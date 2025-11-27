@@ -515,7 +515,7 @@ export function getRoleColor(role: DataRoomMember['role']): string {
   }
 }
 
-export function getTypeColor(type: DataRoom['type']): string {
+export function getTypeColor(_type: DataRoom['type']): string {
   // Unified dark brown/charcoal style with white text for all types
   return 'bg-aifm-charcoal text-white';
 }
