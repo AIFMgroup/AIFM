@@ -74,7 +74,7 @@ The fund delivered strong performance throughout 2024, outperforming benchmark b
 
 export async function POST(request: NextRequest) {
   try {
-    const { clientName, reportType, data } = await request.json();
+    const { clientName, reportType } = await request.json();
 
     // Simulate AI processing delay
     await new Promise(resolve => setTimeout(resolve, 500));
