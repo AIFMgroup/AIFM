@@ -35,7 +35,7 @@ export default function DataRoomsPage() {
   const totalMembers = mockDataRooms.reduce((sum, r) => sum + r.membersCount, 0);
 
   return (
-    <DashboardLayout showCompanySelector={false}>
+    <DashboardLayout>
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>

@@ -12,7 +12,6 @@ import { mockCompanies, Company } from '@/lib/companyData';
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  showCompanySelector?: boolean;
   selectedCompany?: Company;
   onCompanyChange?: (company: Company) => void;
 }
@@ -49,536 +48,316 @@ function HelpTooltip({ text }: { text: string }) {
   );
 }
 
-// Onboarding Wizard Modal
+// Minimal Onboarding Wizard Modal - Fixed Size
 function OnboardingWizard({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({
-    // Step 1: Basic Info
     companyName: '',
     shortName: '',
     orgNumber: '',
     fundType: '',
-    // Step 2: Legal & Compliance
     registrationCountry: '',
-    regulatoryStatus: '',
-    aifmLicense: '',
     fundStructure: '',
-    // Step 3: Fund Details
     targetSize: '',
     currency: 'SEK',
-    vintageYear: new Date().getFullYear().toString(),
-    investmentStrategy: '',
-    // Step 4: Contact & Access
     primaryContact: '',
     email: '',
-    phone: '',
-    accessLevel: 'full',
   });
 
-  const steps = [
-    {
-      id: 'basic',
-      title: 'Grundläggande info',
-      icon: Building2,
-      description: 'Företagets grunduppgifter',
-    },
-    {
-      id: 'legal',
-      title: 'Juridik & Compliance',
-      icon: Shield,
-      description: 'Regulatorisk information',
-    },
-    {
-      id: 'fund',
-      title: 'Fonddetaljer',
-      icon: Briefcase,
-      description: 'Fondens struktur och strategi',
-    },
-    {
-      id: 'contact',
-      title: 'Kontakt & Åtkomst',
-      icon: Users,
-      description: 'Kontaktpersoner och behörigheter',
-    },
+  const steps = ['Bolag', 'Struktur', 'Kontakt'];
+
+  const fundTypes = [
+    { value: 'venture', label: 'Venture Capital' },
+    { value: 'growth', label: 'Growth Equity' },
+    { value: 'buyout', label: 'Buyout' },
+    { value: 'real_estate', label: 'Real Estate' },
+    { value: 'infrastructure', label: 'Infrastructure' },
+    { value: 'credit', label: 'Private Credit' },
+  ];
+
+  const countries = [
+    { value: 'SE', label: 'Sverige' },
+    { value: 'NO', label: 'Norge' },
+    { value: 'DK', label: 'Danmark' },
+    { value: 'FI', label: 'Finland' },
+    { value: 'LU', label: 'Luxemburg' },
+  ];
+
+  const structures = [
+    { value: 'kb', label: 'Kommanditbolag (KB)' },
+    { value: 'ab', label: 'Aktiebolag (AB)' },
+    { value: 'sicav', label: 'SICAV' },
+    { value: 'raif', label: 'RAIF' },
+  ];
+
+  const currencies = [
+    { value: 'SEK', label: 'SEK' },
+    { value: 'EUR', label: 'EUR' },
+    { value: 'USD', label: 'USD' },
+    { value: 'NOK', label: 'NOK' },
   ];
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const nextStep = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(prev => prev + 1);
-    }
-  };
-
-  const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(prev => prev - 1);
-    }
-  };
+  const nextStep = () => currentStep < steps.length - 1 && setCurrentStep(prev => prev + 1);
+  const prevStep = () => currentStep > 0 && setCurrentStep(prev => prev - 1);
 
   const handleSubmit = () => {
-    alert('Nytt bolag skapat! (Demo)\n\n' + JSON.stringify(formData, null, 2));
+    alert('Nytt bolag skapat! (Demo)');
     onClose();
     setCurrentStep(0);
     setFormData({
-      companyName: '',
-      shortName: '',
-      orgNumber: '',
-      fundType: '',
-      registrationCountry: '',
-      regulatoryStatus: '',
-      aifmLicense: '',
-      fundStructure: '',
-      targetSize: '',
-      currency: 'SEK',
-      vintageYear: new Date().getFullYear().toString(),
-      investmentStrategy: '',
-      primaryContact: '',
-      email: '',
-      phone: '',
-      accessLevel: 'full',
+      companyName: '', shortName: '', orgNumber: '', fundType: '',
+      registrationCountry: '', fundStructure: '', targetSize: '',
+      currency: 'SEK', primaryContact: '', email: '',
     });
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        {/* Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-aifm-charcoal to-aifm-charcoal/90 text-white">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-aifm-gold rounded-xl flex items-center justify-center">
-                <Plus className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className="text-lg font-medium">Lägg till nytt bolag</h2>
-                <p className="text-sm text-white/60">Steg {currentStep + 1} av {steps.length}</p>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      {/* Fixed size container - 600px width, 520px height */}
+      <div className="bg-white rounded-2xl w-[600px] h-[520px] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        
+        {/* Minimal Header */}
+        <div className="px-8 py-5 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+          <div>
+            <h2 className="text-lg font-medium text-aifm-charcoal">Nytt bolag</h2>
+            <p className="text-xs text-aifm-charcoal/50 mt-0.5">Steg {currentStep + 1} av {steps.length}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <X className="w-4 h-4 text-aifm-charcoal/50" />
+          </button>
+        </div>
+
+        {/* Step Indicator - Minimal */}
+        <div className="px-8 py-3 border-b border-gray-50 flex-shrink-0">
+          <div className="flex items-center gap-8">
+            {steps.map((step, index) => (
+              <button
+                key={step}
+                onClick={() => setCurrentStep(index)}
+                className="flex items-center gap-2 group"
+              >
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-all
+                  ${index === currentStep 
+                    ? 'bg-aifm-charcoal text-white' 
+                    : index < currentStep 
+                      ? 'bg-aifm-charcoal/10 text-aifm-charcoal' 
+                      : 'bg-gray-100 text-gray-400'}`}>
+                  {index < currentStep ? <Check className="w-3 h-3" /> : index + 1}
+                </div>
+                <span className={`text-sm transition-colors ${index === currentStep ? 'text-aifm-charcoal font-medium' : 'text-aifm-charcoal/40'}`}>
+                  {step}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Step Tabs */}
-        <div className="px-6 py-3 bg-gray-50 border-b border-gray-100">
-          <div className="flex items-center gap-2">
-            {steps.map((step, index) => {
-              const Icon = step.icon;
-              const isActive = index === currentStep;
-              const isCompleted = index < currentStep;
-              
-              return (
-                <button
-                  key={step.id}
-                  onClick={() => setCurrentStep(index)}
-                  className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-200
-                    ${isActive 
-                      ? 'bg-white shadow-md border border-aifm-gold/30' 
-                      : isCompleted 
-                        ? 'bg-green-50 border border-green-200' 
-                        : 'bg-white/50 border border-transparent hover:bg-white hover:border-gray-200'}`}
-                >
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0
-                    ${isActive 
-                      ? 'bg-aifm-gold/10' 
-                      : isCompleted 
-                        ? 'bg-green-100' 
-                        : 'bg-gray-100'}`}
-                  >
-                    {isCompleted ? (
-                      <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    ) : (
-                      <Icon className={`w-4 h-4 ${isActive ? 'text-aifm-gold' : 'text-gray-400'}`} />
-                    )}
-                  </div>
-                  <div className="hidden lg:block text-left">
-                    <p className={`text-xs font-medium ${isActive ? 'text-aifm-charcoal' : 'text-gray-500'}`}>
-                      {step.title}
-                    </p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Step Content */}
-        <div className="p-6 max-h-[60vh] overflow-y-auto">
-          {/* Step 1: Basic Info */}
+        {/* Content Area - Fixed Height with scroll if needed */}
+        <div className="flex-1 px-8 py-6 overflow-y-auto">
+          
+          {/* Step 1: Company Info */}
           {currentStep === 0 && (
             <div className="space-y-5">
-              <div className="flex items-center gap-2 mb-4">
-                <Building2 className="w-5 h-5 text-aifm-gold" />
-                <h3 className="text-lg font-medium text-aifm-charcoal">Grundläggande information</h3>
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <label className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wide">Bolagsnamn</label>
+                  <HelpTooltip text="Det fullständiga juridiska namnet på bolaget." />
+                </div>
+                <input
+                  type="text"
+                  value={formData.companyName}
+                  onChange={(e) => handleInputChange('companyName', e.target.value)}
+                  placeholder="Nordic Ventures I AB"
+                  className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-aifm-charcoal/10 transition-all"
+                />
               </div>
-              
-              <div className="space-y-4">
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <label className="text-xs font-medium text-aifm-charcoal/70 uppercase tracking-wider">
-                      Bolagsnamn *
-                    </label>
-                    <HelpTooltip text="Det fullständiga juridiska namnet på bolaget/fonden som det är registrerat hos Bolagsverket." />
+                    <label className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wide">Kortnamn</label>
+                    <HelpTooltip text="Kort namn som visas i gränssnittet." />
                   </div>
                   <input
                     type="text"
-                    value={formData.companyName}
-                    onChange={(e) => handleInputChange('companyName', e.target.value)}
-                    placeholder="t.ex. Nordic Ventures I AB"
-                    className="input w-full"
+                    value={formData.shortName}
+                    onChange={(e) => handleInputChange('shortName', e.target.value)}
+                    placeholder="Nordic Ventures I"
+                    className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-aifm-charcoal/10 transition-all"
                   />
                 </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <label className="text-xs font-medium text-aifm-charcoal/70 uppercase tracking-wider">
-                        Kortnamn *
-                      </label>
-                      <HelpTooltip text="Ett kort, lättläst namn som används i gränssnittet. Max 20 tecken." />
-                    </div>
-                    <input
-                      type="text"
-                      value={formData.shortName}
-                      onChange={(e) => handleInputChange('shortName', e.target.value)}
-                      placeholder="t.ex. Nordic Ventures I"
-                      className="input w-full"
-                      maxLength={20}
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <label className="text-xs font-medium text-aifm-charcoal/70 uppercase tracking-wider">
-                        Organisationsnummer *
-                      </label>
-                      <HelpTooltip text="Det svenska organisationsnumret i formatet XXXXXX-XXXX." />
-                    </div>
-                    <input
-                      type="text"
-                      value={formData.orgNumber}
-                      onChange={(e) => handleInputChange('orgNumber', e.target.value)}
-                      placeholder="XXXXXX-XXXX"
-                      className="input w-full"
-                    />
-                  </div>
-                </div>
-
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <label className="text-xs font-medium text-aifm-charcoal/70 uppercase tracking-wider">
-                      Fondtyp *
-                    </label>
-                    <HelpTooltip text="Välj den typ av fond som bäst beskriver investeringsstrategin och strukturen." />
+                    <label className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wide">Org.nummer</label>
+                    <HelpTooltip text="Organisationsnummer (XXXXXX-XXXX)." />
                   </div>
-                  <select
-                    value={formData.fundType}
-                    onChange={(e) => handleInputChange('fundType', e.target.value)}
-                    className="input w-full"
-                  >
-                    <option value="">Välj fondtyp...</option>
-                    <option value="venture">Venture Capital</option>
-                    <option value="growth">Growth Equity</option>
-                    <option value="buyout">Buyout</option>
-                    <option value="real_estate">Real Estate</option>
-                    <option value="infrastructure">Infrastructure</option>
-                    <option value="credit">Private Credit</option>
-                    <option value="fund_of_funds">Fund of Funds</option>
-                  </select>
+                  <input
+                    type="text"
+                    value={formData.orgNumber}
+                    onChange={(e) => handleInputChange('orgNumber', e.target.value)}
+                    placeholder="559123-4567"
+                    className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-aifm-charcoal/10 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <label className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wide">Fondtyp</label>
+                  <HelpTooltip text="Välj den typ av fond som bäst beskriver investeringsstrategin." />
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {fundTypes.map((type) => (
+                    <button
+                      key={type.value}
+                      type="button"
+                      onClick={() => handleInputChange('fundType', type.value)}
+                      className={`px-3 py-2.5 rounded-xl text-sm transition-all
+                        ${formData.fundType === type.value
+                          ? 'bg-aifm-charcoal text-white'
+                          : 'bg-gray-50 text-aifm-charcoal/70 hover:bg-gray-100'}`}
+                    >
+                      {type.label}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
           )}
 
-          {/* Step 2: Legal & Compliance */}
+          {/* Step 2: Structure */}
           {currentStep === 1 && (
             <div className="space-y-5">
-              <div className="flex items-center gap-2 mb-4">
-                <Shield className="w-5 h-5 text-aifm-gold" />
-                <h3 className="text-lg font-medium text-aifm-charcoal">Juridik & Compliance</h3>
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <label className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wide">Registreringsland</label>
+                  <HelpTooltip text="Landet där fonden är juridiskt registrerad." />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {countries.map((country) => (
+                    <button
+                      key={country.value}
+                      type="button"
+                      onClick={() => handleInputChange('registrationCountry', country.value)}
+                      className={`px-4 py-2.5 rounded-xl text-sm transition-all
+                        ${formData.registrationCountry === country.value
+                          ? 'bg-aifm-charcoal text-white'
+                          : 'bg-gray-50 text-aifm-charcoal/70 hover:bg-gray-100'}`}
+                    >
+                      {country.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <label className="text-xs font-medium text-aifm-charcoal/70 uppercase tracking-wider">
-                        Registreringsland *
-                      </label>
-                      <HelpTooltip text="Landet där fonden är juridiskt registrerad och reglerad." />
-                    </div>
-                    <select
-                      value={formData.registrationCountry}
-                      onChange={(e) => handleInputChange('registrationCountry', e.target.value)}
-                      className="input w-full"
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <label className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wide">Fondstruktur</label>
+                  <HelpTooltip text="Den juridiska strukturen som fonden är organiserad under." />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {structures.map((struct) => (
+                    <button
+                      key={struct.value}
+                      type="button"
+                      onClick={() => handleInputChange('fundStructure', struct.value)}
+                      className={`px-4 py-3 rounded-xl text-sm text-left transition-all
+                        ${formData.fundStructure === struct.value
+                          ? 'bg-aifm-charcoal text-white'
+                          : 'bg-gray-50 text-aifm-charcoal/70 hover:bg-gray-100'}`}
                     >
-                      <option value="">Välj land...</option>
-                      <option value="SE">Sverige</option>
-                      <option value="NO">Norge</option>
-                      <option value="DK">Danmark</option>
-                      <option value="FI">Finland</option>
-                      <option value="LU">Luxemburg</option>
-                      <option value="IE">Irland</option>
-                      <option value="other">Annat</option>
-                    </select>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <label className="text-xs font-medium text-aifm-charcoal/70 uppercase tracking-wider">
-                        Regulatorisk status *
-                      </label>
-                      <HelpTooltip text="Fondens registreringsstatus hos Finansinspektionen eller motsvarande myndighet." />
-                    </div>
-                    <select
-                      value={formData.regulatoryStatus}
-                      onChange={(e) => handleInputChange('regulatoryStatus', e.target.value)}
-                      className="input w-full"
-                    >
-                      <option value="">Välj status...</option>
-                      <option value="registered">Registrerad AIF</option>
-                      <option value="licensed">Licensierad AIF</option>
-                      <option value="sub_threshold">Under tröskelvärde</option>
-                      <option value="pending">Ansökan pågår</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <label className="text-xs font-medium text-aifm-charcoal/70 uppercase tracking-wider">
-                      AIFM-licensnummer
-                    </label>
-                    <HelpTooltip text="Om fonden har en AIFM-licens, ange licensnumret här. Lämna tomt om ej tillämpligt." />
-                  </div>
-                  <input
-                    type="text"
-                    value={formData.aifmLicense}
-                    onChange={(e) => handleInputChange('aifmLicense', e.target.value)}
-                    placeholder="t.ex. FI-12345"
-                    className="input w-full"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <label className="text-xs font-medium text-aifm-charcoal/70 uppercase tracking-wider">
-                      Fondstruktur *
-                    </label>
-                    <HelpTooltip text="Den juridiska strukturen som fonden är organiserad under." />
-                  </div>
-                  <select
-                    value={formData.fundStructure}
-                    onChange={(e) => handleInputChange('fundStructure', e.target.value)}
-                    className="input w-full"
-                  >
-                    <option value="">Välj struktur...</option>
-                    <option value="limited_partnership">Kommanditbolag (KB)</option>
-                    <option value="aktiebolag">Aktiebolag (AB)</option>
-                    <option value="sicav">SICAV</option>
-                    <option value="sif">SIF</option>
-                    <option value="raif">RAIF</option>
-                    <option value="other">Annan</option>
-                  </select>
-                </div>
-
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-amber-800">Viktigt</p>
-                    <p className="text-xs text-amber-700 mt-1">
-                      Säkerställ att all regulatorisk information är korrekt. Felaktig information kan leda till compliance-problem.
-                    </p>
-                  </div>
+                      {struct.label}
+                    </button>
+                  ))}
                 </div>
               </div>
-            </div>
-          )}
 
-          {/* Step 3: Fund Details */}
-          {currentStep === 2 && (
-            <div className="space-y-5">
-              <div className="flex items-center gap-2 mb-4">
-                <Briefcase className="w-5 h-5 text-aifm-gold" />
-                <h3 className="text-lg font-medium text-aifm-charcoal">Fonddetaljer</h3>
-              </div>
-
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <label className="text-xs font-medium text-aifm-charcoal/70 uppercase tracking-wider">
-                        Målstorlek (MSEK) *
-                      </label>
-                      <HelpTooltip text="Den totala målstorleken för fonden i miljoner SEK (eller vald valuta)." />
-                    </div>
-                    <input
-                      type="number"
-                      value={formData.targetSize}
-                      onChange={(e) => handleInputChange('targetSize', e.target.value)}
-                      placeholder="t.ex. 500"
-                      className="input w-full"
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <label className="text-xs font-medium text-aifm-charcoal/70 uppercase tracking-wider">
-                        Valuta *
-                      </label>
-                      <HelpTooltip text="Den huvudsakliga valutan som fonden redovisar i." />
-                    </div>
-                    <select
-                      value={formData.currency}
-                      onChange={(e) => handleInputChange('currency', e.target.value)}
-                      className="input w-full"
-                    >
-                      <option value="SEK">SEK - Svenska kronor</option>
-                      <option value="EUR">EUR - Euro</option>
-                      <option value="USD">USD - US Dollar</option>
-                      <option value="NOK">NOK - Norska kronor</option>
-                      <option value="DKK">DKK - Danska kronor</option>
-                    </select>
-                  </div>
-                </div>
-
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <label className="text-xs font-medium text-aifm-charcoal/70 uppercase tracking-wider">
-                      Vintage Year *
-                    </label>
-                    <HelpTooltip text="Året då fonden gjorde sin första investering eller closing. Används för benchmarking." />
+                    <label className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wide">Målstorlek (MSEK)</label>
+                    <HelpTooltip text="Fondens målstorlek i miljoner." />
                   </div>
                   <input
                     type="number"
-                    value={formData.vintageYear}
-                    onChange={(e) => handleInputChange('vintageYear', e.target.value)}
-                    placeholder={new Date().getFullYear().toString()}
-                    min="2000"
-                    max="2030"
-                    className="input w-full"
+                    value={formData.targetSize}
+                    onChange={(e) => handleInputChange('targetSize', e.target.value)}
+                    placeholder="500"
+                    className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-aifm-charcoal/10 transition-all"
                   />
                 </div>
-
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <label className="text-xs font-medium text-aifm-charcoal/70 uppercase tracking-wider">
-                      Investeringsstrategi
-                    </label>
-                    <HelpTooltip text="Beskriv kortfattat fondens investeringsfokus, t.ex. sektor, geografiskt fokus, investeringsstorlek." />
+                    <label className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wide">Valuta</label>
+                    <HelpTooltip text="Fondens redovisningsvaluta." />
                   </div>
-                  <textarea
-                    value={formData.investmentStrategy}
-                    onChange={(e) => handleInputChange('investmentStrategy', e.target.value)}
-                    placeholder="t.ex. Investerar i nordiska tech-bolag i tidig tillväxtfas med fokus på SaaS och FinTech..."
-                    className="input w-full h-24 resize-none"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: Contact & Access */}
-          {currentStep === 3 && (
-            <div className="space-y-5">
-              <div className="flex items-center gap-2 mb-4">
-                <Users className="w-5 h-5 text-aifm-gold" />
-                <h3 className="text-lg font-medium text-aifm-charcoal">Kontakt & Åtkomst</h3>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <label className="text-xs font-medium text-aifm-charcoal/70 uppercase tracking-wider">
-                      Primär kontaktperson *
-                    </label>
-                    <HelpTooltip text="Huvudkontakten för fonden som kommer att ha administratörsrättigheter." />
-                  </div>
-                  <input
-                    type="text"
-                    value={formData.primaryContact}
-                    onChange={(e) => handleInputChange('primaryContact', e.target.value)}
-                    placeholder="Förnamn Efternamn"
-                    className="input w-full"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <label className="text-xs font-medium text-aifm-charcoal/70 uppercase tracking-wider">
-                        E-post *
-                      </label>
-                      <HelpTooltip text="E-postadressen som inbjudan och notifieringar kommer att skickas till." />
-                    </div>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      placeholder="namn@foretag.se"
-                      className="input w-full"
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <label className="text-xs font-medium text-aifm-charcoal/70 uppercase tracking-wider">
-                        Telefon
-                      </label>
-                      <HelpTooltip text="Telefonnummer för kontakt vid brådskande ärenden." />
-                    </div>
-                    <input
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      placeholder="+46 70 123 45 67"
-                      className="input w-full"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <label className="text-xs font-medium text-aifm-charcoal/70 uppercase tracking-wider">
-                      Åtkomstnivå *
-                    </label>
-                    <HelpTooltip text="Bestämmer vilka funktioner och data som kontaktpersonen har tillgång till." />
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { value: 'full', label: 'Full åtkomst', desc: 'Alla funktioner' },
-                      { value: 'standard', label: 'Standard', desc: 'Grundläggande funktioner' },
-                      { value: 'readonly', label: 'Endast läsning', desc: 'Kan bara visa data' },
-                    ].map((option) => (
+                  <div className="flex gap-2">
+                    {currencies.map((curr) => (
                       <button
-                        key={option.value}
+                        key={curr.value}
                         type="button"
-                        onClick={() => handleInputChange('accessLevel', option.value)}
-                        className={`p-3 rounded-xl border-2 text-left transition-all
-                          ${formData.accessLevel === option.value
-                            ? 'border-aifm-gold bg-aifm-gold/5'
-                            : 'border-gray-200 hover:border-aifm-gold/30'}`}
+                        onClick={() => handleInputChange('currency', curr.value)}
+                        className={`flex-1 py-3 rounded-xl text-sm transition-all
+                          ${formData.currency === curr.value
+                            ? 'bg-aifm-charcoal text-white'
+                            : 'bg-gray-50 text-aifm-charcoal/70 hover:bg-gray-100'}`}
                       >
-                        <p className={`text-sm font-medium ${formData.accessLevel === option.value ? 'text-aifm-gold' : 'text-aifm-charcoal'}`}>
-                          {option.label}
-                        </p>
-                        <p className="text-xs text-aifm-charcoal/50 mt-0.5">{option.desc}</p>
+                        {curr.label}
                       </button>
                     ))}
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
 
-                <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+          {/* Step 3: Contact */}
+          {currentStep === 2 && (
+            <div className="space-y-5">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <label className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wide">Kontaktperson</label>
+                  <HelpTooltip text="Huvudkontakten som får administratörsrättigheter." />
+                </div>
+                <input
+                  type="text"
+                  value={formData.primaryContact}
+                  onChange={(e) => handleInputChange('primaryContact', e.target.value)}
+                  placeholder="Anna Andersson"
+                  className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-aifm-charcoal/10 transition-all"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <label className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wide">E-post</label>
+                  <HelpTooltip text="Inbjudan skickas till denna adress." />
+                </div>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  placeholder="anna@foretag.se"
+                  className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-aifm-charcoal/10 transition-all"
+                />
+              </div>
+
+              <div className="mt-6 p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-aifm-charcoal/30 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-green-800">Redo att skapa</p>
-                    <p className="text-xs text-green-700 mt-1">
-                      När du klickar &quot;Skapa bolag&quot; kommer en inbjudan att skickas till kontaktpersonen.
+                    <p className="text-sm font-medium text-aifm-charcoal/70">Redo att skapa</p>
+                    <p className="text-xs text-aifm-charcoal/50 mt-1">
+                      En inbjudan skickas till kontaktpersonen när bolaget skapas.
                     </p>
                   </div>
                 </div>
@@ -587,30 +366,23 @@ function OnboardingWizard({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
           )}
         </div>
 
-        {/* Footer with Navigation */}
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+        {/* Footer - Fixed */}
+        <div className="px-8 py-4 border-t border-gray-100 flex items-center justify-between flex-shrink-0 bg-gray-50/50">
           <button
             onClick={prevStep}
             disabled={currentStep === 0}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all
-              ${currentStep === 0
-                ? 'text-gray-300 cursor-not-allowed'
-                : 'text-aifm-charcoal hover:bg-white hover:shadow-md'}`}
+            className={`px-4 py-2 rounded-xl text-sm transition-all flex items-center gap-2
+              ${currentStep === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-aifm-charcoal/60 hover:text-aifm-charcoal hover:bg-white'}`}
           >
             <ArrowLeft className="w-4 h-4" />
             Tillbaka
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {steps.map((_, index) => (
               <div
                 key={index}
-                className={`w-2 h-2 rounded-full transition-all
-                  ${index === currentStep 
-                    ? 'bg-aifm-gold w-6' 
-                    : index < currentStep 
-                      ? 'bg-green-500' 
-                      : 'bg-gray-300'}`}
+                className={`h-1.5 rounded-full transition-all ${index === currentStep ? 'w-6 bg-aifm-charcoal' : 'w-1.5 bg-gray-200'}`}
               />
             ))}
           </div>
@@ -618,17 +390,14 @@ function OnboardingWizard({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
           {currentStep === steps.length - 1 ? (
             <button
               onClick={handleSubmit}
-              className="flex items-center gap-2 px-6 py-2 bg-aifm-gold text-white rounded-xl 
-                        hover:bg-aifm-gold/90 shadow-lg shadow-aifm-gold/25 transition-all"
+              className="px-6 py-2 bg-aifm-charcoal text-white rounded-xl text-sm font-medium hover:bg-aifm-charcoal/90 transition-all"
             >
-              <CheckCircle2 className="w-4 h-4" />
               Skapa bolag
             </button>
           ) : (
             <button
               onClick={nextStep}
-              className="flex items-center gap-2 px-6 py-2 bg-aifm-charcoal text-white rounded-xl 
-                        hover:bg-aifm-charcoal/90 transition-all"
+              className="px-6 py-2 bg-aifm-charcoal text-white rounded-xl text-sm font-medium hover:bg-aifm-charcoal/90 transition-all flex items-center gap-2"
             >
               Nästa
               <ArrowRight className="w-4 h-4" />
@@ -819,7 +588,6 @@ function CompanySelector({
 // Inner layout component that uses the sidebar context
 function DashboardLayoutInner({ 
   children, 
-  showCompanySelector = true,
   selectedCompany: externalSelectedCompany,
   onCompanyChange 
 }: DashboardLayoutProps) {
@@ -835,32 +603,29 @@ function DashboardLayoutInner({
       <DashboardSidebar />
       
       <main className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out ${collapsed ? 'ml-[72px]' : 'ml-64'}`}>
-        {/* Header with company selector */}
-        {showCompanySelector && (
-          <header className="bg-white border-b border-gray-100 sticky top-0 z-30">
-            <div className="px-6 py-4">
-              {/* Centered dropdown and notification */}
-              <div className="flex items-center justify-between">
-                {/* Left spacer for centering */}
-                <div className="w-10" />
-                
-                {/* Centered Company Dropdown with Add Button */}
-                <CompanySelector
-                  selectedCompany={selectedCompany}
-                  companies={mockCompanies}
-                  onChange={handleCompanyChange}
-                  onAddNew={() => setShowOnboardingWizard(true)}
-                />
-                
-                {/* Right side - notification */}
-                <button className="relative p-2 text-aifm-charcoal/50 hover:text-aifm-gold hover:bg-aifm-gold/5 rounded-xl transition-all duration-200">
-                  <Bell className="w-5 h-5" />
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-aifm-gold rounded-full animate-pulse" />
-                </button>
-              </div>
+        {/* Header with company selector - ALWAYS visible */}
+        <header className="bg-white border-b border-gray-100 sticky top-0 z-30">
+          <div className="px-6 py-3">
+            <div className="flex items-center justify-between">
+              {/* Left spacer for centering */}
+              <div className="w-10" />
+              
+              {/* Centered Company Dropdown with Add Button */}
+              <CompanySelector
+                selectedCompany={selectedCompany}
+                companies={mockCompanies}
+                onChange={handleCompanyChange}
+                onAddNew={() => setShowOnboardingWizard(true)}
+              />
+              
+              {/* Right side - notification */}
+              <button className="relative p-2 text-aifm-charcoal/50 hover:text-aifm-gold hover:bg-aifm-gold/5 rounded-xl transition-all duration-200">
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-aifm-gold rounded-full animate-pulse" />
+              </button>
             </div>
-          </header>
-        )}
+          </div>
+        </header>
 
         {/* Main content area */}
         <div className="flex-1 p-6 bg-gradient-to-br from-gray-50 to-gray-100/50 overflow-auto">

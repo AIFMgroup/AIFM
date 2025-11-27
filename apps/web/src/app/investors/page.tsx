@@ -83,7 +83,7 @@ export default function InvestorsPage() {
   };
 
   return (
-    <DashboardLayout showCompanySelector={false}>
+    <DashboardLayout>
       {/* Page Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
