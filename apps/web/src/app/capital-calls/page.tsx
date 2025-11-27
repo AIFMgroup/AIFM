@@ -108,7 +108,7 @@ export default function CapitalCallsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Total Committed</span>
+            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Totalt åtagande</span>
             <DollarSign className="w-5 h-5 text-aifm-charcoal/30" />
           </div>
           <p className="text-2xl font-medium text-aifm-charcoal">{formatCurrency(totalCommitted, selectedFund.currency)}</p>
@@ -116,16 +116,16 @@ export default function CapitalCallsPage() {
 
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Called to Date</span>
+            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Inropat hittills</span>
             <ArrowUpRight className="w-5 h-5 text-green-500" />
           </div>
           <p className="text-2xl font-medium text-aifm-charcoal">{formatCurrency(totalCalled, selectedFund.currency)}</p>
-          <p className="text-sm text-aifm-charcoal/60 mt-1">{formatPercentage(callPercentage)} of committed</p>
+          <p className="text-sm text-aifm-charcoal/60 mt-1">{formatPercentage(callPercentage)} av åtagande</p>
         </div>
 
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Remaining</span>
+            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Återstående</span>
             <Clock className="w-5 h-5 text-amber-500" />
           </div>
           <p className="text-2xl font-medium text-aifm-charcoal">{formatCurrency(remainingToCall, selectedFund.currency)}</p>
@@ -133,7 +133,7 @@ export default function CapitalCallsPage() {
 
         <div className="bg-gradient-to-br from-aifm-gold to-aifm-gold/80 rounded-2xl p-6 text-white">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium uppercase tracking-wider text-white/70">Active Calls</span>
+            <span className="text-xs font-medium uppercase tracking-wider text-white/70">Aktiva anrop</span>
             <Bell className="w-5 h-5 text-white/50" />
           </div>
           <p className="text-2xl font-medium">{fundCalls.filter(c => c.status === 'SENT').length}</p>
@@ -143,8 +143,8 @@ export default function CapitalCallsPage() {
       {/* Progress Bar */}
       <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm mb-8">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Capital Call Progress</span>
-          <span className="text-sm text-aifm-charcoal/60">{formatPercentage(callPercentage)} Called</span>
+          <span className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Kapitalanropsförlopp</span>
+          <span className="text-sm text-aifm-charcoal/60">{formatPercentage(callPercentage)} inropat</span>
         </div>
         <div className="w-full bg-gray-100 rounded-full h-3">
           <div 
@@ -163,8 +163,8 @@ export default function CapitalCallsPage() {
         {/* Capital Calls List */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Capital Calls</h3>
-            <span className="text-xs text-aifm-charcoal/50">{fundCalls.length} total</span>
+            <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Kapitalanrop</h3>
+            <span className="text-xs text-aifm-charcoal/50">{fundCalls.length} totalt</span>
           </div>
           <div className="divide-y divide-gray-50">
             {fundCalls.length === 0 ? (
@@ -175,7 +175,7 @@ export default function CapitalCallsPage() {
                   onClick={() => setShowNewCallModal(true)}
                   className="btn-primary mt-4 py-2 px-4"
                 >
-                  Create First Call
+                  Skapa första anrop
                 </button>
               </div>
             ) : (
@@ -198,7 +198,7 @@ export default function CapitalCallsPage() {
                         </div>
                         <div>
                           <p className="font-medium text-aifm-charcoal">{formatCurrency(call.totalAmount, selectedFund.currency)}</p>
-                          <p className="text-xs text-aifm-charcoal/50">Due: {formatDate(call.dueDate)}</p>
+                          <p className="text-xs text-aifm-charcoal/50">Förfaller: {formatDate(call.dueDate)}</p>
                         </div>
                       </div>
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(call.status)}`}>
@@ -208,9 +208,9 @@ export default function CapitalCallsPage() {
                     <p className="text-sm text-aifm-charcoal/60 mb-2">{call.purpose}</p>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-aifm-charcoal/50">
-                        {call.items.filter(i => i.status === 'PAID').length}/{call.items.length} investors paid
+                        {call.items.filter(i => i.status === 'PAID').length}/{call.items.length} investerare betalat
                       </span>
-                      <span className="text-aifm-charcoal/50">{formatPercentage(paidPercentage)} received</span>
+                      <span className="text-aifm-charcoal/50">{formatPercentage(paidPercentage)} mottaget</span>
                     </div>
                     <div className="w-full bg-gray-100 rounded-full h-1.5 mt-2">
                       <div 
@@ -241,35 +241,35 @@ export default function CapitalCallsPage() {
               </div>
               
               <div className="p-6 border-b border-gray-100">
-                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
-                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Call Date</p>
+                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Anropsdatum</p>
                     <p className="font-medium text-aifm-charcoal">{formatDate(selectedCall.callDate)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Due Date</p>
+                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Förfallodatum</p>
                     <p className="font-medium text-aifm-charcoal">{formatDate(selectedCall.dueDate)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Total Amount</p>
+                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Totalt belopp</p>
                     <p className="font-medium text-aifm-charcoal">{formatCurrency(selectedCall.totalAmount, selectedFund.currency)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Received</p>
+                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Mottaget</p>
                     <p className="font-medium text-green-600">
                       {formatCurrency(selectedCall.items.reduce((sum, i) => sum + i.paidAmount, 0), selectedFund.currency)}
                     </p>
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Purpose</p>
+                  <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Syfte</p>
                   <p className="text-aifm-charcoal">{selectedCall.purpose}</p>
                 </div>
               </div>
 
               {/* Investor Breakdown */}
               <div className="px-6 py-4 border-b border-gray-100">
-                <h4 className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider mb-3">Investor Payments</h4>
+                <h4 className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider mb-3">Investerarbetalningar</h4>
               </div>
               <div className="divide-y divide-gray-50 max-h-80 overflow-y-auto">
                 {selectedCall.items.map((item) => {
@@ -285,9 +285,9 @@ export default function CapitalCallsPage() {
                           <Clock className="w-5 h-5 text-amber-500" />
                         )}
                         <div>
-                          <p className="font-medium text-aifm-charcoal text-sm">{investor?.name || 'Unknown'}</p>
+                          <p className="font-medium text-aifm-charcoal text-sm">{investor?.name || 'Okänd'}</p>
                           <p className="text-xs text-aifm-charcoal/50">
-                            {item.paidAt ? `Paid ${formatDate(item.paidAt)}` : 'Pending'}
+                            {item.paidAt ? `Betalt ${formatDate(item.paidAt)}` : 'Väntar'}
                           </p>
                         </div>
                       </div>
@@ -295,7 +295,7 @@ export default function CapitalCallsPage() {
                         <p className="font-medium text-aifm-charcoal text-sm">{formatCurrency(item.amount, selectedFund.currency)}</p>
                         {item.paidAmount > 0 && item.paidAmount < item.amount && (
                           <p className="text-xs text-blue-600">
-                            {formatCurrency(item.paidAmount, selectedFund.currency)} paid
+                            {formatCurrency(item.paidAmount, selectedFund.currency)} betalt
                           </p>
                         )}
                       </div>
@@ -309,11 +309,11 @@ export default function CapitalCallsPage() {
                 <div className="flex gap-3">
                   <button className="flex-1 btn-outline py-2 flex items-center justify-center gap-2">
                     <Send className="w-4 h-4" />
-                    Send Reminder
+                    Skicka påminnelse
                   </button>
                   <button className="flex-1 btn-outline py-2 flex items-center justify-center gap-2">
                     <Download className="w-4 h-4" />
-                    Export
+                    Exportera
                   </button>
                 </div>
               </div>
@@ -332,7 +332,7 @@ export default function CapitalCallsPage() {
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-lg font-medium text-aifm-charcoal uppercase tracking-wider">New Capital Call</h3>
+              <h3 className="text-lg font-medium text-aifm-charcoal uppercase tracking-wider">Nytt kapitalanrop</h3>
               <button 
                 onClick={() => setShowNewCallModal(false)}
                 className="p-2 hover:bg-gray-100 rounded-lg"
@@ -343,38 +343,38 @@ export default function CapitalCallsPage() {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                  Fund
+                  Fond
                 </label>
                 <p className="font-medium text-aifm-charcoal">{selectedFund.name}</p>
               </div>
               <div>
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                  Call Amount ({selectedFund.currency})
+                  Anropsbelopp ({selectedFund.currency})
                 </label>
                 <input
                   type="number"
                   value={newCallAmount}
                   onChange={(e) => setNewCallAmount(e.target.value)}
                   className="input w-full"
-                  placeholder="Enter amount"
+                  placeholder="Ange belopp"
                 />
                 <p className="text-xs text-aifm-charcoal/50 mt-1">
-                  Remaining uncalled: {formatCurrency(remainingToCall, selectedFund.currency)}
+                  Återstående ej inropat: {formatCurrency(remainingToCall, selectedFund.currency)}
                 </p>
               </div>
               <div>
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                  Purpose
+                  Syfte
                 </label>
                 <textarea
                   value={newCallPurpose}
                   onChange={(e) => setNewCallPurpose(e.target.value)}
                   className="input w-full h-24 resize-none"
-                  placeholder="E.g., New investment in Company X"
+                  placeholder="T.ex. ny investering i Bolag X"
                 />
               </div>
               <div className="bg-aifm-gold/5 rounded-xl p-4">
-                <p className="text-sm font-medium text-aifm-charcoal mb-2">Distribution Preview</p>
+                <p className="text-sm font-medium text-aifm-charcoal mb-2">Fördelningsförhandsgranskning</p>
                 <div className="space-y-2 text-sm">
                   {commitments.slice(0, 3).map((commitment) => {
                     const allocation = newCallAmount ? 
@@ -389,7 +389,7 @@ export default function CapitalCallsPage() {
                     );
                   })}
                   {commitments.length > 3 && (
-                    <p className="text-xs text-aifm-charcoal/50">+ {commitments.length - 3} more investors</p>
+                    <p className="text-xs text-aifm-charcoal/50">+ {commitments.length - 3} fler investerare</p>
                   )}
                 </div>
               </div>
@@ -399,18 +399,18 @@ export default function CapitalCallsPage() {
                 onClick={() => setShowNewCallModal(false)}
                 className="flex-1 btn-outline py-2"
               >
-                Cancel
+                Avbryt
               </button>
               <button 
                 onClick={() => {
-                  alert('Capital call created! (Demo)');
+                  alert('Kapitalanrop skapat! (Demo)');
                   setShowNewCallModal(false);
                   setNewCallAmount('');
                   setNewCallPurpose('');
                 }}
                 className="flex-1 btn-primary py-2"
               >
-                Create Call
+                Skapa anrop
               </button>
             </div>
           </div>

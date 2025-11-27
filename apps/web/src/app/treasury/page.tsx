@@ -100,7 +100,7 @@ export default function TreasuryPage() {
             <Wallet className="w-5 h-5 text-white/40" />
           </div>
           <p className="text-3xl font-medium">{formatCurrency(totalBalance, selectedFund.currency)}</p>
-          <p className="text-sm text-white/60 mt-2">{accounts.length} bank account{accounts.length !== 1 ? 's' : ''}</p>
+          <p className="text-sm text-white/60 mt-2">{accounts.length} bankkonto{accounts.length !== 1 ? 'n' : ''}</p>
         </div>
 
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
@@ -109,25 +109,25 @@ export default function TreasuryPage() {
             <Clock className="w-5 h-5 text-amber-500" />
           </div>
           <p className="text-2xl font-medium text-aifm-charcoal">{formatCurrency(pendingAmount, selectedFund.currency)}</p>
-          <p className="text-sm text-aifm-charcoal/60 mt-2">{pendingInvoices.length} invoice{pendingInvoices.length !== 1 ? 's' : ''} pending</p>
+          <p className="text-sm text-aifm-charcoal/60 mt-2">{pendingInvoices.length} faktura{pendingInvoices.length !== 1 ? 'or' : ''} väntar</p>
         </div>
 
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Unmatched</span>
+            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Omatchade</span>
             <AlertCircle className="w-5 h-5 text-amber-500" />
           </div>
           <p className="text-2xl font-medium text-aifm-charcoal">{unmatchedTransactions.length}</p>
-          <p className="text-sm text-aifm-charcoal/60 mt-2">transactions need review</p>
+          <p className="text-sm text-aifm-charcoal/60 mt-2">transaktioner behöver granskas</p>
         </div>
 
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Last Sync</span>
+            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Senast synkat</span>
             <RefreshCw className="w-5 h-5 text-green-500" />
           </div>
-          <p className="text-2xl font-medium text-aifm-charcoal">2h ago</p>
-          <p className="text-sm text-green-600 mt-2">All accounts synced</p>
+          <p className="text-2xl font-medium text-aifm-charcoal">2h sedan</p>
+          <p className="text-sm text-green-600 mt-2">Alla konton synkade</p>
         </div>
       </div>
 
@@ -136,10 +136,10 @@ export default function TreasuryPage() {
         <div className="border-b border-gray-100">
           <nav className="flex -mb-px">
             {[
-              { id: 'accounts', label: 'Bank Accounts', icon: Building2 },
-              { id: 'transactions', label: 'Transactions', icon: ArrowUpRight },
-              { id: 'invoices', label: 'Invoices', icon: FileText },
-              { id: 'payments', label: 'Payments', icon: Send },
+              { id: 'accounts', label: 'Bankkonton', icon: Building2 },
+              { id: 'transactions', label: 'Transaktioner', icon: ArrowUpRight },
+              { id: 'invoices', label: 'Fakturor', icon: FileText },
+              { id: 'payments', label: 'Betalningar', icon: Send },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -166,10 +166,10 @@ export default function TreasuryPage() {
               {accounts.length === 0 ? (
                 <div className="text-center py-12">
                   <Building2 className="w-12 h-12 text-aifm-charcoal/20 mx-auto mb-4" />
-                  <p className="text-aifm-charcoal/60">No bank accounts configured for this fund</p>
+                  <p className="text-aifm-charcoal/60">Inga bankkonton konfigurerade för denna fond</p>
                   <button className="btn-primary mt-4">
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Bank Account
+                    Lägg till bankkonto
                   </button>
                 </div>
               ) : (
@@ -212,7 +212,7 @@ export default function TreasuryPage() {
                       <div className="mt-6 pt-6 border-t border-gray-100">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                           <div>
-                            <p className="text-aifm-charcoal/50 uppercase tracking-wider text-xs mb-1">Account Number</p>
+                            <p className="text-aifm-charcoal/50 uppercase tracking-wider text-xs mb-1">Kontonummer</p>
                             <p className="font-medium text-aifm-charcoal">{account.accountNumber}</p>
                           </div>
                           <div>
@@ -220,22 +220,22 @@ export default function TreasuryPage() {
                             <p className="font-medium text-aifm-charcoal">{account.bic}</p>
                           </div>
                           <div>
-                            <p className="text-aifm-charcoal/50 uppercase tracking-wider text-xs mb-1">Currency</p>
+                            <p className="text-aifm-charcoal/50 uppercase tracking-wider text-xs mb-1">Valuta</p>
                             <p className="font-medium text-aifm-charcoal">{account.currency}</p>
                           </div>
                           <div>
-                            <p className="text-aifm-charcoal/50 uppercase tracking-wider text-xs mb-1">Last Synced</p>
+                            <p className="text-aifm-charcoal/50 uppercase tracking-wider text-xs mb-1">Senast synkat</p>
                             <p className="font-medium text-aifm-charcoal">{formatDate(account.lastSyncAt)}</p>
                           </div>
                         </div>
                         <div className="flex gap-3 mt-4">
                           <button className="btn-outline py-2 px-4 text-sm flex items-center gap-2">
                             <Eye className="w-4 h-4" />
-                            View Transactions
+                            Visa transaktioner
                           </button>
                           <button className="btn-outline py-2 px-4 text-sm flex items-center gap-2">
                             <RefreshCw className="w-4 h-4" />
-                            Sync Now
+                            Synka nu
                           </button>
                         </div>
                       </div>
@@ -261,12 +261,12 @@ export default function TreasuryPage() {
                   </div>
                   <button className="btn-outline py-2 px-4 flex items-center gap-2">
                     <Filter className="w-4 h-4" />
-                    Filter
+                    Filtrera
                   </button>
                 </div>
                 <button className="btn-outline py-2 px-4 flex items-center gap-2">
                   <Download className="w-4 h-4" />
-                  Export
+                  Exportera
                 </button>
               </div>
 
@@ -274,10 +274,10 @@ export default function TreasuryPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-100">
-                      <th className="text-left px-4 py-3 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Date</th>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Description</th>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Counterparty</th>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Category</th>
+                      <th className="text-left px-4 py-3 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Datum</th>
+                      <th className="text-left px-4 py-3 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Beskrivning</th>
+                      <th className="text-left px-4 py-3 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Motpart</th>
+                      <th className="text-left px-4 py-3 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Kategori</th>
                       <th className="text-right px-4 py-3 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Belopp</th>
                       <th className="text-center px-4 py-3 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Status</th>
                     </tr>
@@ -305,12 +305,12 @@ export default function TreasuryPage() {
                           {tx.matched ? (
                             <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">
                               <CheckCircle2 className="w-3 h-3" />
-                              Matched
+                              Matchad
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-700">
                               <AlertCircle className="w-3 h-3" />
-                              Unmatched
+                              Omatchad
                             </span>
                           )}
                         </td>
@@ -338,7 +338,7 @@ export default function TreasuryPage() {
                 </div>
                 <button className="btn-primary py-2 px-4 flex items-center gap-2">
                   <Plus className="w-4 h-4" />
-                  Upload Invoice
+                  Ladda upp faktura
                 </button>
               </div>
 
@@ -368,7 +368,7 @@ export default function TreasuryPage() {
                       <div className="flex items-center gap-6">
                         <div className="text-right">
                           <p className="font-medium text-aifm-charcoal">{formatCurrency(invoice.amount, invoice.currency)}</p>
-                          <p className="text-xs text-aifm-charcoal/50">Due: {formatDate(invoice.dueDate)}</p>
+                          <p className="text-xs text-aifm-charcoal/50">Förfaller: {formatDate(invoice.dueDate)}</p>
                         </div>
                         <span className={`px-3 py-1 text-xs font-medium rounded-full ${
                           invoice.status === 'PAID' ? 'bg-green-100 text-green-700' :
@@ -393,13 +393,13 @@ export default function TreasuryPage() {
           {activeTab === 'payments' && (
             <div className="text-center py-12">
               <Send className="w-12 h-12 text-aifm-charcoal/20 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-aifm-charcoal mb-2">Payment Processing</h3>
+              <h3 className="text-lg font-medium text-aifm-charcoal mb-2">Betalningshantering</h3>
               <p className="text-aifm-charcoal/60 mb-6 max-w-md mx-auto">
-                Initiate and approve payments with four-eyes principle for secure fund operations.
+                Initiera och godkänn betalningar med 4-ögonprincipen för säkra fondoperationer.
               </p>
               <button className="btn-primary">
                 <Plus className="w-4 h-4 mr-2" />
-                Create Payment
+                Skapa betalning
               </button>
             </div>
           )}

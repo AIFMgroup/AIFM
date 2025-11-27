@@ -94,7 +94,7 @@ export default function DataRoomDetailPage() {
               {room.watermark && (
                 <span className="px-2 py-1 text-xs font-medium rounded-full bg-aifm-charcoal/10 text-aifm-charcoal flex items-center gap-1">
                   <Shield className="w-3 h-3" />
-                  Watermarked
+                  Vattenstämplad
                 </span>
               )}
             </div>
@@ -108,10 +108,10 @@ export default function DataRoomDetailPage() {
           <div className="flex items-center justify-between">
             <nav className="flex gap-6">
               {[
-                { id: 'documents', label: 'Documents', icon: FileText, count: documents.length },
-                { id: 'members', label: 'Members', icon: Users, count: members.length },
-                { id: 'activity', label: 'Activity', icon: History },
-                { id: 'settings', label: 'Settings', icon: Settings },
+                { id: 'documents', label: 'Dokument', icon: FileText, count: documents.length },
+                { id: 'members', label: 'Medlemmar', icon: Users, count: members.length },
+                { id: 'activity', label: 'Aktivitet', icon: History },
+                { id: 'settings', label: 'Inställningar', icon: Settings },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -140,7 +140,7 @@ export default function DataRoomDetailPage() {
                     className="btn-primary py-2 px-4 flex items-center gap-2"
                   >
                     <Upload className="w-4 h-4" />
-                    Upload
+                    Ladda upp
                   </button>
                 </>
               )}
@@ -150,7 +150,7 @@ export default function DataRoomDetailPage() {
                   className="btn-primary py-2 px-4 flex items-center gap-2"
                 >
                   <UserPlus className="w-4 h-4" />
-                  Invite
+                  Bjud in
                 </button>
               )}
             </div>
@@ -166,7 +166,7 @@ export default function DataRoomDetailPage() {
             <div className="lg:col-span-1">
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <div className="px-4 py-3 border-b border-gray-100">
-                  <h3 className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Folders</h3>
+                  <h3 className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Mappar</h3>
                 </div>
                 <div className="divide-y divide-gray-50">
                   <button
@@ -177,7 +177,7 @@ export default function DataRoomDetailPage() {
                   >
                     <Folder className={`w-5 h-5 ${!selectedFolder ? 'text-aifm-gold' : 'text-gray-400'}`} />
                     <span className={`text-sm ${!selectedFolder ? 'text-aifm-gold font-medium' : 'text-aifm-charcoal'}`}>
-                      All Documents
+                      Alla dokument
                     </span>
                     <span className="ml-auto text-xs text-aifm-charcoal/50">{documents.length}</span>
                   </button>
@@ -200,7 +200,7 @@ export default function DataRoomDetailPage() {
                 <div className="p-4 border-t border-gray-100">
                   <button className="w-full btn-outline py-2 flex items-center justify-center gap-2 text-sm">
                     <Plus className="w-4 h-4" />
-                    New Folder
+                    Ny mapp
                   </button>
                 </div>
               </div>
@@ -240,8 +240,8 @@ export default function DataRoomDetailPage() {
                   <table className="w-full">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Name</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Size</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Namn</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Storlek</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Visningar</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Uppladdad</th>
                         <th className="px-6 py-3 text-right text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Åtgärder</th>
@@ -272,15 +272,15 @@ export default function DataRoomDetailPage() {
                           <td className="px-6 py-4 text-sm text-aifm-charcoal/60">{formatDate(doc.uploadedAt)}</td>
                           <td className="px-6 py-4">
                             <div className="flex items-center justify-end gap-2">
-                              <button className="p-2 hover:bg-gray-100 rounded-lg" title="Preview">
+                              <button className="p-2 hover:bg-gray-100 rounded-lg" title="Förhandsgranska">
                                 <Eye className="w-4 h-4 text-aifm-charcoal/60" />
                               </button>
                               {room.downloadEnabled && (
-                                <button className="p-2 hover:bg-gray-100 rounded-lg" title="Download">
+                                <button className="p-2 hover:bg-gray-100 rounded-lg" title="Ladda ner">
                                   <Download className="w-4 h-4 text-aifm-charcoal/60" />
                                 </button>
                               )}
-                              <button className="p-2 hover:bg-gray-100 rounded-lg" title="More">
+                              <button className="p-2 hover:bg-gray-100 rounded-lg" title="Mer">
                                 <MoreVertical className="w-4 h-4 text-aifm-charcoal/60" />
                               </button>
                             </div>
@@ -333,18 +333,18 @@ export default function DataRoomDetailPage() {
         {activeTab === 'members' && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Room Members</h3>
-              <span className="text-xs text-aifm-charcoal/50">{members.length} members</span>
+              <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Rumsmedlemmar</h3>
+              <span className="text-xs text-aifm-charcoal/50">{members.length} medlemmar</span>
             </div>
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Member</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Role</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Permissions</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Last Access</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Visits</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Medlem</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Roll</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Behörigheter</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Senast åtkomst</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Besök</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Åtgärder</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -374,10 +374,10 @@ export default function DataRoomDetailPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         {member.permissions.view && (
-                          <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">View</span>
+                          <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">Visa</span>
                         )}
                         {member.permissions.download && (
-                          <span className="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">Download</span>
+                          <span className="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">Ladda ner</span>
                         )}
                         {member.permissions.upload && (
                           <span className="text-xs bg-green-100 text-green-600 px-1.5 py-0.5 rounded">Ladda upp</span>
@@ -385,16 +385,16 @@ export default function DataRoomDetailPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-aifm-charcoal/60">
-                      {member.lastAccess ? formatDate(member.lastAccess) : 'Never'}
+                      {member.lastAccess ? formatDate(member.lastAccess) : 'Aldrig'}
                     </td>
                     <td className="px-6 py-4 text-sm text-aifm-charcoal/60">{member.accessCount}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        <button className="p-2 hover:bg-gray-100 rounded-lg" title="Edit">
+                        <button className="p-2 hover:bg-gray-100 rounded-lg" title="Redigera">
                           <Settings className="w-4 h-4 text-aifm-charcoal/60" />
                         </button>
                         {member.role !== 'OWNER' && (
-                          <button className="p-2 hover:bg-red-50 rounded-lg" title="Remove">
+                          <button className="p-2 hover:bg-red-50 rounded-lg" title="Ta bort">
                             <Trash2 className="w-4 h-4 text-red-500" />
                           </button>
                         )}
@@ -411,7 +411,7 @@ export default function DataRoomDetailPage() {
         {activeTab === 'activity' && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Activity Log</h3>
+              <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Aktivitetslogg</h3>
               <button className="btn-outline py-1.5 px-3 text-sm flex items-center gap-2">
                 <Download className="w-4 h-4" />
                 Exportera
@@ -454,18 +454,18 @@ export default function DataRoomDetailPage() {
           <div className="space-y-6">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-100">
-                <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Room Settings</h3>
+                <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Rumsinställningar</h3>
               </div>
               <div className="p-6 space-y-6">
                 <div>
                   <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                    Room Name
+                    Rumsnamn
                   </label>
                   <input type="text" defaultValue={room.name} className="input w-full max-w-md" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                    Description
+                    Beskrivning
                   </label>
                   <textarea defaultValue={room.description} className="input w-full max-w-md h-20 resize-none" />
                 </div>
@@ -476,7 +476,7 @@ export default function DataRoomDetailPage() {
                       defaultChecked={room.watermark}
                       className="w-4 h-4 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold"
                     />
-                    <span className="text-sm text-aifm-charcoal">Apply watermarks to all documents</span>
+                    <span className="text-sm text-aifm-charcoal">Applicera vattenstämpel på alla dokument</span>
                   </label>
                 </div>
                 <div className="flex items-center gap-4">
@@ -486,12 +486,12 @@ export default function DataRoomDetailPage() {
                       defaultChecked={room.downloadEnabled}
                       className="w-4 h-4 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold"
                     />
-                    <span className="text-sm text-aifm-charcoal">Allow document downloads</span>
+                    <span className="text-sm text-aifm-charcoal">Tillåt nedladdning av dokument</span>
                   </label>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                    Expiration Date
+                    Utgångsdatum
                   </label>
                   <input 
                     type="date" 
@@ -504,16 +504,16 @@ export default function DataRoomDetailPage() {
             </div>
 
             <div className="bg-red-50 border border-red-200 rounded-2xl p-6">
-              <h3 className="text-sm font-medium text-red-800 uppercase tracking-wider mb-2">Danger Zone</h3>
+              <h3 className="text-sm font-medium text-red-800 uppercase tracking-wider mb-2">Riskzon</h3>
               <p className="text-sm text-red-700 mb-4">
-                Once you archive or delete this room, all data will be preserved but no longer accessible to members.
+                Om du arkiverar eller raderar detta rum kommer all data att bevaras men inte längre vara tillgänglig för medlemmar.
               </p>
               <div className="flex gap-3">
                 <button className="px-4 py-2 bg-white text-red-600 border border-red-200 rounded-xl hover:bg-red-50 transition-colors text-sm font-medium">
-                  Archive Room
+                  Arkivera rum
                 </button>
                 <button className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors text-sm font-medium">
-                  Delete Room
+                  Radera rum
                 </button>
               </div>
             </div>
@@ -526,7 +526,7 @@ export default function DataRoomDetailPage() {
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-lg font-medium text-aifm-charcoal uppercase tracking-wider">Invite Member</h3>
+              <h3 className="text-lg font-medium text-aifm-charcoal uppercase tracking-wider">Bjud in medlem</h3>
               <button 
                 onClick={() => setShowInviteModal(false)}
                 className="p-2 hover:bg-gray-100 rounded-lg"
@@ -537,7 +537,7 @@ export default function DataRoomDetailPage() {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                  Email Address
+                  E-postadress
                 </label>
                 <input
                   type="email"

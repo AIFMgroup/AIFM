@@ -103,7 +103,7 @@ export default function DistributionsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Total Distributed</span>
+            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Totalt utdelat</span>
             <ArrowDownRight className="w-5 h-5 text-green-500" />
           </div>
           <p className="text-2xl font-medium text-aifm-charcoal">{formatCurrency(totalDistributed, selectedFund.currency)}</p>
@@ -119,7 +119,7 @@ export default function DistributionsPage() {
 
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Distributions</span>
+            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Utdelningar</span>
             <FileText className="w-5 h-5 text-aifm-charcoal/30" />
           </div>
           <p className="text-2xl font-medium text-aifm-charcoal">{fundDists.length}</p>
@@ -127,7 +127,7 @@ export default function DistributionsPage() {
 
         <div className="bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/90 rounded-2xl p-6 text-white">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium uppercase tracking-wider text-white/70">Pending Approval</span>
+            <span className="text-xs font-medium uppercase tracking-wider text-white/70">Väntar på godkännande</span>
             <Shield className="w-5 h-5 text-white/50" />
           </div>
           <p className="text-2xl font-medium">{fundDists.filter(d => d.status === 'APPROVED').length}</p>
@@ -140,8 +140,8 @@ export default function DistributionsPage() {
           <Shield className="w-5 h-5 text-aifm-gold" />
         </div>
         <div>
-          <p className="font-medium text-aifm-charcoal">4-Eyes Principle Active</p>
-          <p className="text-sm text-aifm-charcoal/60">All distributions require approval from two authorized users before execution</p>
+          <p className="font-medium text-aifm-charcoal">4-ögonprincipen aktiv</p>
+          <p className="text-sm text-aifm-charcoal/60">Alla utdelningar kräver godkännande från två behöriga användare före verkställande</p>
         </div>
       </div>
 
@@ -149,8 +149,8 @@ export default function DistributionsPage() {
         {/* Distributions List */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Distributions</h3>
-            <span className="text-xs text-aifm-charcoal/50">{fundDists.length} total</span>
+            <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Utdelningar</h3>
+            <span className="text-xs text-aifm-charcoal/50">{fundDists.length} totalt</span>
           </div>
           <div className="divide-y divide-gray-50">
             {fundDists.length === 0 ? (
@@ -161,7 +161,7 @@ export default function DistributionsPage() {
                   onClick={() => setShowNewDistModal(true)}
                   className="btn-primary mt-4 py-2 px-4"
                 >
-                  Create First Distribution
+                  Skapa första utdelning
                 </button>
               </div>
             ) : (
@@ -194,7 +194,7 @@ export default function DistributionsPage() {
                       {getTypeLabel(dist.type)}
                     </span>
                     <span className="text-xs text-aifm-charcoal/50">
-                      {dist.items.length} investors
+                      {dist.items.length} investerare
                     </span>
                   </div>
                 </div>
@@ -221,19 +221,19 @@ export default function DistributionsPage() {
               <div className="p-6 border-b border-gray-100">
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
-                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Date</p>
+                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Datum</p>
                     <p className="font-medium text-aifm-charcoal">{formatDate(selectedDistribution.distributionDate)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Type</p>
+                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Typ</p>
                     <p className="font-medium text-aifm-charcoal">{getTypeLabel(selectedDistribution.type)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Total Amount</p>
+                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Totalt belopp</p>
                     <p className="font-medium text-green-600">{formatCurrency(selectedDistribution.totalAmount, selectedFund.currency)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Investors</p>
+                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Investerare</p>
                     <p className="font-medium text-aifm-charcoal">{selectedDistribution.items.length}</p>
                   </div>
                 </div>
@@ -241,7 +241,7 @@ export default function DistributionsPage() {
 
               {/* Investor Breakdown */}
               <div className="px-6 py-4 border-b border-gray-100">
-                <h4 className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider mb-3">Distribution Breakdown</h4>
+                <h4 className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider mb-3">Utdelningsfördelning</h4>
               </div>
               <div className="divide-y divide-gray-50 max-h-64 overflow-y-auto">
                 {selectedDistribution.items.map((item) => {
@@ -252,7 +252,7 @@ export default function DistributionsPage() {
                         <div className="w-8 h-8 bg-aifm-gold/10 rounded-lg flex items-center justify-center">
                           <Users className="w-4 h-4 text-aifm-gold" />
                         </div>
-                        <p className="font-medium text-aifm-charcoal text-sm">{investor?.name || 'Unknown'}</p>
+                        <p className="font-medium text-aifm-charcoal text-sm">{investor?.name || 'Okänd'}</p>
                       </div>
                       <p className="font-medium text-green-600 text-sm">{formatCurrency(item.amount, selectedFund.currency)}</p>
                     </div>
@@ -266,8 +266,8 @@ export default function DistributionsPage() {
                   <div className="flex items-center gap-3 mb-4">
                     <Shield className="w-5 h-5 text-amber-600" />
                     <div>
-                      <p className="font-medium text-amber-800">Awaiting Second Approval</p>
-                      <p className="text-sm text-amber-700">One approval received. Requires one more to execute.</p>
+                      <p className="font-medium text-amber-800">Väntar på andra godkännande</p>
+                      <p className="text-sm text-amber-700">Ett godkännande mottaget. Kräver ytterligare ett för att verkställa.</p>
                     </div>
                   </div>
                   <button 
@@ -275,7 +275,7 @@ export default function DistributionsPage() {
                     className="w-full btn-primary py-2 flex items-center justify-center gap-2"
                   >
                     <Check className="w-4 h-4" />
-                    Approve & Execute
+                    Godkänn & verkställ
                   </button>
                 </div>
               )}
@@ -285,8 +285,8 @@ export default function DistributionsPage() {
                   <div className="flex items-center gap-3">
                     <CheckCircle2 className="w-5 h-5 text-green-600" />
                     <div>
-                      <p className="font-medium text-green-800">Distribution Completed</p>
-                      <p className="text-sm text-green-700">All payments have been executed successfully.</p>
+                      <p className="font-medium text-green-800">Utdelning slutförd</p>
+                      <p className="text-sm text-green-700">Alla betalningar har genomförts framgångsrikt.</p>
                     </div>
                   </div>
                 </div>
@@ -301,7 +301,7 @@ export default function DistributionsPage() {
                   </button>
                   <button className="flex-1 btn-outline py-2 flex items-center justify-center gap-2">
                     <Download className="w-4 h-4" />
-                    Export
+                    Exportera
                   </button>
                 </div>
               </div>
@@ -320,7 +320,7 @@ export default function DistributionsPage() {
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-lg font-medium text-aifm-charcoal uppercase tracking-wider">New Distribution</h3>
+              <h3 className="text-lg font-medium text-aifm-charcoal uppercase tracking-wider">Ny utdelning</h3>
               <button 
                 onClick={() => setShowNewDistModal(false)}
                 className="p-2 hover:bg-gray-100 rounded-lg"
@@ -331,7 +331,7 @@ export default function DistributionsPage() {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                  Fund
+                  Fond
                 </label>
                 <p className="font-medium text-aifm-charcoal">{selectedFund.name}</p>
               </div>
@@ -354,18 +354,18 @@ export default function DistributionsPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                  Total Amount ({selectedFund.currency})
+                  Totalt belopp ({selectedFund.currency})
                 </label>
                 <input
                   type="number"
                   value={newDistAmount}
                   onChange={(e) => setNewDistAmount(e.target.value)}
                   className="input w-full"
-                  placeholder="Enter amount"
+                  placeholder="Ange belopp"
                 />
               </div>
               <div className="bg-aifm-gold/5 rounded-xl p-4">
-                <p className="text-sm font-medium text-aifm-charcoal mb-2">Distribution Preview</p>
+                <p className="text-sm font-medium text-aifm-charcoal mb-2">Utdelningsförhandsgranskning</p>
                 <div className="space-y-2 text-sm">
                   {commitments.slice(0, 3).map((commitment) => {
                     const allocation = newDistAmount ? 
@@ -380,15 +380,15 @@ export default function DistributionsPage() {
                     );
                   })}
                   {commitments.length > 3 && (
-                    <p className="text-xs text-aifm-charcoal/50">+ {commitments.length - 3} more investors</p>
+                    <p className="text-xs text-aifm-charcoal/50">+ {commitments.length - 3} fler investerare</p>
                   )}
                 </div>
               </div>
               <div className="bg-amber-50 rounded-xl p-4 flex items-start gap-3">
                 <Shield className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-amber-800">4-Eyes Required</p>
-                  <p className="text-xs text-amber-700">This distribution will require approval from another authorized user before execution.</p>
+                  <p className="text-sm font-medium text-amber-800">4-ögon krävs</p>
+                  <p className="text-xs text-amber-700">Denna utdelning kräver godkännande från en annan behörig användare före verkställande.</p>
                 </div>
               </div>
             </div>
@@ -397,17 +397,17 @@ export default function DistributionsPage() {
                 onClick={() => setShowNewDistModal(false)}
                 className="flex-1 btn-outline py-2"
               >
-                Cancel
+                Avbryt
               </button>
               <button 
                 onClick={() => {
-                  alert('Distribution created! Awaiting second approval. (Demo)');
+                  alert('Utdelning skapad! Väntar på andra godkännande. (Demo)');
                   setShowNewDistModal(false);
                   setNewDistAmount('');
                 }}
                 className="flex-1 btn-primary py-2"
               >
-                Create Distribution
+                Skapa utdelning
               </button>
             </div>
           </div>
@@ -427,24 +427,24 @@ export default function DistributionsPage() {
                   <Shield className="w-6 h-6 text-green-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-aifm-charcoal">Second Approval Required</p>
-                  <p className="text-sm text-aifm-charcoal/60">You are about to approve this distribution</p>
+                  <p className="font-medium text-aifm-charcoal">Andra godkännande krävs</p>
+                  <p className="text-sm text-aifm-charcoal/60">Du håller på att godkänna denna utdelning</p>
                 </div>
               </div>
               <div className="bg-gray-50 rounded-xl p-4 mb-6">
                 <div className="flex justify-between mb-2">
-                  <span className="text-sm text-aifm-charcoal/60">Amount</span>
+                  <span className="text-sm text-aifm-charcoal/60">Belopp</span>
                   <span className="font-medium text-aifm-charcoal">
                     {selectedDistribution && formatCurrency(selectedDistribution.totalAmount, selectedFund.currency)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-aifm-charcoal/60">Investors</span>
+                  <span className="text-sm text-aifm-charcoal/60">Investerare</span>
                   <span className="font-medium text-aifm-charcoal">{selectedDistribution?.items.length}</span>
                 </div>
               </div>
               <p className="text-sm text-aifm-charcoal/60 mb-4">
-                By approving, you confirm that you have reviewed this distribution and authorize its execution.
+                Genom att godkänna bekräftar du att du har granskat denna utdelning och godkänner dess verkställande.
               </p>
             </div>
             <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
@@ -452,17 +452,17 @@ export default function DistributionsPage() {
                 onClick={() => setShowApprovalModal(false)}
                 className="flex-1 btn-outline py-2"
               >
-                Cancel
+                Avbryt
               </button>
               <button 
                 onClick={() => {
-                  alert('Distribution approved and executed! (Demo)');
+                  alert('Utdelning godkänd och verkställd! (Demo)');
                   setShowApprovalModal(false);
                 }}
                 className="flex-1 btn-primary py-2 flex items-center justify-center gap-2"
               >
                 <Check className="w-4 h-4" />
-                Approve
+                Godkänn
               </button>
             </div>
           </div>

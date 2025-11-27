@@ -112,7 +112,7 @@ export default function InvestorsPage() {
             </button>
             <button className="btn-primary py-2 px-4 flex items-center gap-2">
               <Plus className="w-4 h-4" />
-              Add Investor
+              Lägg till investerare
             </button>
           </div>
         </div>
@@ -144,7 +144,7 @@ export default function InvestorsPage() {
           }`}
         >
           <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">KYC Approved</span>
+            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">KYC godkänd</span>
             <CheckCircle2 className="w-5 h-5 text-green-500" />
           </div>
           <p className="text-3xl font-medium text-green-600">{stats.approved}</p>
@@ -238,7 +238,7 @@ export default function InvestorsPage() {
                   <div className="flex items-center gap-6">
                     <div className="text-right">
                       <p className="font-medium text-aifm-charcoal">{formatCurrency(totalCommitted, 'SEK')}</p>
-                      <p className="text-sm text-aifm-charcoal/60">{commitments.length} commitment{commitments.length !== 1 ? 's' : ''}</p>
+                      <p className="text-sm text-aifm-charcoal/60">{commitments.length} åtagande{commitments.length !== 1 ? 'n' : ''}</p>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -263,7 +263,7 @@ export default function InvestorsPage() {
                     <div className="grid md:grid-cols-2 gap-8">
                       {/* Contact Info */}
                       <div>
-                        <h4 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider mb-4">Contact Information</h4>
+                        <h4 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider mb-4">Kontaktinformation</h4>
                         <div className="space-y-3">
                           <div className="flex items-center gap-3">
                             <Mail className="w-4 h-4 text-aifm-charcoal/40" />
@@ -284,16 +284,16 @@ export default function InvestorsPage() {
 
                       {/* Compliance Status */}
                       <div>
-                        <h4 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider mb-4">Compliance Status</h4>
+                        <h4 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider mb-4">Efterlevnadsstatus</h4>
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-aifm-charcoal/60">KYC Status</span>
+                            <span className="text-sm text-aifm-charcoal/60">KYC-status</span>
                             <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${getKYCStatusColor(investor.kycStatus)}`}>
                               {investor.kycStatus.replace('_', ' ')}
                             </span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-aifm-charcoal/60">AML Screening</span>
+                            <span className="text-sm text-aifm-charcoal/60">AML-screening</span>
                             <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                               investor.amlStatus === 'CLEAR' ? 'bg-green-100 text-green-700' :
                               investor.amlStatus === 'FLAGGED' ? 'bg-red-100 text-red-700' :
@@ -303,17 +303,17 @@ export default function InvestorsPage() {
                             </span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-aifm-charcoal/60">Risk Rating</span>
+                            <span className="text-sm text-aifm-charcoal/60">Riskbetyg</span>
                             <span className={`px-2 py-1 text-xs font-medium rounded-full ${getRiskColor(investor.riskRating)}`}>
                               {investor.riskRating}
                             </span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-aifm-charcoal/60">PEP Status</span>
+                            <span className="text-sm text-aifm-charcoal/60">PEP-status</span>
                             <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                               investor.pepStatus ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'
                             }`}>
-                              {investor.pepStatus ? 'YES' : 'NO'}
+                              {investor.pepStatus ? 'JA' : 'NEJ'}
                             </span>
                           </div>
                         </div>
@@ -323,17 +323,17 @@ export default function InvestorsPage() {
                     {/* Commitments */}
                     {commitments.length > 0 && (
                       <div className="mt-6">
-                        <h4 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider mb-4">Fund Commitments</h4>
+                        <h4 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider mb-4">Fondåtaganden</h4>
                         <div className="space-y-3">
                           {commitments.map((commitment) => (
                             <div key={commitment.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                               <div>
                                 <p className="font-medium text-aifm-charcoal">{commitment.fund?.name}</p>
-                                <p className="text-sm text-aifm-charcoal/60">Signed: {formatDate(commitment.signedAt)}</p>
+                                <p className="text-sm text-aifm-charcoal/60">Signerat: {formatDate(commitment.signedAt)}</p>
                               </div>
                               <div className="text-right">
                                 <p className="font-medium text-aifm-charcoal">{formatCurrency(commitment.committedAmount, commitment.fund?.currency || 'SEK')}</p>
-                                <p className="text-sm text-aifm-charcoal/60">{formatPercentage(commitment.ownershipPercentage)} ownership</p>
+                                <p className="text-sm text-aifm-charcoal/60">{formatPercentage(commitment.ownershipPercentage)} ägarandel</p>
                               </div>
                             </div>
                           ))}
@@ -345,15 +345,15 @@ export default function InvestorsPage() {
                     <div className="mt-6 flex gap-3">
                       <button className="btn-outline py-2 px-4 text-sm flex items-center gap-2">
                         <Eye className="w-4 h-4" />
-                        View Documents
+                        Visa dokument
                       </button>
                       <button className="btn-outline py-2 px-4 text-sm flex items-center gap-2">
                         <FileText className="w-4 h-4" />
-                        Generate Statement
+                        Generera utdrag
                       </button>
                       <button className="btn-outline py-2 px-4 text-sm flex items-center gap-2">
                         <Mail className="w-4 h-4" />
-                        Send Message
+                        Skicka meddelande
                       </button>
                     </div>
                   </div>
@@ -366,7 +366,7 @@ export default function InvestorsPage() {
         {filteredInvestors.length === 0 && (
           <div className="text-center py-12">
             <Users className="w-12 h-12 text-aifm-charcoal/20 mx-auto mb-4" />
-            <p className="text-aifm-charcoal/60">No investors found matching your criteria</p>
+            <p className="text-aifm-charcoal/60">Inga investerare hittades som matchar dina kriterier</p>
           </div>
         )}
       </div>

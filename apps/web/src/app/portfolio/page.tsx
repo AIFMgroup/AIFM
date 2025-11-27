@@ -91,7 +91,7 @@ export default function PortfolioPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/90 rounded-2xl p-6 text-white">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-medium uppercase tracking-wider text-white/60">Portfolio Value</span>
+            <span className="text-xs font-medium uppercase tracking-wider text-white/60">Portföljvärde</span>
             <PieChart className="w-5 h-5 text-white/40" />
           </div>
           <p className="text-3xl font-medium">{formatCurrency(totalValue, selectedFund.currency)}</p>
@@ -116,18 +116,18 @@ export default function PortfolioPage() {
             <DollarSign className="w-5 h-5 text-aifm-charcoal/30" />
           </div>
           <p className="text-2xl font-medium text-aifm-charcoal">{formatCurrency(totalInvested, selectedFund.currency)}</p>
-          <p className="text-sm text-aifm-charcoal/60 mt-2">Across {portfolio.length} investments</p>
+          <p className="text-sm text-aifm-charcoal/60 mt-2">Fördelat på {portfolio.length} investeringar</p>
         </div>
 
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Unrealized Gain</span>
+            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Orealiserad vinst</span>
             <TrendingUp className="w-5 h-5 text-green-500" />
           </div>
           <p className={`text-2xl font-medium ${unrealizedGain >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {unrealizedGain >= 0 ? '+' : ''}{formatCurrency(unrealizedGain, selectedFund.currency)}
           </p>
-          <p className="text-sm text-aifm-charcoal/60 mt-2">{formatPercentage(unrealizedGainPercent)} return</p>
+          <p className="text-sm text-aifm-charcoal/60 mt-2">{formatPercentage(unrealizedGainPercent)} avkastning</p>
         </div>
 
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
@@ -136,13 +136,13 @@ export default function PortfolioPage() {
             <Building2 className="w-5 h-5 text-aifm-charcoal/30" />
           </div>
           <p className="text-2xl font-medium text-aifm-charcoal">{activeCompanies}</p>
-          <p className="text-sm text-aifm-charcoal/60 mt-2">of {portfolio.length} total</p>
+          <p className="text-sm text-aifm-charcoal/60 mt-2">av {portfolio.length} totalt</p>
         </div>
       </div>
 
       {/* Sector Breakdown */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-8">
-        <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider mb-6">Sector Allocation</h3>
+        <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider mb-6">Sektorfördelning</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {Object.entries(bySector).map(([sector, value]) => {
             const percentage = (value / totalValue) * 100;
@@ -234,15 +234,15 @@ export default function PortfolioPage() {
 
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-aifm-charcoal/60">Current Value</span>
+                      <span className="text-sm text-aifm-charcoal/60">Nuvarande värde</span>
                       <span className="font-medium text-aifm-charcoal">{formatCurrency(company.currentValuation, selectedFund.currency)}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-aifm-charcoal/60">Invested</span>
+                      <span className="text-sm text-aifm-charcoal/60">Investerat</span>
                       <span className="text-sm text-aifm-charcoal">{formatCurrency(company.initialInvestment, selectedFund.currency)}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-aifm-charcoal/60">Return</span>
+                      <span className="text-sm text-aifm-charcoal/60">Avkastning</span>
                       <span className={`font-medium ${gainPercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {gainPercent >= 0 ? '+' : ''}{formatPercentage(gainPercent)}
                       </span>
@@ -255,7 +255,7 @@ export default function PortfolioPage() {
                         <Globe className="w-3 h-3" />
                         {company.country}
                       </span>
-                      <span>{formatPercentage(company.ownership)} ownership</span>
+                      <span>{formatPercentage(company.ownership)} ägarandel</span>
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
                         {formatDate(company.investmentDate)}
@@ -268,7 +268,7 @@ export default function PortfolioPage() {
                   <div className="px-6 py-4 bg-gray-50 rounded-b-2xl border-t border-gray-100">
                     <div className="grid grid-cols-4 gap-4 text-center">
                       <div>
-                        <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider">Revenue</p>
+                        <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider">Omsättning</p>
                         <p className="font-medium text-aifm-charcoal text-sm">{company.metrics.revenue ? `${(company.metrics.revenue / 1000000).toFixed(1)}M` : '-'}</p>
                       </div>
                       <div>
@@ -278,11 +278,11 @@ export default function PortfolioPage() {
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider">Team</p>
+                        <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider">Anställda</p>
                         <p className="font-medium text-aifm-charcoal text-sm">{company.metrics.employees || '-'}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider">Growth</p>
+                        <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider">Tillväxt</p>
                         <p className="font-medium text-green-600 text-sm">
                           {company.metrics.growth ? `+${company.metrics.growth}%` : '-'}
                         </p>
@@ -301,12 +301,12 @@ export default function PortfolioPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
-                  <th className="text-left px-6 py-4 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Company</th>
-                  <th className="text-left px-6 py-4 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Sector</th>
-                  <th className="text-right px-6 py-4 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Invested</th>
-                  <th className="text-right px-6 py-4 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Current Value</th>
-                  <th className="text-right px-6 py-4 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Return</th>
-                  <th className="text-center px-6 py-4 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Ownership</th>
+                  <th className="text-left px-6 py-4 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Bolag</th>
+                  <th className="text-left px-6 py-4 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Sektor</th>
+                  <th className="text-right px-6 py-4 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Investerat</th>
+                  <th className="text-right px-6 py-4 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Nuvarande värde</th>
+                  <th className="text-right px-6 py-4 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Avkastning</th>
+                  <th className="text-center px-6 py-4 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Ägarandel</th>
                   <th className="text-center px-6 py-4 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-4"></th>
                 </tr>
