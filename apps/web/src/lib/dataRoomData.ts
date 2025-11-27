@@ -98,8 +98,8 @@ export interface DataRoomActivity {
 export const mockDataRooms: DataRoom[] = [
   {
     id: 'dr-1',
-    name: 'TechStart Acquisition',
-    description: 'Due diligence documents for TechStart AB acquisition',
+    name: 'TechStart Förvärv',
+    description: 'Due diligence-dokument för förvärv av TechStart AB',
     fundId: 'fund-1',
     fundName: 'Nordic Growth Fund I',
     type: 'DEAL_ROOM',
@@ -115,8 +115,8 @@ export const mockDataRooms: DataRoom[] = [
   },
   {
     id: 'dr-2',
-    name: 'Q4 2024 LP Reports',
-    description: 'Quarterly reports and capital statements for LPs',
+    name: 'Q4 2024 LP-rapporter',
+    description: 'Kvartalsrapporter och kapitalräkningar för LPs',
     fundId: 'fund-1',
     fundName: 'Nordic Growth Fund I',
     type: 'INVESTOR_PORTAL',
@@ -131,8 +131,8 @@ export const mockDataRooms: DataRoom[] = [
   },
   {
     id: 'dr-3',
-    name: 'Board Documents 2024',
-    description: 'Confidential board meeting materials',
+    name: 'Styrelsedokument 2024',
+    description: 'Konfidentiella styrelsemötesmaterial',
     fundId: 'fund-1',
     fundName: 'Nordic Growth Fund I',
     type: 'BOARD',
@@ -147,8 +147,8 @@ export const mockDataRooms: DataRoom[] = [
   },
   {
     id: 'dr-4',
-    name: 'New LP Due Diligence',
-    description: 'Materials for prospective investor Oslo Pensjonskasse',
+    name: 'Ny LP Due Diligence',
+    description: 'Material för prospektiv investerare Oslo Pensjonskasse',
     fundId: 'fund-2',
     fundName: 'Scandinavian Tech Fund II',
     type: 'DUE_DILIGENCE',
@@ -164,8 +164,8 @@ export const mockDataRooms: DataRoom[] = [
   },
   {
     id: 'dr-5',
-    name: 'Compliance Archive 2023',
-    description: 'KYC/AML documentation and regulatory filings',
+    name: 'Compliance-arkiv 2023',
+    description: 'KYC/AML-dokumentation och regulatoriska rapporter',
     fundId: 'fund-1',
     fundName: 'Nordic Growth Fund I',
     type: 'COMPLIANCE',
@@ -275,14 +275,14 @@ export const mockDataRoomMembers: DataRoomMember[] = [
 ];
 
 export const mockDataRoomFolders: DataRoomFolder[] = [
-  { id: 'drf-1', roomId: 'dr-1', name: 'Financial Statements', createdAt: new Date('2024-10-15'), documentsCount: 8 },
-  { id: 'drf-2', roomId: 'dr-1', name: 'Legal Documents', createdAt: new Date('2024-10-15'), documentsCount: 6 },
-  { id: 'drf-3', roomId: 'dr-1', name: 'Technical Due Diligence', createdAt: new Date('2024-10-16'), documentsCount: 5 },
-  { id: 'drf-4', roomId: 'dr-1', name: 'Management Presentations', createdAt: new Date('2024-10-18'), documentsCount: 3 },
-  { id: 'drf-5', roomId: 'dr-1', name: 'Cap Table & Ownership', createdAt: new Date('2024-10-20'), documentsCount: 2 },
-  { id: 'drf-6', roomId: 'dr-2', name: 'Q4 Reports', createdAt: new Date('2024-10-01'), documentsCount: 5 },
-  { id: 'drf-7', roomId: 'dr-2', name: 'Capital Statements', createdAt: new Date('2024-10-01'), documentsCount: 5 },
-  { id: 'drf-8', roomId: 'dr-2', name: 'Valuations', createdAt: new Date('2024-10-01'), documentsCount: 5 },
+  { id: 'drf-1', roomId: 'dr-1', name: 'Finansiella rapporter', createdAt: new Date('2024-10-15'), documentsCount: 8 },
+  { id: 'drf-2', roomId: 'dr-1', name: 'Juridiska dokument', createdAt: new Date('2024-10-15'), documentsCount: 6 },
+  { id: 'drf-3', roomId: 'dr-1', name: 'Teknisk Due Diligence', createdAt: new Date('2024-10-16'), documentsCount: 5 },
+  { id: 'drf-4', roomId: 'dr-1', name: 'Ledningspresentationer', createdAt: new Date('2024-10-18'), documentsCount: 3 },
+  { id: 'drf-5', roomId: 'dr-1', name: 'Ägarstruktur', createdAt: new Date('2024-10-20'), documentsCount: 2 },
+  { id: 'drf-6', roomId: 'dr-2', name: 'Q4-rapporter', createdAt: new Date('2024-10-01'), documentsCount: 5 },
+  { id: 'drf-7', roomId: 'dr-2', name: 'Kapitalräkningar', createdAt: new Date('2024-10-01'), documentsCount: 5 },
+  { id: 'drf-8', roomId: 'dr-2', name: 'Värderingar', createdAt: new Date('2024-10-01'), documentsCount: 5 },
 ];
 
 export const mockDataRoomDocuments: DataRoomDocument[] = [
@@ -290,7 +290,7 @@ export const mockDataRoomDocuments: DataRoomDocument[] = [
   {
     id: 'drd-1',
     roomId: 'dr-1',
-    name: 'Audited Financial Statements 2023',
+    name: 'Reviderade finansiella rapporter 2023',
     fileName: 'TechStart_Financials_2023_Audited.pdf',
     fileType: 'application/pdf',
     fileSize: 4500000,
@@ -308,7 +308,7 @@ export const mockDataRoomDocuments: DataRoomDocument[] = [
   {
     id: 'drd-2',
     roomId: 'dr-1',
-    name: 'Management Accounts Q1-Q3 2024',
+    name: 'Månadsrapporter Q1-Q3 2024',
     fileName: 'TechStart_MgmtAccounts_2024.xlsx',
     fileType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     fileSize: 850000,
@@ -326,7 +326,7 @@ export const mockDataRoomDocuments: DataRoomDocument[] = [
   {
     id: 'drd-3',
     roomId: 'dr-1',
-    name: 'Share Purchase Agreement - Draft',
+    name: 'Aktieöverlåtelseavtal - Utkast',
     fileName: 'SPA_Draft_v3.pdf',
     fileType: 'application/pdf',
     fileSize: 1200000,
@@ -344,7 +344,7 @@ export const mockDataRoomDocuments: DataRoomDocument[] = [
   {
     id: 'drd-4',
     roomId: 'dr-1',
-    name: 'Technical Architecture Overview',
+    name: 'Teknisk arkitekturöversikt',
     fileName: 'TechStart_Architecture_2024.pdf',
     fileType: 'application/pdf',
     fileSize: 3200000,
@@ -362,7 +362,7 @@ export const mockDataRoomDocuments: DataRoomDocument[] = [
   {
     id: 'drd-5',
     roomId: 'dr-1',
-    name: 'Cap Table - November 2024',
+    name: 'Ägarstruktur - November 2024',
     fileName: 'TechStart_CapTable_Nov2024.xlsx',
     fileType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     fileSize: 125000,
@@ -381,7 +381,7 @@ export const mockDataRoomDocuments: DataRoomDocument[] = [
   {
     id: 'drd-6',
     roomId: 'dr-2',
-    name: 'Quarterly Report Q3 2024',
+    name: 'Kvartalsrapport Q3 2024',
     fileName: 'NGF1_Q3_2024_Report.pdf',
     fileType: 'application/pdf',
     fileSize: 2800000,
@@ -407,7 +407,7 @@ export const mockDataRoomActivities: DataRoomActivity[] = [
     action: 'VIEW',
     targetType: 'DOCUMENT',
     targetId: 'drd-2',
-    targetName: 'Management Accounts Q1-Q3 2024',
+    targetName: 'Månadsrapporter Q1-Q3 2024',
     timestamp: new Date('2024-11-27T10:30:00'),
   },
   {
@@ -418,7 +418,7 @@ export const mockDataRoomActivities: DataRoomActivity[] = [
     action: 'DOWNLOAD',
     targetType: 'DOCUMENT',
     targetId: 'drd-5',
-    targetName: 'Cap Table - November 2024',
+    targetName: 'Ägarstruktur - November 2024',
     timestamp: new Date('2024-11-26T15:45:00'),
   },
   {
@@ -429,7 +429,7 @@ export const mockDataRoomActivities: DataRoomActivity[] = [
     action: 'VIEW',
     targetType: 'DOCUMENT',
     targetId: 'drd-1',
-    targetName: 'Audited Financial Statements 2023',
+    targetName: 'Reviderade finansiella rapporter 2023',
     timestamp: new Date('2024-11-26T14:20:00'),
   },
   {
@@ -440,7 +440,7 @@ export const mockDataRoomActivities: DataRoomActivity[] = [
     action: 'UPLOAD',
     targetType: 'DOCUMENT',
     targetId: 'drd-3',
-    targetName: 'Share Purchase Agreement - Draft',
+    targetName: 'Aktieöverlåtelseavtal - Utkast',
     timestamp: new Date('2024-11-25T09:15:00'),
   },
   {
@@ -451,7 +451,7 @@ export const mockDataRoomActivities: DataRoomActivity[] = [
     action: 'ACCEPT_INVITE',
     targetType: 'ROOM',
     targetId: 'dr-1',
-    targetName: 'TechStart Acquisition',
+    targetName: 'TechStart Förvärv',
     timestamp: new Date('2024-10-21T11:00:00'),
   },
 ];

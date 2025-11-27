@@ -383,7 +383,7 @@ export const mockCapitalCalls: CapitalCall[] = [
     totalAmount: 42500000,
     callDate: new Date('2024-11-01'),
     dueDate: new Date('2024-11-30'),
-    purpose: 'New investment in TechStart AB',
+    purpose: 'Ny investering i TechStart AB',
     status: 'SENT',
     items: [
       { id: 'cci-1', capitalCallId: 'cc-1', investorId: 'inv-1', amount: 10000000, paidAmount: 10000000, status: 'PAID', paidAt: new Date('2024-11-15') },
@@ -400,7 +400,7 @@ export const mockCapitalCalls: CapitalCall[] = [
     totalAmount: 14500000,
     callDate: new Date('2024-10-15'),
     dueDate: new Date('2024-11-15'),
-    purpose: 'Follow-on investment in DataFlow',
+    purpose: 'Uppföljningsinvestering i DataFlow',
     status: 'FULLY_PAID',
     items: [
       { id: 'cci-6', capitalCallId: 'cc-2', investorId: 'inv-1', amount: 5000000, paidAmount: 5000000, status: 'PAID', paidAt: new Date('2024-11-01') },
@@ -446,7 +446,7 @@ export const mockPortfolioCompanies: PortfolioCompany[] = [
   {
     id: 'pc-1',
     name: 'TechStart AB',
-    sector: 'Enterprise Software',
+    sector: 'Företagsmjukvara',
     country: 'Sweden',
     investmentDate: new Date('2022-06-15'),
     initialInvestment: 25000000,
@@ -459,7 +459,7 @@ export const mockPortfolioCompanies: PortfolioCompany[] = [
   {
     id: 'pc-2',
     name: 'DataFlow Nordic',
-    sector: 'Data Analytics',
+    sector: 'Dataanalys',
     country: 'Finland',
     investmentDate: new Date('2022-09-01'),
     initialInvestment: 35000000,
@@ -485,7 +485,7 @@ export const mockPortfolioCompanies: PortfolioCompany[] = [
   {
     id: 'pc-4',
     name: 'HealthTech Norge',
-    sector: 'HealthTech',
+    sector: 'Hälsotech',
     country: 'Norway',
     investmentDate: new Date('2023-04-10'),
     initialInvestment: 30000000,
@@ -498,7 +498,7 @@ export const mockPortfolioCompanies: PortfolioCompany[] = [
   {
     id: 'pc-5',
     name: 'LogiSmart',
-    sector: 'Logistics',
+    sector: 'Logistik',
     country: 'Sweden',
     investmentDate: new Date('2023-08-01'),
     initialInvestment: 20000000,
@@ -524,7 +524,7 @@ export const mockPortfolioCompanies: PortfolioCompany[] = [
   {
     id: 'pc-7',
     name: 'CyberShield',
-    sector: 'Cybersecurity',
+    sector: 'Cybersäkerhet',
     country: 'Sweden',
     investmentDate: new Date('2024-02-01'),
     initialInvestment: 22000000,
@@ -537,7 +537,7 @@ export const mockPortfolioCompanies: PortfolioCompany[] = [
   {
     id: 'pc-8',
     name: 'Nordic Properties I',
-    sector: 'Commercial Real Estate',
+    sector: 'Kommersiella fastigheter',
     country: 'Sweden',
     investmentDate: new Date('2021-04-01'),
     initialInvestment: 50000000,
@@ -550,7 +550,7 @@ export const mockPortfolioCompanies: PortfolioCompany[] = [
   {
     id: 'pc-9',
     name: 'Baltic Logistics Hub',
-    sector: 'Industrial Real Estate',
+    sector: 'Industrifastigheter',
     country: 'Latvia',
     investmentDate: new Date('2021-08-15'),
     initialInvestment: 45000000,
@@ -563,7 +563,7 @@ export const mockPortfolioCompanies: PortfolioCompany[] = [
   {
     id: 'pc-10',
     name: 'Helsinki Office Park',
-    sector: 'Office Real Estate',
+    sector: 'Kontorsfastigheter',
     country: 'Finland',
     investmentDate: new Date('2022-01-10'),
     initialInvestment: 40000000,
@@ -632,18 +632,18 @@ export const mockBankAccounts: BankAccount[] = [
 
 export const mockBankTransactions: BankTransaction[] = [
   // Recent transactions for Fund 1
-  { id: 'bt-1', accountId: 'ba-1', date: new Date('2024-11-25'), amount: 10000000, currency: 'SEK', type: 'CREDIT', category: 'CAPITAL_CALL', counterparty: 'Första AP-fonden', reference: 'CC5-INV1', description: 'Capital Call #5 payment', matched: true, matchedTo: 'cci-1' },
-  { id: 'bt-2', accountId: 'ba-1', date: new Date('2024-11-24'), amount: 7500000, currency: 'SEK', type: 'CREDIT', category: 'CAPITAL_CALL', counterparty: 'Nordea Life & Pension', reference: 'CC5-INV2', description: 'Capital Call #5 payment', matched: true, matchedTo: 'cci-2' },
-  { id: 'bt-3', accountId: 'ba-1', date: new Date('2024-11-23'), amount: 12500000, currency: 'SEK', type: 'CREDIT', category: 'CAPITAL_CALL', counterparty: 'Wallenberg Foundations', reference: 'CC5-INV3', description: 'Capital Call #5 payment', matched: true, matchedTo: 'cci-3' },
-  { id: 'bt-4', accountId: 'ba-1', date: new Date('2024-11-22'), amount: 2500000, currency: 'SEK', type: 'CREDIT', category: 'CAPITAL_CALL', counterparty: 'Erik Lindström', reference: 'CC5-PARTIAL', description: 'Capital Call #5 partial payment', matched: true, matchedTo: 'cci-5' },
+  { id: 'bt-1', accountId: 'ba-1', date: new Date('2024-11-25'), amount: 10000000, currency: 'SEK', type: 'CREDIT', category: 'CAPITAL_CALL', counterparty: 'Första AP-fonden', reference: 'CC5-INV1', description: 'Kapitalanrop #5 inbetalning', matched: true, matchedTo: 'cci-1' },
+  { id: 'bt-2', accountId: 'ba-1', date: new Date('2024-11-24'), amount: 7500000, currency: 'SEK', type: 'CREDIT', category: 'CAPITAL_CALL', counterparty: 'Nordea Life & Pension', reference: 'CC5-INV2', description: 'Kapitalanrop #5 inbetalning', matched: true, matchedTo: 'cci-2' },
+  { id: 'bt-3', accountId: 'ba-1', date: new Date('2024-11-23'), amount: 12500000, currency: 'SEK', type: 'CREDIT', category: 'CAPITAL_CALL', counterparty: 'Wallenberg Foundations', reference: 'CC5-INV3', description: 'Kapitalanrop #5 inbetalning', matched: true, matchedTo: 'cci-3' },
+  { id: 'bt-4', accountId: 'ba-1', date: new Date('2024-11-22'), amount: 2500000, currency: 'SEK', type: 'CREDIT', category: 'CAPITAL_CALL', counterparty: 'Erik Lindström', reference: 'CC5-PARTIAL', description: 'Kapitalanrop #5 delbetalning', matched: true, matchedTo: 'cci-5' },
   { id: 'bt-5', accountId: 'ba-1', date: new Date('2024-11-20'), amount: 850000, currency: 'SEK', type: 'DEBIT', category: 'FEE', counterparty: 'Fund Admin AB', reference: 'MGMT-Q4-2024', description: 'Q4 2024 Management fee', matched: true },
-  { id: 'bt-6', accountId: 'ba-1', date: new Date('2024-11-18'), amount: 125000, currency: 'SEK', type: 'DEBIT', category: 'EXPENSE', counterparty: 'Advokatfirman Lindahl', reference: 'INV-2024-1234', description: 'Legal services - TechStart transaction', matched: true },
-  { id: 'bt-7', accountId: 'ba-1', date: new Date('2024-11-15'), amount: 45000, currency: 'SEK', type: 'DEBIT', category: 'EXPENSE', counterparty: 'KPMG', reference: 'AUDIT-2024', description: 'Quarterly audit review', matched: true },
-  { id: 'bt-8', accountId: 'ba-1', date: new Date('2024-11-10'), amount: 25000000, currency: 'SEK', type: 'DEBIT', category: 'INVESTMENT', counterparty: 'TechStart AB', reference: 'INV-TS-002', description: 'Follow-on investment', matched: true },
+  { id: 'bt-6', accountId: 'ba-1', date: new Date('2024-11-18'), amount: 125000, currency: 'SEK', type: 'DEBIT', category: 'EXPENSE', counterparty: 'Advokatfirman Lindahl', reference: 'INV-2024-1234', description: 'Juridiska tjänster - TechStart transaktion', matched: true },
+  { id: 'bt-7', accountId: 'ba-1', date: new Date('2024-11-15'), amount: 45000, currency: 'SEK', type: 'DEBIT', category: 'EXPENSE', counterparty: 'KPMG', reference: 'AUDIT-2024', description: 'Kvartalsvis revisionsgranskning', matched: true },
+  { id: 'bt-8', accountId: 'ba-1', date: new Date('2024-11-10'), amount: 25000000, currency: 'SEK', type: 'DEBIT', category: 'INVESTMENT', counterparty: 'TechStart AB', reference: 'INV-TS-002', description: 'Uppföljningsinvestering', matched: true },
   // Unmatched transaction
-  { id: 'bt-9', accountId: 'ba-1', date: new Date('2024-11-08'), amount: 15000, currency: 'SEK', type: 'CREDIT', category: 'OTHER', counterparty: 'Unknown Sender', reference: 'REF12345', description: 'Incoming payment', matched: false },
+  { id: 'bt-9', accountId: 'ba-1', date: new Date('2024-11-08'), amount: 15000, currency: 'SEK', type: 'CREDIT', category: 'OTHER', counterparty: 'Okänd avsändare', reference: 'REF12345', description: 'Inkommande betalning', matched: false },
   // Fund 2 transactions
-  { id: 'bt-10', accountId: 'ba-3', date: new Date('2024-11-20'), amount: 5000000, currency: 'EUR', type: 'CREDIT', category: 'CAPITAL_CALL', counterparty: 'Första AP-fonden', reference: 'CC2-F2-INV1', description: 'Capital Call #2 payment', matched: true },
+  { id: 'bt-10', accountId: 'ba-3', date: new Date('2024-11-20'), amount: 5000000, currency: 'EUR', type: 'CREDIT', category: 'CAPITAL_CALL', counterparty: 'Första AP-fonden', reference: 'CC2-F2-INV1', description: 'Kapitalanrop #2 inbetalning', matched: true },
   { id: 'bt-11', accountId: 'ba-3', date: new Date('2024-11-15'), amount: 200000, currency: 'EUR', type: 'DEBIT', category: 'FEE', counterparty: 'Fund Admin AB', reference: 'MGMT-F2-Q4', description: 'Q4 2024 Management fee', matched: true },
 ];
 
@@ -659,7 +659,7 @@ export const mockInvoices: Invoice[] = [
     dueDate: new Date('2024-12-20'),
     status: 'PENDING',
     category: 'LEGAL',
-    description: 'Legal services - Q4 2024 fund compliance review',
+    description: 'Juridiska tjänster - Q4 2024 fondcompliance granskning',
   },
   {
     id: 'inv-2',
@@ -672,7 +672,7 @@ export const mockInvoices: Invoice[] = [
     dueDate: new Date('2024-12-15'),
     status: 'APPROVED',
     category: 'AUDIT',
-    description: 'Annual audit services 2024',
+    description: 'Årsrevision 2024',
     approvedBy: 'Anna Svensson',
   },
   {
@@ -686,7 +686,7 @@ export const mockInvoices: Invoice[] = [
     dueDate: new Date('2024-11-30'),
     status: 'PAID',
     category: 'ADMIN',
-    description: 'Q4 2024 Fund administration services',
+    description: 'Q4 2024 Fondadministration',
     approvedBy: 'Carl Johansson',
     paidAt: new Date('2024-11-20'),
   },
@@ -701,7 +701,7 @@ export const mockInvoices: Invoice[] = [
     dueDate: new Date('2024-12-18'),
     status: 'PENDING',
     category: 'AUDIT',
-    description: 'Tax compliance review',
+    description: 'Skattegranskning',
   },
   {
     id: 'inv-5',
@@ -714,7 +714,7 @@ export const mockInvoices: Invoice[] = [
     dueDate: new Date('2024-12-10'),
     status: 'APPROVED',
     category: 'OTHER',
-    description: 'Property valuation services Q4 2024',
+    description: 'Fastighetsvärdering Q4 2024',
     approvedBy: 'Eva Larsson',
   },
 ];
@@ -729,9 +729,9 @@ export const mockLedgerEntries: LedgerEntry[] = [
 ];
 
 export const mockDocuments: Document[] = [
-  { id: 'doc-1', fundId: 'fund-1', title: 'Limited Partnership Agreement', fileName: 'NGF1_LPA_2022.pdf', fileType: 'application/pdf', fileSize: 2500000, category: 'LPA', uploadedAt: new Date('2022-03-15'), uploadedBy: 'Admin', accessLevel: 'INVESTORS' },
-  { id: 'doc-2', fundId: 'fund-1', title: 'Q3 2024 Quarterly Report', fileName: 'NGF1_Q3_2024_Report.pdf', fileType: 'application/pdf', fileSize: 1800000, category: 'REPORT', uploadedAt: new Date('2024-10-15'), uploadedBy: 'Admin', accessLevel: 'INVESTORS' },
-  { id: 'doc-3', fundId: 'fund-1', title: 'Q2 2024 Quarterly Report', fileName: 'NGF1_Q2_2024_Report.pdf', fileType: 'application/pdf', fileSize: 1650000, category: 'REPORT', uploadedAt: new Date('2024-07-15'), uploadedBy: 'Admin', accessLevel: 'INVESTORS' },
+  { id: 'doc-1', fundId: 'fund-1', title: 'Kommanditbolagsavtal', fileName: 'NGF1_LPA_2022.pdf', fileType: 'application/pdf', fileSize: 2500000, category: 'LPA', uploadedAt: new Date('2022-03-15'), uploadedBy: 'Admin', accessLevel: 'INVESTORS' },
+  { id: 'doc-2', fundId: 'fund-1', title: 'Q3 2024 Kvartalsrapport', fileName: 'NGF1_Q3_2024_Report.pdf', fileType: 'application/pdf', fileSize: 1800000, category: 'REPORT', uploadedAt: new Date('2024-10-15'), uploadedBy: 'Admin', accessLevel: 'INVESTORS' },
+  { id: 'doc-3', fundId: 'fund-1', title: 'Q2 2024 Kvartalsrapport', fileName: 'NGF1_Q2_2024_Report.pdf', fileType: 'application/pdf', fileSize: 1650000, category: 'REPORT', uploadedAt: new Date('2024-07-15'), uploadedBy: 'Admin', accessLevel: 'INVESTORS' },
   { id: 'doc-4', fundId: 'fund-1', investorId: 'inv-1', title: 'Capital Account Statement Q3 2024', fileName: 'AP1_Statement_Q3_2024.pdf', fileType: 'application/pdf', fileSize: 450000, category: 'STATEMENT', uploadedAt: new Date('2024-10-20'), uploadedBy: 'System', accessLevel: 'INVESTORS' },
   { id: 'doc-5', investorId: 'inv-1', title: 'KYC Documentation', fileName: 'AP1_KYC_2024.pdf', fileType: 'application/pdf', fileSize: 3200000, category: 'KYC', uploadedAt: new Date('2024-01-15'), uploadedBy: 'Compliance', accessLevel: 'INTERNAL' },
   { id: 'doc-6', fundId: 'fund-2', title: 'Scandinavian Tech Fund II - PPM', fileName: 'STF2_PPM_2023.pdf', fileType: 'application/pdf', fileSize: 4500000, category: 'LPA', uploadedAt: new Date('2023-06-01'), uploadedBy: 'Admin', accessLevel: 'INVESTORS' },

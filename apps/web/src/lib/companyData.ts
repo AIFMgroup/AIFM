@@ -122,14 +122,14 @@ export const companyDashboards: Record<string, CompanyDashboard> = {
       { name: 'FinTech', value: 25500000, percentage: 20, color: '#cbd5e1' },
     ],
     transactions: [
-      { id: 't1', type: 'INVESTMENT', description: 'Seed Round NewVenture', amount: 1255549, currency: 'EUR', date: new Date('2024-11-15'), status: 'COMPLETED' },
+      { id: 't1', type: 'INVESTMENT', description: 'Såddfinansiering NyVenture', amount: 1255549, currency: 'EUR', date: new Date('2024-11-15'), status: 'COMPLETED' },
       { id: 't2', type: 'EXPENSE', description: 'Tech Summit 2025', amount: 150000, currency: 'SEK', date: new Date('2024-11-20'), status: 'PENDING' },
-      { id: 't3', type: 'DISTRIBUTION', description: 'Q3 Distribution', amount: 2500000, currency: 'SEK', date: new Date('2024-10-30'), status: 'COMPLETED' },
+      { id: 't3', type: 'DISTRIBUTION', description: 'Q3 Utdelning', amount: 2500000, currency: 'SEK', date: new Date('2024-10-30'), status: 'COMPLETED' },
     ],
     tasks: [
-      { id: 'task1', title: 'Q4 Board Meeting Preparation', description: 'Prepare materials for upcoming board meeting', dueDate: new Date('2024-12-10'), priority: 'HIGH', status: 'IN_PROGRESS', assignee: 'Anna S.' },
-      { id: 'task2', title: 'Annual Report Draft', description: 'First draft of annual report', dueDate: new Date('2024-12-20'), priority: 'MEDIUM', status: 'TODO' },
-      { id: 'task3', title: 'LP Meeting Follow-up', description: 'Send meeting minutes to all LPs', dueDate: new Date('2024-11-30'), priority: 'LOW', status: 'DONE' },
+      { id: 'task1', title: 'Förbered Q4 styrelsemöte', description: 'Förbered material inför kommande styrelsemöte', dueDate: new Date('2024-12-10'), priority: 'HIGH', status: 'IN_PROGRESS', assignee: 'Anna S.' },
+      { id: 'task2', title: 'Utkast årsredovisning', description: 'Första utkast till årsredovisning', dueDate: new Date('2024-12-20'), priority: 'MEDIUM', status: 'TODO' },
+      { id: 'task3', title: 'LP-möte uppföljning', description: 'Skicka mötesprotokoll till alla LPs', dueDate: new Date('2024-11-30'), priority: 'LOW', status: 'DONE' },
     ],
     kpiData: [
       { month: 'Jun', value1: 85, value2: 75 },
@@ -151,17 +151,17 @@ export const companyDashboards: Record<string, CompanyDashboard> = {
   'company-2': {
     company: mockCompanies[1],
     portfolio: [
-      { name: 'Enterprise SaaS', value: 28000000, percentage: 40, color: '#4F46E5' },
-      { name: 'B2B Platforms', value: 21000000, percentage: 30, color: '#818CF8' },
-      { name: 'Developer Tools', value: 14000000, percentage: 20, color: '#A5B4FC' },
-      { name: 'Other', value: 7000000, percentage: 10, color: '#C7D2FE' },
+      { name: 'Företags-SaaS', value: 28000000, percentage: 40, color: '#4F46E5' },
+      { name: 'B2B-plattformar', value: 21000000, percentage: 30, color: '#818CF8' },
+      { name: 'Utvecklarverktyg', value: 14000000, percentage: 20, color: '#A5B4FC' },
+      { name: 'Övrigt', value: 7000000, percentage: 10, color: '#C7D2FE' },
     ],
     transactions: [
-      { id: 't4', type: 'INVESTMENT', description: 'Series A CloudTech', amount: 3500000, currency: 'EUR', date: new Date('2024-11-10'), status: 'COMPLETED' },
-      { id: 't5', type: 'INCOME', description: 'Exit Proceeds - DataCorp', amount: 8500000, currency: 'EUR', date: new Date('2024-10-25'), status: 'COMPLETED' },
+      { id: 't4', type: 'INVESTMENT', description: 'Serie A CloudTech', amount: 3500000, currency: 'EUR', date: new Date('2024-11-10'), status: 'COMPLETED' },
+      { id: 't5', type: 'INCOME', description: 'Exitintäkt - DataCorp', amount: 8500000, currency: 'EUR', date: new Date('2024-10-25'), status: 'COMPLETED' },
     ],
     tasks: [
-      { id: 'task4', title: 'Due Diligence Review', description: 'Complete DD for Series B target', dueDate: new Date('2024-12-05'), priority: 'HIGH', status: 'IN_PROGRESS' },
+      { id: 'task4', title: 'Due Diligence-granskning', description: 'Slutför DD för Serie B-mål', dueDate: new Date('2024-12-05'), priority: 'HIGH', status: 'IN_PROGRESS' },
     ],
     kpiData: [
       { month: 'Jun', value1: 100, value2: 90 },
@@ -183,17 +183,17 @@ export const companyDashboards: Record<string, CompanyDashboard> = {
   'company-3': {
     company: mockCompanies[2],
     portfolio: [
-      { name: 'Office', value: 85000000, percentage: 45, color: '#059669' },
-      { name: 'Logistics', value: 57000000, percentage: 30, color: '#34D399' },
-      { name: 'Retail', value: 28000000, percentage: 15, color: '#6EE7B7' },
-      { name: 'Residential', value: 19000000, percentage: 10, color: '#A7F3D0' },
+      { name: 'Kontor', value: 85000000, percentage: 45, color: '#059669' },
+      { name: 'Logistik', value: 57000000, percentage: 30, color: '#34D399' },
+      { name: 'Handel', value: 28000000, percentage: 15, color: '#6EE7B7' },
+      { name: 'Bostäder', value: 19000000, percentage: 10, color: '#A7F3D0' },
     ],
     transactions: [
-      { id: 't6', type: 'INVESTMENT', description: 'Malmö Logistics Hub', amount: 25000000, currency: 'SEK', date: new Date('2024-11-01'), status: 'COMPLETED' },
-      { id: 't7', type: 'INCOME', description: 'Rental Income Q4', amount: 4500000, currency: 'SEK', date: new Date('2024-11-15'), status: 'COMPLETED' },
+      { id: 't6', type: 'INVESTMENT', description: 'Malmö Logistikcenter', amount: 25000000, currency: 'SEK', date: new Date('2024-11-01'), status: 'COMPLETED' },
+      { id: 't7', type: 'INCOME', description: 'Hyresintäkter Q4', amount: 4500000, currency: 'SEK', date: new Date('2024-11-15'), status: 'COMPLETED' },
     ],
     tasks: [
-      { id: 'task5', title: 'Property Valuation', description: 'Annual property valuations', dueDate: new Date('2024-12-15'), priority: 'HIGH', status: 'TODO' },
+      { id: 'task5', title: 'Fastighetsvärdering', description: 'Årliga fastighetsvärderingar', dueDate: new Date('2024-12-15'), priority: 'HIGH', status: 'TODO' },
     ],
     kpiData: [
       { month: 'Jun', value1: 95, value2: 88 },
@@ -220,10 +220,10 @@ export const companyDashboards: Record<string, CompanyDashboard> = {
       { name: 'EdTech', value: 14000000, percentage: 20, color: '#FCA5A5' },
     ],
     transactions: [
-      { id: 't8', type: 'INVESTMENT', description: 'Series A GreenPower', amount: 5000000, currency: 'EUR', date: new Date('2024-11-12'), status: 'COMPLETED' },
+      { id: 't8', type: 'INVESTMENT', description: 'Serie A GreenPower', amount: 5000000, currency: 'EUR', date: new Date('2024-11-12'), status: 'COMPLETED' },
     ],
     tasks: [
-      { id: 'task6', title: 'Impact Report', description: 'Quarterly impact metrics report', dueDate: new Date('2024-12-01'), priority: 'MEDIUM', status: 'IN_PROGRESS' },
+      { id: 'task6', title: 'Påverkansrapport', description: 'Kvartalsvis rapport om påverkansmått', dueDate: new Date('2024-12-01'), priority: 'MEDIUM', status: 'IN_PROGRESS' },
     ],
     kpiData: [
       { month: 'Jun', value1: 80, value2: 70 },
@@ -245,18 +245,18 @@ export const companyDashboards: Record<string, CompanyDashboard> = {
   'company-5': {
     company: mockCompanies[4],
     portfolio: [
-      { name: 'E-commerce', value: 22000000, percentage: 35, color: '#7C3AED' },
-      { name: 'Logistics Tech', value: 19000000, percentage: 30, color: '#A78BFA' },
+      { name: 'E-handel', value: 22000000, percentage: 35, color: '#7C3AED' },
+      { name: 'Logistiktech', value: 19000000, percentage: 30, color: '#A78BFA' },
       { name: 'FinTech', value: 13000000, percentage: 20, color: '#C4B5FD' },
-      { name: 'Other', value: 9000000, percentage: 15, color: '#DDD6FE' },
+      { name: 'Övrigt', value: 9000000, percentage: 15, color: '#DDD6FE' },
     ],
     transactions: [
-      { id: 't9', type: 'INVESTMENT', description: 'Seed BalticPay', amount: 800000, currency: 'EUR', date: new Date('2024-11-18'), status: 'COMPLETED' },
-      { id: 't10', type: 'EXPENSE', description: 'Legal Fees', amount: 125000, currency: 'EUR', date: new Date('2024-11-20'), status: 'PENDING' },
+      { id: 't9', type: 'INVESTMENT', description: 'Sådd BalticPay', amount: 800000, currency: 'EUR', date: new Date('2024-11-18'), status: 'COMPLETED' },
+      { id: 't10', type: 'EXPENSE', description: 'Juridiska kostnader', amount: 125000, currency: 'EUR', date: new Date('2024-11-20'), status: 'PENDING' },
     ],
     tasks: [
-      { id: 'task7', title: 'Investor Relations', description: 'Prepare quarterly update for LPs', dueDate: new Date('2024-12-08'), priority: 'HIGH', status: 'TODO' },
-      { id: 'task8', title: 'Portfolio Review', description: 'Monthly portfolio company check-ins', dueDate: new Date('2024-11-28'), priority: 'MEDIUM', status: 'DONE' },
+      { id: 'task7', title: 'Investerarrelationer', description: 'Förbered kvartalsuppdatering för LPs', dueDate: new Date('2024-12-08'), priority: 'HIGH', status: 'TODO' },
+      { id: 'task8', title: 'Portföljgenomgång', description: 'Månatlig uppföljning av portföljbolag', dueDate: new Date('2024-11-28'), priority: 'MEDIUM', status: 'DONE' },
     ],
     kpiData: [
       { month: 'Jun', value1: 90, value2: 82 },
