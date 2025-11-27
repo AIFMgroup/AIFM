@@ -28,9 +28,9 @@ export default function PasswordGatePage() {
         const data = await response.json();
 
         if (response.ok && data.success) {
-          // Redirect to home page or intended destination
+          // Redirect to overview or intended destination
           const urlParams = new URLSearchParams(window.location.search);
-          const callbackUrl = urlParams.get('callbackUrl') || '/';
+          const callbackUrl = urlParams.get('callbackUrl') || '/overview';
           window.location.href = callbackUrl; // Use window.location for full page reload to set cookie
         } else {
           setError(data.error || 'Invalid password');

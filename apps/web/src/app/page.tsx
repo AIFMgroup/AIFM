@@ -53,7 +53,7 @@ export default function HomePage() {
                 Sign In
               </Link>
               <Link 
-                href="/admin/dashboard"
+                href="/overview"
                 className="btn-primary text-sm"
               >
                 Dashboard
@@ -86,7 +86,7 @@ export default function HomePage() {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/admin/dashboard" className="btn-primary text-center">
+                <Link href="/overview" className="btn-primary text-center">
                   <span>Access Platform</span>
                   <ArrowRight className="w-4 h-4 ml-2 inline" />
                 </Link>
@@ -237,7 +237,7 @@ export default function HomePage() {
                 ))}
               </div>
               
-              <Link href="/admin/dashboard" className="btn-primary inline-flex items-center">
+              <Link href="/overview" className="btn-primary inline-flex items-center">
                 Explore Platform
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
@@ -288,7 +288,7 @@ export default function HomePage() {
             Join leading fund managers who trust AIFM for their fund administration needs.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/admin/dashboard" className="btn-primary">
+            <Link href="/overview" className="btn-primary">
               Get Started
               <ArrowRight className="w-4 h-4 ml-2 inline" />
             </Link>
