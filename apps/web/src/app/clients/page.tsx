@@ -4,11 +4,12 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { 
   Building2, FileText, Clock,
-  AlertCircle, Search, Plus, ChevronRight, Zap
+  AlertCircle, Search, Plus, ChevronRight, Zap, BookOpen
 } from 'lucide-react';
 import {
   mockClients, getOverallStats
 } from '@/lib/clientData';
+import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('sv-SE', {
@@ -76,8 +77,22 @@ export default function ClientsPage() {
       <main className="max-w-7xl mx-auto px-6 lg:px-12 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="heading-2 mb-2">Klienthantering</h1>
-          <p className="text-aifm-charcoal/60">Hantera företag och deras bokföring med AI-stöd</p>
+          <div className="flex items-center gap-2 mb-2">
+            <h1 className="heading-2">Klienthantering</h1>
+            <HelpTooltip 
+              {...helpContent.clients}
+              learnMoreLink="/guide#bookkeeping"
+              position="bottom"
+              size="md"
+            />
+          </div>
+          <div className="flex items-center gap-4">
+            <p className="text-aifm-charcoal/60">Hantera företag och deras bokföring med AI-stöd</p>
+            <Link href="/guide#bookkeeping" className="text-xs text-aifm-gold hover:underline flex items-center gap-1">
+              <BookOpen className="w-3 h-3" />
+              Guide
+            </Link>
+          </div>
         </div>
 
         {/* Stats Overview */}

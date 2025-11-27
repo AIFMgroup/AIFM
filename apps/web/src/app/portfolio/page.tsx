@@ -6,12 +6,13 @@ import {
   Building2, TrendingUp, TrendingDown, Globe,
   Download, Filter, Search,
   Plus, Eye, BarChart3, PieChart,
-  Calendar, DollarSign, Briefcase
+  Calendar, DollarSign, Briefcase, BookOpen
 } from 'lucide-react';
 import {
   mockFunds, getPortfolioByFund,
   formatCurrency, formatPercentage, formatDate, Fund, PortfolioCompany
 } from '@/lib/fundData';
+import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
 
 export default function PortfolioPage() {
   const [selectedFund, setSelectedFund] = useState<Fund>(mockFunds[0]);
@@ -72,8 +73,22 @@ export default function PortfolioPage() {
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="heading-2 mb-2">Portfolio Monitoring</h1>
-            <p className="text-aifm-charcoal/60">Track portfolio company performance and valuations</p>
+            <div className="flex items-center gap-2 mb-2">
+              <h1 className="heading-2">Portfolio Monitoring</h1>
+              <HelpTooltip 
+                {...helpContent.portfolio}
+                learnMoreLink="/guide#portfolio"
+                position="bottom"
+                size="md"
+              />
+            </div>
+            <div className="flex items-center gap-4">
+              <p className="text-aifm-charcoal/60">Track portfolio company performance and valuations</p>
+              <Link href="/guide#portfolio" className="text-xs text-aifm-gold hover:underline flex items-center gap-1">
+                <BookOpen className="w-3 h-3" />
+                Guide
+              </Link>
+            </div>
           </div>
           
           <div className="flex items-center gap-3">

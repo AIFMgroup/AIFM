@@ -6,12 +6,13 @@ import {
   Users, Shield, CheckCircle2, AlertCircle, Clock,
   RefreshCw, Download, Filter, Search, ChevronRight,
   Plus, Eye, Mail, Phone, Globe, Building2, User,
-  FileText, AlertTriangle, XCircle
+  FileText, AlertTriangle, XCircle, BookOpen
 } from 'lucide-react';
 import {
   mockInvestors, getCommitmentsByInvestor,
   formatCurrency, formatPercentage, formatDate, Investor
 } from '@/lib/fundData';
+import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
 
 export default function InvestorsPage() {
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'approved' | 'pending' | 'flagged'>('all');
@@ -117,8 +118,22 @@ export default function InvestorsPage() {
       <main className="max-w-7xl mx-auto px-6 lg:px-12 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="heading-2 mb-2">Investor Management</h1>
-          <p className="text-aifm-charcoal/60">Manage investors, KYC/AML compliance, and commitments</p>
+          <div className="flex items-center gap-2 mb-2">
+            <h1 className="heading-2">Investor Management</h1>
+            <HelpTooltip 
+              {...helpContent.investors}
+              learnMoreLink="/guide#investors"
+              position="bottom"
+              size="md"
+            />
+          </div>
+          <div className="flex items-center gap-4">
+            <p className="text-aifm-charcoal/60">Manage investors, KYC/AML compliance, and commitments</p>
+            <Link href="/guide#investors" className="text-xs text-aifm-gold hover:underline flex items-center gap-1">
+              <BookOpen className="w-3 h-3" />
+              Guide
+            </Link>
+          </div>
         </div>
 
         {/* Stats Cards */}

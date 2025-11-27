@@ -5,12 +5,13 @@ import Link from 'next/link';
 import { 
   TrendingUp, Wallet, 
   ArrowUpRight, ArrowDownRight, DollarSign,
-  ChevronRight, RefreshCw, Download
+  ChevronRight, RefreshCw, Download, BookOpen
 } from 'lucide-react';
 import { 
   mockFunds, getCommitmentsByFund, getPortfolioByFund,
   formatCurrency, formatPercentage, formatDate, Fund
 } from '@/lib/fundData';
+import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
 
 export default function FundOverviewPage() {
   const [selectedFund, setSelectedFund] = useState<Fund>(mockFunds[0]);
@@ -64,8 +65,22 @@ export default function FundOverviewPage() {
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="heading-2 mb-2">Fund Overview</h1>
-            <p className="text-aifm-charcoal/60">Monitor fund performance, NAV, and key metrics</p>
+            <div className="flex items-center gap-2 mb-2">
+              <h1 className="heading-2">Fund Overview</h1>
+              <HelpTooltip 
+                {...helpContent.fundDashboard}
+                learnMoreLink="/guide#funds"
+                position="bottom"
+                size="md"
+              />
+            </div>
+            <div className="flex items-center gap-4">
+              <p className="text-aifm-charcoal/60">Monitor fund performance, NAV, and key metrics</p>
+              <Link href="/guide#funds" className="text-xs text-aifm-gold hover:underline flex items-center gap-1">
+                <BookOpen className="w-3 h-3" />
+                Guide
+              </Link>
+            </div>
           </div>
           
           {/* Fund Selector */}

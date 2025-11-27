@@ -6,12 +6,13 @@ import {
   Building2, ArrowUpRight,
   RefreshCw, Download, Filter, Search, CheckCircle2,
   AlertCircle, Clock, ChevronRight, Plus, Eye,
-  Wallet, FileText, Send
+  Wallet, FileText, Send, BookOpen
 } from 'lucide-react';
 import {
   mockFunds, getBankAccountsByFund, getTransactionsByAccount, getInvoicesByFund,
   formatCurrency, formatDate, Fund, BankAccount
 } from '@/lib/fundData';
+import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
 
 export default function TreasuryPage() {
   const [selectedFund, setSelectedFund] = useState<Fund>(mockFunds[0]);
@@ -74,8 +75,22 @@ export default function TreasuryPage() {
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="heading-2 mb-2">Treasury</h1>
-            <p className="text-aifm-charcoal/60">Bank accounts, transactions, and payment management</p>
+            <div className="flex items-center gap-2 mb-2">
+              <h1 className="heading-2">Treasury</h1>
+              <HelpTooltip 
+                {...helpContent.treasury}
+                learnMoreLink="/guide#treasury"
+                position="bottom"
+                size="md"
+              />
+            </div>
+            <div className="flex items-center gap-4">
+              <p className="text-aifm-charcoal/60">Bank accounts, transactions, and payment management</p>
+              <Link href="/guide#treasury" className="text-xs text-aifm-gold hover:underline flex items-center gap-1">
+                <BookOpen className="w-3 h-3" />
+                Guide
+              </Link>
+            </div>
           </div>
           
           <div className="flex items-center gap-3">

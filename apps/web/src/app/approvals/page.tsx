@@ -5,9 +5,10 @@ import Link from 'next/link';
 import { 
   Shield, Check, X, Clock, AlertCircle, FileText,
   DollarSign, Users, CheckCircle2,
-  ArrowRight, RefreshCw
+  ArrowRight, RefreshCw, BookOpen
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/fundData';
+import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
 
 // Types for approval workflow
 interface ApprovalItem {
@@ -236,8 +237,22 @@ export default function ApprovalsPage() {
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="heading-2 mb-2">Approval Center</h1>
-            <p className="text-aifm-charcoal/60">4-Eyes Principle: All financial actions require dual approval</p>
+            <div className="flex items-center gap-2 mb-2">
+              <h1 className="heading-2">Approval Center</h1>
+              <HelpTooltip 
+                {...helpContent.approvals}
+                learnMoreLink="/guide#approvals"
+                position="bottom"
+                size="md"
+              />
+            </div>
+            <div className="flex items-center gap-4">
+              <p className="text-aifm-charcoal/60">4-Eyes Principle: All financial actions require dual approval</p>
+              <Link href="/guide#approvals" className="text-xs text-aifm-gold hover:underline flex items-center gap-1">
+                <BookOpen className="w-3 h-3" />
+                Guide
+              </Link>
+            </div>
           </div>
           
           <div className="flex items-center gap-3">
