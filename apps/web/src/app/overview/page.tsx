@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
-  TrendingUp, Calendar, ChevronRight,
-  ArrowUpRight, ArrowDownRight, FolderLock, DollarSign
+  ChevronRight, ArrowUpRight, ArrowDownRight, FolderLock
 } from 'lucide-react';
 import {
   mockCompanies, getCompanyDashboard, formatCurrencyCompact,
