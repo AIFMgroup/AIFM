@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, Briefcase, CheckSquare,
   Settings, LogOut, ChevronDown,
-  ChevronLeft, ChevronRight, Banknote, FolderOpen
+  ChevronLeft, ChevronRight, Banknote, FolderOpen, BookOpen
 } from 'lucide-react';
 import { useSidebar } from './SidebarContext';
 
@@ -205,8 +205,24 @@ export function DashboardSidebar() {
           <li>
             <Link 
               href="/guide"
-              className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-white hover:bg-white/5 transition-all duration-200 group relative`}
-              title={collapsed ? 'Guide' : undefined}
+              className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-white hover:bg-white/5 transition-all duration-200 group relative ${pathname === '/guide' ? 'bg-aifm-gold' : ''}`}
+              title={collapsed ? 'Användarguide' : undefined}
+            >
+              <BookOpen className="w-5 h-5 flex-shrink-0" />
+              {!collapsed && <span className="text-sm">Användarguide</span>}
+              {collapsed && (
+                <div className="absolute left-full ml-2 px-2 py-1 bg-aifm-charcoal text-white text-xs rounded 
+                                opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-lg border border-white/10">
+                  Användarguide
+                </div>
+              )}
+            </Link>
+          </li>
+          <li>
+            <Link 
+              href="/settings"
+              className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-white hover:bg-white/5 transition-all duration-200 group relative ${pathname === '/settings' ? 'bg-aifm-gold' : ''}`}
+              title={collapsed ? 'Inställningar' : undefined}
             >
               <Settings className="w-5 h-5 flex-shrink-0" />
               {!collapsed && <span className="text-sm">Inställningar</span>}

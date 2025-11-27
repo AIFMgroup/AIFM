@@ -118,8 +118,8 @@ function OnboardingWizard({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      {/* Fixed size container - 600px width, 520px height */}
-      <div className="bg-white rounded-2xl w-[600px] h-[520px] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      {/* Fixed size container - 720px width, 620px height for better visibility */}
+      <div className="bg-white rounded-2xl w-[720px] h-[620px] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         
         {/* Minimal Header */}
         <div className="px-8 py-5 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
