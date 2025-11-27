@@ -831,3 +831,41 @@ export function getFundStats() {
   };
 }
 
+// Mapping between company IDs (from companyData) and fund IDs
+const companyToFundMap: Record<string, string> = {
+  'company-1': 'fund-1', // Nordic Ventures I -> Nordic Growth Fund I
+  'company-2': 'fund-2', // TechGrowth -> Scandinavian Tech Fund II
+  'company-3': 'fund-3', // Scandi RE -> Nordic Real Estate III
+  'company-4': 'fund-4', // Impact Nordic -> Impact Ventures Nordic
+  'company-5': 'fund-5', // Baltic Growth -> Baltic Growth Partners
+};
+
+export function getFundByCompanyId(companyId: string): Fund | undefined {
+  const fundId = companyToFundMap[companyId];
+  return fundId ? mockFunds.find(f => f.id === fundId) : undefined;
+}
+
+export function getPortfolioByCompanyId(companyId: string): PortfolioCompany[] {
+  const fundId = companyToFundMap[companyId];
+  return fundId ? getPortfolioByFund(fundId) : [];
+}
+
+export function getInvestorsByCompanyId(companyId: string): Investor[] {
+  const fundId = companyToFundMap[companyId];
+  if (!fundId) return [];
+  // Get all investors who have commitments in this fund
+  const fundCommitments = mockCommitments.filter(c => c.fundId === fundId);
+  const investorIds = [...new Set(fundCommitments.map(c => c.investorId))];
+  return mockInvestors.filter(i => investorIds.includes(i.id));
+}
+
+export function getCapitalCallsByCompanyId(companyId: string): CapitalCall[] {
+  const fundId = companyToFundMap[companyId];
+  return fundId ? mockCapitalCalls.filter(cc => cc.fundId === fundId) : [];
+}
+
+export function getDistributionsByCompanyId(companyId: string): Distribution[] {
+  const fundId = companyToFundMap[companyId];
+  return fundId ? mockDistributions.filter(d => d.fundId === fundId) : [];
+}
+

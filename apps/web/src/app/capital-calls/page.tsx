@@ -4,25 +4,28 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { 
   ArrowUpRight, Plus, CheckCircle2, Clock,
-  Send, Download, DollarSign, FileText, Bell, X, BookOpen, Building2
+  Send, Download, DollarSign, FileText, Bell, X, BookOpen
 } from 'lucide-react';
 import {
-  mockFunds, mockCapitalCalls, getCommitmentsByFund,
-  formatCurrency, formatDate, formatPercentage, Fund, CapitalCall
+  getFundByCompanyId, getCapitalCallsByCompanyId, getCommitmentsByFund,
+  formatCurrency, formatDate, formatPercentage, CapitalCall
 } from '@/lib/fundData';
 import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
-import { CustomSelect } from '@/components/CustomSelect';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { useCompany } from '@/components/CompanyContext';
 
 export default function CapitalCallsPage() {
-  const [selectedFund, setSelectedFund] = useState<Fund>(mockFunds[0]);
+  const { selectedCompany } = useCompany();
   const [selectedCall, setSelectedCall] = useState<CapitalCall | null>(null);
   const [showNewCallModal, setShowNewCallModal] = useState(false);
   const [newCallAmount, setNewCallAmount] = useState('');
   const [newCallPurpose, setNewCallPurpose] = useState('');
 
-  const fundCalls = mockCapitalCalls.filter(cc => cc.fundId === selectedFund.id);
-  const commitments = getCommitmentsByFund(selectedFund.id);
+  const selectedFund = getFundByCompanyId(selectedCompany.id);
+  const fundCalls = getCapitalCallsByCompanyId(selectedCompany.id);
+  const commitments = selectedFund ? getCommitmentsByFund(selectedFund.id) : [];
+  const currency = selectedFund?.currency || 'SEK';
+  const fundName = selectedFund?.name || selectedCompany.shortName;
   
   // Calculate totals
   const totalCommitted = commitments.reduce((sum, c) => sum + c.committedAmount, 0);
@@ -76,24 +79,6 @@ export default function CapitalCallsPage() {
         </div>
         
         <div className="flex items-center gap-3">
-          <CustomSelect
-            options={mockFunds.map((fund) => ({
-              value: fund.id,
-              label: fund.name,
-              icon: <Building2 className="w-4 h-4 text-aifm-gold" />
-            }))}
-            value={selectedFund.id}
-            onChange={(value) => {
-              const fund = mockFunds.find(f => f.id === value);
-              if (fund) {
-                setSelectedFund(fund);
-                setSelectedCall(null);
-              }
-            }}
-            className="min-w-[280px]"
-            variant="gold"
-            size="md"
-          />
           <button 
             onClick={() => setShowNewCallModal(true)}
             className="btn-primary py-2 px-4 flex items-center gap-2"
@@ -111,7 +96,7 @@ export default function CapitalCallsPage() {
             <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Totalt åtagande</span>
             <DollarSign className="w-5 h-5 text-aifm-charcoal/30" />
           </div>
-          <p className="text-2xl font-medium text-aifm-charcoal">{formatCurrency(totalCommitted, selectedFund.currency)}</p>
+          <p className="text-2xl font-medium text-aifm-charcoal">{formatCurrency(totalCommitted, currency)}</p>
         </div>
 
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
@@ -119,7 +104,7 @@ export default function CapitalCallsPage() {
             <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Inropat hittills</span>
             <ArrowUpRight className="w-5 h-5 text-green-500" />
           </div>
-          <p className="text-2xl font-medium text-aifm-charcoal">{formatCurrency(totalCalled, selectedFund.currency)}</p>
+          <p className="text-2xl font-medium text-aifm-charcoal">{formatCurrency(totalCalled, currency)}</p>
           <p className="text-sm text-aifm-charcoal/60 mt-1">{formatPercentage(callPercentage)} av åtagande</p>
         </div>
 
@@ -128,7 +113,7 @@ export default function CapitalCallsPage() {
             <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Återstående</span>
             <Clock className="w-5 h-5 text-amber-500" />
           </div>
-          <p className="text-2xl font-medium text-aifm-charcoal">{formatCurrency(remainingToCall, selectedFund.currency)}</p>
+          <p className="text-2xl font-medium text-aifm-charcoal">{formatCurrency(remainingToCall, currency)}</p>
         </div>
 
         <div className="bg-gradient-to-br from-aifm-gold to-aifm-gold/80 rounded-2xl p-6 text-white">
@@ -197,7 +182,7 @@ export default function CapitalCallsPage() {
                           <span className="text-aifm-gold font-medium">#{call.callNumber}</span>
                         </div>
                         <div>
-                          <p className="font-medium text-aifm-charcoal">{formatCurrency(call.totalAmount, selectedFund.currency)}</p>
+                          <p className="font-medium text-aifm-charcoal">{formatCurrency(call.totalAmount, currency)}</p>
                           <p className="text-xs text-aifm-charcoal/50">Förfaller: {formatDate(call.dueDate)}</p>
                         </div>
                       </div>
@@ -252,12 +237,12 @@ export default function CapitalCallsPage() {
                   </div>
                   <div>
                     <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Totalt belopp</p>
-                    <p className="font-medium text-aifm-charcoal">{formatCurrency(selectedCall.totalAmount, selectedFund.currency)}</p>
+                    <p className="font-medium text-aifm-charcoal">{formatCurrency(selectedCall.totalAmount, currency)}</p>
                   </div>
                   <div>
                     <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Mottaget</p>
                     <p className="font-medium text-green-600">
-                      {formatCurrency(selectedCall.items.reduce((sum, i) => sum + i.paidAmount, 0), selectedFund.currency)}
+                      {formatCurrency(selectedCall.items.reduce((sum, i) => sum + i.paidAmount, 0), currency)}
                     </p>
                   </div>
                 </div>
@@ -292,10 +277,10 @@ export default function CapitalCallsPage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium text-aifm-charcoal text-sm">{formatCurrency(item.amount, selectedFund.currency)}</p>
+                        <p className="font-medium text-aifm-charcoal text-sm">{formatCurrency(item.amount, currency)}</p>
                         {item.paidAmount > 0 && item.paidAmount < item.amount && (
                           <p className="text-xs text-blue-600">
-                            {formatCurrency(item.paidAmount, selectedFund.currency)} betalt
+                            {formatCurrency(item.paidAmount, currency)} betalt
                           </p>
                         )}
                       </div>
@@ -345,11 +330,11 @@ export default function CapitalCallsPage() {
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
                   Fond
                 </label>
-                <p className="font-medium text-aifm-charcoal">{selectedFund.name}</p>
+                <p className="font-medium text-aifm-charcoal">{fundName}</p>
               </div>
               <div>
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                  Anropsbelopp ({selectedFund.currency})
+                  Anropsbelopp ({currency})
                 </label>
                 <input
                   type="number"
@@ -359,7 +344,7 @@ export default function CapitalCallsPage() {
                   placeholder="Ange belopp"
                 />
                 <p className="text-xs text-aifm-charcoal/50 mt-1">
-                  Återstående ej inropat: {formatCurrency(remainingToCall, selectedFund.currency)}
+                  Återstående ej inropat: {formatCurrency(remainingToCall, currency)}
                 </p>
               </div>
               <div>
@@ -383,7 +368,7 @@ export default function CapitalCallsPage() {
                       <div key={commitment.id} className="flex justify-between">
                         <span className="text-aifm-charcoal/60">{commitment.investor?.name}</span>
                         <span className="font-medium text-aifm-charcoal">
-                          {formatCurrency(allocation, selectedFund.currency)}
+                          {formatCurrency(allocation, currency)}
                         </span>
                       </div>
                     );

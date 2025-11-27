@@ -4,27 +4,30 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { 
   ArrowDownRight, Plus, CheckCircle2,
-  Users, DollarSign, FileText, Building2,
+  Users, DollarSign, FileText,
   Check, X, Shield, Eye, Download, BookOpen
 } from 'lucide-react';
 import {
-  mockFunds, mockDistributions, getCommitmentsByFund,
-  formatCurrency, formatDate, Fund, Distribution
+  getFundByCompanyId, getDistributionsByCompanyId, getCommitmentsByFund,
+  formatCurrency, formatDate, Distribution
 } from '@/lib/fundData';
 import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
 import { CustomSelect } from '@/components/CustomSelect';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { useCompany } from '@/components/CompanyContext';
 
 export default function DistributionsPage() {
-  const [selectedFund, setSelectedFund] = useState<Fund>(mockFunds[0]);
+  const { selectedCompany } = useCompany();
   const [selectedDistribution, setSelectedDistribution] = useState<Distribution | null>(null);
   const [showNewDistModal, setShowNewDistModal] = useState(false);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [newDistAmount, setNewDistAmount] = useState('');
   const [newDistType, setNewDistType] = useState<Distribution['type']>('PROFIT_DISTRIBUTION');
 
-  const fundDists = mockDistributions.filter(d => d.fundId === selectedFund.id);
-  const commitments = getCommitmentsByFund(selectedFund.id);
+  const selectedFund = getFundByCompanyId(selectedCompany.id);
+  const fundDists = getDistributionsByCompanyId(selectedCompany.id);
+  const commitments = selectedFund ? getCommitmentsByFund(selectedFund.id) : [];
+  const currency = selectedFund?.currency || 'SEK';
   
   // Calculate totals
   const totalDistributed = commitments.reduce((sum, c) => sum + c.distributedAmount, 0);
@@ -71,24 +74,6 @@ export default function DistributionsPage() {
         </div>
         
         <div className="flex items-center gap-3">
-          <CustomSelect
-            options={mockFunds.map((fund) => ({
-              value: fund.id,
-              label: fund.name,
-              icon: <Building2 className="w-4 h-4 text-aifm-gold" />
-            }))}
-            value={selectedFund.id}
-            onChange={(value) => {
-              const fund = mockFunds.find(f => f.id === value);
-              if (fund) {
-                setSelectedFund(fund);
-                setSelectedDistribution(null);
-              }
-            }}
-            className="min-w-[280px]"
-            variant="gold"
-            size="md"
-          />
           <button 
             onClick={() => setShowNewDistModal(true)}
             className="btn-primary py-2 px-4 flex items-center gap-2"
@@ -106,7 +91,7 @@ export default function DistributionsPage() {
             <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Totalt utdelat</span>
             <ArrowDownRight className="w-5 h-5 text-green-500" />
           </div>
-          <p className="text-2xl font-medium text-aifm-charcoal">{formatCurrency(totalDistributed, selectedFund.currency)}</p>
+          <p className="text-2xl font-medium text-aifm-charcoal">{formatCurrency(totalDistributed, currency)}</p>
         </div>
 
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
@@ -114,7 +99,7 @@ export default function DistributionsPage() {
             <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">DPI</span>
             <DollarSign className="w-5 h-5 text-aifm-charcoal/30" />
           </div>
-          <p className="text-2xl font-medium text-aifm-charcoal">{selectedFund.dpi.toFixed(2)}x</p>
+          <p className="text-2xl font-medium text-aifm-charcoal">{(selectedFund?.dpi || 0).toFixed(2)}x</p>
         </div>
 
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
@@ -179,7 +164,7 @@ export default function DistributionsPage() {
                         <span className="text-green-700 font-medium">#{dist.distributionNumber}</span>
                       </div>
                       <div>
-                        <p className="font-medium text-aifm-charcoal">{formatCurrency(dist.totalAmount, selectedFund.currency)}</p>
+                        <p className="font-medium text-aifm-charcoal">{formatCurrency(dist.totalAmount, currency)}</p>
                         <p className="text-xs text-aifm-charcoal/50">{formatDate(dist.distributionDate)}</p>
                       </div>
                     </div>
@@ -230,7 +215,7 @@ export default function DistributionsPage() {
                   </div>
                   <div>
                     <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Totalt belopp</p>
-                    <p className="font-medium text-green-600">{formatCurrency(selectedDistribution.totalAmount, selectedFund.currency)}</p>
+                    <p className="font-medium text-green-600">{formatCurrency(selectedDistribution.totalAmount, currency)}</p>
                   </div>
                   <div>
                     <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Investerare</p>
@@ -254,7 +239,7 @@ export default function DistributionsPage() {
                         </div>
                         <p className="font-medium text-aifm-charcoal text-sm">{investor?.name || 'Okänd'}</p>
                       </div>
-                      <p className="font-medium text-green-600 text-sm">{formatCurrency(item.amount, selectedFund.currency)}</p>
+                      <p className="font-medium text-green-600 text-sm">{formatCurrency(item.amount, currency)}</p>
                     </div>
                   );
                 })}
@@ -333,7 +318,7 @@ export default function DistributionsPage() {
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
                   Fond
                 </label>
-                <p className="font-medium text-aifm-charcoal">{selectedFund.name}</p>
+                <p className="font-medium text-aifm-charcoal">{selectedFund?.name || selectedCompany.shortName}</p>
               </div>
               <div>
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
@@ -354,7 +339,7 @@ export default function DistributionsPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                  Totalt belopp ({selectedFund.currency})
+                  Totalt belopp ({currency})
                 </label>
                 <input
                   type="number"
@@ -374,7 +359,7 @@ export default function DistributionsPage() {
                       <div key={commitment.id} className="flex justify-between">
                         <span className="text-aifm-charcoal/60">{commitment.investor?.name}</span>
                         <span className="font-medium text-green-600">
-                          {formatCurrency(allocation, selectedFund.currency)}
+                          {formatCurrency(allocation, currency)}
                         </span>
                       </div>
                     );
@@ -435,7 +420,7 @@ export default function DistributionsPage() {
                 <div className="flex justify-between mb-2">
                   <span className="text-sm text-aifm-charcoal/60">Belopp</span>
                   <span className="font-medium text-aifm-charcoal">
-                    {selectedDistribution && formatCurrency(selectedDistribution.totalAmount, selectedFund.currency)}
+                    {selectedDistribution && formatCurrency(selectedDistribution.totalAmount, currency)}
                   </span>
                 </div>
                 <div className="flex justify-between">

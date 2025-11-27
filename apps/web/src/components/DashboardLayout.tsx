@@ -7,7 +7,8 @@ import {
 } from 'lucide-react';
 import { DashboardSidebar } from './DashboardSidebar';
 import { SidebarProvider, useSidebar } from './SidebarContext';
-import { mockCompanies, Company } from '@/lib/companyData';
+import { CompanyProvider, useCompany } from './CompanyContext';
+import { Company } from '@/lib/companyData';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -590,12 +591,13 @@ function DashboardLayoutInner({
   selectedCompany: externalSelectedCompany,
   onCompanyChange 
 }: DashboardLayoutProps) {
-  const [internalSelectedCompany, setInternalSelectedCompany] = useState<Company>(mockCompanies[0]);
+  const { selectedCompany: contextCompany, setSelectedCompany, companies } = useCompany();
   const [showOnboardingWizard, setShowOnboardingWizard] = useState(false);
   const { collapsed } = useSidebar();
   
-  const selectedCompany = externalSelectedCompany || internalSelectedCompany;
-  const handleCompanyChange = onCompanyChange || setInternalSelectedCompany;
+  // Use external props if provided, otherwise use context
+  const selectedCompany = externalSelectedCompany || contextCompany;
+  const handleCompanyChange = onCompanyChange || setSelectedCompany;
 
   return (
     <div className="min-h-screen bg-white flex">
@@ -612,7 +614,7 @@ function DashboardLayoutInner({
               {/* Centered Company Dropdown with Add Button */}
               <CompanySelector
                 selectedCompany={selectedCompany}
-                companies={mockCompanies}
+                companies={companies}
                 onChange={handleCompanyChange}
                 onAddNew={() => setShowOnboardingWizard(true)}
               />
@@ -643,11 +645,13 @@ function DashboardLayoutInner({
   );
 }
 
-// Main export that wraps with SidebarProvider
+// Main export that wraps with SidebarProvider and CompanyProvider
 export function DashboardLayout(props: DashboardLayoutProps) {
   return (
     <SidebarProvider>
-      <DashboardLayoutInner {...props} />
+      <CompanyProvider>
+        <DashboardLayoutInner {...props} />
+      </CompanyProvider>
     </SidebarProvider>
   );
 }

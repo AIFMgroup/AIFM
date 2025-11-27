@@ -5,24 +5,26 @@ import Link from 'next/link';
 import { 
   Building2, TrendingUp, TrendingDown, Globe,
   Download, Filter, Search,
-  Plus, Eye, BarChart3, PieChart,
-  Calendar, DollarSign, Briefcase, BookOpen
+  Plus, Eye, BarChart3, PieChart, Briefcase,
+  Calendar, DollarSign, BookOpen
 } from 'lucide-react';
 import {
-  mockFunds, getPortfolioByFund,
-  formatCurrency, formatPercentage, formatDate, Fund, PortfolioCompany
+  getFundByCompanyId, getPortfolioByCompanyId,
+  formatCurrency, formatPercentage, formatDate, PortfolioCompany
 } from '@/lib/fundData';
 import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
-import { CustomSelect } from '@/components/CustomSelect';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { useCompany } from '@/components/CompanyContext';
 
 export default function PortfolioPage() {
-  const [selectedFund, setSelectedFund] = useState<Fund>(mockFunds[0]);
+  const { selectedCompany } = useCompany();
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_selectedCompany, setSelectedCompany] = useState<PortfolioCompany | null>(null);
+  const [_selectedPortfolioCompany, setSelectedPortfolioCompany] = useState<PortfolioCompany | null>(null);
 
-  const portfolio = getPortfolioByFund(selectedFund.id);
+  const selectedFund = getFundByCompanyId(selectedCompany.id);
+  const portfolio = getPortfolioByCompanyId(selectedCompany.id);
+  const currency = selectedFund?.currency || 'SEK';
   
   // Calculate portfolio metrics
   const totalInvested = portfolio.reduce((sum, pc) => sum + pc.initialInvestment, 0);
@@ -61,21 +63,6 @@ export default function PortfolioPage() {
         </div>
         
         <div className="flex items-center gap-3">
-          <CustomSelect
-            options={mockFunds.map((fund) => ({
-              value: fund.id,
-              label: fund.name,
-              icon: <Briefcase className="w-4 h-4 text-aifm-gold" />
-            }))}
-            value={selectedFund.id}
-            onChange={(value) => {
-              const fund = mockFunds.find(f => f.id === value);
-              if (fund) setSelectedFund(fund);
-            }}
-            className="min-w-[280px]"
-            variant="gold"
-            size="md"
-          />
           <button className="btn-outline py-2 px-4 flex items-center gap-2">
             <Download className="w-4 h-4" />
             Exportera
@@ -94,7 +81,7 @@ export default function PortfolioPage() {
             <span className="text-xs font-medium uppercase tracking-wider text-white/60">Portföljvärde</span>
             <PieChart className="w-5 h-5 text-white/40" />
           </div>
-          <p className="text-3xl font-medium">{formatCurrency(totalValue, selectedFund.currency)}</p>
+          <p className="text-3xl font-medium">{formatCurrency(totalValue, currency)}</p>
           <div className="flex items-center gap-2 mt-2">
             {unrealizedGainPercent >= 0 ? (
               <>
@@ -115,7 +102,7 @@ export default function PortfolioPage() {
             <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Totalt investerat</span>
             <DollarSign className="w-5 h-5 text-aifm-charcoal/30" />
           </div>
-          <p className="text-2xl font-medium text-aifm-charcoal">{formatCurrency(totalInvested, selectedFund.currency)}</p>
+          <p className="text-2xl font-medium text-aifm-charcoal">{formatCurrency(totalInvested, currency)}</p>
           <p className="text-sm text-aifm-charcoal/60 mt-2">Fördelat på {portfolio.length} investeringar</p>
         </div>
 
@@ -125,7 +112,7 @@ export default function PortfolioPage() {
             <TrendingUp className="w-5 h-5 text-green-500" />
           </div>
           <p className={`text-2xl font-medium ${unrealizedGain >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {unrealizedGain >= 0 ? '+' : ''}{formatCurrency(unrealizedGain, selectedFund.currency)}
+            {unrealizedGain >= 0 ? '+' : ''}{formatCurrency(unrealizedGain, currency)}
           </p>
           <p className="text-sm text-aifm-charcoal/60 mt-2">{formatPercentage(unrealizedGainPercent)} avkastning</p>
         </div>
@@ -208,7 +195,7 @@ export default function PortfolioPage() {
               <div 
                 key={company.id}
                 className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all cursor-pointer group"
-                onClick={() => setSelectedCompany(company)}
+                onClick={() => setSelectedPortfolioCompany(company)}
               >
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
@@ -235,11 +222,11 @@ export default function PortfolioPage() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-aifm-charcoal/60">Nuvarande värde</span>
-                      <span className="font-medium text-aifm-charcoal">{formatCurrency(company.currentValuation, selectedFund.currency)}</span>
+                      <span className="font-medium text-aifm-charcoal">{formatCurrency(company.currentValuation, currency)}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-aifm-charcoal/60">Investerat</span>
-                      <span className="text-sm text-aifm-charcoal">{formatCurrency(company.initialInvestment, selectedFund.currency)}</span>
+                      <span className="text-sm text-aifm-charcoal">{formatCurrency(company.initialInvestment, currency)}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-aifm-charcoal/60">Avkastning</span>
@@ -329,8 +316,8 @@ export default function PortfolioPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-aifm-charcoal">{company.sector}</td>
-                      <td className="px-6 py-4 text-sm text-aifm-charcoal text-right">{formatCurrency(company.initialInvestment, selectedFund.currency)}</td>
-                      <td className="px-6 py-4 text-sm font-medium text-aifm-charcoal text-right">{formatCurrency(company.currentValuation, selectedFund.currency)}</td>
+                      <td className="px-6 py-4 text-sm text-aifm-charcoal text-right">{formatCurrency(company.initialInvestment, currency)}</td>
+                      <td className="px-6 py-4 text-sm font-medium text-aifm-charcoal text-right">{formatCurrency(company.currentValuation, currency)}</td>
                       <td className={`px-6 py-4 text-sm font-medium text-right ${gainPercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {gainPercent >= 0 ? '+' : ''}{formatPercentage(gainPercent)}
                       </td>

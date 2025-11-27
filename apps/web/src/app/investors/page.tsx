@@ -9,19 +9,24 @@ import {
   FileText, AlertTriangle, XCircle, BookOpen
 } from 'lucide-react';
 import {
-  mockInvestors, getCommitmentsByInvestor,
+  getInvestorsByCompanyId, getCommitmentsByInvestor,
   formatCurrency, formatPercentage, formatDate, Investor
 } from '@/lib/fundData';
 import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { useCompany } from '@/components/CompanyContext';
 
 export default function InvestorsPage() {
+  const { selectedCompany } = useCompany();
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'approved' | 'pending' | 'flagged'>('all');
   const [selectedInvestor, setSelectedInvestor] = useState<Investor | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Get investors for selected company
+  const companyInvestors = getInvestorsByCompanyId(selectedCompany.id);
+
   // Filter investors
-  const filteredInvestors = mockInvestors.filter(investor => {
+  const filteredInvestors = companyInvestors.filter(investor => {
     const matchesSearch = investor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          investor.email.toLowerCase().includes(searchQuery.toLowerCase());
     
@@ -34,10 +39,10 @@ export default function InvestorsPage() {
 
   // Stats
   const stats = {
-    total: mockInvestors.length,
-    approved: mockInvestors.filter(i => i.kycStatus === 'APPROVED').length,
-    pending: mockInvestors.filter(i => i.kycStatus === 'PENDING' || i.kycStatus === 'IN_PROGRESS').length,
-    flagged: mockInvestors.filter(i => i.amlStatus === 'FLAGGED' || i.riskRating === 'HIGH').length,
+    total: companyInvestors.length,
+    approved: companyInvestors.filter(i => i.kycStatus === 'APPROVED').length,
+    pending: companyInvestors.filter(i => i.kycStatus === 'PENDING' || i.kycStatus === 'IN_PROGRESS').length,
+    flagged: companyInvestors.filter(i => i.amlStatus === 'FLAGGED' || i.riskRating === 'HIGH').length,
   };
 
   const getKYCStatusIcon = (status: string) => {
