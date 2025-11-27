@@ -116,7 +116,7 @@ export default function TreasuryPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/90 rounded-2xl p-6 text-white">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-medium uppercase tracking-wider text-white/60">Total Balance</span>
+              <span className="text-xs font-medium uppercase tracking-wider text-white/60">Totalt saldo</span>
               <Wallet className="w-5 h-5 text-white/40" />
             </div>
             <p className="text-3xl font-medium">{formatCurrency(totalBalance, selectedFund.currency)}</p>
@@ -125,7 +125,7 @@ export default function TreasuryPage() {
 
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-aifm">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Pending Payments</span>
+              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Väntande betalningar</span>
               <Clock className="w-5 h-5 text-amber-500" />
             </div>
             <p className="text-2xl font-medium text-aifm-charcoal">{formatCurrency(pendingAmount, selectedFund.currency)}</p>
@@ -275,7 +275,7 @@ export default function TreasuryPage() {
                       <Search className="w-4 h-4 text-aifm-charcoal/40 absolute left-3 top-1/2 -translate-y-1/2" />
                       <input 
                         type="text" 
-                        placeholder="Search transactions..."
+                        placeholder="Sök transaktioner..."
                         className="input py-2 pl-10 pr-4 w-64"
                       />
                     </div>
@@ -298,7 +298,7 @@ export default function TreasuryPage() {
                         <th className="text-left px-4 py-3 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Description</th>
                         <th className="text-left px-4 py-3 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Counterparty</th>
                         <th className="text-left px-4 py-3 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Category</th>
-                        <th className="text-right px-4 py-3 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Amount</th>
+                        <th className="text-right px-4 py-3 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Belopp</th>
                         <th className="text-center px-4 py-3 text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Status</th>
                       </tr>
                     </thead>
@@ -351,7 +351,7 @@ export default function TreasuryPage() {
                       <Search className="w-4 h-4 text-aifm-charcoal/40 absolute left-3 top-1/2 -translate-y-1/2" />
                       <input 
                         type="text" 
-                        placeholder="Search invoices..."
+                        placeholder="Sök fakturor..."
                         className="input py-2 pl-10 pr-4 w-64"
                       />
                     </div>

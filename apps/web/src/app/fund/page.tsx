@@ -96,7 +96,7 @@ export default function FundOverviewPage() {
             </select>
             <button className="btn-outline py-2 px-4 flex items-center gap-2">
               <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Export</span>
+              <span className="hidden sm:inline">Exportera</span>
             </button>
           </div>
         </div>

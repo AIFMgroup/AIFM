@@ -132,7 +132,7 @@ export default function PortfolioPage() {
 
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-aifm">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Total Invested</span>
+              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Totalt investerat</span>
               <DollarSign className="w-5 h-5 text-aifm-charcoal/30" />
             </div>
             <p className="text-2xl font-medium text-aifm-charcoal">{formatCurrency(totalInvested, selectedFund.currency)}</p>
@@ -152,7 +152,7 @@ export default function PortfolioPage() {
 
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-aifm">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Active Companies</span>
+              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Aktiva bolag</span>
               <Building2 className="w-5 h-5 text-aifm-charcoal/30" />
             </div>
             <p className="text-2xl font-medium text-aifm-charcoal">{activeCompanies}</p>
@@ -189,13 +189,13 @@ export default function PortfolioPage() {
               <Search className="w-4 h-4 text-aifm-charcoal/40 absolute left-3 top-1/2 -translate-y-1/2" />
               <input 
                 type="text" 
-                placeholder="Search companies..."
+                placeholder="Sök bolag..."
                 className="input py-2 pl-10 pr-4 w-64"
               />
             </div>
             <button className="btn-outline py-2 px-4 flex items-center gap-2">
               <Filter className="w-4 h-4" />
-              Filter
+              Filtrera
             </button>
           </div>
           <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">

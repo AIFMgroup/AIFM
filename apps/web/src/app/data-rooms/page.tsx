@@ -87,7 +87,7 @@ export default function DataRoomsPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Active Rooms</span>
+              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Aktiva rum</span>
               <FolderLock className="w-5 h-5 text-aifm-gold" />
             </div>
             <p className="text-2xl font-medium text-aifm-charcoal">{activeRooms}</p>
@@ -103,7 +103,7 @@ export default function DataRoomsPage() {
 
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Total Members</span>
+              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Totalt antal medlemmar</span>
               <Users className="w-5 h-5 text-aifm-charcoal/30" />
             </div>
             <p className="text-2xl font-medium text-aifm-charcoal">{totalMembers}</p>
@@ -135,7 +135,7 @@ export default function DataRoomsPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-aifm-charcoal/40" />
             <input
               type="text"
-              placeholder="Search data rooms..."
+              placeholder="Sök datarum..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="input pl-10 w-full"
@@ -158,9 +158,9 @@ export default function DataRoomsPage() {
             onChange={(e) => setFilterStatus(e.target.value)}
             className="input py-2 px-4 min-w-[150px]"
           >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="archived">Archived</option>
+            <option value="all">Alla statusar</option>
+            <option value="active">Aktiva</option>
+            <option value="archived">Arkiverade</option>
           </select>
         </div>
 
@@ -209,7 +209,7 @@ export default function DataRoomsPage() {
                   </div>
                   <div className="text-center">
                     <p className="text-sm font-medium text-aifm-charcoal">{formatDate(room.lastActivity)}</p>
-                    <p className="text-xs text-aifm-charcoal/50">Last Active</p>
+                    <p className="text-xs text-aifm-charcoal/50">Senast aktiv</p>
                   </div>
                 </div>
 
@@ -266,7 +266,7 @@ export default function DataRoomsPage() {
                 <input
                   type="text"
                   className="input w-full"
-                  placeholder="e.g., Project Alpha Due Diligence"
+                  placeholder="t.ex. Projekt Alpha Due Diligence"
                 />
               </div>
               <div>
@@ -275,7 +275,7 @@ export default function DataRoomsPage() {
                 </label>
                 <textarea
                   className="input w-full h-20 resize-none"
-                  placeholder="Brief description of the room's purpose..."
+                  placeholder="Kort beskrivning av rummets syfte..."
                 />
               </div>
               <div>

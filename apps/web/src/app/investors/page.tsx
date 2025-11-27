@@ -104,7 +104,7 @@ export default function InvestorsPage() {
             <div className="flex items-center gap-3">
               <button className="btn-outline py-2 px-4 flex items-center gap-2">
                 <Download className="w-4 h-4" />
-                Export
+                Exportera
               </button>
               <button className="btn-primary py-2 px-4 flex items-center gap-2">
                 <Plus className="w-4 h-4" />
@@ -147,7 +147,7 @@ export default function InvestorsPage() {
             }`}
           >
             <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Total Investors</span>
+              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Totalt antal investerare</span>
               <Users className="w-5 h-5 text-aifm-charcoal/30" />
             </div>
             <p className="text-3xl font-medium text-aifm-charcoal">{stats.total}</p>
@@ -177,7 +177,7 @@ export default function InvestorsPage() {
             }`}
           >
             <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Pending Review</span>
+              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Väntar på granskning</span>
               <Clock className="w-5 h-5 text-amber-500" />
             </div>
             <p className="text-3xl font-medium text-amber-600">{stats.pending}</p>
@@ -205,7 +205,7 @@ export default function InvestorsPage() {
             <Search className="w-4 h-4 text-aifm-charcoal/40 absolute left-3 top-1/2 -translate-y-1/2" />
             <input 
               type="text" 
-              placeholder="Search investors..."
+              placeholder="Sök investerare..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="input py-2 pl-10 pr-4 w-full"
@@ -213,7 +213,7 @@ export default function InvestorsPage() {
           </div>
           <button className="btn-outline py-2 px-4 flex items-center gap-2">
             <Filter className="w-4 h-4" />
-            More Filters
+            Fler filter
           </button>
         </div>
 

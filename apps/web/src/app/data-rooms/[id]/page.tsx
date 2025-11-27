@@ -214,7 +214,7 @@ export default function DataRoomDetailPage() {
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-aifm-charcoal/40" />
                       <input
                         type="text"
-                        placeholder="Search documents..."
+                        placeholder="Sök dokument..."
                         className="input pl-9 py-1.5 text-sm w-64"
                       />
                     </div>
@@ -413,7 +413,7 @@ export default function DataRoomDetailPage() {
               <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Activity Log</h3>
               <button className="btn-outline py-1.5 px-3 text-sm flex items-center gap-2">
                 <Download className="w-4 h-4" />
-                Export
+                Exportera
               </button>
             </div>
             <div className="divide-y divide-gray-50">
@@ -541,7 +541,7 @@ export default function DataRoomDetailPage() {
                 <input
                   type="email"
                   className="input w-full"
-                  placeholder="name@company.com"
+                  placeholder="namn@foretag.se"
                 />
               </div>
               <div>
@@ -566,7 +566,7 @@ export default function DataRoomDetailPage() {
                 </label>
                 <textarea
                   className="input w-full h-20 resize-none"
-                  placeholder="Add a personal note to the invitation..."
+                  placeholder="Lägg till ett personligt meddelande..."
                 />
               </div>
             </div>
