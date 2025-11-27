@@ -83,7 +83,7 @@ export default function PortfolioPage() {
               />
             </div>
             <div className="flex items-center gap-4">
-              <p className="text-aifm-charcoal/60">Track portfolio company performance and valuations</p>
+              <p className="text-aifm-charcoal/60">Följ portföljbolagens utveckling och värderingar</p>
               <Link href="/guide#portfolio" className="text-xs text-aifm-gold hover:underline flex items-center gap-1">
                 <BookOpen className="w-3 h-3" />
                 Guide

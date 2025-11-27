@@ -85,7 +85,7 @@ export default function TreasuryPage() {
               />
             </div>
             <div className="flex items-center gap-4">
-              <p className="text-aifm-charcoal/60">Bank accounts, transactions, and payment management</p>
+              <p className="text-aifm-charcoal/60">Bankkonton, transaktioner och betalningshantering</p>
               <Link href="/guide#treasury" className="text-xs text-aifm-gold hover:underline flex items-center gap-1">
                 <BookOpen className="w-3 h-3" />
                 Guide

@@ -44,7 +44,7 @@ const guideSections = [
   },
   {
     id: 'treasury',
-    title: 'Treasury',
+    title: 'Likviditet',
     icon: Wallet,
     color: 'bg-cyan-100 text-cyan-600',
   },
