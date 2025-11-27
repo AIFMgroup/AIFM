@@ -75,14 +75,12 @@ function AnimatedBar({
   height, 
   color, 
   delay = 0, 
-  value,
-  label
+  value
 }: { 
   height: number; 
   color: string; 
   delay?: number;
   value?: number;
-  label?: string;
 }) {
   const [animatedHeight, setAnimatedHeight] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
