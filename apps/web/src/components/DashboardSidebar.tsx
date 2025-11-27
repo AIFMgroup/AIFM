@@ -5,9 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { 
-  LayoutDashboard, Briefcase, CheckSquare, FolderLock,
-  Users, ArrowUpRight, ArrowDownRight, FileText, 
-  Settings, LogOut, Wallet, ChevronDown,
+  LayoutDashboard, Briefcase, CheckSquare,
+  Settings, LogOut, ChevronDown,
   ChevronLeft, ChevronRight, Banknote, FolderOpen
 } from 'lucide-react';
 import { useSidebar } from './SidebarContext';
