@@ -339,7 +339,7 @@ export default function CapitalCallsPage() {
             ) : (
               <div className="p-12 text-center">
                 <FileText className="w-12 h-12 text-aifm-charcoal/20 mx-auto mb-4" />
-                <p className="text-aifm-charcoal/60">Select a capital call to view details</p>
+                <p className="text-aifm-charcoal/60">Välj ett kapitalanrop för att se detaljer</p>
               </div>
             )}
           </div>

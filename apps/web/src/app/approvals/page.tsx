@@ -424,7 +424,7 @@ export default function ApprovalsPage() {
 
                   {selectedItem.metadata && (
                     <div className="bg-gray-50 rounded-xl p-4">
-                      <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-2">Additional Details</p>
+                      <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-2">Ytterligare detaljer</p>
                       {Object.entries(selectedItem.metadata).map(([key, value]) => (
                         <div key={key} className="flex justify-between text-sm mb-1 last:mb-0">
                           <span className="text-aifm-charcoal/60 capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
@@ -502,7 +502,7 @@ export default function ApprovalsPage() {
                           <X className="w-4 h-4 text-red-600" />
                         </div>
                         <div>
-                          <p className="font-medium text-aifm-charcoal text-sm">Rejected</p>
+                          <p className="font-medium text-aifm-charcoal text-sm">Avslaget</p>
                           <p className="text-xs text-aifm-charcoal/60">
                             {selectedItem.rejectedBy} • {selectedItem.rejectedAt && formatDate(selectedItem.rejectedAt)}
                           </p>
@@ -542,7 +542,7 @@ export default function ApprovalsPage() {
             ) : (
               <div className="p-12 text-center">
                 <Shield className="w-12 h-12 text-aifm-charcoal/20 mx-auto mb-4" />
-                <p className="text-aifm-charcoal/60">Select an item to view details</p>
+                <p className="text-aifm-charcoal/60">Välj ett ärende för att se detaljer</p>
               </div>
             )}
           </div>
@@ -611,7 +611,7 @@ export default function ApprovalsPage() {
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-xl">
             <div className="px-6 py-4 border-b border-gray-100">
-              <h3 className="text-lg font-medium text-aifm-charcoal uppercase tracking-wider">Reject Item</h3>
+              <h3 className="text-lg font-medium text-aifm-charcoal uppercase tracking-wider">Avslå ärende</h3>
             </div>
             <div className="p-6">
               <div className="flex items-center gap-4 mb-6">

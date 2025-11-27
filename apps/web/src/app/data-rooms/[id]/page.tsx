@@ -241,9 +241,9 @@ export default function DataRoomDetailPage() {
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Name</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Size</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Views</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Uploaded</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Actions</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Visningar</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Uppladdad</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Åtgärder</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
@@ -379,7 +379,7 @@ export default function DataRoomDetailPage() {
                           <span className="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">Download</span>
                         )}
                         {member.permissions.upload && (
-                          <span className="text-xs bg-green-100 text-green-600 px-1.5 py-0.5 rounded">Upload</span>
+                          <span className="text-xs bg-green-100 text-green-600 px-1.5 py-0.5 rounded">Ladda upp</span>
                         )}
                       </div>
                     </td>
@@ -597,7 +597,7 @@ export default function DataRoomDetailPage() {
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-lg font-medium text-aifm-charcoal uppercase tracking-wider">Upload Documents</h3>
+              <h3 className="text-lg font-medium text-aifm-charcoal uppercase tracking-wider">Ladda upp dokument</h3>
               <button 
                 onClick={() => setShowUploadModal(false)}
                 className="p-2 hover:bg-gray-100 rounded-lg"

@@ -150,8 +150,8 @@ export default function ClientDashboardPage() {
         <h2 className="text-2xl font-semibold mb-4">Manual Upload</h2>
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Upload CSV/XLSX File</CardTitle>
-            <p className="text-sm text-muted-foreground">Import accounting data from a spreadsheet</p>
+            <CardTitle className="text-lg">Ladda upp CSV/XLSX-fil</CardTitle>
+            <p className="text-sm text-muted-foreground">Importera bokföringsdata från kalkylblad</p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleUpload} className="space-y-4">
