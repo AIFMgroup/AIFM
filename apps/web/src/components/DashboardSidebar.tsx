@@ -65,7 +65,7 @@ const navItems: NavItem[] = [
 export function DashboardSidebar() {
   const { collapsed, toggle } = useSidebar();
   const pathname = usePathname();
-  const [expandedItems, setExpandedItems] = useState<string[]>(['fund', 'capital', 'documents']);
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   const isActive = (href: string) => {
     if (href === '/overview') return pathname === '/overview' || pathname === '/';
@@ -123,7 +123,7 @@ export function DashboardSidebar() {
                     className={`w-full flex items-center ${collapsed ? 'justify-center' : 'justify-between'} px-3 py-2.5 rounded-lg transition-all duration-200 group relative
                       ${active 
                         ? 'text-white bg-white/10' 
-                        : 'text-white/50 hover:text-white hover:bg-white/5'
+                        : 'text-white hover:bg-white/5'
                       }`}
                     title={collapsed ? item.label : undefined}
                   >
@@ -150,7 +150,7 @@ export function DashboardSidebar() {
                     className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'} px-3 py-2.5 rounded-lg transition-all duration-200 group relative
                       ${active 
                         ? 'text-white bg-aifm-gold' 
-                        : 'text-white/50 hover:text-white hover:bg-white/5'
+                        : 'text-white hover:bg-white/5'
                       }`}
                     title={collapsed ? item.label : undefined}
                   >
@@ -181,7 +181,7 @@ export function DashboardSidebar() {
                               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200
                                 ${childActive 
                                   ? 'text-white bg-aifm-gold' 
-                                  : 'text-white/40 hover:text-white hover:bg-white/5'
+                                  : 'text-white/70 hover:text-white hover:bg-white/5'
                                 }`}
                             >
                               <div className={`w-1.5 h-1.5 rounded-full ${childActive ? 'bg-white' : 'bg-white/30'}`} />
@@ -205,7 +205,7 @@ export function DashboardSidebar() {
           <li>
             <Link 
               href="/guide"
-              className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-white/40 hover:text-white hover:bg-white/5 transition-all duration-200 group relative`}
+              className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-white hover:bg-white/5 transition-all duration-200 group relative`}
               title={collapsed ? 'Guide' : undefined}
             >
               <Settings className="w-5 h-5 flex-shrink-0" />
@@ -221,7 +221,7 @@ export function DashboardSidebar() {
           <li>
             <button 
               onClick={handleLogout}
-              className={`w-full flex items-center ${collapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 group relative`}
+              className={`w-full flex items-center ${collapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-white hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 group relative`}
               title={collapsed ? 'Logga ut' : undefined}
             >
               <LogOut className="w-5 h-5 flex-shrink-0" />
