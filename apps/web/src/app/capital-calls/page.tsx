@@ -41,11 +41,11 @@ export default function CapitalCallsPage() {
 
   const getStatusLabel = (status: CapitalCall['status']) => {
     switch (status) {
-      case 'FULLY_PAID': return 'Fully Paid';
-      case 'PARTIALLY_PAID': return 'Partial';
-      case 'SENT': return 'Sent';
-      case 'DRAFT': return 'Draft';
-      case 'OVERDUE': return 'Overdue';
+      case 'FULLY_PAID': return 'Betald';
+      case 'PARTIALLY_PAID': return 'Delvis betald';
+      case 'SENT': return 'Skickad';
+      case 'DRAFT': return 'Utkast';
+      case 'OVERDUE': return 'Förfallen';
       default: return status;
     }
   };

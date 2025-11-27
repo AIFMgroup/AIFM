@@ -49,10 +49,10 @@ export default function TreasuryPage() {
                 <span className="font-medium tracking-widest text-aifm-charcoal uppercase text-sm">AIFM</span>
               </Link>
               <nav className="hidden md:flex items-center gap-6">
-                <Link href="/fund" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Funds</Link>
-                <Link href="/treasury" className="text-sm font-medium text-aifm-gold uppercase tracking-wider">Treasury</Link>
-                <Link href="/portfolio" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Portfolio</Link>
-                <Link href="/investors" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Investors</Link>
+                <Link href="/fund" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Fonder</Link>
+                <Link href="/treasury" className="text-sm font-medium text-aifm-gold uppercase tracking-wider">Likviditet</Link>
+                <Link href="/portfolio" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Portfölj</Link>
+                <Link href="/investors" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Investerare</Link>
               </nav>
             </div>
             <div className="flex items-center gap-3">
@@ -64,7 +64,7 @@ export default function TreasuryPage() {
               </button>
               <button className="btn-primary text-sm py-2 flex items-center gap-2">
                 <Plus className="w-4 h-4" />
-                New Payment
+                Ny betalning
               </button>
             </div>
           </div>
@@ -76,7 +76,7 @@ export default function TreasuryPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <h1 className="heading-2">Treasury</h1>
+              <h1 className="heading-2">Likviditet</h1>
               <HelpTooltip 
                 {...helpContent.treasury}
                 learnMoreLink="/guide#treasury"

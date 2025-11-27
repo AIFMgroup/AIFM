@@ -119,7 +119,7 @@ export default function InvestorsPage() {
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-2">
-            <h1 className="heading-2">Investor Management</h1>
+              <h1 className="heading-2">Investerarhantering</h1>
             <HelpTooltip 
               {...helpContent.investors}
               learnMoreLink="/guide#investors"

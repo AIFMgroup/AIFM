@@ -38,9 +38,9 @@ export default function DistributionsPage() {
 
   const getTypeLabel = (type: Distribution['type']) => {
     switch (type) {
-      case 'DIVIDEND': return 'Dividend';
-      case 'RETURN_OF_CAPITAL': return 'Return of Capital';
-      case 'PROFIT_DISTRIBUTION': return 'Profit Distribution';
+      case 'DIVIDEND': return 'Utdelning';
+      case 'RETURN_OF_CAPITAL': return 'Kapitalåterbäring';
+      case 'PROFIT_DISTRIBUTION': return 'Vinstutdelning';
       default: return type;
     }
   };

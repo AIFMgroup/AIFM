@@ -43,8 +43,8 @@ const mockApprovals: ApprovalItem[] = [
   {
     id: 'appr-1',
     type: 'DISTRIBUTION',
-    title: 'Profit Distribution - Q4 2024',
-    description: 'Quarterly profit distribution to 5 investors based on ownership percentages',
+    title: 'Vinstutdelning - Q4 2024',
+    description: 'Kvartalsvis vinstutdelning till 5 investerare baserat på ägarandelar',
     amount: 15000000,
     currency: 'SEK',
     fundName: 'Nordic Growth Fund I',

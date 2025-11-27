@@ -39,10 +39,10 @@ export default function FundOverviewPage() {
                 <span className="font-medium tracking-widest text-aifm-charcoal uppercase text-sm">AIFM</span>
               </Link>
               <nav className="hidden md:flex items-center gap-6">
-                <Link href="/fund" className="text-sm font-medium text-aifm-gold uppercase tracking-wider">Funds</Link>
-                <Link href="/treasury" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Treasury</Link>
-                <Link href="/portfolio" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Portfolio</Link>
-                <Link href="/investors" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Investors</Link>
+                <Link href="/fund" className="text-sm font-medium text-aifm-gold uppercase tracking-wider">Fonder</Link>
+                <Link href="/treasury" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Likviditet</Link>
+                <Link href="/portfolio" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Portfölj</Link>
+                <Link href="/investors" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Investerare</Link>
                 <Link href="/admin/compliance" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Compliance</Link>
               </nav>
             </div>
@@ -53,8 +53,8 @@ export default function FundOverviewPage() {
               >
                 <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
               </button>
-              <Link href="/admin/dashboard" className="btn-primary text-sm py-2">
-                Admin Dashboard
+              <Link href="/overview" className="btn-primary text-sm py-2">
+                Översikt
               </Link>
             </div>
           </div>
@@ -66,7 +66,7 @@ export default function FundOverviewPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <h1 className="heading-2">Fund Overview</h1>
+              <h1 className="heading-2">Fondöversikt</h1>
               <HelpTooltip 
                 {...helpContent.fundDashboard}
                 learnMoreLink="/guide#funds"
@@ -75,7 +75,7 @@ export default function FundOverviewPage() {
               />
             </div>
             <div className="flex items-center gap-4">
-              <p className="text-aifm-charcoal/60">Monitor fund performance, NAV, and key metrics</p>
+              <p className="text-aifm-charcoal/60">Övervaka fondprestanda, NAV och nyckeltal</p>
               <Link href="/guide#funds" className="text-xs text-aifm-gold hover:underline flex items-center gap-1">
                 <BookOpen className="w-3 h-3" />
                 Guide
