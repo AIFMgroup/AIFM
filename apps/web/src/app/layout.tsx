@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { SessionProvider } from 'next-auth/react';
 import { ToastContainer } from '@/components/Toast';
+import { Providers } from '@/components/Providers';
 import './globals.css';
 import '@/styles/animations.css';
 
@@ -18,7 +19,9 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <SessionProvider>
-          {children}
+          <Providers>
+            {children}
+          </Providers>
           <ToastContainer />
         </SessionProvider>
       </body>

@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { DashboardSidebar } from './DashboardSidebar';
 import { SidebarProvider, useSidebar } from './SidebarContext';
-import { CompanyProvider, useCompany } from './CompanyContext';
+import { useCompany } from './CompanyContext';
 import { Company } from '@/lib/companyData';
 
 interface DashboardLayoutProps {
@@ -645,13 +645,11 @@ function DashboardLayoutInner({
   );
 }
 
-// Main export that wraps with SidebarProvider and CompanyProvider
+// Main export that wraps with SidebarProvider
 export function DashboardLayout(props: DashboardLayoutProps) {
   return (
     <SidebarProvider>
-      <CompanyProvider>
-        <DashboardLayoutInner {...props} />
-      </CompanyProvider>
+      <DashboardLayoutInner {...props} />
     </SidebarProvider>
   );
 }
