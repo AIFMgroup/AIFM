@@ -318,13 +318,13 @@ export default function OverviewPage() {
                     <div className="text-center">
                       {hoveredInfo ? (
                         <>
-                          <p className="text-4xl font-semibold text-aifm-charcoal">{hoveredInfo.percentage}%</p>
-                          <p className="text-sm text-aifm-charcoal/50 mt-1">{hoveredInfo.name}</p>
+                          <p className="text-2xl font-semibold text-aifm-charcoal">{hoveredInfo.percentage}%</p>
+                          <p className="text-xs text-aifm-charcoal/50 mt-1">{hoveredInfo.name}</p>
                         </>
                       ) : (
                         <>
-                          <p className="text-4xl font-semibold text-aifm-charcoal">{formatCurrencyCompact(totalPortfolioValue)}</p>
-                          <p className="text-sm text-aifm-charcoal/50 mt-1">Totalt värde</p>
+                          <p className="text-2xl font-semibold text-aifm-charcoal">{formatCurrencyCompact(totalPortfolioValue)}</p>
+                          <p className="text-xs text-aifm-charcoal/50 mt-1">Totalt värde</p>
                         </>
                       )}
                     </div>
@@ -379,14 +379,14 @@ export default function OverviewPage() {
             </div>
             
             <div className="p-6 lg:p-8">
-              {/* Current Value Display */}
-              <div className="mb-6">
-                <p className="text-3xl font-semibold text-aifm-charcoal tracking-tight">
+              {/* Current Value Display - Smaller to avoid collision */}
+              <div className="mb-4">
+                <p className="text-2xl font-semibold text-aifm-charcoal tracking-tight">
                   {selectedKPI === 'NAV' && `${(metrics.nav / 1000000).toFixed(1)} MSEK`}
                   {selectedKPI === 'IRR' && `${metrics.irr.toFixed(1)}%`}
                   {selectedKPI === 'MOIC' && `${metrics.moic.toFixed(2)}x`}
                 </p>
-                <p className="text-xs text-aifm-charcoal/40 mt-1">
+                <p className="text-[10px] text-aifm-charcoal/40 mt-0.5 uppercase tracking-wider">
                   {selectedKPI === 'NAV' && 'Nettotillgångsvärde'}
                   {selectedKPI === 'IRR' && 'Internränta (årlig)'}
                   {selectedKPI === 'MOIC' && 'Multiple on Invested Capital'}

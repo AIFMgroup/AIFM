@@ -2,8 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { 
-  Send, Bot, User, FileText, Sparkles, Clock,
-  ThumbsUp, ThumbsDown, Copy, CheckCircle2
+  Send, Bot, User, FileText, Sparkles,
+  ThumbsUp, ThumbsDown, Copy, CheckCircle2, MessageCircle
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 
@@ -138,7 +138,7 @@ export default function ComplianceAgentPage() {
     {
       id: 'welcome',
       role: 'assistant',
-      content: `Hej! 👋 Jag är din Compliance Agent.
+      content: `Hej! Jag är din Compliance Agent.
 
 Jag har tillgång till alla uppladdade dokument och kan hjälpa dig att hitta information om:
 - Fondbestämmelser och policyer
@@ -244,40 +244,99 @@ Försök gärna omformulera din fråga eller välj ett av de föreslagna ämnena
     }).format(date);
   };
 
+  // Parse message content with markdown-like formatting
+  const renderMessageContent = (content: string, isAssistant: boolean) => {
+    const lines = content.split('\n');
+    return lines.map((line, i) => {
+      // Bold text
+      if (line.startsWith('**') && line.endsWith('**')) {
+        return (
+          <p key={i} className={`font-semibold mt-3 first:mt-0 ${isAssistant ? 'text-white' : 'text-aifm-charcoal'}`}>
+            {line.replace(/\*\*/g, '')}
+          </p>
+        );
+      }
+      // Inline bold
+      if (line.includes('**')) {
+        const parts = line.split(/\*\*/);
+        return (
+          <p key={i} className={isAssistant ? 'text-white/90' : 'text-aifm-charcoal/90'}>
+            {parts.map((part, j) => 
+              j % 2 === 1 ? <strong key={j} className="font-semibold">{part}</strong> : part
+            )}
+          </p>
+        );
+      }
+      // List items
+      if (line.startsWith('- ')) {
+        return (
+          <p key={i} className={`ml-3 ${isAssistant ? 'text-white/90' : 'text-aifm-charcoal/90'}`}>
+            • {line.substring(2)}
+          </p>
+        );
+      }
+      // Numbered list
+      if (line.match(/^\d+\./)) {
+        return (
+          <p key={i} className={`ml-3 ${isAssistant ? 'text-white/90' : 'text-aifm-charcoal/90'}`}>
+            {line}
+          </p>
+        );
+      }
+      // Empty line
+      if (!line) {
+        return <div key={i} className="h-2" />;
+      }
+      // Regular text
+      return (
+        <p key={i} className={isAssistant ? 'text-white/90' : 'text-aifm-charcoal/90'}>
+          {line}
+        </p>
+      );
+    });
+  };
+
   return (
     <DashboardLayout>
       <div className="flex flex-col h-[calc(100vh-140px)]">
         {/* Header */}
         <div className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-aifm-gold to-aifm-gold/70 flex items-center justify-center">
-              <Bot className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/80 
+                            flex items-center justify-center shadow-lg shadow-aifm-charcoal/20
+                            animate-pulse-slow">
+              <Bot className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-medium text-aifm-charcoal uppercase tracking-wider">
+              <h1 className="text-2xl font-semibold text-aifm-charcoal tracking-tight">
                 Compliance Agent
               </h1>
-              <p className="text-sm text-aifm-charcoal/50">
-                AI-assistent för dokumentsökning och compliance-frågor
-              </p>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                <p className="text-sm text-aifm-charcoal/50">
+                  Online • Söker i {5} dokument
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Chat Container */}
-        <div className="flex-1 bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col">
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* Chat Container - Messenger Style */}
+        <div className="flex-1 bg-gradient-to-b from-gray-50 to-gray-100/50 rounded-2xl overflow-hidden flex flex-col
+                        border border-gray-200/50 shadow-inner">
+          
+          {/* Messages Area */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {messages.map((message) => (
               <div 
                 key={message.id}
-                className={`flex gap-4 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
+                className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
               >
                 {/* Avatar */}
-                <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center
+                <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-md
                   ${message.role === 'assistant' 
-                    ? 'bg-gradient-to-br from-aifm-gold to-aifm-gold/70' 
-                    : 'bg-aifm-charcoal'
+                    ? 'bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/80' 
+                    : 'bg-gradient-to-br from-aifm-gold to-aifm-gold/80'
                   }`}
                 >
                   {message.role === 'assistant' 
@@ -286,36 +345,29 @@ Försök gärna omformulera din fråga eller välj ett av de föreslagna ämnena
                   }
                 </div>
 
-                {/* Message Content */}
-                <div className={`flex-1 max-w-[80%] ${message.role === 'user' ? 'flex flex-col items-end' : ''}`}>
-                  <div className={`rounded-2xl px-5 py-4 ${
+                {/* Message Bubble */}
+                <div className={`max-w-[75%] ${message.role === 'user' ? 'flex flex-col items-end' : ''}`}>
+                  {/* Messenger-style bubble */}
+                  <div className={`rounded-2xl px-5 py-4 shadow-sm ${
                     message.role === 'assistant' 
-                      ? 'bg-gray-50 text-aifm-charcoal' 
-                      : 'bg-aifm-charcoal text-white'
+                      ? 'bg-aifm-charcoal text-white rounded-tl-md' 
+                      : 'bg-white text-aifm-charcoal rounded-tr-md border border-gray-100'
                   }`}>
-                    <div className="prose prose-sm max-w-none whitespace-pre-wrap">
-                      {message.content.split('\n').map((line, i) => {
-                        if (line.startsWith('**') && line.endsWith('**')) {
-                          return <p key={i} className="font-semibold mt-3 first:mt-0">{line.replace(/\*\*/g, '')}</p>;
-                        }
-                        if (line.startsWith('- ')) {
-                          return <p key={i} className="ml-4">• {line.substring(2)}</p>;
-                        }
-                        if (line.match(/^\d+\./)) {
-                          return <p key={i} className="ml-4">{line}</p>;
-                        }
-                        return <p key={i} className={line ? '' : 'h-2'}>{line}</p>;
-                      })}
+                    <div className="text-sm leading-relaxed">
+                      {renderMessageContent(message.content, message.role === 'assistant')}
                     </div>
                   </div>
 
-                  {/* Sources */}
+                  {/* Sources (for assistant messages) */}
                   {message.sources && message.sources.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-2">
                       {message.sources.map((source, i) => (
                         <span 
                           key={i}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-aifm-gold/10 text-aifm-gold text-xs rounded-lg"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 
+                                     bg-white text-aifm-charcoal/70 text-xs rounded-full
+                                     border border-gray-200 shadow-sm
+                                     hover:border-aifm-gold/50 hover:text-aifm-gold transition-colors cursor-pointer"
                         >
                           <FileText className="w-3 h-3" />
                           {source}
@@ -324,30 +376,27 @@ Försök gärna omformulera din fråga eller välj ett av de föreslagna ämnena
                     </div>
                   )}
 
-                  {/* Actions & Timestamp */}
+                  {/* Timestamp & Actions */}
                   <div className={`flex items-center gap-3 mt-2 text-xs text-aifm-charcoal/40
                     ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
                   >
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {formatTime(message.timestamp)}
-                    </span>
+                    <span>{formatTime(message.timestamp)}</span>
                     {message.role === 'assistant' && message.id !== 'welcome' && (
                       <div className="flex items-center gap-1">
                         <button 
                           onClick={() => handleCopy(message.id, message.content)}
-                          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                          className="p-1.5 hover:bg-white rounded-lg transition-colors"
                           title="Kopiera"
                         >
                           {copiedId === message.id 
-                            ? <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                            ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                             : <Copy className="w-3.5 h-3.5" />
                           }
                         </button>
-                        <button className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors" title="Bra svar">
+                        <button className="p-1.5 hover:bg-white rounded-lg transition-colors" title="Bra svar">
                           <ThumbsUp className="w-3.5 h-3.5" />
                         </button>
-                        <button className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors" title="Dåligt svar">
+                        <button className="p-1.5 hover:bg-white rounded-lg transition-colors" title="Dåligt svar">
                           <ThumbsDown className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -359,18 +408,19 @@ Försök gärna omformulera din fråga eller välj ett av de föreslagna ämnena
 
             {/* Typing Indicator */}
             {isTyping && (
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-gradient-to-br from-aifm-gold to-aifm-gold/70 flex items-center justify-center">
+              <div className="flex gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/80 
+                                flex items-center justify-center shadow-md">
                   <Bot className="w-5 h-5 text-white" />
                 </div>
-                <div className="bg-gray-50 rounded-2xl px-5 py-4">
-                  <div className="flex items-center gap-2">
+                <div className="bg-aifm-charcoal rounded-2xl rounded-tl-md px-5 py-4 shadow-sm">
+                  <div className="flex items-center gap-3">
                     <Sparkles className="w-4 h-4 text-aifm-gold animate-pulse" />
-                    <span className="text-sm text-aifm-charcoal/60">Söker i dokumenten...</span>
+                    <span className="text-sm text-white/70">Söker i dokumenten</span>
                     <div className="flex gap-1">
-                      <div className="w-1.5 h-1.5 bg-aifm-gold rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-1.5 h-1.5 bg-aifm-gold rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-1.5 h-1.5 bg-aifm-gold rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      <div className="w-2 h-2 bg-aifm-gold rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="w-2 h-2 bg-aifm-gold rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="w-2 h-2 bg-aifm-gold rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                     </div>
                   </div>
                 </div>
@@ -382,15 +432,20 @@ Försök gärna omformulera din fråga eller välj ett av de föreslagna ämnena
 
           {/* Suggested Questions */}
           {messages.length <= 1 && (
-            <div className="px-6 py-4 border-t border-gray-100">
-              <p className="text-xs text-aifm-charcoal/40 uppercase tracking-wider mb-3">Föreslagna frågor</p>
+            <div className="px-6 py-4 bg-white/80 backdrop-blur-sm border-t border-gray-100">
+              <p className="text-xs text-aifm-charcoal/40 uppercase tracking-wider font-medium mb-3 flex items-center gap-2">
+                <MessageCircle className="w-3 h-3" />
+                Föreslagna frågor
+              </p>
               <div className="flex flex-wrap gap-2">
                 {suggestedQuestions.map((question, i) => (
                   <button
                     key={i}
                     onClick={() => handleSuggestedQuestion(question)}
-                    className="px-4 py-2 bg-gray-50 hover:bg-aifm-gold/10 hover:text-aifm-gold 
-                               text-sm text-aifm-charcoal/70 rounded-xl transition-colors"
+                    className="px-4 py-2.5 bg-white hover:bg-aifm-gold/10 
+                               text-sm text-aifm-charcoal/70 hover:text-aifm-charcoal
+                               rounded-full border border-gray-200 hover:border-aifm-gold/30
+                               transition-all duration-300 shadow-sm hover:shadow-md"
                   >
                     {question}
                   </button>
@@ -399,8 +454,8 @@ Försök gärna omformulera din fråga eller välj ett av de föreslagna ämnena
             </div>
           )}
 
-          {/* Input Area */}
-          <div className="p-4 border-t border-gray-100">
+          {/* Input Area - Messenger Style */}
+          <div className="p-4 bg-white border-t border-gray-100">
             <div className="flex items-end gap-3">
               <div className="flex-1 relative">
                 <textarea
@@ -408,31 +463,34 @@ Försök gärna omformulera din fråga eller välj ett av de föreslagna ämnena
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Ställ en fråga om dina dokument..."
+                  placeholder="Skriv din fråga här..."
                   rows={1}
-                  className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 pr-12
-                             focus:outline-none focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold
-                             text-aifm-charcoal placeholder:text-aifm-charcoal/40"
-                  style={{ minHeight: '48px', maxHeight: '120px' }}
+                  className="w-full resize-none rounded-2xl border border-gray-200 
+                             bg-gray-50 px-5 py-3.5
+                             focus:outline-none focus:ring-2 focus:ring-aifm-charcoal/20 focus:border-aifm-charcoal/30
+                             focus:bg-white
+                             text-aifm-charcoal placeholder:text-aifm-charcoal/40
+                             transition-all duration-200"
+                  style={{ minHeight: '52px', maxHeight: '120px' }}
                 />
               </div>
               <button
                 onClick={handleSend}
                 disabled={!inputValue.trim() || isTyping}
-                className="flex-shrink-0 w-12 h-12 rounded-xl bg-aifm-gold hover:bg-aifm-gold/90 
+                className="flex-shrink-0 w-12 h-12 rounded-full 
+                           bg-aifm-charcoal hover:bg-aifm-charcoal/90 
                            disabled:bg-gray-200 disabled:cursor-not-allowed
-                           flex items-center justify-center transition-colors"
+                           flex items-center justify-center 
+                           transition-all duration-300 
+                           shadow-lg shadow-aifm-charcoal/20 hover:shadow-xl hover:shadow-aifm-charcoal/30
+                           hover:scale-105 active:scale-95"
               >
                 <Send className="w-5 h-5 text-white" />
               </button>
             </div>
-            <p className="text-xs text-aifm-charcoal/40 mt-2 text-center">
-              Compliance Agent söker i {5} uppladdade dokument
-            </p>
           </div>
         </div>
       </div>
     </DashboardLayout>
   );
 }
-
