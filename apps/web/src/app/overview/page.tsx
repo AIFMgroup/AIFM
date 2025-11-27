@@ -14,7 +14,7 @@ import {
   Company
 } from '@/lib/companyData';
 
-// Navigation items
+// Navigation items - Swedish
 const navItems = [
   { id: 'overview', label: 'Översikt', icon: LayoutDashboard, href: '/overview' },
   { id: 'portfolio', label: 'Portfölj', icon: Briefcase, href: '/portfolio' },
@@ -24,9 +24,9 @@ const navItems = [
   { id: 'investors', label: 'Investerare', icon: Users, href: '/investors' },
   { id: 'capital', label: 'Kapitalanrop', icon: ArrowUpRight, href: '/capital-calls' },
   { id: 'distributions', label: 'Utdelningar', icon: ArrowDownRight, href: '/distributions' },
-  { id: 'treasury', label: 'Treasury', icon: Wallet, href: '/treasury' },
+  { id: 'treasury', label: 'Likviditet', icon: Wallet, href: '/treasury' },
   { id: 'divider2', type: 'divider' },
-  { id: 'documents', label: 'Dokument', icon: FileText, href: '/clients' },
+  { id: 'documents', label: 'Bokföring', icon: FileText, href: '/clients' },
   { id: 'compliance', label: 'Compliance', icon: Shield, href: '/approvals' },
 ];
 
@@ -43,7 +43,7 @@ export default function OverviewPage() {
   const dashboard = getCompanyDashboard(selectedCompany.id);
 
   if (!dashboard) {
-    return <div>Loading...</div>;
+    return <div>Laddar...</div>;
   }
 
   const { portfolio, transactions, tasks, kpiData, metrics } = dashboard;
@@ -51,20 +51,47 @@ export default function OverviewPage() {
   // Calculate total portfolio value
   const totalPortfolioValue = portfolio.reduce((sum, item) => sum + item.value, 0);
 
+  // Transaction type translations
+  const getTransactionTypeLabel = (type: string) => {
+    switch(type) {
+      case 'INVESTMENT': return 'Investering';
+      case 'INCOME': return 'Intäkt';
+      case 'DISTRIBUTION': return 'Utdelning';
+      case 'EXPENSE': return 'Utgift';
+      default: return type;
+    }
+  };
+
+  // Priority translations
+  const getPriorityLabel = (priority: string) => {
+    switch(priority) {
+      case 'HIGH': return 'Hög';
+      case 'MEDIUM': return 'Medel';
+      case 'LOW': return 'Låg';
+      default: return priority;
+    }
+  };
+
+  const handleLogout = () => {
+    // Clear cookie and redirect to login
+    document.cookie = 'password-gate-auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    window.location.href = '/password-gate';
+  };
+
   return (
     <div className="min-h-screen bg-white flex">
       {/* Left Sidebar */}
-      <aside className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-aifm-charcoal flex flex-col transition-all duration-300`}>
+      <aside className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-aifm-charcoal flex flex-col transition-all duration-300 fixed left-0 top-0 bottom-0 z-40`}>
         {/* Logo */}
         <div className="p-4 border-b border-white/10">
-          <Link href="/" className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-aifm-gold rounded-lg flex items-center justify-center flex-shrink-0">
               <span className="text-white font-bold text-lg">A</span>
             </div>
             {!sidebarCollapsed && (
               <span className="text-white font-medium tracking-widest uppercase">AIFM</span>
             )}
-          </Link>
+          </div>
         </div>
 
         {/* Main Navigation */}
@@ -117,7 +144,10 @@ export default function OverviewPage() {
               );
             })}
             <li>
-              <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-white/50 hover:bg-red-500/20 hover:text-red-400 transition-colors">
+              <button 
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-white/50 hover:bg-red-500/20 hover:text-red-400 transition-colors"
+              >
                 <LogOut className="w-5 h-5 flex-shrink-0" />
                 {!sidebarCollapsed && (
                   <span className="text-sm">Logga ut</span>
@@ -129,7 +159,7 @@ export default function OverviewPage() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-h-screen">
+      <main className="flex-1 flex flex-col min-h-screen ml-64">
         {/* Top Company Selector Bar */}
         <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
           <div className="px-6 py-3">
@@ -188,11 +218,11 @@ export default function OverviewPage() {
                 {/* Portfolio Overview */}
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                   <div className="px-6 py-4 border-b border-gray-100">
-                    <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Portfolio Overview</h3>
+                    <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Portföljöversikt</h3>
                   </div>
                   <div className="p-6">
                     <div className="flex items-center gap-8">
-                      {/* Pie Chart Placeholder */}
+                      {/* Pie Chart */}
                       <div className="relative w-40 h-40 flex-shrink-0">
                         <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
                           {portfolio.map((item, index) => {
@@ -278,9 +308,7 @@ export default function OverviewPage() {
                               tx.type === 'DISTRIBUTION' ? 'bg-purple-100 text-purple-700' :
                               'bg-amber-100 text-amber-700'
                             }`}>
-                              {tx.type === 'INVESTMENT' ? 'Investment' : 
-                               tx.type === 'INCOME' ? 'Income' :
-                               tx.type === 'DISTRIBUTION' ? 'Distribution' : 'Expense'}
+                              {getTransactionTypeLabel(tx.type)}
                             </span>
                             <p className="text-sm text-aifm-charcoal">{tx.description}</p>
                           </div>
@@ -342,7 +370,7 @@ export default function OverviewPage() {
                                 task.priority === 'MEDIUM' ? 'bg-amber-100 text-amber-700' :
                                 'bg-gray-100 text-gray-600'
                               }`}>
-                                {task.priority}
+                                {getPriorityLabel(task.priority)}
                               </span>
                             </div>
                           </div>
@@ -358,7 +386,7 @@ export default function OverviewPage() {
                 {/* KPI Chart */}
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                   <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Operational KPIs</h3>
+                    <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Nyckeltal</h3>
                     <select className="text-xs border-0 bg-gray-100 rounded-lg px-2 py-1 text-aifm-charcoal">
                       <option>NAV</option>
                       <option>IRR</option>
@@ -407,19 +435,19 @@ export default function OverviewPage() {
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                     <p className="text-xs font-medium text-aifm-charcoal/50 uppercase tracking-wider mb-1">MOIC</p>
                     <p className="text-3xl font-bold text-aifm-charcoal">{metrics.moic.toFixed(2)}x</p>
-                    <p className="text-xs text-green-600 mt-1">↑ Multiple on Invested</p>
+                    <p className="text-xs text-green-600 mt-1">↑ Multipel på investerat</p>
                   </div>
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                     <p className="text-xs font-medium text-aifm-charcoal/50 uppercase tracking-wider mb-1">IRR</p>
                     <p className="text-3xl font-bold text-aifm-charcoal">{metrics.irr.toFixed(2)}%</p>
-                    <p className="text-xs text-green-600 mt-1">↑ Internal Rate of Return</p>
+                    <p className="text-xs text-green-600 mt-1">↑ Internränta</p>
                   </div>
                 </div>
 
                 {/* Quick Stats */}
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                   <div className="px-6 py-4 border-b border-gray-100">
-                    <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Nyckeltal</h3>
+                    <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Sammanfattning</h3>
                   </div>
                   <div className="p-4 space-y-4">
                     <div className="flex justify-between items-center">
@@ -443,7 +471,7 @@ export default function OverviewPage() {
 
                 {/* Quick Actions */}
                 <div className="bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/90 rounded-2xl p-5 text-white">
-                  <h3 className="text-sm font-medium uppercase tracking-wider mb-4">Snabblänkar</h3>
+                  <h3 className="text-sm font-medium uppercase tracking-wider mb-4">Snabbåtgärder</h3>
                   <div className="space-y-2">
                     <Link href="/capital-calls" className="flex items-center justify-between p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-colors">
                       <span className="text-sm">Nytt kapitalanrop</span>
@@ -467,4 +495,3 @@ export default function OverviewPage() {
     </div>
   );
 }
-
