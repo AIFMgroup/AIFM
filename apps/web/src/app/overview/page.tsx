@@ -221,24 +221,44 @@ export default function OverviewPage() {
       selectedCompany={selectedCompany} 
       onCompanyChange={setSelectedCompany}
     >
-      {/* Page Title */}
-      <div className="mb-6">
-        <h2 className="text-xl font-medium text-aifm-charcoal uppercase tracking-wider">Översikt</h2>
-        <p className="text-sm text-aifm-charcoal/50 mt-1">Realtidsöverblick av {selectedCompany.shortName}</p>
+      {/* Page Title - More space */}
+      <div className="mb-10">
+        <h2 className="text-2xl font-medium text-aifm-charcoal uppercase tracking-wider">Översikt</h2>
+        <p className="text-aifm-charcoal/40 mt-2">{selectedCompany.shortName}</p>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      {/* Top Row - Key Metrics */}
+      <div className="grid grid-cols-4 gap-6 mb-10">
+        <div className="bg-white rounded-xl p-6">
+          <p className="text-xs text-aifm-charcoal/40 uppercase tracking-wider">NAV</p>
+          <p className="text-2xl font-medium text-aifm-charcoal mt-2">{formatCurrencyCompact(metrics.nav)}</p>
+        </div>
+        <div className="bg-white rounded-xl p-6">
+          <p className="text-xs text-aifm-charcoal/40 uppercase tracking-wider">MOIC</p>
+          <p className="text-2xl font-medium text-aifm-charcoal mt-2">{metrics.moic.toFixed(2)}x</p>
+        </div>
+        <div className="bg-white rounded-xl p-6">
+          <p className="text-xs text-aifm-charcoal/40 uppercase tracking-wider">IRR</p>
+          <p className="text-2xl font-medium text-aifm-charcoal mt-2">{metrics.irr.toFixed(1)}%</p>
+        </div>
+        <div className="bg-white rounded-xl p-6">
+          <p className="text-xs text-aifm-charcoal/40 uppercase tracking-wider">Orealiserad vinst</p>
+          <p className="text-2xl font-medium text-green-600 mt-2">+{formatCurrencyCompact(metrics.unrealizedGain)}</p>
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-8">
         {/* Left column - 2/3 width */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-8">
           {/* Portfolio Overview - Larger donut chart */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl hover:shadow-aifm-gold/5 transition-all duration-300">
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Portföljöversikt</h3>
+          <div className="bg-white rounded-xl overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-50">
+              <h3 className="text-xs font-medium text-aifm-charcoal/40 uppercase tracking-wider">Portföljöversikt</h3>
             </div>
-            <div className="p-6">
-              <div className="flex items-center gap-12">
+            <div className="p-8">
+              <div className="flex items-center gap-16">
                 {/* Larger Donut Chart */}
-                <div className="relative w-56 h-56 flex-shrink-0">
+                <div className="relative w-64 h-64 flex-shrink-0">
                   <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
                     {portfolio.map((item, index) => (
                       <DonutSegment 
@@ -258,13 +278,13 @@ export default function OverviewPage() {
                     <div className="text-center">
                       {hoveredInfo ? (
                         <>
-                          <p className="text-2xl font-bold text-aifm-charcoal animate-in fade-in duration-200">{hoveredInfo.percentage}%</p>
-                          <p className="text-sm text-aifm-charcoal/50 animate-in fade-in duration-200">{hoveredInfo.name}</p>
+                          <p className="text-3xl font-medium text-aifm-charcoal">{hoveredInfo.percentage}%</p>
+                          <p className="text-sm text-aifm-charcoal/40 mt-1">{hoveredInfo.name}</p>
                         </>
                       ) : (
                         <>
-                          <p className="text-2xl font-bold text-aifm-charcoal">{formatCurrencyCompact(totalPortfolioValue)}</p>
-                          <p className="text-sm text-aifm-charcoal/50">Totalt</p>
+                          <p className="text-3xl font-medium text-aifm-charcoal">{formatCurrencyCompact(totalPortfolioValue)}</p>
+                          <p className="text-sm text-aifm-charcoal/40 mt-1">Totalt</p>
                         </>
                       )}
                     </div>
@@ -272,27 +292,21 @@ export default function OverviewPage() {
                 </div>
                 
                 {/* Legend */}
-                <div className="flex-1 space-y-3">
+                <div className="flex-1 space-y-4">
                   {portfolio.map((item) => (
                     <div 
                       key={item.name} 
-                      className={`flex items-center justify-between p-3 rounded-xl transition-all duration-200 cursor-pointer ${hoveredSegment === item.name ? 'bg-gray-50 scale-[1.02]' : 'hover:bg-gray-50'}`} 
+                      className={`flex items-center justify-between py-2 cursor-pointer transition-all ${hoveredSegment === item.name ? 'opacity-100' : 'opacity-70 hover:opacity-100'}`} 
                       onMouseEnter={() => setHoveredSegment(item.name)} 
                       onMouseLeave={() => setHoveredSegment(null)}
                     >
                       <div className="flex items-center gap-3">
-                        <div 
-                          className="w-4 h-4 rounded-md transition-all duration-300" 
-                          style={{ 
-                            backgroundColor: item.color, 
-                            boxShadow: hoveredSegment === item.name ? `0 0 12px ${item.color}60` : 'none' 
-                          }} 
-                        />
-                        <span className="text-sm text-aifm-charcoal font-medium">{item.name}</span>
+                        <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: item.color }} />
+                        <span className="text-sm text-aifm-charcoal">{item.name}</span>
                       </div>
                       <div className="text-right">
-                        <span className="text-sm font-bold text-aifm-charcoal">{item.percentage}%</span>
-                        <span className="text-xs text-aifm-charcoal/50 ml-2">{formatCurrencyCompact(item.value)}</span>
+                        <span className="text-sm font-medium text-aifm-charcoal">{item.percentage}%</span>
+                        <span className="text-xs text-aifm-charcoal/40 ml-3">{formatCurrencyCompact(item.value)}</span>
                       </div>
                     </div>
                   ))}
@@ -301,99 +315,108 @@ export default function OverviewPage() {
             </div>
           </div>
 
-          {/* Transactions */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl hover:shadow-aifm-gold/5 transition-all duration-300">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Transaktioner</h3>
-              <Link href="/treasury" className="text-xs text-aifm-gold hover:text-aifm-gold/80 flex items-center gap-1 hover:gap-2 transition-all duration-200">
+          {/* KPI Chart - Much Larger */}
+          <div className="bg-white rounded-xl overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-50 flex items-center justify-between">
+              <h3 className="text-xs font-medium text-aifm-charcoal/40 uppercase tracking-wider">Nyckeltal</h3>
+              <CustomSelect options={kpiOptions} value={selectedKPI} onChange={setSelectedKPI} />
+            </div>
+            <div className="p-8">
+              {/* Much larger chart area */}
+              <div className="h-80 flex items-end justify-between gap-6 px-4 pb-8">
+                {kpiData.map((data, index) => {
+                  const maxValue = Math.max(...kpiData.map(d => Math.max(d.value1, d.value2)));
+                  const height1 = (data.value1 / maxValue) * 75;
+                  const height2 = (data.value2 / maxValue) * 75;
+                  return (
+                    <div key={data.month} className="flex-1 flex flex-col items-center">
+                      <div className="w-full h-64 flex items-end justify-center gap-2">
+                        <AnimatedBar height={height1} color="#c0a280" delay={index * 100} value={data.value1} />
+                        <AnimatedBar height={height2} color="#615c59" delay={index * 100 + 50} value={data.value2} />
+                      </div>
+                      <span className="text-xs text-aifm-charcoal/40 mt-4">{data.month}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Legend */}
+              <div className="flex items-center justify-center gap-8 pt-6 border-t border-gray-50">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm bg-aifm-gold" />
+                  <span className="text-xs text-aifm-charcoal/50">Faktiskt</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm bg-aifm-charcoal" />
+                  <span className="text-xs text-aifm-charcoal/50">Mål</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Transactions - Simplified */}
+          <div className="bg-white rounded-xl overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-50 flex items-center justify-between">
+              <h3 className="text-xs font-medium text-aifm-charcoal/40 uppercase tracking-wider">Senaste transaktioner</h3>
+              <Link href="/treasury" className="text-xs text-aifm-charcoal/40 hover:text-aifm-charcoal flex items-center gap-1">
                 Visa alla <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
             <div className="divide-y divide-gray-50">
-              {transactions.map((tx, index) => (
-                <div 
-                  key={tx.id} 
-                  className="px-6 py-4 flex items-center justify-between hover:bg-gray-50/50 transition-all duration-200 cursor-pointer group" 
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg 
-                      ${tx.type === 'INVESTMENT' ? 'bg-blue-100 group-hover:shadow-blue-200' : 
-                        tx.type === 'INCOME' ? 'bg-green-100 group-hover:shadow-green-200' : 
-                        tx.type === 'DISTRIBUTION' ? 'bg-purple-100 group-hover:shadow-purple-200' : 
-                        'bg-amber-100 group-hover:shadow-amber-200'}`}
-                    >
-                      {tx.type === 'INVESTMENT' && <ArrowUpRight className="w-5 h-5 text-blue-600" />}
-                      {tx.type === 'INCOME' && <TrendingUp className="w-5 h-5 text-green-600" />}
-                      {tx.type === 'DISTRIBUTION' && <ArrowDownRight className="w-5 h-5 text-purple-600" />}
-                      {tx.type === 'EXPENSE' && <DollarSign className="w-5 h-5 text-amber-600" />}
-                    </div>
+              {transactions.slice(0, 4).map((tx) => (
+                <div key={tx.id} className="px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-2 h-2 rounded-full 
+                      ${tx.type === 'INCOME' || tx.type === 'DISTRIBUTION' ? 'bg-green-500' : 'bg-aifm-charcoal/30'}`} 
+                    />
                     <div>
-                      <span className={`inline-block px-2 py-0.5 text-[10px] font-medium rounded-md uppercase mr-2 
-                        ${tx.type === 'INVESTMENT' ? 'bg-blue-100 text-blue-700' : 
-                          tx.type === 'INCOME' ? 'bg-green-100 text-green-700' : 
-                          tx.type === 'DISTRIBUTION' ? 'bg-purple-100 text-purple-700' : 
-                          'bg-amber-100 text-amber-700'}`}
-                      >
-                        {getTransactionTypeLabel(tx.type)}
-                      </span>
                       <p className="text-sm text-aifm-charcoal">{tx.description}</p>
+                      <p className="text-xs text-aifm-charcoal/40 mt-0.5">{getTransactionTypeLabel(tx.type)} • {tx.date.toLocaleDateString('sv-SE')}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className={`font-bold ${tx.type === 'INCOME' || tx.type === 'DISTRIBUTION' ? 'text-green-600' : 'text-aifm-charcoal'}`}>
-                      {tx.type === 'INCOME' || tx.type === 'DISTRIBUTION' ? '+' : '-'}{formatCurrencyCompact(tx.amount, tx.currency)}
-                    </p>
-                    <p className="text-xs text-aifm-charcoal/50">{tx.date.toLocaleDateString('sv-SE')}</p>
-                  </div>
+                  <p className={`text-sm font-medium ${tx.type === 'INCOME' || tx.type === 'DISTRIBUTION' ? 'text-green-600' : 'text-aifm-charcoal'}`}>
+                    {tx.type === 'INCOME' || tx.type === 'DISTRIBUTION' ? '+' : '-'}{formatCurrencyCompact(tx.amount, tx.currency)}
+                  </p>
                 </div>
               ))}
             </div>
           </div>
+        </div>
 
-          {/* Tasks */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl hover:shadow-aifm-gold/5 transition-all duration-300">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Uppgifter</h3>
-              <Link href="/approvals" className="text-xs text-aifm-gold hover:text-aifm-gold/80 flex items-center gap-1 hover:gap-2 transition-all duration-200">
+        {/* Right column - 1/3 width */}
+        <div className="space-y-8">
+          {/* Tasks - Simplified */}
+          <div className="bg-white rounded-xl overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-50 flex items-center justify-between">
+              <h3 className="text-xs font-medium text-aifm-charcoal/40 uppercase tracking-wider">Uppgifter</h3>
+              <Link href="/approvals" className="text-xs text-aifm-charcoal/40 hover:text-aifm-charcoal flex items-center gap-1">
                 Visa alla <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
-            <div className="p-4 space-y-3">
-              {tasks.map((task, index) => (
-                <div 
-                  key={task.id} 
-                  className={`p-4 rounded-xl border transition-all duration-300 cursor-pointer hover:scale-[1.01] 
-                    ${task.status === 'DONE' 
-                      ? 'bg-gray-50/50 border-gray-100' 
-                      : 'bg-white border-gray-200 hover:border-aifm-gold/50 hover:shadow-lg hover:shadow-aifm-gold/5'}`} 
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
+            <div className="p-4 space-y-2">
+              {tasks.slice(0, 4).map((task) => (
+                <div key={task.id} className={`p-4 rounded-lg ${task.status === 'DONE' ? 'bg-gray-50' : 'bg-gray-50/50'}`}>
                   <div className="flex items-start gap-3">
-                    <div className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200 
-                      ${task.status === 'DONE' ? 'bg-aifm-gold border-aifm-gold' : 'border-gray-300 hover:border-aifm-gold'}`}
+                    <div className={`mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center 
+                      ${task.status === 'DONE' ? 'bg-aifm-charcoal border-aifm-charcoal' : 'border-gray-300'}`}
                     >
                       {task.status === 'DONE' && (
-                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                         </svg>
                       )}
                     </div>
                     <div className="flex-1">
-                      <p className={`text-sm font-medium ${task.status === 'DONE' ? 'text-aifm-charcoal/50 line-through' : 'text-aifm-charcoal'}`}>
+                      <p className={`text-sm ${task.status === 'DONE' ? 'text-aifm-charcoal/40 line-through' : 'text-aifm-charcoal'}`}>
                         {task.title}
                       </p>
-                      <p className="text-xs text-aifm-charcoal/50 mt-0.5">{task.description}</p>
-                      <div className="flex items-center gap-3 mt-2">
-                        <span className="flex items-center gap-1 text-xs text-aifm-charcoal/50">
-                          <Calendar className="w-3 h-3" />
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-aifm-charcoal/40">
                           {task.dueDate.toLocaleDateString('sv-SE')}
                         </span>
-                        {task.assignee && <span className="text-xs text-aifm-charcoal/50">{task.assignee}</span>}
-                        <span className={`text-xs px-2 py-0.5 rounded-md font-medium 
-                          ${task.priority === 'HIGH' ? 'bg-red-100 text-red-700' : 
-                            task.priority === 'MEDIUM' ? 'bg-amber-100 text-amber-700' : 
-                            'bg-gray-100 text-gray-600'}`}
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded 
+                          ${task.priority === 'HIGH' ? 'bg-red-100 text-red-600' : 
+                            task.priority === 'MEDIUM' ? 'bg-amber-100 text-amber-600' : 
+                            'bg-gray-100 text-gray-500'}`}
                         >
                           {getPriorityLabel(task.priority)}
                         </span>
@@ -404,85 +427,24 @@ export default function OverviewPage() {
               ))}
             </div>
           </div>
-        </div>
-
-        {/* Right column - 1/3 width */}
-        <div className="space-y-6">
-          {/* KPI Chart - Larger */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl hover:shadow-aifm-gold/5 transition-all duration-300">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Nyckeltal</h3>
-              <CustomSelect options={kpiOptions} value={selectedKPI} onChange={setSelectedKPI} />
-            </div>
-            <div className="p-6">
-              {/* Larger chart area with proper spacing for tooltips */}
-              <div className="h-52 flex items-end justify-between gap-3 px-2 pt-8">
-                {kpiData.map((data, index) => {
-                  const maxValue = Math.max(...kpiData.map(d => Math.max(d.value1, d.value2)));
-                  const height1 = (data.value1 / maxValue) * 85; // Max 85% to leave room for tooltips
-                  const height2 = (data.value2 / maxValue) * 85;
-                  return (
-                    <div key={data.month} className="flex-1 flex flex-col items-center">
-                      <div className="w-full h-44 flex items-end justify-center gap-1.5">
-                        <AnimatedBar height={height1} color="#c0a280" delay={index * 100} value={data.value1} />
-                        <AnimatedBar height={height2} color="#615c59" delay={index * 100 + 50} value={data.value2} />
-                      </div>
-                      <span className="text-[10px] text-aifm-charcoal/50 mt-3 font-medium">{data.month}</span>
-                    </div>
-                  );
-                })}
-              </div>
-              {/* Legend */}
-              <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-gray-100">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-sm bg-aifm-gold shadow-sm shadow-aifm-gold/30" />
-                  <span className="text-xs text-aifm-charcoal/60 font-medium">Faktiskt</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-sm bg-aifm-charcoal shadow-sm" />
-                  <span className="text-xs text-aifm-charcoal/60 font-medium">Mål</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* MOIC & IRR Cards */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-xl hover:shadow-aifm-gold/10 transition-all duration-300 hover:scale-105 cursor-pointer group">
-              <p className="text-xs font-medium text-aifm-charcoal/50 uppercase tracking-wider mb-1">MOIC</p>
-              <p className="text-3xl font-bold text-aifm-charcoal group-hover:text-aifm-gold transition-colors">{metrics.moic.toFixed(2)}x</p>
-              <div className="flex items-center gap-1 mt-1">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <p className="text-xs text-green-600">Multipel på investerat</p>
-              </div>
-            </div>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-xl hover:shadow-aifm-gold/10 transition-all duration-300 hover:scale-105 cursor-pointer group">
-              <p className="text-xs font-medium text-aifm-charcoal/50 uppercase tracking-wider mb-1">IRR</p>
-              <p className="text-3xl font-bold text-aifm-charcoal group-hover:text-aifm-gold transition-colors">{metrics.irr.toFixed(1)}%</p>
-              <div className="flex items-center gap-1 mt-1">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <p className="text-xs text-green-600">Internränta</p>
-              </div>
-            </div>
-          </div>
 
           {/* Summary */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl hover:shadow-aifm-gold/5 transition-all duration-300">
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Sammanfattning</h3>
+          <div className="bg-white rounded-xl overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-50">
+              <h3 className="text-xs font-medium text-aifm-charcoal/40 uppercase tracking-wider">Sammanfattning</h3>
             </div>
-            <div className="p-4 space-y-4">
+            <div className="p-6 space-y-5">
               {[
                 { label: 'NAV', value: metrics.nav, color: '#c0a280' }, 
                 { label: 'Totalt investerat', value: metrics.totalInvested, color: '#615c59' }, 
                 { label: 'Utdelat', value: metrics.totalDistributed, color: '#059669' }
               ].map((item, index) => (
-                <div key={item.label} className="space-y-1">
+                <div key={item.label} className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-aifm-charcoal/60">{item.label}</span>
-                    <span className="font-medium text-aifm-charcoal">{formatCurrencyCompact(item.value)}</span>
+                    <span className="text-sm text-aifm-charcoal/50">{item.label}</span>
+                    <span className="text-sm font-medium text-aifm-charcoal">{formatCurrencyCompact(item.value)}</span>
                   </div>
-                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
                     <div 
                       className="h-full rounded-full transition-all duration-1000 ease-out" 
                       style={{ 
@@ -494,18 +456,12 @@ export default function OverviewPage() {
                   </div>
                 </div>
               ))}
-              <div className="pt-2 border-t border-gray-100">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-aifm-charcoal/60">Orealiserad vinst</span>
-                  <span className="font-bold text-green-600">+{formatCurrencyCompact(metrics.unrealizedGain)}</span>
-                </div>
-              </div>
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="bg-gradient-to-br from-aifm-charcoal via-aifm-charcoal to-aifm-charcoal/90 rounded-2xl p-5 text-white shadow-xl shadow-aifm-charcoal/20">
-            <h3 className="text-sm font-medium uppercase tracking-wider mb-4">Snabbåtgärder</h3>
+          {/* Quick Actions - Fixed white text */}
+          <div className="bg-aifm-charcoal rounded-xl p-6">
+            <h3 className="text-xs font-medium text-white/60 uppercase tracking-wider mb-5">Snabbåtgärder</h3>
             <div className="space-y-2">
               {[
                 { href: '/capital-calls', label: 'Nytt kapitalanrop', icon: ArrowUpRight }, 
@@ -515,10 +471,10 @@ export default function OverviewPage() {
                 <Link 
                   key={action.href} 
                   href={action.href} 
-                  className="flex items-center justify-between p-3 bg-white/10 rounded-xl hover:bg-aifm-gold/80 transition-all duration-300 group hover:shadow-lg hover:shadow-aifm-gold/20"
+                  className="flex items-center justify-between p-3 bg-white/5 rounded-lg text-white hover:bg-white/10 transition-colors"
                 >
                   <span className="text-sm">{action.label}</span>
-                  <action.icon className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+                  <action.icon className="w-4 h-4 text-white/50" />
                 </Link>
               ))}
             </div>
