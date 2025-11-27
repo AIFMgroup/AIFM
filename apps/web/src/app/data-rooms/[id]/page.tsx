@@ -16,6 +16,7 @@ import {
   getFileIcon, getRoleColor, getTypeColor, getTypeLabel, getActionLabel
 } from '@/lib/dataRoomData';
 import { formatDate } from '@/lib/fundData';
+import { CustomSelect } from '@/components/CustomSelect';
 
 export default function DataRoomDetailPage() {
   const params = useParams();
@@ -546,13 +547,20 @@ export default function DataRoomDetailPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                  Role
+                  Roll
                 </label>
-                <select className="input w-full">
-                  <option value="VIEWER">Viewer - Can view documents only</option>
-                  <option value="MEMBER">Member - Can view and download</option>
-                  <option value="ADMIN">Admin - Full access</option>
-                </select>
+                <CustomSelect
+                  options={[
+                    { value: 'VIEWER', label: 'Läsare - Kan endast visa dokument', icon: <Eye className="w-4 h-4 text-gray-500" /> },
+                    { value: 'MEMBER', label: 'Medlem - Kan visa och ladda ner', icon: <Download className="w-4 h-4 text-blue-500" /> },
+                    { value: 'ADMIN', label: 'Admin - Full åtkomst', icon: <Shield className="w-4 h-4 text-aifm-gold" /> },
+                  ]}
+                  value="VIEWER"
+                  onChange={() => {}}
+                  className="w-full"
+                  variant="default"
+                  size="md"
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
@@ -617,14 +625,23 @@ export default function DataRoomDetailPage() {
               </div>
               <div className="mt-4">
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                  Upload to Folder
+                  Ladda upp till mapp
                 </label>
-                <select className="input w-full">
-                  <option value="">Root (No folder)</option>
-                  {folders.map(folder => (
-                    <option key={folder.id} value={folder.id}>{folder.name}</option>
-                  ))}
-                </select>
+                <CustomSelect
+                  options={[
+                    { value: '', label: 'Rot (Ingen mapp)', icon: <FolderLock className="w-4 h-4 text-aifm-charcoal/40" /> },
+                    ...folders.map(folder => ({
+                      value: folder.id,
+                      label: folder.name,
+                      icon: <Folder className="w-4 h-4 text-aifm-gold" />
+                    }))
+                  ]}
+                  value=""
+                  onChange={() => {}}
+                  className="w-full"
+                  variant="default"
+                  size="md"
+                />
               </div>
             </div>
             <div className="px-6 py-4 border-t border-gray-100 flex gap-3">

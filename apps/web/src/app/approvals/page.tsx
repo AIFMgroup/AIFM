@@ -4,11 +4,12 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { 
   Shield, Check, X, Clock, AlertCircle, FileText,
-  DollarSign, Users, CheckCircle2,
+  DollarSign, Users, CheckCircle2, Filter,
   ArrowRight, RefreshCw, BookOpen
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/fundData';
 import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
+import { CustomSelect } from '@/components/CustomSelect';
 
 // Types for approval workflow
 interface ApprovalItem {
@@ -256,16 +257,19 @@ export default function ApprovalsPage() {
           </div>
           
           <div className="flex items-center gap-3">
-            <select
+            <CustomSelect
+              options={[
+                { value: 'all', label: 'Alla ärenden', icon: <Filter className="w-4 h-4 text-aifm-charcoal/40" /> },
+                { value: 'pending', label: `Väntande (${pendingCount})`, icon: <Clock className="w-4 h-4 text-amber-500" /> },
+                { value: 'approved', label: 'Godkända', icon: <CheckCircle2 className="w-4 h-4 text-green-500" /> },
+                { value: 'rejected', label: 'Avslagna', icon: <X className="w-4 h-4 text-red-500" /> },
+              ]}
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
-              className="input py-2 px-4"
-            >
-              <option value="all">Alla ärenden</option>
-              <option value="pending">Väntande ({pendingCount})</option>
-              <option value="approved">Godkända</option>
-              <option value="rejected">Avslagna</option>
-            </select>
+              onChange={(value) => setFilterStatus(value as typeof filterStatus)}
+              className="min-w-[200px]"
+              variant="minimal"
+              size="md"
+            />
           </div>
         </div>
 
