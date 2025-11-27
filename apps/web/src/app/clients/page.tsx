@@ -23,7 +23,8 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-function formatDate(date: Date): string {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function _formatDate(date: Date): string {
   return new Intl.DateTimeFormat('sv-SE', {
     month: 'short',
     day: 'numeric',
