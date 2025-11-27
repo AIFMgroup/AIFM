@@ -67,12 +67,6 @@ const navItems: NavItem[] = [
     ]
   },
   { 
-    id: 'tasks', 
-    label: 'Uppgifter', 
-    icon: CheckSquare, 
-    href: '/approvals' 
-  },
-  { 
     id: 'compliance-agent', 
     label: 'Compliance Agent', 
     icon: Bot,
@@ -80,6 +74,12 @@ const navItems: NavItem[] = [
       { id: 'compliance-docs', label: 'Ladda upp dokument', href: '/compliance/documents' },
       { id: 'compliance-chat', label: 'Compliance Agent', href: '/compliance/chat' },
     ]
+  },
+  { 
+    id: 'tasks', 
+    label: 'Uppgifter', 
+    icon: CheckSquare, 
+    href: '/approvals' 
   },
 ];
 
