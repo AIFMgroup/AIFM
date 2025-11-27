@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { 
-  Upload, FileText, CheckCircle2, Clock, Trash2, Eye,
+  Upload, FileText, CheckCircle2, Trash2, Eye,
   File, FileSpreadsheet, FileImage, AlertCircle, Sparkles,
   ArrowRight, RotateCcw, X, ZoomIn
 } from 'lucide-react';

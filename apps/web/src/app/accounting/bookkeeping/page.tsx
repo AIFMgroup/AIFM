@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { 
-  CheckCircle2, Clock, AlertCircle, Search, Filter,
+  CheckCircle2, Clock, AlertCircle, Search,
   ArrowUpRight, ArrowDownRight, Eye, Check, X, ChevronDown,
   FileText, Sparkles
 } from 'lucide-react';
@@ -225,7 +225,6 @@ export default function BookkeepingPage() {
 
   const approvedCount = transactions.filter(tx => tx.status === 'approved').length;
   const pendingCount = transactions.filter(tx => tx.status === 'pending').length;
-  const needsReviewCount = transactions.filter(tx => tx.status === 'needs_review').length;
 
   const totalIncome = transactions.filter(tx => tx.type === 'income' && tx.status === 'approved').reduce((sum, tx) => sum + tx.amount, 0);
   const totalExpense = transactions.filter(tx => tx.type === 'expense' && tx.status === 'approved').reduce((sum, tx) => sum + tx.amount, 0);

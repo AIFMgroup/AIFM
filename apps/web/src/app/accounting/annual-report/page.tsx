@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { 
-  CheckCircle2, Clock, FileText, Download, Eye, Edit3,
-  ChevronRight, Send, Sparkles, AlertCircle
+  CheckCircle2, Download, Eye, Edit3,
+  Send, Sparkles, AlertCircle
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 
@@ -50,7 +50,7 @@ function getStatusBadge(status: ReportSection['status']) {
 }
 
 export default function AnnualReportPage() {
-  const [sections, setSections] = useState<ReportSection[]>(reportSections);
+  const [sections] = useState<ReportSection[]>(reportSections);
   const [selectedYear, setSelectedYear] = useState('2024');
 
   const completedSections = sections.filter(s => s.status === 'completed').length;
