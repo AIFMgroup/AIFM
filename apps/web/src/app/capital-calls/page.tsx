@@ -4,13 +4,14 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { 
   ArrowUpRight, Plus, CheckCircle2, Clock,
-  Send, Download, DollarSign, FileText, Bell, X, BookOpen
+  Send, Download, DollarSign, FileText, Bell, X, BookOpen, Building2
 } from 'lucide-react';
 import {
   mockFunds, mockCapitalCalls, getCommitmentsByFund,
   formatCurrency, formatDate, formatPercentage, Fund, CapitalCall
 } from '@/lib/fundData';
 import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
+import { CustomSelect } from '@/components/CustomSelect';
 
 export default function CapitalCallsPage() {
   const [selectedFund, setSelectedFund] = useState<Fund>(mockFunds[0]);
@@ -105,21 +106,24 @@ export default function CapitalCallsPage() {
             </div>
           </div>
           
-          <select
+          <CustomSelect
+            options={mockFunds.map((fund) => ({
+              value: fund.id,
+              label: fund.name,
+              icon: <Building2 className="w-4 h-4 text-aifm-gold" />
+            }))}
             value={selectedFund.id}
-            onChange={(e) => {
-              const fund = mockFunds.find(f => f.id === e.target.value);
+            onChange={(value) => {
+              const fund = mockFunds.find(f => f.id === value);
               if (fund) {
                 setSelectedFund(fund);
                 setSelectedCall(null);
               }
             }}
-            className="input py-2 px-4 pr-10 min-w-[250px]"
-          >
-            {mockFunds.map((fund) => (
-              <option key={fund.id} value={fund.id}>{fund.name}</option>
-            ))}
-          </select>
+            className="min-w-[280px]"
+            variant="gold"
+            size="md"
+          />
         </div>
 
         {/* Stats */}

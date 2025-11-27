@@ -5,13 +5,14 @@ import Link from 'next/link';
 import { 
   TrendingUp, Wallet, 
   ArrowUpRight, ArrowDownRight, DollarSign,
-  ChevronRight, RefreshCw, Download, BookOpen
+  ChevronRight, RefreshCw, Download, BookOpen, Building2
 } from 'lucide-react';
 import { 
   mockFunds, getCommitmentsByFund, getPortfolioByFund,
   formatCurrency, formatPercentage, formatDate, Fund
 } from '@/lib/fundData';
 import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
+import { CustomSelect } from '@/components/CustomSelect';
 
 export default function FundOverviewPage() {
   const [selectedFund, setSelectedFund] = useState<Fund>(mockFunds[0]);
@@ -85,16 +86,19 @@ export default function FundOverviewPage() {
           
           {/* Fund Selector */}
           <div className="flex items-center gap-3">
-            <select
+            <CustomSelect
+              options={mockFunds.map((fund) => ({
+                value: fund.id,
+                label: fund.name,
+                icon: <Building2 className="w-4 h-4 text-aifm-gold" />
+              }))}
               value={selectedFund.id}
-              onChange={(e) => setSelectedFund(mockFunds.find(f => f.id === e.target.value) || mockFunds[0])}
-              className="input py-2 px-4 pr-10 min-w-[250px]"
-            >
-              {mockFunds.map((fund) => (
-                <option key={fund.id} value={fund.id}>{fund.name}</option>
-              ))}
-            </select>
-            <button className="btn-outline py-2 px-4 flex items-center gap-2">
+              onChange={(value) => setSelectedFund(mockFunds.find(f => f.id === value) || mockFunds[0])}
+              className="min-w-[280px]"
+              variant="gold"
+              size="md"
+            />
+            <button className="btn-outline py-2 px-4 flex items-center gap-2 hover:border-aifm-gold hover:text-aifm-gold transition-all duration-300">
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">Exportera</span>
             </button>

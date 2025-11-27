@@ -13,6 +13,7 @@ import {
   formatCurrency, formatPercentage, formatDate, Fund, PortfolioCompany
 } from '@/lib/fundData';
 import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
+import { CustomSelect } from '@/components/CustomSelect';
 
 export default function PortfolioPage() {
   const [selectedFund, setSelectedFund] = useState<Fund>(mockFunds[0]);
@@ -92,18 +93,21 @@ export default function PortfolioPage() {
           </div>
           
           <div className="flex items-center gap-3">
-            <select
+            <CustomSelect
+              options={mockFunds.map((fund) => ({
+                value: fund.id,
+                label: fund.name,
+                icon: <Briefcase className="w-4 h-4 text-aifm-gold" />
+              }))}
               value={selectedFund.id}
-              onChange={(e) => {
-                const fund = mockFunds.find(f => f.id === e.target.value);
+              onChange={(value) => {
+                const fund = mockFunds.find(f => f.id === value);
                 if (fund) setSelectedFund(fund);
               }}
-              className="input py-2 px-4 pr-10 min-w-[250px]"
-            >
-              {mockFunds.map((fund) => (
-                <option key={fund.id} value={fund.id}>{fund.name}</option>
-              ))}
-            </select>
+              className="min-w-[280px]"
+              variant="gold"
+              size="md"
+            />
           </div>
         </div>
 
