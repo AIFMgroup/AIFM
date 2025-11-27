@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { 
   Settings, Key, Building2, CreditCard, Bell, Shield, Link2, 
-  Users, Mail, Phone, Globe, Check, X, Eye, EyeOff,
+  Users, Globe, Check, X, Eye, EyeOff,
   RefreshCw, Trash2, Plus, ExternalLink, AlertCircle, CheckCircle2
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
