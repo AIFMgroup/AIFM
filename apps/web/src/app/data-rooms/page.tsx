@@ -12,6 +12,7 @@ import {
 import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
 import { formatDate } from '@/lib/fundData';
 import { CustomSelect } from '@/components/CustomSelect';
+import { DashboardLayout } from '@/components/DashboardLayout';
 
 export default function DataRoomsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,40 +35,12 @@ export default function DataRoomsPage() {
   const totalMembers = mockDataRooms.reduce((sum, r) => sum + r.membersCount, 0);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <Link href="/" className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-aifm-gold rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">A</span>
-                </div>
-                <span className="font-medium tracking-widest text-aifm-charcoal uppercase text-sm">AIFM</span>
-              </Link>
-              <nav className="hidden md:flex items-center gap-6">
-                <Link href="/fund" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Fonder</Link>
-                <Link href="/data-rooms" className="text-sm font-medium text-aifm-gold uppercase tracking-wider">Datarum</Link>
-                <Link href="/investors" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Investerare</Link>
-              </nav>
-            </div>
-            <button 
-              onClick={() => setShowNewRoomModal(true)}
-              className="btn-primary py-2 px-4 flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Nytt datarum
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-6 lg:px-12 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
+    <DashboardLayout showCompanySelector={false}>
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
           <div className="flex items-center gap-2 mb-2">
-            <h1 className="heading-2">Säkra datarum</h1>
+            <h1 className="text-2xl font-medium text-aifm-charcoal uppercase tracking-wider">Säkra datarum</h1>
             <HelpTooltip 
               {...helpContent.dataRooms}
               learnMoreLink="/guide#data-rooms"
@@ -83,174 +56,181 @@ export default function DataRoomsPage() {
             </Link>
           </div>
         </div>
+        <button 
+          onClick={() => setShowNewRoomModal(true)}
+          className="btn-primary py-2 px-4 flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Nytt datarum
+        </button>
+      </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Aktiva rum</span>
-              <FolderLock className="w-5 h-5 text-aifm-gold" />
-            </div>
-            <p className="text-2xl font-medium text-aifm-charcoal">{activeRooms}</p>
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Aktiva rum</span>
+            <FolderLock className="w-5 h-5 text-aifm-gold" />
           </div>
-
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Dokument</span>
-              <FileText className="w-5 h-5 text-aifm-charcoal/30" />
-            </div>
-            <p className="text-2xl font-medium text-aifm-charcoal">{totalDocuments}</p>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Totalt antal medlemmar</span>
-              <Users className="w-5 h-5 text-aifm-charcoal/30" />
-            </div>
-            <p className="text-2xl font-medium text-aifm-charcoal">{totalMembers}</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-aifm-gold to-aifm-gold/80 rounded-2xl p-6 text-white">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium uppercase tracking-wider text-white/70">Security</span>
-              <Shield className="w-5 h-5 text-white/50" />
-            </div>
-            <p className="text-lg font-medium">256-bit Encrypted</p>
-          </div>
+          <p className="text-2xl font-medium text-aifm-charcoal">{activeRooms}</p>
         </div>
 
-        {/* Security Notice */}
-        <div className="bg-aifm-charcoal/5 border border-aifm-charcoal/10 rounded-2xl p-4 mb-8 flex items-center gap-4">
-          <div className="w-10 h-10 bg-aifm-charcoal/10 rounded-xl flex items-center justify-center">
-            <Lock className="w-5 h-5 text-aifm-charcoal" />
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Dokument</span>
+            <FileText className="w-5 h-5 text-aifm-charcoal/30" />
           </div>
-          <div className="flex-1">
-            <p className="font-medium text-aifm-charcoal">Bank-grade Security</p>
-            <p className="text-sm text-aifm-charcoal/60">All documents are encrypted at rest and in transit. Access is logged and auditable.</p>
-          </div>
+          <p className="text-2xl font-medium text-aifm-charcoal">{totalDocuments}</p>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-aifm-charcoal/40" />
-            <input
-              type="text"
-              placeholder="Sök datarum..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="input pl-10 w-full"
-            />
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Totalt antal medlemmar</span>
+            <Users className="w-5 h-5 text-aifm-charcoal/30" />
           </div>
-          <CustomSelect
-            options={[
-              { value: 'all', label: 'Alla typer', icon: <Filter className="w-4 h-4 text-aifm-charcoal/40" /> },
-              { value: 'DEAL_ROOM', label: 'Affärsrum', icon: <Building2 className="w-4 h-4 text-blue-500" /> },
-              { value: 'DUE_DILIGENCE', label: 'Due Diligence', icon: <Search className="w-4 h-4 text-green-500" /> },
-              { value: 'INVESTOR_PORTAL', label: 'Investerarportal', icon: <Users className="w-4 h-4 text-purple-500" /> },
-              { value: 'BOARD', label: 'Styrelserum', icon: <Shield className="w-4 h-4 text-amber-500" /> },
-              { value: 'COMPLIANCE', label: 'Compliance', icon: <Lock className="w-4 h-4 text-red-500" /> },
-            ]}
-            value={filterType}
-            onChange={setFilterType}
-            className="min-w-[200px]"
-            variant="minimal"
-            size="md"
-          />
-          <CustomSelect
-            options={[
-              { value: 'all', label: 'Alla statusar', icon: <FolderLock className="w-4 h-4 text-aifm-charcoal/40" /> },
-              { value: 'active', label: 'Aktiva', icon: <Clock className="w-4 h-4 text-green-500" /> },
-              { value: 'archived', label: 'Arkiverade', icon: <Archive className="w-4 h-4 text-gray-400" /> },
-            ]}
-            value={filterStatus}
-            onChange={setFilterStatus}
-            className="min-w-[170px]"
-            variant="minimal"
-            size="md"
+          <p className="text-2xl font-medium text-aifm-charcoal">{totalMembers}</p>
+        </div>
+
+        <div className="bg-gradient-to-br from-aifm-gold to-aifm-gold/80 rounded-2xl p-6 text-white">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-medium uppercase tracking-wider text-white/70">Security</span>
+            <Shield className="w-5 h-5 text-white/50" />
+          </div>
+          <p className="text-lg font-medium">256-bit Encrypted</p>
+        </div>
+      </div>
+
+      {/* Security Notice */}
+      <div className="bg-aifm-charcoal/5 border border-aifm-charcoal/10 rounded-2xl p-4 mb-8 flex items-center gap-4">
+        <div className="w-10 h-10 bg-aifm-charcoal/10 rounded-xl flex items-center justify-center">
+          <Lock className="w-5 h-5 text-aifm-charcoal" />
+        </div>
+        <div className="flex-1">
+          <p className="font-medium text-aifm-charcoal">Bank-grade Security</p>
+          <p className="text-sm text-aifm-charcoal/60">All documents are encrypted at rest and in transit. Access is logged and auditable.</p>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-aifm-charcoal/40" />
+          <input
+            type="text"
+            placeholder="Sök datarum..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="input pl-10 w-full"
           />
         </div>
+        <CustomSelect
+          options={[
+            { value: 'all', label: 'Alla typer', icon: <Filter className="w-4 h-4 text-aifm-charcoal/40" /> },
+            { value: 'DEAL_ROOM', label: 'Affärsrum', icon: <Building2 className="w-4 h-4 text-blue-500" /> },
+            { value: 'DUE_DILIGENCE', label: 'Due Diligence', icon: <Search className="w-4 h-4 text-green-500" /> },
+            { value: 'INVESTOR_PORTAL', label: 'Investerarportal', icon: <Users className="w-4 h-4 text-purple-500" /> },
+            { value: 'BOARD', label: 'Styrelserum', icon: <Shield className="w-4 h-4 text-amber-500" /> },
+            { value: 'COMPLIANCE', label: 'Compliance', icon: <Lock className="w-4 h-4 text-red-500" /> },
+          ]}
+          value={filterType}
+          onChange={setFilterType}
+          className="min-w-[200px]"
+          variant="minimal"
+          size="md"
+        />
+        <CustomSelect
+          options={[
+            { value: 'all', label: 'Alla statusar', icon: <FolderLock className="w-4 h-4 text-aifm-charcoal/40" /> },
+            { value: 'active', label: 'Aktiva', icon: <Clock className="w-4 h-4 text-green-500" /> },
+            { value: 'archived', label: 'Arkiverade', icon: <Archive className="w-4 h-4 text-gray-400" /> },
+          ]}
+          value={filterStatus}
+          onChange={setFilterStatus}
+          className="min-w-[170px]"
+          variant="minimal"
+          size="md"
+        />
+      </div>
 
-        {/* Data Rooms Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredRooms.map((room) => (
-            <Link 
-              key={room.id}
-              href={`/data-rooms/${room.id}`}
-              className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:border-aifm-gold/30 transition-all overflow-hidden"
-            >
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                    room.status === 'ARCHIVED' ? 'bg-gray-100' : 'bg-aifm-gold/10'
-                  }`}>
-                    {room.status === 'ARCHIVED' ? (
-                      <Archive className="w-6 h-6 text-gray-400" />
-                    ) : (
-                      <FolderLock className="w-6 h-6 text-aifm-gold" />
-                    )}
-                  </div>
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getTypeColor(room.type)}`}>
-                    {getTypeLabel(room.type)}
-                  </span>
+      {/* Data Rooms Grid */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredRooms.map((room) => (
+          <Link 
+            key={room.id}
+            href={`/data-rooms/${room.id}`}
+            className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:border-aifm-gold/30 transition-all overflow-hidden"
+          >
+            <div className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                  room.status === 'ARCHIVED' ? 'bg-gray-100' : 'bg-aifm-gold/10'
+                }`}>
+                  {room.status === 'ARCHIVED' ? (
+                    <Archive className="w-6 h-6 text-gray-400" />
+                  ) : (
+                    <FolderLock className="w-6 h-6 text-aifm-gold" />
+                  )}
                 </div>
-                
-                <h3 className="font-medium text-aifm-charcoal mb-1 group-hover:text-aifm-gold transition-colors">
-                  {room.name}
-                </h3>
-                <p className="text-sm text-aifm-charcoal/60 line-clamp-2 mb-4">{room.description}</p>
-
-                <div className="flex items-center gap-1 text-xs text-aifm-charcoal/50 mb-4">
-                  <Building2 className="w-3.5 h-3.5" />
-                  <span>{room.fundName}</span>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 pt-4 border-t border-gray-100">
-                  <div className="text-center">
-                    <p className="text-lg font-medium text-aifm-charcoal">{room.documentsCount}</p>
-                    <p className="text-xs text-aifm-charcoal/50">Dokument</p>
-                  </div>
-                  <div className="text-center border-x border-gray-100">
-                    <p className="text-lg font-medium text-aifm-charcoal">{room.membersCount}</p>
-                    <p className="text-xs text-aifm-charcoal/50">Medlemmar</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-medium text-aifm-charcoal">{formatDate(room.lastActivity)}</p>
-                    <p className="text-xs text-aifm-charcoal/50">Senast aktiv</p>
-                  </div>
-                </div>
-
-                {room.expiresAt && (
-                  <div className="mt-4 flex items-center gap-2 text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>Expires {formatDate(room.expiresAt)}</span>
-                  </div>
-                )}
-
-                {room.watermark && (
-                  <div className="mt-2 flex items-center gap-2 text-xs text-aifm-charcoal/50">
-                    <Shield className="w-3.5 h-3.5" />
-                    <span>Watermarked</span>
-                  </div>
-                )}
+                <span className={`px-2 py-1 text-xs font-medium rounded-full ${getTypeColor(room.type)}`}>
+                  {getTypeLabel(room.type)}
+                </span>
               </div>
-            </Link>
-          ))}
-        </div>
+              
+              <h3 className="font-medium text-aifm-charcoal mb-1 group-hover:text-aifm-gold transition-colors">
+                {room.name}
+              </h3>
+              <p className="text-sm text-aifm-charcoal/60 line-clamp-2 mb-4">{room.description}</p>
 
-        {filteredRooms.length === 0 && (
-          <div className="text-center py-12">
-            <FolderLock className="w-12 h-12 text-aifm-charcoal/20 mx-auto mb-4" />
-            <p className="text-aifm-charcoal/60">No data rooms found</p>
-            <button 
-              onClick={() => setShowNewRoomModal(true)}
-              className="btn-primary mt-4 py-2 px-4"
-            >
-              Create First Data Room
-            </button>
-          </div>
-        )}
-      </main>
+              <div className="flex items-center gap-1 text-xs text-aifm-charcoal/50 mb-4">
+                <Building2 className="w-3.5 h-3.5" />
+                <span>{room.fundName}</span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 pt-4 border-t border-gray-100">
+                <div className="text-center">
+                  <p className="text-lg font-medium text-aifm-charcoal">{room.documentsCount}</p>
+                  <p className="text-xs text-aifm-charcoal/50">Dokument</p>
+                </div>
+                <div className="text-center border-x border-gray-100">
+                  <p className="text-lg font-medium text-aifm-charcoal">{room.membersCount}</p>
+                  <p className="text-xs text-aifm-charcoal/50">Medlemmar</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-medium text-aifm-charcoal">{formatDate(room.lastActivity)}</p>
+                  <p className="text-xs text-aifm-charcoal/50">Senast aktiv</p>
+                </div>
+              </div>
+
+              {room.expiresAt && (
+                <div className="mt-4 flex items-center gap-2 text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>Expires {formatDate(room.expiresAt)}</span>
+                </div>
+              )}
+
+              {room.watermark && (
+                <div className="mt-2 flex items-center gap-2 text-xs text-aifm-charcoal/50">
+                  <Shield className="w-3.5 h-3.5" />
+                  <span>Watermarked</span>
+                </div>
+              )}
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {filteredRooms.length === 0 && (
+        <div className="text-center py-12">
+          <FolderLock className="w-12 h-12 text-aifm-charcoal/20 mx-auto mb-4" />
+          <p className="text-aifm-charcoal/60">No data rooms found</p>
+          <button 
+            onClick={() => setShowNewRoomModal(true)}
+            className="btn-primary mt-4 py-2 px-4"
+          >
+            Create First Data Room
+          </button>
+        </div>
+      )}
 
       {/* New Room Modal */}
       {showNewRoomModal && (
@@ -357,7 +337,6 @@ export default function DataRoomsPage() {
           </div>
         </div>
       )}
-    </div>
+    </DashboardLayout>
   );
 }
-

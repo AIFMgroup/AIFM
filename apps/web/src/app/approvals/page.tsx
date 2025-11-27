@@ -10,6 +10,7 @@ import {
 import { formatCurrency, formatDate } from '@/lib/fundData';
 import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
 import { CustomSelect } from '@/components/CustomSelect';
+import { DashboardLayout } from '@/components/DashboardLayout';
 
 // Types for approval workflow
 interface ApprovalItem {
@@ -212,346 +213,323 @@ export default function ApprovalsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <Link href="/" className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-aifm-gold rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">A</span>
-                </div>
-                <span className="font-medium tracking-widest text-aifm-charcoal uppercase text-sm">AIFM</span>
-              </Link>
-              <nav className="hidden md:flex items-center gap-6">
-                <Link href="/fund" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Funds</Link>
-                <Link href="/treasury" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Treasury</Link>
-                <Link href="/approvals" className="text-sm font-medium text-aifm-gold uppercase tracking-wider">Approvals</Link>
-              </nav>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-6 lg:px-12 py-8">
-        {/* Page Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <h1 className="heading-2">Godkännandecenter</h1>
-              <HelpTooltip 
-                {...helpContent.approvals}
-                learnMoreLink="/guide#approvals"
-                position="bottom"
-                size="md"
-              />
-            </div>
-            <div className="flex items-center gap-4">
-              <p className="text-aifm-charcoal/60">4-ögon principen: Alla finansiella åtgärder kräver dubbelt godkännande</p>
-              <Link href="/guide#approvals" className="text-xs text-aifm-gold hover:underline flex items-center gap-1">
-                <BookOpen className="w-3 h-3" />
-                Guide
-              </Link>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <CustomSelect
-              options={[
-                { value: 'all', label: 'Alla ärenden', icon: <Filter className="w-4 h-4 text-aifm-charcoal/40" /> },
-                { value: 'pending', label: `Väntande (${pendingCount})`, icon: <Clock className="w-4 h-4 text-amber-500" /> },
-                { value: 'approved', label: 'Godkända', icon: <CheckCircle2 className="w-4 h-4 text-green-500" /> },
-                { value: 'rejected', label: 'Avslagna', icon: <X className="w-4 h-4 text-red-500" /> },
-              ]}
-              value={filterStatus}
-              onChange={(value) => setFilterStatus(value as typeof filterStatus)}
-              className="min-w-[200px]"
-              variant="minimal"
+    <DashboardLayout showCompanySelector={false}>
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <h1 className="text-2xl font-medium text-aifm-charcoal uppercase tracking-wider">Godkännandecenter</h1>
+            <HelpTooltip 
+              {...helpContent.approvals}
+              learnMoreLink="/guide#approvals"
+              position="bottom"
               size="md"
             />
           </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Väntande</span>
-              <Clock className="w-5 h-5 text-amber-500" />
-            </div>
-            <p className="text-2xl font-medium text-aifm-charcoal">{pendingCount}</p>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">1st Approval</span>
-              <Shield className="w-5 h-5 text-amber-500" />
-            </div>
-            <p className="text-2xl font-medium text-aifm-charcoal">
-              {mockApprovals.filter(i => i.status === 'PENDING_FIRST').length}
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">2nd Approval</span>
-              <Shield className="w-5 h-5 text-blue-500" />
-            </div>
-            <p className="text-2xl font-medium text-aifm-charcoal">
-              {mockApprovals.filter(i => i.status === 'PENDING_SECOND').length}
-            </p>
-          </div>
-
-          <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-2xl p-6 text-white">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium uppercase tracking-wider text-white/70">Godkänt idag</span>
-              <CheckCircle2 className="w-5 h-5 text-white/50" />
-            </div>
-            <p className="text-2xl font-medium">{mockApprovals.filter(i => i.status === 'APPROVED').length}</p>
+          <div className="flex items-center gap-4">
+            <p className="text-aifm-charcoal/60">4-ögon principen: Alla finansiella åtgärder kräver dubbelt godkännande</p>
+            <Link href="/guide#approvals" className="text-xs text-aifm-gold hover:underline flex items-center gap-1">
+              <BookOpen className="w-3 h-3" />
+              Guide
+            </Link>
           </div>
         </div>
+        
+        <div className="flex items-center gap-3">
+          <CustomSelect
+            options={[
+              { value: 'all', label: 'Alla ärenden', icon: <Filter className="w-4 h-4 text-aifm-charcoal/40" /> },
+              { value: 'pending', label: `Väntande (${pendingCount})`, icon: <Clock className="w-4 h-4 text-amber-500" /> },
+              { value: 'approved', label: 'Godkända', icon: <CheckCircle2 className="w-4 h-4 text-green-500" /> },
+              { value: 'rejected', label: 'Avslagna', icon: <X className="w-4 h-4 text-red-500" /> },
+            ]}
+            value={filterStatus}
+            onChange={(value) => setFilterStatus(value as typeof filterStatus)}
+            className="min-w-[200px]"
+            variant="minimal"
+            size="md"
+          />
+        </div>
+      </div>
 
-        {/* 4-Eyes Notice */}
-        <div className="bg-gradient-to-r from-aifm-gold/10 to-aifm-gold/5 border border-aifm-gold/30 rounded-2xl p-6 mb-8">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-aifm-gold/20 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Shield className="w-6 h-6 text-aifm-gold" />
-            </div>
-            <div>
-              <h3 className="font-medium text-aifm-charcoal mb-1">4-Eyes Principle (Vier-Augen-Prinzip)</h3>
-              <p className="text-sm text-aifm-charcoal/70 mb-3">
-                All financial transactions require approval from two separate authorized users before execution. 
-                This dual-control mechanism ensures accuracy, prevents fraud, and maintains regulatory compliance.
-              </p>
-              <div className="flex flex-wrap gap-4 text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-amber-500 rounded-full" />
-                  <span className="text-aifm-charcoal/60">1st Approval: Initial review & verification</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                  <span className="text-aifm-charcoal/60">2nd Approval: Final authorization & execution</span>
-                </div>
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Väntande</span>
+            <Clock className="w-5 h-5 text-amber-500" />
+          </div>
+          <p className="text-2xl font-medium text-aifm-charcoal">{pendingCount}</p>
+        </div>
+
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">1st Approval</span>
+            <Shield className="w-5 h-5 text-amber-500" />
+          </div>
+          <p className="text-2xl font-medium text-aifm-charcoal">
+            {mockApprovals.filter(i => i.status === 'PENDING_FIRST').length}
+          </p>
+        </div>
+
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">2nd Approval</span>
+            <Shield className="w-5 h-5 text-blue-500" />
+          </div>
+          <p className="text-2xl font-medium text-aifm-charcoal">
+            {mockApprovals.filter(i => i.status === 'PENDING_SECOND').length}
+          </p>
+        </div>
+
+        <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-2xl p-6 text-white">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-medium uppercase tracking-wider text-white/70">Godkänt idag</span>
+            <CheckCircle2 className="w-5 h-5 text-white/50" />
+          </div>
+          <p className="text-2xl font-medium">{mockApprovals.filter(i => i.status === 'APPROVED').length}</p>
+        </div>
+      </div>
+
+      {/* 4-Eyes Notice */}
+      <div className="bg-gradient-to-r from-aifm-gold/10 to-aifm-gold/5 border border-aifm-gold/30 rounded-2xl p-6 mb-8">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 bg-aifm-gold/20 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Shield className="w-6 h-6 text-aifm-gold" />
+          </div>
+          <div>
+            <h3 className="font-medium text-aifm-charcoal mb-1">4-Eyes Principle (Vier-Augen-Prinzip)</h3>
+            <p className="text-sm text-aifm-charcoal/70 mb-3">
+              All financial transactions require approval from two separate authorized users before execution. 
+              This dual-control mechanism ensures accuracy, prevents fraud, and maintains regulatory compliance.
+            </p>
+            <div className="flex flex-wrap gap-4 text-xs">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-amber-500 rounded-full" />
+                <span className="text-aifm-charcoal/60">1st Approval: Initial review & verification</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                <span className="text-aifm-charcoal/60">2nd Approval: Final authorization & execution</span>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Approval Queue */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Approval Queue</h3>
-              <span className="text-xs text-aifm-charcoal/50">{filteredItems.length} items</span>
-            </div>
-            <div className="divide-y divide-gray-50 max-h-[600px] overflow-y-auto">
-              {filteredItems.length === 0 ? (
-                <div className="p-8 text-center">
-                  <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
-                  <p className="text-aifm-charcoal/60">Inga ärenden matchar filtret</p>
-                </div>
-              ) : (
-                filteredItems.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => setSelectedItem(item)}
-                    className={`p-4 cursor-pointer transition-colors ${
-                      selectedItem?.id === item.id ? 'bg-aifm-gold/5' : 'hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        item.status === 'APPROVED' ? 'bg-green-100 text-green-600' :
-                        item.status === 'REJECTED' ? 'bg-red-100 text-red-600' :
-                        'bg-aifm-gold/10 text-aifm-gold'
-                      }`}>
-                        {getTypeIcon(item.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <p className="font-medium text-aifm-charcoal truncate">{item.title}</p>
-                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap ${getStatusColor(item.status)}`}>
-                            {getStatusLabel(item.status)}
-                          </span>
-                        </div>
-                        <p className="text-sm text-aifm-charcoal/60 mb-2 line-clamp-1">{item.description}</p>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-aifm-charcoal">
-                            {formatCurrency(item.amount, item.currency)}
-                          </span>
-                          <span className="text-xs text-aifm-charcoal/50">{item.fundName}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+      <div className="grid lg:grid-cols-2 gap-8">
+        {/* Approval Queue */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Approval Queue</h3>
+            <span className="text-xs text-aifm-charcoal/50">{filteredItems.length} items</span>
           </div>
-
-          {/* Selected Item Details */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            {selectedItem ? (
-              <>
-                <div className="px-6 py-4 border-b border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Details</h3>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(selectedItem.status)}`}>
-                      {getStatusLabel(selectedItem.status)}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="p-6 border-b border-gray-100">
-                  <h4 className="font-medium text-aifm-charcoal mb-2">{selectedItem.title}</h4>
-                  <p className="text-sm text-aifm-charcoal/60 mb-4">{selectedItem.description}</p>
-                  
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Amount</p>
-                      <p className="font-medium text-aifm-charcoal">{formatCurrency(selectedItem.amount, selectedItem.currency)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Fund</p>
-                      <p className="font-medium text-aifm-charcoal">{selectedItem.fundName}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Skapad av</p>
-                      <p className="font-medium text-aifm-charcoal">{selectedItem.createdBy}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Skapad</p>
-                      <p className="font-medium text-aifm-charcoal">{formatDate(selectedItem.createdAt)}</p>
-                    </div>
-                  </div>
-
-                  {selectedItem.metadata && (
-                    <div className="bg-gray-50 rounded-xl p-4">
-                      <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-2">Ytterligare detaljer</p>
-                      {Object.entries(selectedItem.metadata).map(([key, value]) => (
-                        <div key={key} className="flex justify-between text-sm mb-1 last:mb-0">
-                          <span className="text-aifm-charcoal/60 capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
-                          <span className="font-medium text-aifm-charcoal">{value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Approval Trail */}
-                <div className="p-6 border-b border-gray-100">
-                  <h4 className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider mb-4">Approval Trail</h4>
-                  <div className="space-y-4">
-                    {/* First Approval */}
-                    <div className="flex items-start gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        selectedItem.firstApproval ? 'bg-green-100' : 'bg-gray-100'
-                      }`}>
-                        {selectedItem.firstApproval ? (
-                          <Check className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <span className="text-xs font-medium text-gray-400">1</span>
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-medium text-aifm-charcoal text-sm">First Approval</p>
-                        {selectedItem.firstApproval ? (
-                          <>
-                            <p className="text-xs text-aifm-charcoal/60">
-                              {selectedItem.firstApproval.approvedBy} • {formatDate(selectedItem.firstApproval.approvedAt)}
-                            </p>
-                            {selectedItem.firstApproval.comment && (
-                              <p className="text-xs text-aifm-charcoal/50 mt-1 italic">
-                                &ldquo;{selectedItem.firstApproval.comment}&rdquo;
-                              </p>
-                            )}
-                          </>
-                        ) : (
-                          <p className="text-xs text-amber-600">Pending</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Second Approval */}
-                    <div className="flex items-start gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        selectedItem.secondApproval ? 'bg-green-100' : 
-                        selectedItem.firstApproval ? 'bg-blue-100' : 'bg-gray-100'
-                      }`}>
-                        {selectedItem.secondApproval ? (
-                          <Check className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <span className={`text-xs font-medium ${selectedItem.firstApproval ? 'text-blue-600' : 'text-gray-400'}`}>2</span>
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-medium text-aifm-charcoal text-sm">Second Approval</p>
-                        {selectedItem.secondApproval ? (
-                          <p className="text-xs text-aifm-charcoal/60">
-                            {selectedItem.secondApproval.approvedBy} • {formatDate(selectedItem.secondApproval.approvedAt)}
-                          </p>
-                        ) : selectedItem.firstApproval ? (
-                          <p className="text-xs text-blue-600">Awaiting your approval</p>
-                        ) : (
-                          <p className="text-xs text-gray-400">Waiting for first approval</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Rejection (if applicable) */}
-                    {selectedItem.status === 'REJECTED' && (
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-red-100">
-                          <X className="w-4 h-4 text-red-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-aifm-charcoal text-sm">Avslaget</p>
-                          <p className="text-xs text-aifm-charcoal/60">
-                            {selectedItem.rejectedBy} • {selectedItem.rejectedAt && formatDate(selectedItem.rejectedAt)}
-                          </p>
-                          {selectedItem.rejectionReason && (
-                            <p className="text-xs text-red-600 mt-1">
-                              {selectedItem.rejectionReason}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                {selectedItem.status.startsWith('PENDING') && (
-                  <div className="p-6 bg-gray-50">
-                    <div className="flex gap-3">
-                      <button 
-                        onClick={() => setShowRejectModal(true)}
-                        className="flex-1 btn-outline py-2 flex items-center justify-center gap-2 text-red-600 border-red-200 hover:bg-red-50"
-                      >
-                        <X className="w-4 h-4" />
-                        Reject
-                      </button>
-                      <button 
-                        onClick={() => setShowApproveModal(true)}
-                        className="flex-1 btn-primary py-2 flex items-center justify-center gap-2"
-                      >
-                        <Check className="w-4 h-4" />
-                        Approve
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </>
+          <div className="divide-y divide-gray-50 max-h-[600px] overflow-y-auto">
+            {filteredItems.length === 0 ? (
+              <div className="p-8 text-center">
+                <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                <p className="text-aifm-charcoal/60">Inga ärenden matchar filtret</p>
+              </div>
             ) : (
-              <div className="p-12 text-center">
-                <Shield className="w-12 h-12 text-aifm-charcoal/20 mx-auto mb-4" />
-                <p className="text-aifm-charcoal/60">Välj ett ärende för att se detaljer</p>
-              </div>
+              filteredItems.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => setSelectedItem(item)}
+                  className={`p-4 cursor-pointer transition-colors ${
+                    selectedItem?.id === item.id ? 'bg-aifm-gold/5' : 'hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      item.status === 'APPROVED' ? 'bg-green-100 text-green-600' :
+                      item.status === 'REJECTED' ? 'bg-red-100 text-red-600' :
+                      'bg-aifm-gold/10 text-aifm-gold'
+                    }`}>
+                      {getTypeIcon(item.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <p className="font-medium text-aifm-charcoal truncate">{item.title}</p>
+                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap ${getStatusColor(item.status)}`}>
+                          {getStatusLabel(item.status)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-aifm-charcoal/60 mb-2 line-clamp-1">{item.description}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-aifm-charcoal">
+                          {formatCurrency(item.amount, item.currency)}
+                        </span>
+                        <span className="text-xs text-aifm-charcoal/50">{item.fundName}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </div>
-      </main>
+
+        {/* Selected Item Details */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          {selectedItem ? (
+            <>
+              <div className="px-6 py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Details</h3>
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(selectedItem.status)}`}>
+                    {getStatusLabel(selectedItem.status)}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="p-6 border-b border-gray-100">
+                <h4 className="font-medium text-aifm-charcoal mb-2">{selectedItem.title}</h4>
+                <p className="text-sm text-aifm-charcoal/60 mb-4">{selectedItem.description}</p>
+                
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Amount</p>
+                    <p className="font-medium text-aifm-charcoal">{formatCurrency(selectedItem.amount, selectedItem.currency)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Fund</p>
+                    <p className="font-medium text-aifm-charcoal">{selectedItem.fundName}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Skapad av</p>
+                    <p className="font-medium text-aifm-charcoal">{selectedItem.createdBy}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Skapad</p>
+                    <p className="font-medium text-aifm-charcoal">{formatDate(selectedItem.createdAt)}</p>
+                  </div>
+                </div>
+
+                {selectedItem.metadata && (
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-2">Ytterligare detaljer</p>
+                    {Object.entries(selectedItem.metadata).map(([key, value]) => (
+                      <div key={key} className="flex justify-between text-sm mb-1 last:mb-0">
+                        <span className="text-aifm-charcoal/60 capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
+                        <span className="font-medium text-aifm-charcoal">{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Approval Trail */}
+              <div className="p-6 border-b border-gray-100">
+                <h4 className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider mb-4">Approval Trail</h4>
+                <div className="space-y-4">
+                  {/* First Approval */}
+                  <div className="flex items-start gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      selectedItem.firstApproval ? 'bg-green-100' : 'bg-gray-100'
+                    }`}>
+                      {selectedItem.firstApproval ? (
+                        <Check className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <span className="text-xs font-medium text-gray-400">1</span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium text-aifm-charcoal text-sm">First Approval</p>
+                      {selectedItem.firstApproval ? (
+                        <>
+                          <p className="text-xs text-aifm-charcoal/60">
+                            {selectedItem.firstApproval.approvedBy} • {formatDate(selectedItem.firstApproval.approvedAt)}
+                          </p>
+                          {selectedItem.firstApproval.comment && (
+                            <p className="text-xs text-aifm-charcoal/50 mt-1 italic">
+                              &ldquo;{selectedItem.firstApproval.comment}&rdquo;
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <p className="text-xs text-amber-600">Pending</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Second Approval */}
+                  <div className="flex items-start gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      selectedItem.secondApproval ? 'bg-green-100' : 
+                      selectedItem.firstApproval ? 'bg-blue-100' : 'bg-gray-100'
+                    }`}>
+                      {selectedItem.secondApproval ? (
+                        <Check className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <span className={`text-xs font-medium ${selectedItem.firstApproval ? 'text-blue-600' : 'text-gray-400'}`}>2</span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium text-aifm-charcoal text-sm">Second Approval</p>
+                      {selectedItem.secondApproval ? (
+                        <p className="text-xs text-aifm-charcoal/60">
+                          {selectedItem.secondApproval.approvedBy} • {formatDate(selectedItem.secondApproval.approvedAt)}
+                        </p>
+                      ) : selectedItem.firstApproval ? (
+                        <p className="text-xs text-blue-600">Awaiting your approval</p>
+                      ) : (
+                        <p className="text-xs text-gray-400">Waiting for first approval</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Rejection (if applicable) */}
+                  {selectedItem.status === 'REJECTED' && (
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-red-100">
+                        <X className="w-4 h-4 text-red-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-aifm-charcoal text-sm">Avslaget</p>
+                        <p className="text-xs text-aifm-charcoal/60">
+                          {selectedItem.rejectedBy} • {selectedItem.rejectedAt && formatDate(selectedItem.rejectedAt)}
+                        </p>
+                        {selectedItem.rejectionReason && (
+                          <p className="text-xs text-red-600 mt-1">
+                            {selectedItem.rejectionReason}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Actions */}
+              {selectedItem.status.startsWith('PENDING') && (
+                <div className="p-6 bg-gray-50">
+                  <div className="flex gap-3">
+                    <button 
+                      onClick={() => setShowRejectModal(true)}
+                      className="flex-1 btn-outline py-2 flex items-center justify-center gap-2 text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                      <X className="w-4 h-4" />
+                      Reject
+                    </button>
+                    <button 
+                      onClick={() => setShowApproveModal(true)}
+                      className="flex-1 btn-primary py-2 flex items-center justify-center gap-2"
+                    >
+                      <Check className="w-4 h-4" />
+                      Approve
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="p-12 text-center">
+              <Shield className="w-12 h-12 text-aifm-charcoal/20 mx-auto mb-4" />
+              <p className="text-aifm-charcoal/60">Välj ett ärende för att se detaljer</p>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Approve Modal */}
       {showApproveModal && selectedItem && (
@@ -660,7 +638,6 @@ export default function ApprovalsPage() {
           </div>
         </div>
       )}
-    </div>
+    </DashboardLayout>
   );
 }
-
