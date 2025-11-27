@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
-  ChevronRight, ArrowUpRight, ArrowDownRight, FolderLock
+  ChevronRight, ArrowUpRight, ArrowDownRight, FolderOpen,
+  TrendingUp, Wallet, PieChart, BarChart3, CheckCircle2, Clock, AlertCircle
 } from 'lucide-react';
 import {
   getCompanyDashboard, formatCurrencyCompact
@@ -11,83 +12,84 @@ import {
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useCompany } from '@/components/CompanyContext';
 
-// Custom Select Component
-function CustomSelect({ 
-  options, 
+// Animated metric card with glow effect
+function MetricCard({ 
+  label, 
   value, 
-  onChange, 
-  className = '' 
+  subValue, 
+  trend,
+  icon: Icon,
+  delay = 0 
 }: { 
-  options: { value: string; label: string }[]; 
+  label: string; 
   value: string; 
-  onChange: (value: string) => void;
-  className?: string;
+  subValue?: string;
+  trend?: 'up' | 'down' | 'neutral';
+  icon: React.ElementType;
+  delay?: number;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
-  const selectedOption = options.find(o => o.value === value);
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), delay);
+    return () => clearTimeout(timer);
+  }, [delay]);
 
   return (
-    <div className={`relative ${className}`}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-gray-50 to-gray-100 
-                   rounded-lg text-xs font-medium text-aifm-charcoal border border-gray-200
-                   hover:from-aifm-gold/5 hover:to-aifm-gold/10 hover:border-aifm-gold/30
-                   transition-all duration-300 group"
-      >
-        <span>{selectedOption?.label || value}</span>
-        <svg className={`w-3 h-3 text-aifm-charcoal/40 group-hover:text-aifm-gold transition-all duration-300 ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
+    <div className={`
+      relative group bg-white rounded-2xl p-8 
+      border border-gray-100/50 
+      transition-all duration-700 ease-out
+      hover:shadow-2xl hover:shadow-aifm-gold/10 hover:border-aifm-gold/20
+      hover:-translate-y-1
+      ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+    `}>
+      {/* Subtle glow effect on hover */}
+      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-aifm-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       
-      {isOpen && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 bg-white rounded-xl border border-gray-100 
-                          shadow-xl overflow-hidden z-50 min-w-[120px] animate-in fade-in slide-in-from-top-2 duration-200">
-            {options.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => {
-                  onChange(option.value);
-                  setIsOpen(false);
-                }}
-                className={`w-full px-4 py-2.5 text-xs text-left transition-all duration-200 
-                           ${value === option.value 
-                             ? 'bg-aifm-gold/10 text-aifm-gold font-medium' 
-                             : 'text-aifm-charcoal hover:bg-gray-50'}`}
-              >
-                {option.label}
-              </button>
-            ))}
+      <div className="relative">
+        <div className="flex items-start justify-between mb-6">
+          <div className="p-3 bg-aifm-charcoal/5 rounded-xl group-hover:bg-aifm-gold/10 transition-colors duration-300">
+            <Icon className="w-5 h-5 text-aifm-charcoal/60 group-hover:text-aifm-gold transition-colors duration-300" />
           </div>
-        </>
-      )}
+          {trend && (
+            <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
+              trend === 'up' ? 'bg-emerald-50 text-emerald-600' :
+              trend === 'down' ? 'bg-red-50 text-red-600' :
+              'bg-gray-50 text-gray-600'
+            }`}>
+              {trend === 'up' ? <TrendingUp className="w-3 h-3" /> : null}
+              {subValue}
+            </div>
+          )}
+        </div>
+        
+        <p className="text-sm text-aifm-charcoal/50 uppercase tracking-wider font-medium mb-2">{label}</p>
+        <p className="text-3xl font-semibold text-aifm-charcoal tracking-tight">{value}</p>
+      </div>
     </div>
   );
 }
 
-// Animated Bar Component - Larger and cleaner
+// Animated Bar for charts
 function AnimatedBar({ 
   height, 
   color, 
   delay = 0, 
-  value
+  value,
+  isActual = true
 }: { 
   height: number; 
   color: string; 
   delay?: number;
   value?: number;
+  isActual?: boolean;
 }) {
   const [animatedHeight, setAnimatedHeight] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setAnimatedHeight(height);
-    }, delay);
+    const timer = setTimeout(() => setAnimatedHeight(height), delay);
     return () => clearTimeout(timer);
   }, [height, delay]);
 
@@ -97,27 +99,26 @@ function AnimatedBar({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Tooltip - positioned above the chart area */}
       {isHovered && value !== undefined && (
-        <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-1 bg-aifm-charcoal text-white 
-                        text-[9px] rounded whitespace-nowrap z-20 animate-in fade-in duration-150 pointer-events-none">
+        <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-aifm-charcoal text-white 
+                        text-xs font-medium rounded-lg whitespace-nowrap z-20 shadow-lg">
           {value.toFixed(2)}
-          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-aifm-charcoal rotate-45" />
+          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-aifm-charcoal rotate-45" />
         </div>
       )}
       <div 
-        className="w-8 rounded-t transition-all duration-700 ease-out hover:opacity-80"
+        className={`w-6 rounded-lg transition-all duration-700 ease-out ${isActual ? '' : 'opacity-40'}`}
         style={{ 
           height: `${animatedHeight}%`,
           backgroundColor: color,
-          boxShadow: isHovered ? `0 0 12px ${color}40` : 'none'
+          boxShadow: isHovered ? `0 0 20px ${color}50, 0 4px 12px ${color}30` : 'none'
         }}
       />
     </div>
   );
 }
 
-// Animated Donut Segment - Fixed to not overlap
+// Donut Segment
 function DonutSegment({ 
   percentage, 
   offset, 
@@ -136,37 +137,60 @@ function DonutSegment({
   onHover: (hovered: boolean) => void;
 }) {
   const [animatedPercentage, setAnimatedPercentage] = useState(0);
-  const circumference = 2 * Math.PI * 35;
+  const circumference = 2 * Math.PI * 38;
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setAnimatedPercentage(percentage);
-    }, delay);
+    const timer = setTimeout(() => setAnimatedPercentage(percentage), delay);
     return () => clearTimeout(timer);
   }, [percentage, delay]);
-
-  const strokeDasharray = `${(animatedPercentage / 100) * circumference} ${circumference}`;
-  const strokeDashoffset = -((offset / 100) * circumference);
 
   return (
     <circle
       cx="50"
       cy="50"
-      r="35"
+      r="38"
       fill="none"
       stroke={color}
-      strokeWidth={isHovered ? 22 : 18}
-      strokeDasharray={strokeDasharray}
-      strokeDashoffset={strokeDashoffset}
+      strokeWidth={isHovered ? 14 : 10}
+      strokeDasharray={`${(animatedPercentage / 100) * circumference} ${circumference}`}
+      strokeDashoffset={-((offset / 100) * circumference)}
+      strokeLinecap="round"
       className="transition-all duration-500 ease-out cursor-pointer"
       style={{
-        filter: isHovered ? `drop-shadow(0 0 8px ${color}60)` : 'none',
-        transform: isHovered ? 'scale(1.02)' : 'scale(1)',
-        transformOrigin: 'center'
+        filter: isHovered ? `drop-shadow(0 0 12px ${color}80)` : 'none',
       }}
       onMouseEnter={() => onHover(true)}
       onMouseLeave={() => onHover(false)}
     />
+  );
+}
+
+// KPI Selector Tabs
+function KPITabs({ 
+  options, 
+  value, 
+  onChange 
+}: { 
+  options: { value: string; label: string }[]; 
+  value: string; 
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="inline-flex bg-gray-100/80 rounded-xl p-1">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          onClick={() => onChange(option.value)}
+          className={`px-4 py-2 text-xs font-medium rounded-lg transition-all duration-300 ${
+            value === option.value
+              ? 'bg-white text-aifm-charcoal shadow-sm'
+              : 'text-aifm-charcoal/50 hover:text-aifm-charcoal'
+          }`}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -178,7 +202,13 @@ export default function OverviewPage() {
   const dashboard = getCompanyDashboard(selectedCompany.id);
 
   if (!dashboard) {
-    return <div>Laddar...</div>;
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="animate-pulse text-aifm-charcoal/40">Laddar...</div>
+        </div>
+      </DashboardLayout>
+    );
   }
 
   const { portfolio, transactions, tasks, kpiDataSet, metrics } = dashboard;
@@ -194,13 +224,8 @@ export default function OverviewPage() {
     }
   };
 
-  const getPriorityLabel = (priority: string) => {
-    switch(priority) {
-      case 'HIGH': return 'Hög';
-      case 'MEDIUM': return 'Medel';
-      case 'LOW': return 'Låg';
-      default: return priority;
-    }
+  const getSegmentOffset = (index: number) => {
+    return portfolio.slice(0, index).reduce((sum, i) => sum + i.percentage, 0);
   };
 
   const kpiOptions = [
@@ -209,52 +234,71 @@ export default function OverviewPage() {
     { value: 'MOIC', label: 'MOIC' },
   ];
 
-  const getSegmentOffset = (index: number) => {
-    return portfolio.slice(0, index).reduce((sum, i) => sum + i.percentage, 0);
-  };
-
   const hoveredInfo = portfolio.find(p => p.name === hoveredSegment);
 
   return (
     <DashboardLayout>
-      {/* Page Title - More space */}
-      <div className="mb-10">
-        <h2 className="text-2xl font-medium text-aifm-charcoal uppercase tracking-wider">Översikt</h2>
-        <p className="text-aifm-charcoal/40 mt-2">{selectedCompany.shortName}</p>
+      {/* Page Header */}
+      <div className="mb-12">
+        <h1 className="text-3xl font-semibold text-aifm-charcoal tracking-tight">Översikt</h1>
+        <p className="text-aifm-charcoal/40 mt-2 text-sm">{selectedCompany.name}</p>
       </div>
 
-      {/* Top Row - Key Metrics */}
-      <div className="grid grid-cols-4 gap-6 mb-10">
-        <div className="bg-white rounded-xl p-6">
-          <p className="text-xs text-aifm-charcoal/40 uppercase tracking-wider">NAV</p>
-          <p className="text-2xl font-medium text-aifm-charcoal mt-2">{formatCurrencyCompact(metrics.nav)}</p>
-        </div>
-        <div className="bg-white rounded-xl p-6">
-          <p className="text-xs text-aifm-charcoal/40 uppercase tracking-wider">MOIC</p>
-          <p className="text-2xl font-medium text-aifm-charcoal mt-2">{metrics.moic.toFixed(2)}x</p>
-        </div>
-        <div className="bg-white rounded-xl p-6">
-          <p className="text-xs text-aifm-charcoal/40 uppercase tracking-wider">IRR</p>
-          <p className="text-2xl font-medium text-aifm-charcoal mt-2">{metrics.irr.toFixed(1)}%</p>
-        </div>
-        <div className="bg-white rounded-xl p-6">
-          <p className="text-xs text-aifm-charcoal/40 uppercase tracking-wider">Orealiserad vinst</p>
-          <p className="text-2xl font-medium text-green-600 mt-2">+{formatCurrencyCompact(metrics.unrealizedGain)}</p>
-        </div>
+      {/* Key Metrics Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <MetricCard 
+          label="Nettotillgångsvärde" 
+          value={formatCurrencyCompact(metrics.nav)}
+          icon={Wallet}
+          delay={0}
+        />
+        <MetricCard 
+          label="MOIC" 
+          value={`${metrics.moic.toFixed(2)}x`}
+          subValue="+12.3%"
+          trend="up"
+          icon={TrendingUp}
+          delay={100}
+        />
+        <MetricCard 
+          label="IRR" 
+          value={`${metrics.irr.toFixed(1)}%`}
+          subValue="Över mål"
+          trend="up"
+          icon={BarChart3}
+          delay={200}
+        />
+        <MetricCard 
+          label="Orealiserad vinst" 
+          value={`+${formatCurrencyCompact(metrics.unrealizedGain)}`}
+          icon={TrendingUp}
+          delay={300}
+        />
       </div>
 
+      {/* Main Content Grid */}
       <div className="grid lg:grid-cols-3 gap-8">
-        {/* Left column - 2/3 width */}
+        {/* Left Column - 2/3 */}
         <div className="lg:col-span-2 space-y-8">
-          {/* Portfolio Overview - Larger donut chart */}
-          <div className="bg-white rounded-xl overflow-hidden">
-            <div className="px-6 py-5 border-b border-gray-50">
-              <h3 className="text-xs font-medium text-aifm-charcoal/40 uppercase tracking-wider">Portföljöversikt</h3>
+          
+          {/* Portfolio Chart Card */}
+          <div className="bg-white rounded-2xl border border-gray-100/50 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-500">
+            <div className="px-8 py-6 border-b border-gray-50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-aifm-charcoal/5 rounded-lg">
+                  <PieChart className="w-4 h-4 text-aifm-charcoal/60" />
+                </div>
+                <h2 className="text-sm font-semibold text-aifm-charcoal uppercase tracking-wider">Portföljfördelning</h2>
+              </div>
+              <Link href="/portfolio" className="text-xs text-aifm-charcoal/40 hover:text-aifm-gold flex items-center gap-1 transition-colors">
+                Detaljer <ChevronRight className="w-3 h-3" />
+              </Link>
             </div>
-            <div className="p-8">
-              <div className="flex items-center gap-16">
-                {/* Larger Donut Chart */}
-                <div className="relative w-80 h-80 flex-shrink-0">
+            
+            <div className="p-8 lg:p-12">
+              <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+                {/* Donut Chart */}
+                <div className="relative w-64 h-64 lg:w-72 lg:h-72 flex-shrink-0">
                   <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
                     {portfolio.map((item, index) => (
                       <DonutSegment 
@@ -262,7 +306,7 @@ export default function OverviewPage() {
                         percentage={item.percentage} 
                         offset={getSegmentOffset(index)} 
                         color={item.color} 
-                        delay={index * 100} 
+                        delay={index * 150} 
                         name={item.name} 
                         value={item.value} 
                         isHovered={hoveredSegment === item.name} 
@@ -274,13 +318,13 @@ export default function OverviewPage() {
                     <div className="text-center">
                       {hoveredInfo ? (
                         <>
-                          <p className="text-3xl font-medium text-aifm-charcoal">{hoveredInfo.percentage}%</p>
-                          <p className="text-sm text-aifm-charcoal/40 mt-1">{hoveredInfo.name}</p>
+                          <p className="text-4xl font-semibold text-aifm-charcoal">{hoveredInfo.percentage}%</p>
+                          <p className="text-sm text-aifm-charcoal/50 mt-1">{hoveredInfo.name}</p>
                         </>
                       ) : (
                         <>
-                          <p className="text-3xl font-medium text-aifm-charcoal">{formatCurrencyCompact(totalPortfolioValue)}</p>
-                          <p className="text-sm text-aifm-charcoal/40 mt-1">Totalt</p>
+                          <p className="text-4xl font-semibold text-aifm-charcoal">{formatCurrencyCompact(totalPortfolioValue)}</p>
+                          <p className="text-sm text-aifm-charcoal/50 mt-1">Totalt värde</p>
                         </>
                       )}
                     </div>
@@ -288,20 +332,31 @@ export default function OverviewPage() {
                 </div>
                 
                 {/* Legend */}
-                <div className="flex-1 space-y-4">
+                <div className="flex-1 w-full space-y-4">
                   {portfolio.map((item) => (
                     <div 
                       key={item.name} 
-                      className={`flex items-center justify-between py-2 cursor-pointer transition-all ${hoveredSegment === item.name ? 'opacity-100' : 'opacity-70 hover:opacity-100'}`} 
+                      className={`flex items-center justify-between py-3 px-4 rounded-xl cursor-pointer transition-all duration-300 ${
+                        hoveredSegment === item.name 
+                          ? 'bg-gray-50 shadow-sm' 
+                          : 'hover:bg-gray-50/50'
+                      }`}
                       onMouseEnter={() => setHoveredSegment(item.name)} 
                       onMouseLeave={() => setHoveredSegment(null)}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: item.color }} />
-                        <span className="text-sm text-aifm-charcoal">{item.name}</span>
+                      <div className="flex items-center gap-4">
+                        <div 
+                          className="w-3 h-3 rounded-full transition-transform duration-300"
+                          style={{ 
+                            backgroundColor: item.color,
+                            transform: hoveredSegment === item.name ? 'scale(1.3)' : 'scale(1)',
+                            boxShadow: hoveredSegment === item.name ? `0 0 8px ${item.color}60` : 'none'
+                          }} 
+                        />
+                        <span className="text-sm font-medium text-aifm-charcoal">{item.name}</span>
                       </div>
                       <div className="text-right">
-                        <span className="text-sm font-medium text-aifm-charcoal">{item.percentage}%</span>
+                        <span className="text-sm font-semibold text-aifm-charcoal">{item.percentage}%</span>
                         <span className="text-xs text-aifm-charcoal/40 ml-3">{formatCurrencyCompact(item.value)}</span>
                       </div>
                     </div>
@@ -311,28 +366,35 @@ export default function OverviewPage() {
             </div>
           </div>
 
-          {/* KPI Chart - Much Larger */}
-          <div className="bg-white rounded-xl overflow-hidden">
-            <div className="px-6 py-5 border-b border-gray-50 flex items-center justify-between">
-              <h3 className="text-xs font-medium text-aifm-charcoal/40 uppercase tracking-wider">Nyckeltal</h3>
-              <CustomSelect options={kpiOptions} value={selectedKPI} onChange={setSelectedKPI} />
+          {/* KPI Chart Card */}
+          <div className="bg-white rounded-2xl border border-gray-100/50 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-500">
+            <div className="px-8 py-6 border-b border-gray-50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-aifm-charcoal/5 rounded-lg">
+                  <BarChart3 className="w-4 h-4 text-aifm-charcoal/60" />
+                </div>
+                <h2 className="text-sm font-semibold text-aifm-charcoal uppercase tracking-wider">Nyckeltal över tid</h2>
+              </div>
+              <KPITabs options={kpiOptions} value={selectedKPI} onChange={setSelectedKPI} />
             </div>
-            <div className="p-8">
-              {/* KPI specific info */}
-              <div className="mb-6 flex items-baseline gap-4">
-                <span className="text-3xl font-medium text-aifm-charcoal">
+            
+            <div className="p-8 lg:p-12">
+              {/* Current Value Display */}
+              <div className="mb-10">
+                <p className="text-5xl font-semibold text-aifm-charcoal tracking-tight">
                   {selectedKPI === 'NAV' && `${(metrics.nav / 1000000).toFixed(1)} MSEK`}
                   {selectedKPI === 'IRR' && `${metrics.irr.toFixed(1)}%`}
                   {selectedKPI === 'MOIC' && `${metrics.moic.toFixed(2)}x`}
-                </span>
-                <span className="text-sm text-aifm-charcoal/40">
+                </p>
+                <p className="text-sm text-aifm-charcoal/40 mt-2">
                   {selectedKPI === 'NAV' && 'Nettotillgångsvärde'}
-                  {selectedKPI === 'IRR' && 'Internränta'}
+                  {selectedKPI === 'IRR' && 'Internränta (årlig)'}
                   {selectedKPI === 'MOIC' && 'Multiple on Invested Capital'}
-                </span>
+                </p>
               </div>
-              {/* Much larger chart area */}
-              <div className="h-[500px] flex items-end justify-between gap-10 px-6 pb-8">
+              
+              {/* Chart */}
+              <div className="h-80 flex items-end justify-between gap-6 lg:gap-10 px-4">
                 {(() => {
                   const currentKpiData = selectedKPI === 'NAV' ? kpiDataSet.nav 
                     : selectedKPI === 'IRR' ? kpiDataSet.irr 
@@ -344,98 +406,80 @@ export default function OverviewPage() {
                     const height2 = (data.value2 / maxValue) * 90;
                     return (
                       <div key={data.month} className="flex-1 flex flex-col items-center">
-                        <div className="w-full h-[400px] flex items-end justify-center gap-4">
-                          <AnimatedBar height={height1} color="#c0a280" delay={index * 80} value={data.value1} />
-                          <AnimatedBar height={height2} color="#615c59" delay={index * 80 + 40} value={data.value2} />
+                        <div className="w-full h-64 flex items-end justify-center gap-2">
+                          <AnimatedBar height={height1} color="#c0a280" delay={index * 100} value={data.value1} isActual={true} />
+                          <AnimatedBar height={height2} color="#2d2a26" delay={index * 100 + 50} value={data.value2} isActual={false} />
                         </div>
-                        <span className="text-xs text-aifm-charcoal/50 mt-6 uppercase tracking-wider font-medium">{data.month}</span>
+                        <span className="text-xs text-aifm-charcoal/40 mt-4 uppercase tracking-wider font-medium">{data.month}</span>
                       </div>
                     );
                   });
                 })()}
               </div>
+              
               {/* Legend */}
-              <div className="flex items-center justify-center gap-8 pt-6 border-t border-gray-50">
+              <div className="flex items-center justify-center gap-8 mt-8 pt-6 border-t border-gray-100">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-sm bg-aifm-gold" />
-                  <span className="text-xs text-aifm-charcoal/50">Faktiskt</span>
+                  <div className="w-3 h-3 rounded-full bg-aifm-gold" />
+                  <span className="text-xs text-aifm-charcoal/50 font-medium">Faktiskt</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-sm bg-aifm-charcoal" />
-                  <span className="text-xs text-aifm-charcoal/50">Mål</span>
+                  <div className="w-3 h-3 rounded-full bg-aifm-charcoal/30" />
+                  <span className="text-xs text-aifm-charcoal/50 font-medium">Mål</span>
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Transactions - Simplified */}
-          <div className="bg-white rounded-xl overflow-hidden">
-            <div className="px-6 py-5 border-b border-gray-50 flex items-center justify-between">
-              <h3 className="text-xs font-medium text-aifm-charcoal/40 uppercase tracking-wider">Senaste transaktioner</h3>
-              <Link href="/treasury" className="text-xs text-aifm-charcoal/40 hover:text-aifm-charcoal flex items-center gap-1">
-                Visa alla <ChevronRight className="w-3 h-3" />
-              </Link>
-            </div>
-            <div className="divide-y divide-gray-50">
-              {transactions.slice(0, 4).map((tx) => (
-                <div key={tx.id} className="px-6 py-4 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-2 h-2 rounded-full 
-                      ${tx.type === 'INCOME' || tx.type === 'DISTRIBUTION' ? 'bg-green-500' : 'bg-aifm-charcoal/30'}`} 
-                    />
-                    <div>
-                      <p className="text-sm text-aifm-charcoal">{tx.description}</p>
-                      <p className="text-xs text-aifm-charcoal/40 mt-0.5">{getTransactionTypeLabel(tx.type)} • {tx.date.toLocaleDateString('sv-SE')}</p>
-                    </div>
-                  </div>
-                  <p className={`text-sm font-medium ${tx.type === 'INCOME' || tx.type === 'DISTRIBUTION' ? 'text-green-600' : 'text-aifm-charcoal'}`}>
-                    {tx.type === 'INCOME' || tx.type === 'DISTRIBUTION' ? '+' : '-'}{formatCurrencyCompact(tx.amount, tx.currency)}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
-        {/* Right column - 1/3 width */}
+        {/* Right Column - 1/3 */}
         <div className="space-y-8">
-          {/* Tasks - Simplified */}
-          <div className="bg-white rounded-xl overflow-hidden">
+          
+          {/* Tasks Card */}
+          <div className="bg-white rounded-2xl border border-gray-100/50 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-500">
             <div className="px-6 py-5 border-b border-gray-50 flex items-center justify-between">
-              <h3 className="text-xs font-medium text-aifm-charcoal/40 uppercase tracking-wider">Uppgifter</h3>
-              <Link href="/approvals" className="text-xs text-aifm-charcoal/40 hover:text-aifm-charcoal flex items-center gap-1">
-                Visa alla <ChevronRight className="w-3 h-3" />
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-aifm-charcoal/5 rounded-lg">
+                  <CheckCircle2 className="w-4 h-4 text-aifm-charcoal/60" />
+                </div>
+                <h2 className="text-sm font-semibold text-aifm-charcoal uppercase tracking-wider">Uppgifter</h2>
+              </div>
+              <Link href="/approvals" className="text-xs text-aifm-charcoal/40 hover:text-aifm-gold flex items-center gap-1 transition-colors">
+                Alla <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
-            <div className="p-4 space-y-2">
+            
+            <div className="p-4 space-y-3">
               {tasks.slice(0, 4).map((task) => (
-                <div key={task.id} className={`p-4 rounded-lg ${task.status === 'DONE' ? 'bg-gray-50' : 'bg-gray-50/50'}`}>
+                <div 
+                  key={task.id} 
+                  className={`p-4 rounded-xl transition-all duration-300 ${
+                    task.status === 'DONE' 
+                      ? 'bg-gray-50/50' 
+                      : 'bg-gray-50 hover:bg-gray-100/50'
+                  }`}
+                >
                   <div className="flex items-start gap-3">
-                    <div className={`mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center 
-                      ${task.status === 'DONE' ? 'bg-aifm-charcoal border-aifm-charcoal' : 'border-gray-300'}`}
-                    >
-                      {task.status === 'DONE' && (
-                        <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
+                    <div className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center transition-all ${
+                      task.status === 'DONE' 
+                        ? 'bg-emerald-500' 
+                        : task.status === 'IN_PROGRESS'
+                          ? 'bg-amber-500'
+                          : 'bg-gray-200'
+                    }`}>
+                      {task.status === 'DONE' && <CheckCircle2 className="w-3 h-3 text-white" />}
+                      {task.status === 'IN_PROGRESS' && <Clock className="w-3 h-3 text-white" />}
+                      {task.status === 'TODO' && <AlertCircle className="w-3 h-3 text-gray-400" />}
                     </div>
-                    <div className="flex-1">
-                      <p className={`text-sm ${task.status === 'DONE' ? 'text-aifm-charcoal/40 line-through' : 'text-aifm-charcoal'}`}>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-medium truncate ${
+                        task.status === 'DONE' ? 'text-aifm-charcoal/40 line-through' : 'text-aifm-charcoal'
+                      }`}>
                         {task.title}
                       </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-aifm-charcoal/40">
-                          {task.dueDate.toLocaleDateString('sv-SE')}
-                        </span>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded 
-                          ${task.priority === 'HIGH' ? 'bg-red-100 text-red-600' : 
-                            task.priority === 'MEDIUM' ? 'bg-amber-100 text-amber-600' : 
-                            'bg-gray-100 text-gray-500'}`}
-                        >
-                          {getPriorityLabel(task.priority)}
-                        </span>
-                      </div>
+                      <p className="text-xs text-aifm-charcoal/40 mt-1">
+                        {task.dueDate.toLocaleDateString('sv-SE')}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -443,53 +487,66 @@ export default function OverviewPage() {
             </div>
           </div>
 
-          {/* Summary */}
-          <div className="bg-white rounded-xl overflow-hidden">
-            <div className="px-6 py-5 border-b border-gray-50">
-              <h3 className="text-xs font-medium text-aifm-charcoal/40 uppercase tracking-wider">Sammanfattning</h3>
+          {/* Recent Transactions */}
+          <div className="bg-white rounded-2xl border border-gray-100/50 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-500">
+            <div className="px-6 py-5 border-b border-gray-50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-aifm-charcoal/5 rounded-lg">
+                  <Wallet className="w-4 h-4 text-aifm-charcoal/60" />
+                </div>
+                <h2 className="text-sm font-semibold text-aifm-charcoal uppercase tracking-wider">Transaktioner</h2>
+              </div>
+              <Link href="/treasury" className="text-xs text-aifm-charcoal/40 hover:text-aifm-gold flex items-center gap-1 transition-colors">
+                Alla <ChevronRight className="w-3 h-3" />
+              </Link>
             </div>
-            <div className="p-6 space-y-5">
-              {[
-                { label: 'NAV', value: metrics.nav, color: '#c0a280' }, 
-                { label: 'Totalt investerat', value: metrics.totalInvested, color: '#615c59' }, 
-                { label: 'Utdelat', value: metrics.totalDistributed, color: '#059669' }
-              ].map((item, index) => (
-                <div key={item.label} className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-aifm-charcoal/50">{item.label}</span>
-                    <span className="text-sm font-medium text-aifm-charcoal">{formatCurrencyCompact(item.value)}</span>
-                  </div>
-                  <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full rounded-full transition-all duration-1000 ease-out" 
-                      style={{ 
-                        width: `${Math.min((item.value / metrics.nav) * 100, 100)}%`, 
-                        backgroundColor: item.color, 
-                        transitionDelay: `${index * 200}ms` 
-                      }} 
-                    />
+            
+            <div className="divide-y divide-gray-50">
+              {transactions.slice(0, 4).map((tx) => (
+                <div key={tx.id} className="px-6 py-4 hover:bg-gray-50/50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full ${
+                        tx.type === 'INCOME' || tx.type === 'DISTRIBUTION' 
+                          ? 'bg-emerald-500' 
+                          : 'bg-aifm-charcoal/30'
+                      }`} />
+                      <div>
+                        <p className="text-sm font-medium text-aifm-charcoal truncate max-w-[140px]">{tx.description}</p>
+                        <p className="text-xs text-aifm-charcoal/40">{getTransactionTypeLabel(tx.type)}</p>
+                      </div>
+                    </div>
+                    <p className={`text-sm font-semibold ${
+                      tx.type === 'INCOME' || tx.type === 'DISTRIBUTION' 
+                        ? 'text-emerald-600' 
+                        : 'text-aifm-charcoal'
+                    }`}>
+                      {tx.type === 'INCOME' || tx.type === 'DISTRIBUTION' ? '+' : '-'}
+                      {formatCurrencyCompact(tx.amount, tx.currency)}
+                    </p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Quick Actions - Fixed white text */}
-          <div className="bg-aifm-charcoal rounded-xl p-6">
-            <h3 className="text-xs font-medium text-white/60 uppercase tracking-wider mb-5">Snabbåtgärder</h3>
+          {/* Quick Actions */}
+          <div className="bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/90 rounded-2xl p-6 shadow-xl shadow-aifm-charcoal/20">
+            <h3 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-5">Snabbåtgärder</h3>
             <div className="space-y-2">
               {[
                 { href: '/capital-calls', label: 'Nytt kapitalanrop', icon: ArrowUpRight }, 
                 { href: '/distributions', label: 'Ny utdelning', icon: ArrowDownRight }, 
-                { href: '/data-rooms', label: 'Öppna datarum', icon: FolderLock }
+                { href: '/data-rooms', label: 'Öppna datarum', icon: FolderOpen }
               ].map((action) => (
                 <Link 
                   key={action.href} 
                   href={action.href} 
-                  className="flex items-center justify-between p-3 bg-white/5 rounded-lg text-white hover:bg-white/10 transition-colors"
+                  className="flex items-center justify-between p-4 bg-white/5 rounded-xl text-white 
+                             hover:bg-white/10 hover:translate-x-1 transition-all duration-300 group"
                 >
-                  <span className="text-sm">{action.label}</span>
-                  <action.icon className="w-4 h-4 text-white/50" />
+                  <span className="text-sm font-medium">{action.label}</span>
+                  <action.icon className="w-4 h-4 text-white/40 group-hover:text-aifm-gold transition-colors" />
                 </Link>
               ))}
             </div>
