@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Upload, FileText, Calculator, FileCheck, CreditCard, 
   CheckCircle2, Clock, AlertCircle, ArrowRight, TrendingUp,
-  Calendar, ChevronRight
+  Calendar, ChevronRight, Sparkles, Zap, BarChart3
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 
@@ -72,38 +72,199 @@ const accountingSteps: AccountingStep[] = [
 ];
 
 const recentActivity = [
-  { id: '1', action: 'Faktura uppladdad', details: 'Leverantörsfaktura #2024-1847', time: '5 min sedan', type: 'upload' },
-  { id: '2', action: 'Transaktion godkänd', details: 'Hyresbetalning december', time: '15 min sedan', type: 'approve' },
-  { id: '3', action: 'AI-klassificering', details: '12 transaktioner klassificerade automatiskt', time: '1 timme sedan', type: 'ai' },
-  { id: '4', action: 'Betalning genomförd', details: 'Skatteinbetalning Q4', time: '2 timmar sedan', type: 'payment' },
-  { id: '5', action: 'Dokument skannat', details: 'Kvitto från SJ AB', time: '3 timmar sedan', type: 'scan' },
+  { id: '1', action: 'Faktura uppladdad', details: 'Leverantörsfaktura #2024-1847', time: '5 min sedan', type: 'upload', icon: Upload },
+  { id: '2', action: 'Transaktion godkänd', details: 'Hyresbetalning december', time: '15 min sedan', type: 'approve', icon: CheckCircle2 },
+  { id: '3', action: 'AI-klassificering', details: '12 transaktioner klassificerade', time: '1 timme sedan', type: 'ai', icon: Sparkles },
+  { id: '4', action: 'Betalning genomförd', details: 'Skatteinbetalning Q4', time: '2 timmar sedan', type: 'payment', icon: CreditCard },
 ];
 
-function getStatusColor(status: AccountingStep['status']) {
-  switch (status) {
-    case 'completed': return 'bg-green-100 text-green-700';
-    case 'in_progress': return 'bg-aifm-gold/20 text-aifm-gold';
-    case 'pending': return 'bg-amber-100 text-amber-700';
-    case 'not_started': return 'bg-gray-100 text-gray-500';
-  }
+// Animated progress ring
+function ProgressRing({ progress, size = 120 }: { progress: number; size?: number }) {
+  const [animatedProgress, setAnimatedProgress] = useState(0);
+  const strokeWidth = 8;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (animatedProgress / 100) * circumference;
+
+  useEffect(() => {
+    setTimeout(() => setAnimatedProgress(progress), 100);
+  }, [progress]);
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg className="transform -rotate-90" width={size} height={size}>
+        <circle
+          className="text-gray-100"
+          strokeWidth={strokeWidth}
+          stroke="currentColor"
+          fill="transparent"
+          r={radius}
+          cx={size / 2}
+          cy={size / 2}
+        />
+        <circle
+          className="text-aifm-gold transition-all duration-1000 ease-out"
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          stroke="currentColor"
+          fill="transparent"
+          r={radius}
+          cx={size / 2}
+          cy={size / 2}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-3xl font-bold text-aifm-charcoal">{Math.round(animatedProgress)}%</span>
+        <span className="text-xs text-aifm-charcoal/50 uppercase tracking-wider">Klart</span>
+      </div>
+    </div>
+  );
 }
 
-function getStatusLabel(status: AccountingStep['status']) {
-  switch (status) {
-    case 'completed': return 'Klart';
-    case 'in_progress': return 'Pågår';
-    case 'pending': return 'Väntar';
-    case 'not_started': return 'Ej påbörjad';
-  }
+// Metric Card
+function MetricCard({ 
+  label, 
+  value, 
+  icon: Icon,
+  color = 'gold',
+  trend
+}: { 
+  label: string; 
+  value: string; 
+  icon: React.ElementType;
+  color?: 'gold' | 'green' | 'amber' | 'blue';
+  trend?: { value: string; positive: boolean };
+}) {
+  const colors = {
+    gold: 'bg-aifm-gold/10 text-aifm-gold',
+    green: 'bg-emerald-100 text-emerald-600',
+    amber: 'bg-amber-100 text-amber-600',
+    blue: 'bg-blue-100 text-blue-600',
+  };
+
+  return (
+    <div className="group bg-white rounded-2xl p-6 border border-gray-100/50 hover:shadow-xl hover:shadow-gray-200/50 hover:border-aifm-gold/20 hover:-translate-y-0.5 transition-all duration-500">
+      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-aifm-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      <div className="relative flex items-start justify-between">
+        <div>
+          <div className={`w-12 h-12 rounded-xl ${colors[color]} flex items-center justify-center mb-4`}>
+            <Icon className="w-6 h-6" />
+          </div>
+          <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider font-medium mb-1">{label}</p>
+          <p className="text-2xl font-semibold text-aifm-charcoal">{value}</p>
+        </div>
+        {trend && (
+          <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
+            trend.positive ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+          }`}>
+            <TrendingUp className={`w-3 h-3 ${!trend.positive && 'rotate-180'}`} />
+            {trend.value}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
-function getStatusIcon(status: AccountingStep['status']) {
-  switch (status) {
-    case 'completed': return <CheckCircle2 className="w-4 h-4" />;
-    case 'in_progress': return <Clock className="w-4 h-4" />;
-    case 'pending': return <AlertCircle className="w-4 h-4" />;
-    case 'not_started': return <Clock className="w-4 h-4" />;
-  }
+// Step Card
+function StepCard({ step, index }: { step: AccountingStep; index: number }) {
+  const Icon = step.icon;
+  
+  const getStatusStyles = (status: AccountingStep['status']) => {
+    switch (status) {
+      case 'completed': return { bg: 'bg-emerald-100', icon: 'text-emerald-600', badge: 'bg-emerald-50 text-emerald-600', label: 'Klart' };
+      case 'in_progress': return { bg: 'bg-aifm-gold/20', icon: 'text-aifm-gold', badge: 'bg-aifm-gold/10 text-aifm-gold', label: 'Pågår' };
+      case 'pending': return { bg: 'bg-amber-100', icon: 'text-amber-600', badge: 'bg-amber-50 text-amber-600', label: 'Väntar' };
+      case 'not_started': return { bg: 'bg-gray-100', icon: 'text-gray-400', badge: 'bg-gray-100 text-gray-500', label: 'Ej påbörjad' };
+    }
+  };
+
+  const styles = getStatusStyles(step.status);
+
+  return (
+    <Link 
+      href={step.href}
+      className="group relative bg-white rounded-2xl border border-gray-100/50 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 hover:border-aifm-gold/20 hover:-translate-y-1 transition-all duration-500"
+    >
+      {/* Top accent line */}
+      <div className={`absolute top-0 left-0 right-0 h-1 ${
+        step.status === 'completed' ? 'bg-emerald-500' :
+        step.status === 'in_progress' ? 'bg-aifm-gold' :
+        step.status === 'pending' ? 'bg-amber-400' :
+        'bg-gray-200'
+      }`} />
+      
+      <div className="p-6">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-4">
+            <div className={`w-14 h-14 rounded-xl ${styles.bg} flex items-center justify-center transition-transform duration-300 group-hover:scale-110`}>
+              {step.status === 'completed' ? (
+                <CheckCircle2 className="w-7 h-7 text-emerald-600" />
+              ) : (
+                <Icon className={`w-7 h-7 ${styles.icon}`} />
+              )}
+            </div>
+            <div>
+              <span className="text-xs text-aifm-charcoal/40 font-medium uppercase tracking-wider">Steg {index + 1}</span>
+              <h3 className="text-lg font-semibold text-aifm-charcoal mt-0.5 group-hover:text-aifm-gold transition-colors">
+                {step.title}
+              </h3>
+            </div>
+          </div>
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${styles.badge}`}>
+            {step.status === 'completed' && <CheckCircle2 className="w-3.5 h-3.5" />}
+            {step.status === 'in_progress' && <Clock className="w-3.5 h-3.5" />}
+            {step.status === 'pending' && <AlertCircle className="w-3.5 h-3.5" />}
+            {styles.label}
+          </span>
+        </div>
+        
+        {/* Description */}
+        <p className="text-sm text-aifm-charcoal/60 mb-4">{step.description}</p>
+
+        {/* Progress or Due Date */}
+        {step.progress !== undefined && (
+          <div className="mb-4">
+            <div className="flex items-center justify-between text-xs mb-2">
+              <span className="text-aifm-charcoal/50">Framsteg</span>
+              <span className="font-semibold text-aifm-charcoal">{step.progress}%</span>
+            </div>
+            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-aifm-gold rounded-full transition-all duration-700 relative"
+                style={{ width: `${step.progress}%` }}
+              >
+                <div className="absolute inset-0 bg-white/30 animate-pulse rounded-full" />
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {step.tasks && (
+          <p className="text-xs text-aifm-charcoal/50 flex items-center gap-1">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+            {step.tasks.completed} av {step.tasks.total} uppgifter klara
+          </p>
+        )}
+        
+        {step.dueDate && (
+          <p className="text-xs text-aifm-charcoal/50 flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5" />
+            Deadline: <span className="font-medium text-aifm-charcoal">{step.dueDate}</span>
+          </p>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100/50 flex items-center justify-between">
+        <span className="text-xs text-aifm-charcoal/40">Klicka för att öppna</span>
+        <ChevronRight className="w-4 h-4 text-aifm-charcoal/30 group-hover:text-aifm-gold group-hover:translate-x-1 transition-all" />
+      </div>
+    </Link>
+  );
 }
 
 export default function AccountingOverviewPage() {
@@ -111,231 +272,178 @@ export default function AccountingOverviewPage() {
 
   const completedSteps = accountingSteps.filter(s => s.status === 'completed').length;
   const totalSteps = accountingSteps.length;
+  const overallProgress = Math.round((completedSteps / totalSteps) * 100 + 
+    accountingSteps.filter(s => s.status === 'in_progress' && s.progress).reduce((sum, s) => sum + (s.progress || 0) / totalSteps / 2, 0));
 
   return (
     <DashboardLayout>
       {/* Page Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-medium text-aifm-charcoal uppercase tracking-wider mb-2">
-              Bokföring
-            </h1>
-            <p className="text-aifm-charcoal/60">
-              Hantera hela bokföringskedjan från underlag till årsredovisning
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <select
-              value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-aifm-charcoal
-                         focus:outline-none focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold"
-            >
-              <option value="2024">Räkenskapsår 2024</option>
-              <option value="2023">Räkenskapsår 2023</option>
-              <option value="2022">Räkenskapsår 2022</option>
-            </select>
-          </div>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
+        <div>
+          <h1 className="text-3xl font-semibold text-aifm-charcoal tracking-tight">Bokföring</h1>
+          <p className="text-aifm-charcoal/40 mt-2">Hantera hela bokföringskedjan från underlag till årsredovisning</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <select
+            value={selectedPeriod}
+            onChange={(e) => setSelectedPeriod(e.target.value)}
+            className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-aifm-charcoal
+                       focus:outline-none focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-all"
+          >
+            <option value="2024">Räkenskapsår 2024</option>
+            <option value="2023">Räkenskapsår 2023</option>
+            <option value="2022">Räkenskapsår 2022</option>
+          </select>
+          <Link 
+            href="/accounting/upload"
+            className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white 
+                       bg-aifm-charcoal rounded-xl hover:bg-aifm-charcoal/90 
+                       shadow-lg shadow-aifm-charcoal/20 transition-all"
+          >
+            <Upload className="w-4 h-4" />
+            Ladda upp
+          </Link>
         </div>
       </div>
 
       {/* Progress Overview */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-xl p-5 border border-gray-100">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-lg bg-aifm-gold/10 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-aifm-gold" />
-            </div>
+      <div className="grid lg:grid-cols-3 gap-8 mb-10">
+        {/* Main Progress */}
+        <div className="bg-gradient-to-br from-aifm-charcoal via-aifm-charcoal to-aifm-charcoal/90 rounded-2xl p-8 text-white shadow-xl shadow-aifm-charcoal/20">
+          <div className="flex items-start justify-between mb-6">
             <div>
-              <p className="text-2xl font-medium text-aifm-charcoal">{completedSteps}/{totalSteps}</p>
-              <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider">Steg klara</p>
+              <h2 className="text-sm font-medium text-white/50 uppercase tracking-wider">Årets framsteg</h2>
+              <p className="text-white/70 text-sm mt-1">{selectedPeriod}</p>
+            </div>
+            <div className="p-2 bg-white/10 rounded-lg">
+              <BarChart3 className="w-5 h-5 text-white/60" />
             </div>
           </div>
-          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-aifm-gold rounded-full transition-all duration-500"
-              style={{ width: `${(completedSteps / totalSteps) * 100}%` }}
-            />
-          </div>
-        </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-medium text-aifm-charcoal">185</p>
-              <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider">Transaktioner godkända</p>
+          <div className="flex items-center gap-8">
+            <ProgressRing progress={overallProgress} />
+            <div className="space-y-3">
+              <div>
+                <span className="text-3xl font-bold">{completedSteps}</span>
+                <span className="text-white/50 text-lg">/{totalSteps}</span>
+                <p className="text-xs text-white/50 uppercase tracking-wider mt-1">Steg klara</p>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-white/60">
+                <Zap className="w-4 h-4 text-aifm-gold" />
+                AI-assisterad bokföring
+              </div>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-medium text-aifm-charcoal">30</p>
-              <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider">Väntar på granskning</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-medium text-aifm-charcoal">31 dec</p>
-              <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider">Nästa deadline</p>
-            </div>
-          </div>
+
+        {/* Metrics */}
+        <div className="lg:col-span-2 grid grid-cols-2 gap-6">
+          <MetricCard 
+            label="Transaktioner godkända" 
+            value="185"
+            icon={CheckCircle2}
+            color="green"
+            trend={{ value: '+12%', positive: true }}
+          />
+          <MetricCard 
+            label="Väntar på granskning" 
+            value="30"
+            icon={Clock}
+            color="amber"
+          />
+          <MetricCard 
+            label="AI-klassificerade" 
+            value="156"
+            icon={Sparkles}
+            color="gold"
+            trend={{ value: '+23%', positive: true }}
+          />
+          <MetricCard 
+            label="Nästa deadline" 
+            value="31 dec"
+            icon={Calendar}
+            color="blue"
+          />
         </div>
       </div>
 
+      {/* Accounting Steps */}
+      <div className="mb-10">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-sm font-semibold text-aifm-charcoal uppercase tracking-wider">Bokföringskedjan</h2>
+          <span className="text-xs text-aifm-charcoal/40">{completedSteps} av {totalSteps} steg klara</span>
+        </div>
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {accountingSteps.map((step, index) => (
+            <StepCard key={step.id} step={step} index={index} />
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom Section */}
       <div className="grid lg:grid-cols-3 gap-8">
-        {/* Main Steps */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h2 className="text-sm font-medium text-aifm-charcoal/60 uppercase tracking-wider">
-                Bokföringskedjan
-              </h2>
-            </div>
-            <div className="divide-y divide-gray-50">
-              {accountingSteps.map((step, index) => {
-                const Icon = step.icon;
-                return (
-                  <Link 
-                    key={step.id}
-                    href={step.href}
-                    className="block px-6 py-5 hover:bg-gray-50/50 transition-colors group"
-                  >
-                    <div className="flex items-start gap-4">
-                      {/* Step Number & Icon */}
-                      <div className="flex-shrink-0">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center
-                          ${step.status === 'completed' ? 'bg-green-100' : 
-                            step.status === 'in_progress' ? 'bg-aifm-gold/20' : 
-                            'bg-gray-100'}`}
-                        >
-                          {step.status === 'completed' ? (
-                            <CheckCircle2 className="w-6 h-6 text-green-600" />
-                          ) : (
-                            <Icon className={`w-6 h-6 ${step.status === 'in_progress' ? 'text-aifm-gold' : 'text-gray-400'}`} />
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <div className="flex items-center gap-3">
-                              <span className="text-xs text-aifm-charcoal/40 font-medium">STEG {index + 1}</span>
-                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(step.status)}`}>
-                                {getStatusIcon(step.status)}
-                                {getStatusLabel(step.status)}
-                              </span>
-                            </div>
-                            <h3 className="text-lg font-medium text-aifm-charcoal mt-1 group-hover:text-aifm-gold transition-colors">
-                              {step.title}
-                            </h3>
-                            <p className="text-sm text-aifm-charcoal/60 mt-1">
-                              {step.description}
-                            </p>
-                          </div>
-                          <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-aifm-gold transition-colors flex-shrink-0 mt-2" />
-                        </div>
-
-                        {/* Progress or Due Date */}
-                        {step.progress !== undefined && (
-                          <div className="mt-3">
-                            <div className="flex items-center justify-between text-xs mb-1">
-                              <span className="text-aifm-charcoal/50">Framsteg</span>
-                              <span className="text-aifm-charcoal font-medium">{step.progress}%</span>
-                            </div>
-                            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-aifm-gold rounded-full transition-all duration-500"
-                                style={{ width: `${step.progress}%` }}
-                              />
-                            </div>
-                          </div>
-                        )}
-                        {step.tasks && (
-                          <p className="text-xs text-aifm-charcoal/50 mt-2">
-                            {step.tasks.completed} av {step.tasks.total} uppgifter klara
-                          </p>
-                        )}
-                        {step.dueDate && (
-                          <p className="text-xs text-aifm-charcoal/50 mt-2 flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            Deadline: {step.dueDate}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+        {/* Quick Actions */}
+        <div className="bg-white rounded-2xl border border-gray-100/50 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-500">
+          <div className="px-6 py-5 border-b border-gray-100">
+            <h3 className="text-sm font-semibold text-aifm-charcoal uppercase tracking-wider">Snabbåtgärder</h3>
+          </div>
+          <div className="p-4 space-y-2">
+            {[
+              { label: 'Ladda upp underlag', href: '/accounting/upload', icon: Upload },
+              { label: 'Granska transaktioner', href: '/accounting/bookkeeping', icon: CheckCircle2 },
+              { label: 'Hantera betalningar', href: '/accounting/payments', icon: CreditCard },
+              { label: 'Visa rapporter', href: '/accounting/closing', icon: FileText },
+            ].map((action) => (
+              <Link 
+                key={action.href}
+                href={action.href}
+                className="flex items-center justify-between p-4 rounded-xl hover:bg-aifm-gold/5 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-aifm-charcoal/5 rounded-lg flex items-center justify-center group-hover:bg-aifm-gold/10 transition-colors">
+                    <action.icon className="w-5 h-5 text-aifm-charcoal/50 group-hover:text-aifm-gold transition-colors" />
+                  </div>
+                  <span className="text-sm font-medium text-aifm-charcoal group-hover:text-aifm-gold transition-colors">{action.label}</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-aifm-charcoal/30 group-hover:text-aifm-gold group-hover:translate-x-1 transition-all" />
+              </Link>
+            ))}
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Quick Actions */}
-          <div className="bg-aifm-charcoal rounded-2xl p-6">
-            <h3 className="text-xs font-medium text-white/60 uppercase tracking-wider mb-4">
-              Snabbåtgärder
-            </h3>
-            <div className="space-y-2">
-              <Link 
-                href="/accounting/upload"
-                className="flex items-center justify-between p-3 bg-white/5 rounded-lg text-white hover:bg-white/10 transition-colors"
-              >
-                <span className="text-sm">Ladda upp underlag</span>
-                <Upload className="w-4 h-4 text-white/50" />
-              </Link>
-              <Link 
-                href="/accounting/bookkeeping"
-                className="flex items-center justify-between p-3 bg-white/5 rounded-lg text-white hover:bg-white/10 transition-colors"
-              >
-                <span className="text-sm">Granska transaktioner</span>
-                <ArrowRight className="w-4 h-4 text-white/50" />
-              </Link>
-              <Link 
-                href="/accounting/payments"
-                className="flex items-center justify-between p-3 bg-white/5 rounded-lg text-white hover:bg-white/10 transition-colors"
-              >
-                <span className="text-sm">Hantera betalningar</span>
-                <CreditCard className="w-4 h-4 text-white/50" />
-              </Link>
-            </div>
+        {/* Recent Activity */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100/50 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-500">
+          <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-aifm-charcoal uppercase tracking-wider">Senaste aktivitet</h3>
+            <Link href="/accounting/bookkeeping" className="text-xs text-aifm-gold hover:text-aifm-gold/80 flex items-center gap-1">
+              Visa alla <ChevronRight className="w-3 h-3" />
+            </Link>
           </div>
-
-          {/* Recent Activity */}
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h3 className="text-sm font-medium text-aifm-charcoal/60 uppercase tracking-wider">
-                Senaste aktivitet
-              </h3>
-            </div>
-            <div className="divide-y divide-gray-50">
-              {recentActivity.map((activity) => (
-                <div key={activity.id} className="px-6 py-3">
-                  <p className="text-sm text-aifm-charcoal font-medium">{activity.action}</p>
-                  <p className="text-xs text-aifm-charcoal/50 mt-0.5">{activity.details}</p>
-                  <p className="text-xs text-aifm-charcoal/30 mt-1">{activity.time}</p>
+          <div className="divide-y divide-gray-50">
+            {recentActivity.map((activity) => (
+              <div key={activity.id} className="px-6 py-4 flex items-center gap-4 hover:bg-gray-50/50 transition-colors">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  activity.type === 'upload' ? 'bg-blue-50' :
+                  activity.type === 'approve' ? 'bg-emerald-50' :
+                  activity.type === 'ai' ? 'bg-aifm-gold/10' :
+                  'bg-purple-50'
+                }`}>
+                  <activity.icon className={`w-5 h-5 ${
+                    activity.type === 'upload' ? 'text-blue-500' :
+                    activity.type === 'approve' ? 'text-emerald-500' :
+                    activity.type === 'ai' ? 'text-aifm-gold' :
+                    'text-purple-500'
+                  }`} />
                 </div>
-              ))}
-            </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-aifm-charcoal">{activity.action}</p>
+                  <p className="text-xs text-aifm-charcoal/50 truncate">{activity.details}</p>
+                </div>
+                <span className="text-xs text-aifm-charcoal/40 flex-shrink-0">{activity.time}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
     </DashboardLayout>
   );
 }
-
