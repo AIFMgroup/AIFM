@@ -96,7 +96,6 @@ function formatDate(date: Date): string {
 export default function ComplianceDocumentsPage() {
   const [documents, setDocuments] = useState<UploadedDocument[]>(mockDocuments);
   const [isDragging, setIsDragging] = useState(false);
-  const [uploadingFiles, setUploadingFiles] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -135,7 +134,6 @@ export default function ComplianceDocumentsPage() {
       };
       
       setDocuments(prev => [newDoc, ...prev]);
-      setUploadingFiles(prev => [...prev, newDoc.id]);
 
       // Simulate processing
       setTimeout(() => {
@@ -151,7 +149,6 @@ export default function ComplianceDocumentsPage() {
               : doc
           )
         );
-        setUploadingFiles(prev => prev.filter(id => id !== newDoc.id));
       }, 3000);
     });
   };
