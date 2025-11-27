@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { 
-  FolderLock, Plus, Users, FileText, Clock, Shield,
-  Search, Lock, Building2, Archive, BookOpen, Filter
+  FolderLock, Plus, Clock, Shield,
+  Search, Lock, Building2, Archive, BookOpen
 } from 'lucide-react';
 import {
   mockDataRooms, getTypeColor, getTypeLabel
@@ -68,35 +68,23 @@ export default function DataRoomsPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Aktiva rum</span>
-            <FolderLock className="w-5 h-5 text-aifm-gold" />
-          </div>
-          <p className="text-2xl font-medium text-aifm-charcoal">{activeRooms}</p>
+          <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Aktiva rum</span>
+          <p className="text-2xl font-medium text-aifm-charcoal mt-2">{activeRooms}</p>
         </div>
 
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Dokument</span>
-            <FileText className="w-5 h-5 text-aifm-charcoal/30" />
-          </div>
-          <p className="text-2xl font-medium text-aifm-charcoal">{totalDocuments}</p>
+          <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Dokument</span>
+          <p className="text-2xl font-medium text-aifm-charcoal mt-2">{totalDocuments}</p>
         </div>
 
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Totalt antal medlemmar</span>
-            <Users className="w-5 h-5 text-aifm-charcoal/30" />
-          </div>
-          <p className="text-2xl font-medium text-aifm-charcoal">{totalMembers}</p>
+          <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Totalt medlemmar</span>
+          <p className="text-2xl font-medium text-aifm-charcoal mt-2">{totalMembers}</p>
         </div>
 
-        <div className="bg-gradient-to-br from-aifm-gold to-aifm-gold/80 rounded-2xl p-6 text-white">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium uppercase tracking-wider text-white/70">Security</span>
-            <Shield className="w-5 h-5 text-white/50" />
-          </div>
-          <p className="text-lg font-medium">256-bit Encrypted</p>
+        <div className="bg-aifm-charcoal rounded-2xl p-6 text-white">
+          <span className="text-xs font-medium uppercase tracking-wider text-white/70">Säkerhet</span>
+          <p className="text-lg font-medium mt-2">256-bit krypterad</p>
         </div>
       </div>
 
@@ -125,12 +113,12 @@ export default function DataRoomsPage() {
         </div>
         <CustomSelect
           options={[
-            { value: 'all', label: 'Alla typer', icon: <Filter className="w-4 h-4 text-aifm-charcoal/40" /> },
-            { value: 'DEAL_ROOM', label: 'Affärsrum', icon: <Building2 className="w-4 h-4 text-blue-500" /> },
-            { value: 'DUE_DILIGENCE', label: 'Due Diligence', icon: <Search className="w-4 h-4 text-green-500" /> },
-            { value: 'INVESTOR_PORTAL', label: 'Investerarportal', icon: <Users className="w-4 h-4 text-purple-500" /> },
-            { value: 'BOARD', label: 'Styrelserum', icon: <Shield className="w-4 h-4 text-amber-500" /> },
-            { value: 'COMPLIANCE', label: 'Compliance', icon: <Lock className="w-4 h-4 text-red-500" /> },
+            { value: 'all', label: 'Alla typer' },
+            { value: 'DEAL_ROOM', label: 'Affärsrum' },
+            { value: 'DUE_DILIGENCE', label: 'Due Diligence' },
+            { value: 'INVESTOR_PORTAL', label: 'Investerarportal' },
+            { value: 'BOARD', label: 'Styrelserum' },
+            { value: 'COMPLIANCE', label: 'Compliance' },
           ]}
           value={filterType}
           onChange={setFilterType}
@@ -140,9 +128,9 @@ export default function DataRoomsPage() {
         />
         <CustomSelect
           options={[
-            { value: 'all', label: 'Alla statusar', icon: <FolderLock className="w-4 h-4 text-aifm-charcoal/40" /> },
-            { value: 'active', label: 'Aktiva', icon: <Clock className="w-4 h-4 text-green-500" /> },
-            { value: 'archived', label: 'Arkiverade', icon: <Archive className="w-4 h-4 text-gray-400" /> },
+            { value: 'all', label: 'Alla statusar' },
+            { value: 'active', label: 'Aktiva' },
+            { value: 'archived', label: 'Arkiverade' },
           ]}
           value={filterStatus}
           onChange={setFilterStatus}
@@ -271,12 +259,12 @@ export default function DataRoomsPage() {
                 </label>
                 <CustomSelect
                   options={[
-                    { value: 'DEAL_ROOM', label: 'Affärsrum', icon: <Building2 className="w-4 h-4 text-blue-500" /> },
-                    { value: 'DUE_DILIGENCE', label: 'Due Diligence', icon: <Search className="w-4 h-4 text-green-500" /> },
-                    { value: 'INVESTOR_PORTAL', label: 'Investerarportal', icon: <Users className="w-4 h-4 text-purple-500" /> },
-                    { value: 'BOARD', label: 'Styrelserum', icon: <Shield className="w-4 h-4 text-amber-500" /> },
-                    { value: 'COMPLIANCE', label: 'Compliance', icon: <Lock className="w-4 h-4 text-red-500" /> },
-                    { value: 'GENERAL', label: 'Allmänt', icon: <FolderLock className="w-4 h-4 text-gray-500" /> },
+                    { value: 'DEAL_ROOM', label: 'Affärsrum' },
+                    { value: 'DUE_DILIGENCE', label: 'Due Diligence' },
+                    { value: 'INVESTOR_PORTAL', label: 'Investerarportal' },
+                    { value: 'BOARD', label: 'Styrelserum' },
+                    { value: 'COMPLIANCE', label: 'Compliance' },
+                    { value: 'GENERAL', label: 'Allmänt' },
                   ]}
                   value="DEAL_ROOM"
                   onChange={() => {}}

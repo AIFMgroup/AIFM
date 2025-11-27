@@ -255,39 +255,27 @@ export default function ApprovalsPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Väntande</span>
-            <Clock className="w-5 h-5 text-amber-500" />
-          </div>
-          <p className="text-2xl font-medium text-aifm-charcoal">{pendingCount}</p>
+          <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Väntande</span>
+          <p className="text-2xl font-medium text-aifm-charcoal mt-2">{pendingCount}</p>
         </div>
 
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">1st Approval</span>
-            <Shield className="w-5 h-5 text-amber-500" />
-          </div>
-          <p className="text-2xl font-medium text-aifm-charcoal">
+          <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">1st Approval</span>
+          <p className="text-2xl font-medium text-aifm-charcoal mt-2">
             {mockApprovals.filter(i => i.status === 'PENDING_FIRST').length}
           </p>
         </div>
 
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">2nd Approval</span>
-            <Shield className="w-5 h-5 text-blue-500" />
-          </div>
-          <p className="text-2xl font-medium text-aifm-charcoal">
+          <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">2nd Approval</span>
+          <p className="text-2xl font-medium text-aifm-charcoal mt-2">
             {mockApprovals.filter(i => i.status === 'PENDING_SECOND').length}
           </p>
         </div>
 
-        <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-2xl p-6 text-white">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium uppercase tracking-wider text-white/70">Godkänt idag</span>
-            <CheckCircle2 className="w-5 h-5 text-white/50" />
-          </div>
-          <p className="text-2xl font-medium">{mockApprovals.filter(i => i.status === 'APPROVED').length}</p>
+        <div className="bg-aifm-charcoal rounded-2xl p-6 text-white">
+          <span className="text-xs font-medium uppercase tracking-wider text-white/70">Godkänt idag</span>
+          <p className="text-2xl font-medium mt-2">{mockApprovals.filter(i => i.status === 'APPROVED').length}</p>
         </div>
       </div>
 

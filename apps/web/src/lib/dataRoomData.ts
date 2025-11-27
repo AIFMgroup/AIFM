@@ -516,15 +516,8 @@ export function getRoleColor(role: DataRoomMember['role']): string {
 }
 
 export function getTypeColor(type: DataRoom['type']): string {
-  switch (type) {
-    case 'DEAL_ROOM': return 'bg-purple-100 text-purple-700';
-    case 'DUE_DILIGENCE': return 'bg-blue-100 text-blue-700';
-    case 'INVESTOR_PORTAL': return 'bg-green-100 text-green-700';
-    case 'BOARD': return 'bg-amber-100 text-amber-700';
-    case 'COMPLIANCE': return 'bg-red-100 text-red-700';
-    case 'GENERAL': return 'bg-gray-100 text-gray-700';
-    default: return 'bg-gray-100 text-gray-700';
-  }
+  // Unified dark brown/charcoal style with white text for all types
+  return 'bg-aifm-charcoal text-white';
 }
 
 export function getTypeLabel(type: DataRoom['type']): string {

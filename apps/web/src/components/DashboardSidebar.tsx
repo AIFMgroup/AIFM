@@ -13,7 +13,7 @@ import { useSidebar } from './SidebarContext';
 const navItems = [
   { id: 'overview', label: 'Översikt', icon: LayoutDashboard, href: '/overview' },
   { id: 'portfolio', label: 'Portfölj', icon: Briefcase, href: '/portfolio' },
-  { id: 'tasks', label: 'Uppgifter', icon: CheckSquare, href: '/approvals' },
+  { id: 'approvals', label: 'Uppgifter', icon: CheckSquare, href: '/approvals' },
   { id: 'dataroom', label: 'Datarum', icon: FolderLock, href: '/data-rooms' },
   { id: 'divider1', type: 'divider' },
   { id: 'investors', label: 'Investerare', icon: Users, href: '/investors' },
@@ -22,7 +22,6 @@ const navItems = [
   { id: 'treasury', label: 'Likviditet', icon: Wallet, href: '/treasury' },
   { id: 'divider2', type: 'divider' },
   { id: 'documents', label: 'Bokföring', icon: FileText, href: '/clients' },
-  { id: 'compliance', label: 'Compliance', icon: Shield, href: '/approvals' },
 ];
 
 const bottomNavItems = [
