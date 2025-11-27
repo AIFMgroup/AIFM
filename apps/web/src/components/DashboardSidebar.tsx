@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, Briefcase, CheckSquare,
   Settings, LogOut, ChevronDown,
-  ChevronLeft, ChevronRight, Banknote, FolderOpen, BookOpen, Bot
+  ChevronLeft, ChevronRight, Banknote, FolderOpen, BookOpen, Bot, Calculator
 } from 'lucide-react';
 import { useSidebar } from './SidebarContext';
 
@@ -51,7 +51,19 @@ const navItems: NavItem[] = [
     icon: FolderOpen,
     children: [
       { id: 'data-rooms', label: 'Datarum', href: '/data-rooms' },
-      { id: 'bookkeeping', label: 'Bokföring', href: '/clients' },
+    ]
+  },
+  { 
+    id: 'accounting', 
+    label: 'Bokföring', 
+    icon: Calculator,
+    children: [
+      { id: 'accounting-overview', label: 'Översikt', href: '/accounting' },
+      { id: 'accounting-upload', label: 'Ladda upp material', href: '/accounting/upload' },
+      { id: 'accounting-bookkeeping', label: 'Löpande bokföring', href: '/accounting/bookkeeping' },
+      { id: 'accounting-closing', label: 'Bokslut', href: '/accounting/closing' },
+      { id: 'accounting-annual', label: 'Årsredovisning', href: '/accounting/annual-report' },
+      { id: 'accounting-payments', label: 'Betalningar', href: '/accounting/payments' },
     ]
   },
   { 
@@ -179,7 +191,7 @@ export function DashboardSidebar() {
 
                 {/* Children */}
                 {hasChildren && !collapsed && (
-                  <div className={`overflow-hidden transition-all duration-200 ${isExpanded ? 'max-h-40 mt-1' : 'max-h-0'}`}>
+                  <div className={`overflow-hidden transition-all duration-200 ${isExpanded ? 'max-h-60 mt-1' : 'max-h-0'}`}>
                     <ul className="pl-5 space-y-0.5">
                       {item.children!.map((child) => {
                         const childActive = isActive(child.href);
