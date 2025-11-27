@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, Briefcase, CheckSquare, FolderLock,
@@ -93,14 +94,15 @@ export function DashboardSidebar() {
       className={`${collapsed ? 'w-[72px]' : 'w-56'} bg-aifm-charcoal flex flex-col transition-all duration-300 ease-in-out fixed left-0 top-0 bottom-0 z-40`}
     >
       {/* Logo */}
-      <div className={`p-4 border-b border-white/5 flex items-center ${collapsed ? 'justify-center' : 'justify-between'}`}>
-        <Link href="/overview" className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-aifm-gold rounded-lg flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-bold">A</span>
-          </div>
-          {!collapsed && (
-            <span className="text-white font-medium tracking-widest uppercase text-sm">AIFM</span>
-          )}
+      <div className={`p-4 border-b border-white/5 flex items-center ${collapsed ? 'justify-center' : 'justify-start'}`}>
+        <Link href="/overview" className="flex items-center">
+          <Image 
+            src="/frilagd_logo.png" 
+            alt="AIFM" 
+            width={collapsed ? 40 : 140} 
+            height={collapsed ? 40 : 50}
+            className="object-contain transition-all duration-300"
+          />
         </Link>
       </div>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { Lock, AlertCircle } from 'lucide-react';
 
 const REQUIRED_PASSWORD = 'AIFM';
@@ -45,14 +46,27 @@ export default function PasswordGatePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
+        {/* Mascot */}
+        <div className="flex justify-center mb-6">
+          <Image 
+            src="/maskot6.png" 
+            alt="AIFM Maskot" 
+            width={180} 
+            height={180}
+            className="object-contain"
+            priority
+          />
+        </div>
+
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-aifm-gold rounded-2xl shadow-lg mb-6">
-            <span className="text-white font-bold text-4xl">A</span>
-          </div>
-          <h1 className="text-2xl font-medium text-aifm-charcoal tracking-widest uppercase mb-2">
-            AIFM
-          </h1>
+          <Image 
+            src="/frilagd_logo.png" 
+            alt="AIFM" 
+            width={160} 
+            height={60}
+            className="mx-auto mb-4 object-contain"
+          />
           <p className="text-sm text-aifm-charcoal/60">
             Fondadministrationsplattform
           </p>
