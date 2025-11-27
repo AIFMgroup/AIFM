@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { 
   ArrowDownRight, Plus, CheckCircle2,
-  Users, DollarSign, FileText,
+  Users, DollarSign, FileText, Building2,
   Check, X, Shield, Eye, Download, BookOpen
 } from 'lucide-react';
 import {
@@ -12,6 +12,7 @@ import {
   formatCurrency, formatDate, Fund, Distribution
 } from '@/lib/fundData';
 import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
+import { CustomSelect } from '@/components/CustomSelect';
 
 export default function DistributionsPage() {
   const [selectedFund, setSelectedFund] = useState<Fund>(mockFunds[0]);
@@ -100,21 +101,24 @@ export default function DistributionsPage() {
             </div>
           </div>
           
-          <select
+          <CustomSelect
+            options={mockFunds.map((fund) => ({
+              value: fund.id,
+              label: fund.name,
+              icon: <Building2 className="w-4 h-4 text-aifm-gold" />
+            }))}
             value={selectedFund.id}
-            onChange={(e) => {
-              const fund = mockFunds.find(f => f.id === e.target.value);
+            onChange={(value) => {
+              const fund = mockFunds.find(f => f.id === value);
               if (fund) {
                 setSelectedFund(fund);
                 setSelectedDistribution(null);
               }
             }}
-            className="input py-2 px-4 pr-10 min-w-[250px]"
-          >
-            {mockFunds.map((fund) => (
-              <option key={fund.id} value={fund.id}>{fund.name}</option>
-            ))}
-          </select>
+            className="min-w-[280px]"
+            variant="gold"
+            size="md"
+          />
         </div>
 
         {/* Stats */}
@@ -356,17 +360,20 @@ export default function DistributionsPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                  Distribution Type
+                  Utdelningstyp
                 </label>
-                <select
+                <CustomSelect
+                  options={[
+                    { value: 'PROFIT_DISTRIBUTION', label: 'Vinstutdelning' },
+                    { value: 'RETURN_OF_CAPITAL', label: 'Kapitalåterbäring' },
+                    { value: 'DIVIDEND', label: 'Utdelning' },
+                  ]}
                   value={newDistType}
-                  onChange={(e) => setNewDistType(e.target.value as Distribution['type'])}
-                  className="input w-full"
-                >
-                  <option value="PROFIT_DISTRIBUTION">Profit Distribution</option>
-                  <option value="RETURN_OF_CAPITAL">Return of Capital</option>
-                  <option value="DIVIDEND">Dividend</option>
-                </select>
+                  onChange={(value) => setNewDistType(value as Distribution['type'])}
+                  className="w-full"
+                  variant="default"
+                  size="md"
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
