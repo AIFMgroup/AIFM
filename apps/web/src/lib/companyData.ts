@@ -46,12 +46,19 @@ export interface KPIData {
   value2: number;
 }
 
+export interface KPIDataSet {
+  nav: KPIData[];
+  irr: KPIData[];
+  moic: KPIData[];
+}
+
 export interface CompanyDashboard {
   company: Company;
   portfolio: PortfolioItem[];
   transactions: Transaction[];
   tasks: Task[];
-  kpiData: KPIData[];
+  kpiData: KPIData[]; // Legacy - kept for compatibility
+  kpiDataSet: KPIDataSet; // New separate data for NAV, IRR, MOIC
   metrics: {
     moic: number;
     irr: number;
@@ -139,6 +146,32 @@ export const companyDashboards: Record<string, CompanyDashboard> = {
       { month: 'Oct', value1: 102, value2: 90 },
       { month: 'Nov', value1: 115, value2: 95 },
     ],
+    kpiDataSet: {
+      nav: [
+        { month: 'Jun', value1: 118.2, value2: 115.0 },
+        { month: 'Jul', value1: 121.5, value2: 118.0 },
+        { month: 'Aug', value1: 119.8, value2: 120.0 },
+        { month: 'Sep', value1: 124.3, value2: 122.0 },
+        { month: 'Oct', value1: 126.9, value2: 125.0 },
+        { month: 'Nov', value1: 128.5, value2: 127.0 },
+      ],
+      irr: [
+        { month: 'Jun', value1: 10.2, value2: 12.0 },
+        { month: 'Jul', value1: 11.1, value2: 12.0 },
+        { month: 'Aug', value1: 10.8, value2: 12.0 },
+        { month: 'Sep', value1: 11.5, value2: 12.0 },
+        { month: 'Oct', value1: 12.0, value2: 12.0 },
+        { month: 'Nov', value1: 12.4, value2: 12.0 },
+      ],
+      moic: [
+        { month: 'Jun', value1: 2.85, value2: 3.00 },
+        { month: 'Jul', value1: 2.95, value2: 3.00 },
+        { month: 'Aug', value1: 2.92, value2: 3.00 },
+        { month: 'Sep', value1: 3.05, value2: 3.00 },
+        { month: 'Oct', value1: 3.12, value2: 3.00 },
+        { month: 'Nov', value1: 3.21, value2: 3.00 },
+      ],
+    },
     metrics: {
       moic: 3.21,
       irr: 12.37,
@@ -171,6 +204,32 @@ export const companyDashboards: Record<string, CompanyDashboard> = {
       { month: 'Oct', value1: 115, value2: 105 },
       { month: 'Nov', value1: 125, value2: 112 },
     ],
+    kpiDataSet: {
+      nav: [
+        { month: 'Jun', value1: 58.0, value2: 55.0 },
+        { month: 'Jul', value1: 61.2, value2: 58.0 },
+        { month: 'Aug', value1: 64.5, value2: 62.0 },
+        { month: 'Sep', value1: 66.8, value2: 65.0 },
+        { month: 'Oct', value1: 68.4, value2: 67.0 },
+        { month: 'Nov', value1: 70.0, value2: 68.0 },
+      ],
+      irr: [
+        { month: 'Jun', value1: 15.2, value2: 15.0 },
+        { month: 'Jul', value1: 16.1, value2: 15.0 },
+        { month: 'Aug', value1: 17.3, value2: 15.0 },
+        { month: 'Sep', value1: 17.8, value2: 15.0 },
+        { month: 'Oct', value1: 18.2, value2: 15.0 },
+        { month: 'Nov', value1: 18.5, value2: 15.0 },
+      ],
+      moic: [
+        { month: 'Jun', value1: 1.95, value2: 2.00 },
+        { month: 'Jul', value1: 2.08, value2: 2.00 },
+        { month: 'Aug', value1: 2.18, value2: 2.00 },
+        { month: 'Sep', value1: 2.28, value2: 2.00 },
+        { month: 'Oct', value1: 2.35, value2: 2.00 },
+        { month: 'Nov', value1: 2.45, value2: 2.00 },
+      ],
+    },
     metrics: {
       moic: 2.45,
       irr: 18.5,
@@ -203,6 +262,32 @@ export const companyDashboards: Record<string, CompanyDashboard> = {
       { month: 'Oct', value1: 102, value2: 95 },
       { month: 'Nov', value1: 105, value2: 98 },
     ],
+    kpiDataSet: {
+      nav: [
+        { month: 'Jun', value1: 175.0, value2: 170.0 },
+        { month: 'Jul', value1: 178.5, value2: 175.0 },
+        { month: 'Aug', value1: 182.0, value2: 180.0 },
+        { month: 'Sep', value1: 184.8, value2: 183.0 },
+        { month: 'Oct', value1: 187.2, value2: 185.0 },
+        { month: 'Nov', value1: 189.0, value2: 186.0 },
+      ],
+      irr: [
+        { month: 'Jun', value1: 6.8, value2: 8.0 },
+        { month: 'Jul', value1: 7.2, value2: 8.0 },
+        { month: 'Aug', value1: 7.5, value2: 8.0 },
+        { month: 'Sep', value1: 7.8, value2: 8.0 },
+        { month: 'Oct', value1: 8.0, value2: 8.0 },
+        { month: 'Nov', value1: 8.2, value2: 8.0 },
+      ],
+      moic: [
+        { month: 'Jun', value1: 1.62, value2: 1.75 },
+        { month: 'Jul', value1: 1.68, value2: 1.75 },
+        { month: 'Aug', value1: 1.72, value2: 1.75 },
+        { month: 'Sep', value1: 1.78, value2: 1.75 },
+        { month: 'Oct', value1: 1.82, value2: 1.75 },
+        { month: 'Nov', value1: 1.85, value2: 1.75 },
+      ],
+    },
     metrics: {
       moic: 1.85,
       irr: 8.2,
@@ -233,6 +318,32 @@ export const companyDashboards: Record<string, CompanyDashboard> = {
       { month: 'Oct', value1: 118, value2: 100 },
       { month: 'Nov', value1: 135, value2: 115 },
     ],
+    kpiDataSet: {
+      nav: [
+        { month: 'Jun', value1: 48.0, value2: 45.0 },
+        { month: 'Jul', value1: 52.5, value2: 50.0 },
+        { month: 'Aug', value1: 57.2, value2: 55.0 },
+        { month: 'Sep', value1: 62.8, value2: 60.0 },
+        { month: 'Oct', value1: 66.5, value2: 65.0 },
+        { month: 'Nov', value1: 70.0, value2: 68.0 },
+      ],
+      irr: [
+        { month: 'Jun', value1: 18.2, value2: 20.0 },
+        { month: 'Jul', value1: 19.5, value2: 20.0 },
+        { month: 'Aug', value1: 20.4, value2: 20.0 },
+        { month: 'Sep', value1: 21.2, value2: 20.0 },
+        { month: 'Oct', value1: 21.8, value2: 20.0 },
+        { month: 'Nov', value1: 22.4, value2: 20.0 },
+      ],
+      moic: [
+        { month: 'Jun', value1: 2.15, value2: 2.50 },
+        { month: 'Jul', value1: 2.32, value2: 2.50 },
+        { month: 'Aug', value1: 2.48, value2: 2.50 },
+        { month: 'Sep', value1: 2.62, value2: 2.50 },
+        { month: 'Oct', value1: 2.75, value2: 2.50 },
+        { month: 'Nov', value1: 2.85, value2: 2.50 },
+      ],
+    },
     metrics: {
       moic: 2.85,
       irr: 22.4,
@@ -266,6 +377,32 @@ export const companyDashboards: Record<string, CompanyDashboard> = {
       { month: 'Oct', value1: 105, value2: 94 },
       { month: 'Nov', value1: 112, value2: 100 },
     ],
+    kpiDataSet: {
+      nav: [
+        { month: 'Jun', value1: 52.5, value2: 50.0 },
+        { month: 'Jul', value1: 55.2, value2: 53.0 },
+        { month: 'Aug', value1: 56.8, value2: 56.0 },
+        { month: 'Sep', value1: 59.2, value2: 58.0 },
+        { month: 'Oct', value1: 61.5, value2: 60.0 },
+        { month: 'Nov', value1: 63.0, value2: 62.0 },
+      ],
+      irr: [
+        { month: 'Jun', value1: 13.2, value2: 14.0 },
+        { month: 'Jul', value1: 14.0, value2: 14.0 },
+        { month: 'Aug', value1: 14.5, value2: 14.0 },
+        { month: 'Sep', value1: 15.0, value2: 14.0 },
+        { month: 'Oct', value1: 15.4, value2: 14.0 },
+        { month: 'Nov', value1: 15.8, value2: 14.0 },
+      ],
+      moic: [
+        { month: 'Jun', value1: 1.82, value2: 2.00 },
+        { month: 'Jul', value1: 1.90, value2: 2.00 },
+        { month: 'Aug', value1: 1.95, value2: 2.00 },
+        { month: 'Sep', value1: 2.02, value2: 2.00 },
+        { month: 'Oct', value1: 2.08, value2: 2.00 },
+        { month: 'Nov', value1: 2.15, value2: 2.00 },
+      ],
+    },
     metrics: {
       moic: 2.15,
       irr: 15.8,

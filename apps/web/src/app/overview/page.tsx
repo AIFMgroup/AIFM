@@ -99,14 +99,14 @@ function AnimatedBar({
     >
       {/* Tooltip - positioned above the chart area */}
       {isHovered && value !== undefined && (
-        <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-aifm-charcoal text-white 
-                        text-[10px] rounded-lg whitespace-nowrap z-20 animate-in fade-in duration-150 pointer-events-none">
-          {value.toFixed(0)}
-          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-aifm-charcoal rotate-45" />
+        <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-1 bg-aifm-charcoal text-white 
+                        text-[9px] rounded whitespace-nowrap z-20 animate-in fade-in duration-150 pointer-events-none">
+          {value.toFixed(2)}
+          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-aifm-charcoal rotate-45" />
         </div>
       )}
       <div 
-        className="w-4 rounded-t transition-all duration-700 ease-out hover:opacity-80"
+        className="w-5 rounded-t transition-all duration-700 ease-out hover:opacity-80"
         style={{ 
           height: `${animatedHeight}%`,
           backgroundColor: color,
@@ -181,7 +181,7 @@ export default function OverviewPage() {
     return <div>Laddar...</div>;
   }
 
-  const { portfolio, transactions, tasks, kpiData, metrics } = dashboard;
+  const { portfolio, transactions, tasks, kpiDataSet, metrics } = dashboard;
   const totalPortfolioValue = portfolio.reduce((sum, item) => sum + item.value, 0);
 
   const getTransactionTypeLabel = (type: string) => {
@@ -257,7 +257,7 @@ export default function OverviewPage() {
             <div className="p-8">
               <div className="flex items-center gap-16">
                 {/* Larger Donut Chart */}
-                <div className="relative w-64 h-64 flex-shrink-0">
+                <div className="relative w-80 h-80 flex-shrink-0">
                   <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
                     {portfolio.map((item, index) => (
                       <DonutSegment 
@@ -321,22 +321,41 @@ export default function OverviewPage() {
               <CustomSelect options={kpiOptions} value={selectedKPI} onChange={setSelectedKPI} />
             </div>
             <div className="p-8">
+              {/* KPI specific info */}
+              <div className="mb-6 flex items-baseline gap-4">
+                <span className="text-3xl font-medium text-aifm-charcoal">
+                  {selectedKPI === 'NAV' && `${(metrics.nav / 1000000).toFixed(1)} MSEK`}
+                  {selectedKPI === 'IRR' && `${metrics.irr.toFixed(1)}%`}
+                  {selectedKPI === 'MOIC' && `${metrics.moic.toFixed(2)}x`}
+                </span>
+                <span className="text-sm text-aifm-charcoal/40">
+                  {selectedKPI === 'NAV' && 'Nettotillgångsvärde'}
+                  {selectedKPI === 'IRR' && 'Internränta'}
+                  {selectedKPI === 'MOIC' && 'Multiple on Invested Capital'}
+                </span>
+              </div>
               {/* Much larger chart area */}
-              <div className="h-80 flex items-end justify-between gap-6 px-4 pb-8">
-                {kpiData.map((data, index) => {
-                  const maxValue = Math.max(...kpiData.map(d => Math.max(d.value1, d.value2)));
-                  const height1 = (data.value1 / maxValue) * 75;
-                  const height2 = (data.value2 / maxValue) * 75;
-                  return (
-                    <div key={data.month} className="flex-1 flex flex-col items-center">
-                      <div className="w-full h-64 flex items-end justify-center gap-2">
-                        <AnimatedBar height={height1} color="#c0a280" delay={index * 100} value={data.value1} />
-                        <AnimatedBar height={height2} color="#615c59" delay={index * 100 + 50} value={data.value2} />
+              <div className="h-96 flex items-end justify-between gap-8 px-4 pb-8">
+                {(() => {
+                  const currentKpiData = selectedKPI === 'NAV' ? kpiDataSet.nav 
+                    : selectedKPI === 'IRR' ? kpiDataSet.irr 
+                    : kpiDataSet.moic;
+                  const maxValue = Math.max(...currentKpiData.map(d => Math.max(d.value1, d.value2)));
+                  
+                  return currentKpiData.map((data, index) => {
+                    const height1 = (data.value1 / maxValue) * 85;
+                    const height2 = (data.value2 / maxValue) * 85;
+                    return (
+                      <div key={data.month} className="flex-1 flex flex-col items-center">
+                        <div className="w-full h-72 flex items-end justify-center gap-3">
+                          <AnimatedBar height={height1} color="#c0a280" delay={index * 80} value={data.value1} />
+                          <AnimatedBar height={height2} color="#615c59" delay={index * 80 + 40} value={data.value2} />
+                        </div>
+                        <span className="text-[10px] text-aifm-charcoal/40 mt-4 uppercase tracking-wider">{data.month}</span>
                       </div>
-                      <span className="text-xs text-aifm-charcoal/40 mt-4">{data.month}</span>
-                    </div>
-                  );
-                })}
+                    );
+                  });
+                })()}
               </div>
               {/* Legend */}
               <div className="flex items-center justify-center gap-8 pt-6 border-t border-gray-50">
