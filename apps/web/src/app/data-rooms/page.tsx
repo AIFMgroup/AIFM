@@ -369,11 +369,11 @@ export default function DataRoomsPage() {
       {/* New Room Modal */}
       {showNewRoomModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[85vh] shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+            <div className="px-8 py-5 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
               <div>
-                <h3 className="text-xl font-semibold text-aifm-charcoal">Skapa nytt datarum</h3>
-                <p className="text-sm text-aifm-charcoal/40 mt-1">Säker delning av dokument med kontrollerad åtkomst</p>
+                <h3 className="text-lg font-semibold text-aifm-charcoal">Skapa nytt datarum</h3>
+                <p className="text-sm text-aifm-charcoal/40 mt-0.5">Säker delning av dokument</p>
               </div>
               <button 
                 onClick={() => setShowNewRoomModal(false)}
@@ -385,7 +385,7 @@ export default function DataRoomsPage() {
               </button>
             </div>
             
-            <div className="p-8 space-y-6">
+            <div className="p-6 space-y-5 overflow-y-auto flex-1">
               <div className="grid grid-cols-2 gap-6">
                 <div className="col-span-2">
                   <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">
@@ -414,19 +414,19 @@ export default function DataRoomsPage() {
               <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
               
               <div>
-                <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-3 uppercase tracking-wider">
+                <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">
                   Rumstyp *
                 </label>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-2">
                   {roomTypes.map((type) => (
                     <button
                       key={type.value}
                       type="button"
                       onClick={() => setNewRoomType(type.value)}
-                      className={`px-4 py-4 rounded-xl text-sm font-medium transition-all duration-300 border-2 ${
+                      className={`px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 border ${
                         newRoomType === type.value
-                          ? 'bg-aifm-charcoal text-white border-aifm-charcoal shadow-lg shadow-aifm-charcoal/20'
-                          : 'bg-white text-aifm-charcoal/60 border-gray-100 hover:border-gray-200 hover:bg-gray-50'
+                          ? 'bg-aifm-charcoal text-white border-aifm-charcoal'
+                          : 'bg-white text-aifm-charcoal/60 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                       }`}
                     >
                       {type.label}
@@ -462,40 +462,29 @@ export default function DataRoomsPage() {
                 </div>
               </div>
 
-              <div className="bg-gray-50/80 rounded-xl p-5 border border-gray-100">
-                <p className="text-xs font-semibold text-aifm-charcoal/50 uppercase tracking-wider mb-4">Säkerhetsinställningar</p>
-                <div className="space-y-4">
+              <div className="bg-gray-50/80 rounded-xl p-4 border border-gray-100">
+                <p className="text-xs font-semibold text-aifm-charcoal/50 uppercase tracking-wider mb-3">Säkerhetsinställningar</p>
+                <div className="space-y-3">
                   <label className="flex items-center justify-between cursor-pointer group">
-                    <div>
-                      <span className="text-sm font-medium text-aifm-charcoal group-hover:text-aifm-gold transition-colors">Vattenstämpel på dokument</span>
-                      <p className="text-xs text-aifm-charcoal/40 mt-0.5">Lägger till mottagarens namn på nedladdade filer</p>
-                    </div>
-                    <input type="checkbox" className="w-5 h-5 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold" defaultChecked />
+                    <span className="text-sm text-aifm-charcoal group-hover:text-aifm-gold transition-colors">Vattenstämpel på dokument</span>
+                    <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold" defaultChecked />
                   </label>
-                  <div className="h-px bg-gray-200" />
                   <label className="flex items-center justify-between cursor-pointer group">
-                    <div>
-                      <span className="text-sm font-medium text-aifm-charcoal group-hover:text-aifm-gold transition-colors">Tillåt nedladdning</span>
-                      <p className="text-xs text-aifm-charcoal/40 mt-0.5">Medlemmar kan ladda ner dokument (annars endast visa)</p>
-                    </div>
-                    <input type="checkbox" className="w-5 h-5 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold" defaultChecked />
+                    <span className="text-sm text-aifm-charcoal group-hover:text-aifm-gold transition-colors">Tillåt nedladdning</span>
+                    <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold" defaultChecked />
                   </label>
-                  <div className="h-px bg-gray-200" />
                   <label className="flex items-center justify-between cursor-pointer group">
-                    <div>
-                      <span className="text-sm font-medium text-aifm-charcoal group-hover:text-aifm-gold transition-colors">Kräv NDA</span>
-                      <p className="text-xs text-aifm-charcoal/40 mt-0.5">Medlemmar måste acceptera NDA innan åtkomst</p>
-                    </div>
-                    <input type="checkbox" className="w-5 h-5 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold" />
+                    <span className="text-sm text-aifm-charcoal group-hover:text-aifm-gold transition-colors">Kräv NDA</span>
+                    <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold" />
                   </label>
                 </div>
               </div>
             </div>
             
-            <div className="px-8 py-6 border-t border-gray-100 flex gap-3">
+            <div className="px-6 py-4 border-t border-gray-100 flex gap-3 flex-shrink-0 bg-gray-50/50">
               <button 
                 onClick={() => setShowNewRoomModal(false)}
-                className="flex-1 py-3.5 px-4 text-sm font-medium text-aifm-charcoal/70 
+                className="flex-1 py-3 px-4 text-sm font-medium text-aifm-charcoal/70 
                            bg-white border border-gray-200 rounded-xl hover:border-aifm-charcoal/30 transition-all"
               >
                 Avbryt
@@ -505,7 +494,7 @@ export default function DataRoomsPage() {
                   alert('Datarum skapat! (Demo)');
                   setShowNewRoomModal(false);
                 }}
-                className="flex-1 py-3.5 px-4 text-sm font-medium text-white 
+                className="flex-1 py-3 px-4 text-sm font-medium text-white 
                            bg-aifm-charcoal rounded-xl hover:bg-aifm-charcoal/90 
                            shadow-lg shadow-aifm-charcoal/20 transition-all flex items-center justify-center gap-2"
               >

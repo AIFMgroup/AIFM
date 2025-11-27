@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -86,22 +86,67 @@ const navItems: NavItem[] = [
 export function DashboardSidebar() {
   const { collapsed, toggle } = useSidebar();
   const pathname = usePathname();
-  const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  // Track which items are manually expanded (user clicked)
+  const [manuallyExpanded, setManuallyExpanded] = useState<Set<string>>(new Set());
+  // Track which items are manually collapsed (user clicked to close)
+  const [manuallyCollapsed, setManuallyCollapsed] = useState<Set<string>>(new Set());
 
-  const isActive = (href: string) => {
+  const isActive = useCallback((href: string) => {
     if (href === '/overview') return pathname === '/overview' || pathname === '/';
     return pathname.startsWith(href);
-  };
+  }, [pathname]);
 
-  const isParentActive = (item: NavItem) => {
+  const isParentActive = useCallback((item: NavItem) => {
     if (item.href) return isActive(item.href);
     return item.children?.some(child => isActive(child.href)) || false;
-  };
+  }, [isActive]);
+
+  // Calculate which items should be expanded
+  const isExpanded = useCallback((id: string) => {
+    // If manually collapsed, don't show
+    if (manuallyCollapsed.has(id)) return false;
+    // If manually expanded, show
+    if (manuallyExpanded.has(id)) return true;
+    // Otherwise, show if a child is active
+    const item = navItems.find(i => i.id === id);
+    if (item && item.children) {
+      return item.children.some(child => isActive(child.href));
+    }
+    return false;
+  }, [manuallyExpanded, manuallyCollapsed, isActive]);
+
+  // When pathname changes and a child becomes active, remove parent from manually collapsed
+  useEffect(() => {
+    navItems.forEach(item => {
+      if (item.children && item.children.some(child => isActive(child.href))) {
+        setManuallyCollapsed(prev => {
+          const next = new Set(prev);
+          next.delete(item.id);
+          return next;
+        });
+      }
+    });
+  }, [pathname, isActive]);
 
   const toggleExpand = (id: string) => {
-    setExpandedItems(prev => 
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    );
+    const currentlyExpanded = isExpanded(id);
+    if (currentlyExpanded) {
+      // User is collapsing - add to manually collapsed, remove from manually expanded
+      setManuallyCollapsed(prev => new Set(prev).add(id));
+      setManuallyExpanded(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    } else {
+      // User is expanding - add to manually expanded, remove from manually collapsed
+      setManuallyExpanded(prev => new Set(prev).add(id));
+      setManuallyCollapsed(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
   };
 
   const handleLogout = () => {
@@ -132,7 +177,7 @@ export function DashboardSidebar() {
           {navItems.map((item) => {
             const Icon = item.icon;
             const hasChildren = item.children && item.children.length > 0;
-            const isExpanded = expandedItems.includes(item.id);
+            const itemIsExpanded = isExpanded(item.id);
             const active = isParentActive(item);
             
             return (
@@ -155,7 +200,7 @@ export function DashboardSidebar() {
                       )}
                     </div>
                     {!collapsed && hasChildren && (
-                      <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${itemIsExpanded ? 'rotate-180' : ''}`} />
                     )}
                     {/* Tooltip when collapsed */}
                     {collapsed && (
@@ -191,7 +236,7 @@ export function DashboardSidebar() {
 
                 {/* Children */}
                 {hasChildren && !collapsed && (
-                  <div className={`overflow-hidden transition-all duration-200 ${isExpanded ? 'max-h-60 mt-1' : 'max-h-0'}`}>
+                  <div className={`overflow-hidden transition-all duration-200 ${itemIsExpanded ? 'max-h-96 mt-1' : 'max-h-0'}`}>
                     <ul className="pl-5 space-y-0.5">
                       {item.children!.map((child) => {
                         const childActive = isActive(child.href);

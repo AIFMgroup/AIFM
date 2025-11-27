@@ -585,6 +585,70 @@ function CompanySelector({
   );
 }
 
+// Collapsible Company Header
+function CollapsibleCompanyHeader({ 
+  selectedCompany, 
+  companies, 
+  onChange, 
+  onAddNew 
+}: { 
+  selectedCompany: Company; 
+  companies: Company[]; 
+  onChange: (company: Company) => void;
+  onAddNew: () => void;
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div className="relative">
+      {/* Collapsed view - just a toggle button */}
+      {!isExpanded && (
+        <button
+          onClick={() => setIsExpanded(true)}
+          className="flex items-center gap-3 px-4 py-2 bg-white border border-gray-200 rounded-xl 
+                     hover:border-aifm-gold/50 hover:shadow-lg hover:shadow-aifm-gold/10
+                     transition-all duration-300 group"
+        >
+          <div 
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: selectedCompany.color + '15' }}
+          >
+            <Building2 className="w-4 h-4" style={{ color: selectedCompany.color }} />
+          </div>
+          <div className="text-left">
+            <p className="text-sm font-medium text-aifm-charcoal">{selectedCompany.shortName}</p>
+            <p className="text-xs text-aifm-charcoal/50">{selectedCompany.orgNumber}</p>
+          </div>
+          {/* Pulsating expand arrow */}
+          <ChevronDown className="w-4 h-4 text-aifm-gold animate-bounce" />
+        </button>
+      )}
+
+      {/* Expanded view - full company selector */}
+      {isExpanded && (
+        <div className="flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+          <CompanySelector
+            selectedCompany={selectedCompany}
+            companies={companies}
+            onChange={(company) => {
+              onChange(company);
+            }}
+            onAddNew={onAddNew}
+          />
+          {/* Collapse button */}
+          <button
+            onClick={() => setIsExpanded(false)}
+            className="p-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+            title="Minimera"
+          >
+            <ChevronDown className="w-4 h-4 text-aifm-charcoal/50 rotate-180" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Inner layout component that uses the sidebar context
 function DashboardLayoutInner({ 
   children, 
@@ -611,8 +675,8 @@ function DashboardLayoutInner({
               {/* Left spacer for centering */}
               <div className="w-10" />
               
-              {/* Centered Company Dropdown with Add Button */}
-              <CompanySelector
+              {/* Centered Collapsible Company Header */}
+              <CollapsibleCompanyHeader
                 selectedCompany={selectedCompany}
                 companies={companies}
                 onChange={handleCompanyChange}
