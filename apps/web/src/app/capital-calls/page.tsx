@@ -188,7 +188,7 @@ export default function CapitalCallsPage() {
               {fundCalls.length === 0 ? (
                 <div className="p-8 text-center">
                   <ArrowUpRight className="w-12 h-12 text-aifm-charcoal/20 mx-auto mb-4" />
-                  <p className="text-aifm-charcoal/60">No capital calls yet</p>
+                  <p className="text-aifm-charcoal/60">Inga kapitalanrop ännu</p>
                   <button 
                     onClick={() => setShowNewCallModal(true)}
                     className="btn-primary mt-4 py-2 px-4"

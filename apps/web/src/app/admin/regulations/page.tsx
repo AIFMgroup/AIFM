@@ -314,7 +314,7 @@ export default function RegulationsPage() {
             <Card className="border-2 border-dashed border-gray-300 bg-white rounded-3xl">
               <CardContent className="text-center py-16">
                 <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-lg font-bold text-black uppercase tracking-wide mb-2">No Regulations</p>
+                <p className="text-lg font-bold text-black uppercase tracking-wide mb-2">Inga regelverk</p>
                 <p className="text-gray-600 text-sm uppercase tracking-wide">
                   Click "New Regulation" to add your first regulation
                 </p>

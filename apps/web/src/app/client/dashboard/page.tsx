@@ -103,7 +103,7 @@ export default function ClientDashboardPage() {
         ) : dataFeeds.length === 0 ? (
           <Card>
             <CardContent className="pt-6">
-              <p className="text-center text-muted-foreground">No data feeds configured yet</p>
+              <p className="text-center text-muted-foreground">Inga dataflöden konfigurerade ännu</p>
             </CardContent>
           </Card>
         ) : (
@@ -184,7 +184,7 @@ export default function ClientDashboardPage() {
         {reports.length === 0 ? (
           <Card>
             <CardContent className="pt-6">
-              <p className="text-center text-muted-foreground">No reports available yet</p>
+              <p className="text-center text-muted-foreground">Inga rapporter tillgängliga ännu</p>
             </CardContent>
           </Card>
         ) : (

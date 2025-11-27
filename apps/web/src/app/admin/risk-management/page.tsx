@@ -262,7 +262,7 @@ export default function RiskManagementPage() {
                 {profiles.length === 0 ? (
                   <div className="text-center py-12 text-gray-500">
                     <Shield className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                    <p>No risk profiles found</p>
+                    <p>Inga riskprofiler hittades</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -384,7 +384,7 @@ export default function RiskManagementPage() {
                                 </div>
                               ))
                             ) : (
-                              <p className="text-sm text-gray-600">No concentration data available</p>
+                              <p className="text-sm text-gray-600">Ingen koncentrationsdata tillgänglig</p>
                             )}
                           </div>
                         </div>

@@ -320,7 +320,7 @@ export default function DataRoomDetailPage() {
                 {filteredDocuments.length === 0 && (
                   <div className="p-12 text-center">
                     <FileText className="w-12 h-12 text-aifm-charcoal/20 mx-auto mb-4" />
-                    <p className="text-aifm-charcoal/60">No documents in this folder</p>
+                    <p className="text-aifm-charcoal/60">Inga dokument i denna mapp</p>
                   </div>
                 )}
               </div>

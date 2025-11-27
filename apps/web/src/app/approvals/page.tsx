@@ -345,7 +345,7 @@ export default function ApprovalsPage() {
               {filteredItems.length === 0 ? (
                 <div className="p-8 text-center">
                   <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
-                  <p className="text-aifm-charcoal/60">No items matching filter</p>
+                  <p className="text-aifm-charcoal/60">Inga ärenden matchar filtret</p>
                 </div>
               ) : (
                 filteredItems.map((item) => (
