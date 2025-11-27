@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import { 
-  Settings, Key, Building2, CreditCard, Bell, Shield, Link2, 
+  Settings, Key, Building2, Bell, Shield, Link2, 
   Users, Globe, Check, X, Eye, EyeOff,
-  RefreshCw, Trash2, Plus, ExternalLink, AlertCircle, CheckCircle2
+  RefreshCw, Trash2, Plus, AlertCircle, CheckCircle2
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 
-type SettingsTab = 'account' | 'company' | 'integrations' | 'billing' | 'notifications' | 'security' | 'team';
+type SettingsTab = 'account' | 'company' | 'integrations' | 'notifications' | 'security' | 'team';
 
 interface Integration {
   id: string;
@@ -40,7 +40,6 @@ export default function SettingsPage() {
     { id: 'account' as SettingsTab, label: 'Konto', icon: Settings },
     { id: 'company' as SettingsTab, label: 'Företag', icon: Building2 },
     { id: 'integrations' as SettingsTab, label: 'Integrationer', icon: Link2 },
-    { id: 'billing' as SettingsTab, label: 'Fakturering', icon: CreditCard },
     { id: 'notifications' as SettingsTab, label: 'Notiser', icon: Bell },
     { id: 'security' as SettingsTab, label: 'Säkerhet', icon: Shield },
     { id: 'team' as SettingsTab, label: 'Team', icon: Users },
@@ -379,90 +378,6 @@ export default function SettingsPage() {
                               Anslut
                             </button>
                           )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Billing */}
-            {activeTab === 'billing' && (
-              <div className="space-y-8">
-                <div>
-                  <h2 className="text-lg font-medium text-aifm-charcoal mb-1">Fakturering & Prenumeration</h2>
-                  <p className="text-sm text-aifm-charcoal/60">Hantera din prenumeration och betalningsmetoder</p>
-                </div>
-
-                {/* Current Plan */}
-                <div className="bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/90 rounded-2xl p-6 text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-white/60 text-sm uppercase tracking-wider">Nuvarande plan</p>
-                      <p className="text-2xl font-medium mt-1">Professional</p>
-                      <p className="text-white/60 text-sm mt-2">Faktureras månadsvis • Nästa faktura 1 dec 2024</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-3xl font-medium">4 990 kr</p>
-                      <p className="text-white/60 text-sm">/månad</p>
-                    </div>
-                  </div>
-                  <div className="mt-6 pt-6 border-t border-white/10 flex gap-3">
-                    <button className="btn-outline py-2 px-4 text-sm text-white border-white/30 hover:bg-white/10">
-                      Ändra plan
-                    </button>
-                    <button className="btn-outline py-2 px-4 text-sm text-white border-white/30 hover:bg-white/10">
-                      Visa fakturor
-                    </button>
-                  </div>
-                </div>
-
-                {/* Payment Method */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Betalningsmetod</h3>
-                    <button className="text-sm text-aifm-gold hover:underline">+ Lägg till ny</button>
-                  </div>
-                  
-                  <div className="bg-gray-50 rounded-xl p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-8 bg-gradient-to-r from-blue-600 to-blue-400 rounded flex items-center justify-center text-white text-xs font-bold">
-                        VISA
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-aifm-charcoal">•••• •••• •••• 4242</p>
-                        <p className="text-xs text-aifm-charcoal/50">Utgår 12/26</p>
-                      </div>
-                    </div>
-                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Standard</span>
-                  </div>
-                </div>
-
-                {/* Billing History */}
-                <div className="space-y-4 pt-6 border-t border-gray-100">
-                  <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Faktureringshistorik</h3>
-                  
-                  <div className="space-y-2">
-                    {[
-                      { date: '1 nov 2024', amount: '4 990 kr', status: 'Betald' },
-                      { date: '1 okt 2024', amount: '4 990 kr', status: 'Betald' },
-                      { date: '1 sep 2024', amount: '4 990 kr', status: 'Betald' },
-                    ].map((invoice, i) => (
-                      <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                        <div className="flex items-center gap-4">
-                          <CreditCard className="w-5 h-5 text-aifm-charcoal/40" />
-                          <div>
-                            <p className="text-sm font-medium text-aifm-charcoal">{invoice.date}</p>
-                            <p className="text-xs text-aifm-charcoal/50">Professional Plan</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <span className="text-sm font-medium text-aifm-charcoal">{invoice.amount}</span>
-                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">{invoice.status}</span>
-                          <button className="text-aifm-charcoal/40 hover:text-aifm-charcoal">
-                            <ExternalLink className="w-4 h-4" />
-                          </button>
                         </div>
                       </div>
                     ))}
