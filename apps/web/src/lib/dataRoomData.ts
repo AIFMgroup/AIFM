@@ -529,26 +529,26 @@ export function getTypeColor(type: DataRoom['type']): string {
 
 export function getTypeLabel(type: DataRoom['type']): string {
   switch (type) {
-    case 'DEAL_ROOM': return 'Deal Room';
+    case 'DEAL_ROOM': return 'Affärsrum';
     case 'DUE_DILIGENCE': return 'Due Diligence';
-    case 'INVESTOR_PORTAL': return 'Investor Portal';
-    case 'BOARD': return 'Board';
+    case 'INVESTOR_PORTAL': return 'Investerarportal';
+    case 'BOARD': return 'Styrelse';
     case 'COMPLIANCE': return 'Compliance';
-    case 'GENERAL': return 'General';
+    case 'GENERAL': return 'Allmänt';
     default: return type;
   }
 }
 
 export function getActionLabel(action: DataRoomActivity['action']): string {
   switch (action) {
-    case 'VIEW': return 'Viewed';
-    case 'DOWNLOAD': return 'Downloaded';
-    case 'UPLOAD': return 'Uploaded';
-    case 'DELETE': return 'Deleted';
-    case 'INVITE': return 'Invited';
-    case 'ACCEPT_INVITE': return 'Accepted invitation to';
-    case 'UPDATE_SETTINGS': return 'Updated settings';
-    case 'CREATE_FOLDER': return 'Created folder';
+    case 'VIEW': return 'Visade';
+    case 'DOWNLOAD': return 'Laddade ned';
+    case 'UPLOAD': return 'Laddade upp';
+    case 'DELETE': return 'Raderade';
+    case 'INVITE': return 'Bjöd in';
+    case 'ACCEPT_INVITE': return 'Accepterade inbjudan till';
+    case 'UPDATE_SETTINGS': return 'Uppdaterade inställningar';
+    case 'CREATE_FOLDER': return 'Skapade mapp';
     default: return action;
   }
 }

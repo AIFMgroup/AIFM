@@ -46,9 +46,9 @@ export default function DataRoomsPage() {
                 <span className="font-medium tracking-widest text-aifm-charcoal uppercase text-sm">AIFM</span>
               </Link>
               <nav className="hidden md:flex items-center gap-6">
-                <Link href="/fund" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Funds</Link>
-                <Link href="/data-rooms" className="text-sm font-medium text-aifm-gold uppercase tracking-wider">Data Rooms</Link>
-                <Link href="/investors" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Investors</Link>
+                <Link href="/fund" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Fonder</Link>
+                <Link href="/data-rooms" className="text-sm font-medium text-aifm-gold uppercase tracking-wider">Datarum</Link>
+                <Link href="/investors" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Investerare</Link>
               </nav>
             </div>
             <button 
@@ -56,7 +56,7 @@ export default function DataRoomsPage() {
               className="btn-primary py-2 px-4 flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              New Data Room
+              Nytt datarum
             </button>
           </div>
         </div>
@@ -66,7 +66,7 @@ export default function DataRoomsPage() {
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-2">
-            <h1 className="heading-2">Secure Data Rooms</h1>
+            <h1 className="heading-2">Säkra datarum</h1>
             <HelpTooltip 
               {...helpContent.dataRooms}
               learnMoreLink="/guide#data-rooms"
@@ -75,7 +75,7 @@ export default function DataRoomsPage() {
             />
           </div>
           <div className="flex items-center gap-4">
-            <p className="text-aifm-charcoal/60">Share documents securely with controlled access and full audit trails</p>
+            <p className="text-aifm-charcoal/60">Dela dokument säkert med kontrollerad åtkomst och full spårbarhet</p>
             <Link href="/guide#data-rooms" className="text-xs text-aifm-gold hover:underline flex items-center gap-1">
               <BookOpen className="w-3 h-3" />
               Guide
