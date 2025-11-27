@@ -5,10 +5,18 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { LogOut, Settings, CheckCircle2, BarChart3, Target } from 'lucide-react';
 import { Footer } from '@/components/Footer';
+import { useEffect } from 'react';
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+
+  // Redirect to overview page
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.push('/overview');
+    }
+  }, [status, router]);
 
   if (status === 'loading') {
     return (
