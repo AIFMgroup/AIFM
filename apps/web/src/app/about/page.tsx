@@ -5,16 +5,12 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
 import { PasswordModal } from '@/components/PasswordModal';
-import Image from 'next/image';
 import { 
-  Shield, Zap, BarChart3, TrendingUp, CheckCircle2, X, ZoomIn,
-  Users, FileText, Database, Globe, Lock, Activity, AlertTriangle, 
-  Settings, ClipboardList, RefreshCw
+  Shield, Zap, BarChart3, Users, Database, Globe, 
+  ClipboardList, Brain
 } from 'lucide-react';
-import '@/styles/animations.css';
 
 export default function AboutPage() {
-  const [imageZoomed, setImageZoomed] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
 
@@ -55,362 +51,181 @@ export default function AboutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <Header />
       
-      {/* Hero Section with AIFM Logo */}
+      {/* Hero Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-black mb-4 tracking-tight uppercase">
-            WHAT WE BUILT
-          </h1>
-          <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto">
-            AIFM Portal - A comprehensive AI-powered fund management platform transforming how fund accounting teams operate
-          </p>
-          
-          {/* Large Pulsing AIFM Logo */}
-          <div className="flex justify-center mb-16">
-            <div 
-              className="relative group cursor-pointer"
-              onClick={() => setImageZoomed(true)}
-            >
-              {/* Pulserande ram och skugga */}
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 rounded-3xl blur-xl opacity-50 animate-pulse group-hover:opacity-70 transition-opacity"></div>
-              <div className="relative p-4 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 rounded-3xl animate-gradient">
-                <div className="bg-white rounded-2xl p-10 relative">
-                  <Image
-                    src="/AIFM.jpeg"
-                    alt="AIFM - AI-Powered Fund Management"
-                    width={800}
-                    height={320}
-                    className="rounded-xl"
-                    unoptimized
-                    onError={(e) => {
-                      e.currentTarget.src = '/dwarf.png';
-                    }}
-                  />
-                  {/* Zoom indicator */}
-                  <div className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                    <ZoomIn className="w-5 h-5" />
-                  </div>
-                </div>
-              </div>
+          {/* AIFM Logo */}
+          <div className="flex justify-center mb-8">
+            <div className="w-24 h-24 bg-aifm-gold rounded-3xl flex items-center justify-center shadow-aifm-xl">
+              <span className="text-white font-bold text-5xl">A</span>
             </div>
           </div>
+          
+          <h1 className="heading-1 mb-6">
+            About AIFM
+          </h1>
+          <p className="text-xl text-aifm-charcoal/70 mb-12 max-w-3xl mx-auto">
+            AI-powered fund administration platform transforming how fund managers operate
+          </p>
         </div>
 
-        {/* Zoom Modal */}
-        {imageZoomed && (
-          <div
-            className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 animate-in fade-in"
-            onClick={() => setImageZoomed(false)}
-          >
-            <div className="relative max-w-7xl w-full max-h-[90vh] flex items-center justify-center">
-              {/* Close button */}
-              <button
-                onClick={() => setImageZoomed(false)}
-                className="absolute top-4 right-4 bg-white text-black p-3 rounded-full hover:bg-gray-200 transition-all z-10 shadow-lg"
-              >
-                <X className="w-6 h-6" />
-              </button>
-              
-              {/* Zoomed image */}
-              <div className="relative w-full h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                <div className="relative p-6 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 rounded-3xl animate-gradient">
-                  <div className="bg-white rounded-2xl p-8">
-                    <Image
-                      src="/AIFM.jpeg"
-                      alt="AIFM - AI-Powered Fund Management"
-                      width={1600}
-                      height={640}
-                      className="rounded-xl max-w-full max-h-[85vh] object-contain"
-                      unoptimized
-                      onError={(e) => {
-                        e.currentTarget.src = '/dwarf.png';
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Core Features Section */}
-        <div className="mb-16">
-          <h2 className="text-3xl font-bold text-black mb-8 text-center uppercase tracking-wide">
+        <div className="mb-20">
+          <h2 className="heading-2 mb-8 text-center">
             Complete Fund Management Solution
           </h2>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="border-2 border-gray-200 bg-white rounded-3xl hover:shadow-xl transition-all duration-200">
+            <Card className="border border-gray-100 bg-white rounded-2xl hover:shadow-lg hover:border-aifm-gold/30 transition-all duration-200">
               <CardHeader>
-                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-4">
-                  <Zap className="w-8 h-8 text-blue-900" />
+                <div className="w-14 h-14 bg-aifm-gold/10 rounded-xl flex items-center justify-center mb-4">
+                  <Zap className="w-7 h-7 text-aifm-gold" />
                 </div>
-                <CardTitle className="text-xl uppercase tracking-wide">AI-Powered Automation</CardTitle>
+                <CardTitle className="text-lg">AI-Powered Automation</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">
-                  Intelligent AI that handles bank reconciliation, KYC reviews, and report generation with human-level accuracy.
+                <p className="text-aifm-charcoal/60">
+                  Intelligent document processing, automated bookkeeping, and smart data extraction powered by GPT-4.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="border-2 border-gray-200 bg-white rounded-3xl hover:shadow-xl transition-all duration-200">
+            <Card className="border border-gray-100 bg-white rounded-2xl hover:shadow-lg hover:border-aifm-gold/30 transition-all duration-200">
               <CardHeader>
-                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-4">
-                  <BarChart3 className="w-8 h-8 text-blue-900" />
+                <div className="w-14 h-14 bg-aifm-gold/10 rounded-xl flex items-center justify-center mb-4">
+                  <Shield className="w-7 h-7 text-aifm-gold" />
                 </div>
-                <CardTitle className="text-xl uppercase tracking-wide">Risk Management</CardTitle>
+                <CardTitle className="text-lg">Bank-Grade Security</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">
-                  Real-time VaR calculations, limit breach monitoring, and comprehensive risk analytics for portfolio oversight.
+                <p className="text-aifm-charcoal/60">
+                  Enterprise security with full audit trails, role-based access control, and four-eyes principle.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="border-2 border-gray-200 bg-white rounded-3xl hover:shadow-xl transition-all duration-200">
+            <Card className="border border-gray-100 bg-white rounded-2xl hover:shadow-lg hover:border-aifm-gold/30 transition-all duration-200">
               <CardHeader>
-                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-4">
-                  <Shield className="w-8 h-8 text-blue-900" />
+                <div className="w-14 h-14 bg-aifm-gold/10 rounded-xl flex items-center justify-center mb-4">
+                  <BarChart3 className="w-7 h-7 text-aifm-gold" />
                 </div>
-                <CardTitle className="text-xl uppercase tracking-wide">Compliance & Governance</CardTitle>
+                <CardTitle className="text-lg">Real-Time Analytics</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">
-                  Automated KYC verification, regulatory deadline tracking, and complete audit trail for compliance.
+                <p className="text-aifm-charcoal/60">
+                  Live dashboards with NAV calculations, portfolio performance, and investor reporting.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="border-2 border-gray-200 bg-white rounded-3xl hover:shadow-xl transition-all duration-200">
+            <Card className="border border-gray-100 bg-white rounded-2xl hover:shadow-lg hover:border-aifm-gold/30 transition-all duration-200">
               <CardHeader>
-                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-4">
-                  <Users className="w-8 h-8 text-blue-900" />
+                <div className="w-14 h-14 bg-aifm-gold/10 rounded-xl flex items-center justify-center mb-4">
+                  <Users className="w-7 h-7 text-aifm-gold" />
                 </div>
-                <CardTitle className="text-xl uppercase tracking-wide">Multi-Role Workflow</CardTitle>
+                <CardTitle className="text-lg">Investor Portal</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">
-                  Seamless coordination between Admin, Coordinator, Specialist, and Client roles with automated handoffs.
+                <p className="text-aifm-charcoal/60">
+                  White-label portal for investors with KYC/AML, document sharing, and capital call tracking.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="border-2 border-gray-200 bg-white rounded-3xl hover:shadow-xl transition-all duration-200">
+            <Card className="border border-gray-100 bg-white rounded-2xl hover:shadow-lg hover:border-aifm-gold/30 transition-all duration-200">
               <CardHeader>
-                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-4">
-                  <Database className="w-8 h-8 text-blue-900" />
+                <div className="w-14 h-14 bg-aifm-gold/10 rounded-xl flex items-center justify-center mb-4">
+                  <Database className="w-7 h-7 text-aifm-gold" />
                 </div>
-                <CardTitle className="text-xl uppercase tracking-wide">Data Integration</CardTitle>
+                <CardTitle className="text-lg">Treasury Management</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">
-                  Automated data feeds from Fortnox, Banks, SKV, FI, and Sigma for seamless data ingestion.
+                <p className="text-aifm-charcoal/60">
+                  Bank integrations, transaction matching, and automated cash flow management.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="border-2 border-gray-200 bg-white rounded-3xl hover:shadow-xl transition-all duration-200">
+            <Card className="border border-gray-100 bg-white rounded-2xl hover:shadow-lg hover:border-aifm-gold/30 transition-all duration-200">
               <CardHeader>
-                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-4">
-                  <Activity className="w-8 h-8 text-blue-900" />
+                <div className="w-14 h-14 bg-aifm-gold/10 rounded-xl flex items-center justify-center mb-4">
+                  <ClipboardList className="w-7 h-7 text-aifm-gold" />
                 </div>
-                <CardTitle className="text-xl uppercase tracking-wide">Real-time Processing</CardTitle>
+                <CardTitle className="text-lg">Regulatory Compliance</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">
-                  Instant document analysis, compliance verification, and live status updates across all workflows.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-2 border-gray-200 bg-white rounded-3xl hover:shadow-xl transition-all duration-200">
-              <CardHeader>
-                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-4">
-                  <FileText className="w-8 h-8 text-blue-900" />
-                </div>
-                <CardTitle className="text-xl uppercase tracking-wide">Document Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  Intelligent document indexing, search, and compliance checking with AI-powered analysis.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-2 border-gray-200 bg-white rounded-3xl hover:shadow-xl transition-all duration-200">
-              <CardHeader>
-                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-4">
-                  <RefreshCw className="w-8 h-8 text-blue-900" />
-                </div>
-                <CardTitle className="text-xl uppercase tracking-wide">Automated Workflows</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  Streamlined task routing, automated assignments, and intelligent prioritization for efficiency.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-2 border-gray-200 bg-white rounded-3xl hover:shadow-xl transition-all duration-200">
-              <CardHeader>
-                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-4">
-                  <CheckCircle2 className="w-8 h-8 text-blue-900" />
-                </div>
-                <CardTitle className="text-xl uppercase tracking-wide">GDPR Compliant</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  Built with privacy by design. Complete data export, account deletion, and GDPR compliance features.
+                <p className="text-aifm-charcoal/60">
+                  Built-in AIFMD, FATCA/CRS support with automated regulatory reporting.
                 </p>
               </CardContent>
             </Card>
           </div>
         </div>
 
-        {/* Key Capabilities Section */}
-        <Card className="border-2 border-gray-200 bg-white rounded-3xl mb-16">
-          <CardHeader>
-            <CardTitle className="text-3xl font-bold text-black mb-6 text-center uppercase tracking-wide">
-              Key Capabilities
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <ClipboardList className="w-5 h-5 text-blue-900" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-black mb-1 uppercase tracking-wide">Task Management</h4>
-                    <p className="text-gray-600 text-sm">
-                      Automated task creation, assignment, and tracking across all roles with intelligent prioritization.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <AlertTriangle className="w-5 h-5 text-blue-900" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-black mb-1 uppercase tracking-wide">Risk Monitoring</h4>
-                    <p className="text-gray-600 text-sm">
-                      Continuous risk assessment with VaR calculations, limit breach alerts, and stress testing.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Globe className="w-5 h-5 text-blue-900" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-black mb-1 uppercase tracking-wide">External Integrations</h4>
-                    <p className="text-gray-600 text-sm">
-                      Connect with Fortnox, banking APIs, SKV, FI, and Sigma for automated data synchronization.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Lock className="w-5 h-5 text-blue-900" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-black mb-1 uppercase tracking-wide">Security & Access</h4>
-                    <p className="text-gray-600 text-sm">
-                      Role-based access control, audit logging, and secure authentication with NextAuth.js.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Settings className="w-5 h-5 text-blue-900" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-black mb-1 uppercase tracking-wide">Policy Management</h4>
-                    <p className="text-gray-600 text-sm">
-                      Define and enforce compliance policies, regulations, and automated checking rules.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <TrendingUp className="w-5 h-5 text-blue-900" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-black mb-1 uppercase tracking-wide">Analytics & Reporting</h4>
-                    <p className="text-gray-600 text-sm">
-                      Comprehensive dashboards, real-time statistics, and automated report generation.
-                    </p>
-                  </div>
-                </div>
-              </div>
+        {/* AI Capabilities */}
+        <div className="mb-20 bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/90 rounded-3xl p-12 text-white">
+          <div className="text-center mb-12">
+            <div className="w-16 h-16 bg-aifm-gold rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <Brain className="w-8 h-8 text-white" />
             </div>
-          </CardContent>
-        </Card>
+            <h2 className="text-3xl font-medium uppercase tracking-wider mb-4">AI-Powered Bookkeeping</h2>
+            <p className="text-lg text-white/70 max-w-2xl mx-auto">
+              Our AI agents handle document processing, classification, and booking suggestions automatically.
+            </p>
+          </div>
 
-        {/* Impact Section */}
-        <Card className="border-2 border-gray-200 bg-white rounded-3xl mb-16">
-          <CardHeader>
-            <CardTitle className="text-3xl font-bold text-black mb-4 text-center uppercase tracking-wide">
-              Real Impact
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-3 gap-8 text-center">
-              <div>
-                <div className="text-5xl font-bold text-blue-900 mb-2">70%</div>
-                <p className="text-gray-600 uppercase tracking-wide text-sm">Time Reduction</p>
-              </div>
-              <div>
-                <div className="text-5xl font-bold text-blue-900 mb-2">3x</div>
-                <p className="text-gray-600 uppercase tracking-wide text-sm">More Clients</p>
-              </div>
-              <div>
-                <div className="text-5xl font-bold text-blue-900 mb-2">80%</div>
-                <p className="text-gray-600 uppercase tracking-wide text-sm">Lower Errors</p>
-              </div>
+          <div className="grid md:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="text-4xl font-medium text-aifm-gold mb-2">95%</div>
+              <p className="text-sm text-white/60 uppercase tracking-wider">Accuracy Rate</p>
             </div>
-          </CardContent>
-        </Card>
+            <div className="text-center">
+              <div className="text-4xl font-medium text-aifm-gold mb-2">&lt;5s</div>
+              <p className="text-sm text-white/60 uppercase tracking-wider">Processing Time</p>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-medium text-aifm-gold mb-2">24/7</div>
+              <p className="text-sm text-white/60 uppercase tracking-wider">Availability</p>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-medium text-aifm-gold mb-2">100%</div>
+              <p className="text-sm text-white/60 uppercase tracking-wider">Audit Trail</p>
+            </div>
+          </div>
+        </div>
 
-        {/* Technology Stack */}
-        <Card className="border-2 border-gray-200 bg-white rounded-3xl">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold text-black mb-4 text-center uppercase tracking-wide">
-              Built With Modern Technology
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-6 text-sm">
-              <div>
-                <h4 className="font-bold text-black mb-2 uppercase tracking-wide">Frontend</h4>
-                <p className="text-gray-600">Next.js 15, React, TypeScript, Tailwind CSS</p>
+        {/* Integration Partners */}
+        <div className="mb-20">
+          <h2 className="heading-2 mb-8 text-center">Integrations</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {['Banks (PSD2)', 'Fortnox', 'BankID', 'AWS'].map((partner) => (
+              <div 
+                key={partner}
+                className="bg-gray-50 rounded-xl p-6 text-center hover:bg-aifm-gold/5 transition-colors"
+              >
+                <Globe className="w-8 h-8 text-aifm-charcoal/40 mx-auto mb-3" />
+                <p className="font-medium text-aifm-charcoal">{partner}</p>
               </div>
-              <div>
-                <h4 className="font-bold text-black mb-2 uppercase tracking-wide">Backend</h4>
-                <p className="text-gray-600">Next.js API Routes, Prisma ORM, PostgreSQL</p>
-              </div>
-              <div>
-                <h4 className="font-bold text-black mb-2 uppercase tracking-wide">AI</h4>
-                <p className="text-gray-600">OpenAI GPT-5 Mini with custom Knowledge Base</p>
-              </div>
-              <div>
-                <h4 className="font-bold text-black mb-2 uppercase tracking-wide">Security</h4>
-                <p className="text-gray-600">NextAuth.js, Role-based access, GDPR compliant</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Contact Section */}
+        <div className="text-center">
+          <h2 className="heading-2 mb-4">Get Started</h2>
+          <p className="text-lg text-aifm-charcoal/60 mb-8 max-w-xl mx-auto">
+            Ready to transform your fund administration? Contact us for a demo.
+          </p>
+          <a href="mailto:info@aifm.se" className="btn-primary">
+            Contact Us
+          </a>
+        </div>
       </main>
-
+      
       <Footer />
     </div>
   );
 }
-

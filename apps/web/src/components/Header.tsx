@@ -3,7 +3,6 @@
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { LogOut } from 'lucide-react';
 import { Button } from '@/components/Button';
 
@@ -19,16 +18,11 @@ export function Header() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href={session ? "/dashboard" : "/"} className="flex items-center">
-              <Image
-                src="/dwarf.png"
-                alt="AIFM"
-                width={40}
-                height={40}
-                className="rounded-lg"
-                unoptimized
-              />
-              <span className="ml-3 text-lg font-semibold text-gray-900 uppercase tracking-wide">AIFM Portal</span>
+            <Link href={session ? "/dashboard" : "/"} className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-aifm-gold rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-lg">A</span>
+              </div>
+              <span className="text-lg font-medium tracking-widest text-aifm-charcoal uppercase">AIFM</span>
             </Link>
           </div>
 
@@ -37,12 +31,12 @@ export function Header() {
             {session ? (
               <>
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">{session.user?.email}</p>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">{userRole}</p>
+                  <p className="text-sm font-medium text-aifm-charcoal">{session.user?.email}</p>
+                  <p className="text-xs text-aifm-charcoal/60 uppercase tracking-wider">{userRole}</p>
                 </div>
                 <button
                   onClick={() => signOut({ redirect: true, callbackUrl: '/' })}
-                  className="flex items-center gap-2 px-4 py-2 text-xs font-medium uppercase tracking-wide bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+                  className="btn-primary py-2 px-4 text-sm flex items-center gap-2"
                 >
                   <LogOut className="w-4 h-4" />
                   Sign Out
@@ -52,17 +46,17 @@ export function Header() {
               <>
                 <Link 
                   href="/how-it-works" 
-                  className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                  className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold transition-colors uppercase tracking-wider"
                 >
-                  HOW IT WORKS
+                  How It Works
                 </Link>
                 <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={() => router.push('/sign-in')}
-                  className="text-xs font-medium uppercase tracking-wide"
+                  className="text-sm font-medium uppercase tracking-wider"
                 >
-                  SIGN IN
+                  Sign In
                 </Button>
               </>
             )}

@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
-import Image from 'next/image';
 import { Lock, AlertCircle } from 'lucide-react';
 
 const REQUIRED_PASSWORD = 'AIFM';
@@ -36,7 +35,7 @@ export default function PasswordGatePage() {
         } else {
           setError(data.error || 'Invalid password');
         }
-      } catch (err) {
+      } catch {
         setError('An error occurred. Please try again.');
       } finally {
         setLoading(false);
@@ -48,47 +47,42 @@ export default function PasswordGatePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 flex items-center justify-center p-4">
-      <Card className="border-2 border-gray-300 bg-white rounded-3xl shadow-2xl w-full max-w-md">
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
+      <Card className="border border-gray-200 bg-white rounded-2xl shadow-aifm-lg w-full max-w-md">
         <CardHeader className="text-center pb-4">
-          <div className="flex justify-center mb-4">
-            <Image
-              src="/dwarf.png"
-              alt="AIFM Logo"
-              width={80}
-              height={80}
-              className="rounded-xl"
-              unoptimized
-            />
+          <div className="flex justify-center mb-6">
+            <div className="w-16 h-16 bg-aifm-gold rounded-2xl flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-3xl">A</span>
+            </div>
           </div>
-          <CardTitle className="text-3xl font-bold text-black mb-2 tracking-tight">
+          <CardTitle className="text-2xl font-medium text-aifm-charcoal mb-2 tracking-wider">
             ACCESS REQUIRED
           </CardTitle>
-          <p className="text-sm text-gray-600 uppercase tracking-wide">
+          <p className="text-sm text-aifm-charcoal/60 uppercase tracking-wider">
             Enter password to continue
           </p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+              <label htmlFor="password" className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-aifm-charcoal/40" />
                 <input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value.toUpperCase())}
-                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-2xl focus:outline-none focus:border-black transition-all text-sm uppercase"
+                  className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-aifm-gold focus:ring-2 focus:ring-aifm-gold/20 transition-all text-sm uppercase"
                   placeholder="Enter password"
                   autoFocus
                   disabled={loading}
                 />
               </div>
               {error && (
-                <div className="mt-2 flex items-center gap-2 text-sm text-red-600">
+                <div className="mt-3 flex items-center gap-2 text-sm text-red-600">
                   <AlertCircle className="w-4 h-4" />
                   <span>{error}</span>
                 </div>
@@ -97,7 +91,7 @@ export default function PasswordGatePage() {
             <Button
               type="submit"
               disabled={loading || !password}
-              className="w-full bg-black text-white hover:bg-gray-800 rounded-2xl uppercase tracking-wide font-semibold py-3 transition-all duration-200"
+              className="w-full btn-primary py-3"
             >
               {loading ? 'Verifying...' : 'Enter'}
             </Button>
@@ -107,4 +101,3 @@ export default function PasswordGatePage() {
     </div>
   );
 }
-

@@ -3,7 +3,6 @@
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import Image from 'next/image';
 
 export default function Navigation() {
   const { data: session } = useSession();
@@ -36,15 +35,11 @@ export default function Navigation() {
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2">
-            <Image
-              src="/dwarf.png"
-              alt="AIFM Logo"
-              width={64}
-              height={64}
-              className="rounded-lg"
-              unoptimized
-            />
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-aifm-gold rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-lg">A</span>
+            </div>
+            <span className="text-lg font-medium tracking-widest text-aifm-charcoal uppercase">AIFM</span>
           </Link>
           
           <div className="flex gap-6">
@@ -52,10 +47,10 @@ export default function Navigation() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`font-medium transition ${
+                className={`text-sm font-medium uppercase tracking-wider transition ${
                   pathname === link.href
-                    ? 'text-gray-900 border-b-2 border-gray-900 pb-1'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'text-aifm-gold'
+                    : 'text-aifm-charcoal/60 hover:text-aifm-gold'
                 }`}
               >
                 {link.label}
@@ -65,15 +60,15 @@ export default function Navigation() {
         </div>
 
         <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-aifm-charcoal/60">
             {session.user?.email}
           </span>
-          <span className="text-xs font-semibold bg-gray-200 px-3 py-1 rounded-full">
-            {userRole.toUpperCase()}
+          <span className="text-xs font-medium bg-aifm-gold/10 text-aifm-gold px-3 py-1 rounded-full uppercase tracking-wider">
+            {userRole}
           </span>
           <button
             onClick={() => signOut({ redirect: true, callbackUrl: '/' })}
-            className="px-4 py-2 text-sm font-medium bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition"
+            className="btn-primary py-2 px-4 text-sm"
           >
             Sign Out
           </button>
