@@ -3,7 +3,7 @@
 import { ReactNode, useState, useRef, useEffect } from 'react';
 import { 
   Bell, Building2, ChevronDown, Search, Check, Plus, X,
-  HelpCircle, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle
+  HelpCircle, ArrowRight, ArrowLeft, CheckCircle2
 } from 'lucide-react';
 import { DashboardSidebar } from './DashboardSidebar';
 import { SidebarProvider, useSidebar } from './SidebarContext';
