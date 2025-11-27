@@ -564,13 +564,13 @@ export default function DataRoomDetailPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                  Access Expires (Optional)
+                  Åtkomst upphör (valfritt)
                 </label>
                 <input type="date" className="input w-full" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                  Personal Message (Optional)
+                  Personligt meddelande (valfritt)
                 </label>
                 <textarea
                   className="input w-full h-20 resize-none"
@@ -583,17 +583,17 @@ export default function DataRoomDetailPage() {
                 onClick={() => setShowInviteModal(false)}
                 className="flex-1 btn-outline py-2"
               >
-                Cancel
+                Avbryt
               </button>
               <button 
                 onClick={() => {
-                  alert('Invitation sent! (Demo)');
+                  alert('Inbjudan skickad! (Demo)');
                   setShowInviteModal(false);
                 }}
                 className="flex-1 btn-primary py-2 flex items-center justify-center gap-2"
               >
                 <Mail className="w-4 h-4" />
-                Send Invitation
+                Skicka inbjudan
               </button>
             </div>
           </div>
@@ -616,11 +616,11 @@ export default function DataRoomDetailPage() {
             <div className="p-6">
               <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:border-aifm-gold/50 transition-colors">
                 <Upload className="w-12 h-12 text-aifm-charcoal/20 mx-auto mb-4" />
-                <p className="text-aifm-charcoal font-medium mb-1">Drop files here or click to upload</p>
+                <p className="text-aifm-charcoal font-medium mb-1">Släpp filer här eller klicka för att ladda upp</p>
                 <p className="text-sm text-aifm-charcoal/50">Stöder PDF, Word, Excel, PowerPoint och bilder</p>
                 <input type="file" className="hidden" multiple />
                 <button className="btn-outline py-2 px-4 mt-4">
-                  Browse Files
+                  Bläddra bland filer
                 </button>
               </div>
               <div className="mt-4">
@@ -649,16 +649,16 @@ export default function DataRoomDetailPage() {
                 onClick={() => setShowUploadModal(false)}
                 className="flex-1 btn-outline py-2"
               >
-                Cancel
+                Avbryt
               </button>
               <button 
                 onClick={() => {
-                  alert('Documents uploaded! (Demo)');
+                  alert('Dokument uppladdade! (Demo)');
                   setShowUploadModal(false);
                 }}
                 className="flex-1 btn-primary py-2"
               >
-                Upload
+                Ladda upp
               </button>
             </div>
           </div>

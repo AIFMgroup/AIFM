@@ -94,8 +94,8 @@ export default function DataRoomsPage() {
           <Lock className="w-5 h-5 text-aifm-charcoal" />
         </div>
         <div className="flex-1">
-          <p className="font-medium text-aifm-charcoal">Bank-grade Security</p>
-          <p className="text-sm text-aifm-charcoal/60">All documents are encrypted at rest and in transit. Access is logged and auditable.</p>
+          <p className="font-medium text-aifm-charcoal">Banksäkerhet</p>
+          <p className="text-sm text-aifm-charcoal/60">Alla dokument är krypterade. Åtkomst loggas och kan granskas.</p>
         </div>
       </div>
 
@@ -192,14 +192,14 @@ export default function DataRoomsPage() {
               {room.expiresAt && (
                 <div className="mt-4 flex items-center gap-2 text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
                   <Clock className="w-3.5 h-3.5" />
-                  <span>Expires {formatDate(room.expiresAt)}</span>
+                  <span>Utgår {formatDate(room.expiresAt)}</span>
                 </div>
               )}
 
               {room.watermark && (
                 <div className="mt-2 flex items-center gap-2 text-xs text-aifm-charcoal/50">
                   <Shield className="w-3.5 h-3.5" />
-                  <span>Watermarked</span>
+                  <span>Vattenstämplad</span>
                 </div>
               )}
             </div>
@@ -210,12 +210,12 @@ export default function DataRoomsPage() {
       {filteredRooms.length === 0 && (
         <div className="text-center py-12">
           <FolderLock className="w-12 h-12 text-aifm-charcoal/20 mx-auto mb-4" />
-          <p className="text-aifm-charcoal/60">No data rooms found</p>
+          <p className="text-aifm-charcoal/60">Inga datarum hittades</p>
           <button 
             onClick={() => setShowNewRoomModal(true)}
             className="btn-primary mt-4 py-2 px-4"
           >
-            Create First Data Room
+            Skapa första datarummet
           </button>
         </div>
       )}
@@ -225,7 +225,7 @@ export default function DataRoomsPage() {
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-lg font-medium text-aifm-charcoal uppercase tracking-wider">New Data Room</h3>
+              <h3 className="text-lg font-medium text-aifm-charcoal uppercase tracking-wider">Nytt datarum</h3>
               <button 
                 onClick={() => setShowNewRoomModal(false)}
                 className="p-2 hover:bg-gray-100 rounded-lg text-aifm-charcoal/60"
@@ -236,7 +236,7 @@ export default function DataRoomsPage() {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                  Room Name
+                  Rumsnamn
                 </label>
                 <input
                   type="text"
@@ -246,7 +246,7 @@ export default function DataRoomsPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                  Description
+                  Beskrivning
                 </label>
                 <textarea
                   className="input w-full h-20 resize-none"
@@ -293,7 +293,7 @@ export default function DataRoomsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                    Expiration Date (Optional)
+                    Utgångsdatum (valfritt)
                   </label>
                   <input type="date" className="input w-full" />
                 </div>
@@ -310,16 +310,16 @@ export default function DataRoomsPage() {
                 onClick={() => setShowNewRoomModal(false)}
                 className="flex-1 btn-outline py-2"
               >
-                Cancel
+                Avbryt
               </button>
               <button 
                 onClick={() => {
-                  alert('Data room created! (Demo)');
+                  alert('Datarum skapat! (Demo)');
                   setShowNewRoomModal(false);
                 }}
                 className="flex-1 btn-primary py-2"
               >
-                Create Room
+                Skapa rum
               </button>
             </div>
           </div>

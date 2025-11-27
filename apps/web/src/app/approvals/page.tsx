@@ -190,23 +190,23 @@ export default function ApprovalsPage() {
 
   const getStatusLabel = (status: ApprovalItem['status']) => {
     switch (status) {
-      case 'PENDING_FIRST': return 'Awaiting 1st Approval';
-      case 'PENDING_SECOND': return 'Awaiting 2nd Approval';
-      case 'APPROVED': return 'Approved';
-      case 'REJECTED': return 'Rejected';
+      case 'PENDING_FIRST': return 'Väntar 1:a';
+      case 'PENDING_SECOND': return 'Väntar 2:a';
+      case 'APPROVED': return 'Godkänd';
+      case 'REJECTED': return 'Avslagen';
       default: return status;
     }
   };
 
   const handleApprove = () => {
-    alert(`Item approved with comment: ${comment || '(no comment)'}\n\nThis would trigger the next step in the approval workflow.`);
+    alert(`Ärende godkänt med kommentar: ${comment || '(ingen kommentar)'}\n\nDetta aktiverar nästa steg i godkännandeflödet.`);
     setShowApproveModal(false);
     setComment('');
     setSelectedItem(null);
   };
 
   const handleReject = () => {
-    alert(`Item rejected. Reason: ${rejectionReason}\n\nThe creator will be notified.`);
+    alert(`Ärende avslaget. Anledning: ${rejectionReason}\n\nSkaparen kommer att notifieras.`);
     setShowRejectModal(false);
     setRejectionReason('');
     setSelectedItem(null);
@@ -260,14 +260,14 @@ export default function ApprovalsPage() {
         </div>
 
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">1st Approval</span>
+          <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">1:a godkännande</span>
           <p className="text-2xl font-medium text-aifm-charcoal mt-2">
             {mockApprovals.filter(i => i.status === 'PENDING_FIRST').length}
           </p>
         </div>
 
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">2nd Approval</span>
+          <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">2:a godkännande</span>
           <p className="text-2xl font-medium text-aifm-charcoal mt-2">
             {mockApprovals.filter(i => i.status === 'PENDING_SECOND').length}
           </p>
@@ -286,19 +286,19 @@ export default function ApprovalsPage() {
             <Shield className="w-6 h-6 text-aifm-gold" />
           </div>
           <div>
-            <h3 className="font-medium text-aifm-charcoal mb-1">4-Eyes Principle (Vier-Augen-Prinzip)</h3>
+            <h3 className="font-medium text-aifm-charcoal mb-1">4-ögon principen</h3>
             <p className="text-sm text-aifm-charcoal/70 mb-3">
-              All financial transactions require approval from two separate authorized users before execution. 
-              This dual-control mechanism ensures accuracy, prevents fraud, and maintains regulatory compliance.
+              Alla finansiella transaktioner kräver godkännande från två separata behöriga användare innan genomförande.
+              Denna dubbla kontrollmekanism säkerställer noggrannhet, förhindrar bedrägeri och upprätthåller regelefterlevnad.
             </p>
             <div className="flex flex-wrap gap-4 text-xs">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-amber-500 rounded-full" />
-                <span className="text-aifm-charcoal/60">1st Approval: Initial review & verification</span>
+                <span className="text-aifm-charcoal/60">1:a godkännande: Första granskning och verifiering</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                <span className="text-aifm-charcoal/60">2nd Approval: Final authorization & execution</span>
+                <span className="text-aifm-charcoal/60">2:a godkännande: Slutligt beslut och genomförande</span>
               </div>
             </div>
           </div>
@@ -309,8 +309,8 @@ export default function ApprovalsPage() {
         {/* Approval Queue */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Approval Queue</h3>
-            <span className="text-xs text-aifm-charcoal/50">{filteredItems.length} items</span>
+            <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Ärendekö</h3>
+            <span className="text-xs text-aifm-charcoal/50">{filteredItems.length} ärenden</span>
           </div>
           <div className="divide-y divide-gray-50 max-h-[600px] overflow-y-auto">
             {filteredItems.length === 0 ? (
@@ -363,7 +363,7 @@ export default function ApprovalsPage() {
             <>
               <div className="px-6 py-4 border-b border-gray-100">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Details</h3>
+                  <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Detaljer</h3>
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(selectedItem.status)}`}>
                     {getStatusLabel(selectedItem.status)}
                   </span>
@@ -376,11 +376,11 @@ export default function ApprovalsPage() {
                 
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
-                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Amount</p>
+                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Belopp</p>
                     <p className="font-medium text-aifm-charcoal">{formatCurrency(selectedItem.amount, selectedItem.currency)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Fund</p>
+                    <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Fond</p>
                     <p className="font-medium text-aifm-charcoal">{selectedItem.fundName}</p>
                   </div>
                   <div>
@@ -408,7 +408,7 @@ export default function ApprovalsPage() {
 
               {/* Approval Trail */}
               <div className="p-6 border-b border-gray-100">
-                <h4 className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider mb-4">Approval Trail</h4>
+                <h4 className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider mb-4">Godkännandehistorik</h4>
                 <div className="space-y-4">
                   {/* First Approval */}
                   <div className="flex items-start gap-3">
@@ -422,7 +422,7 @@ export default function ApprovalsPage() {
                       )}
                     </div>
                     <div>
-                      <p className="font-medium text-aifm-charcoal text-sm">First Approval</p>
+                      <p className="font-medium text-aifm-charcoal text-sm">1:a godkännande</p>
                       {selectedItem.firstApproval ? (
                         <>
                           <p className="text-xs text-aifm-charcoal/60">
@@ -435,7 +435,7 @@ export default function ApprovalsPage() {
                           )}
                         </>
                       ) : (
-                        <p className="text-xs text-amber-600">Pending</p>
+                        <p className="text-xs text-amber-600">Väntar</p>
                       )}
                     </div>
                   </div>
@@ -453,15 +453,15 @@ export default function ApprovalsPage() {
                       )}
                     </div>
                     <div>
-                      <p className="font-medium text-aifm-charcoal text-sm">Second Approval</p>
+                      <p className="font-medium text-aifm-charcoal text-sm">2:a godkännande</p>
                       {selectedItem.secondApproval ? (
                         <p className="text-xs text-aifm-charcoal/60">
                           {selectedItem.secondApproval.approvedBy} • {formatDate(selectedItem.secondApproval.approvedAt)}
                         </p>
                       ) : selectedItem.firstApproval ? (
-                        <p className="text-xs text-blue-600">Awaiting your approval</p>
+                        <p className="text-xs text-blue-600">Väntar på ditt godkännande</p>
                       ) : (
-                        <p className="text-xs text-gray-400">Waiting for first approval</p>
+                        <p className="text-xs text-gray-400">Väntar på första godkännande</p>
                       )}
                     </div>
                   </div>
@@ -497,14 +497,14 @@ export default function ApprovalsPage() {
                       className="flex-1 btn-outline py-2 flex items-center justify-center gap-2 text-red-600 border-red-200 hover:bg-red-50"
                     >
                       <X className="w-4 h-4" />
-                      Reject
+                      Avslå
                     </button>
                     <button 
                       onClick={() => setShowApproveModal(true)}
                       className="flex-1 btn-primary py-2 flex items-center justify-center gap-2"
                     >
                       <Check className="w-4 h-4" />
-                      Approve
+                      Godkänn
                     </button>
                   </div>
                 </div>
@@ -539,21 +539,21 @@ export default function ApprovalsPage() {
               
               <div className="mb-4">
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                  Comment (Optional)
+                  Kommentar (valfritt)
                 </label>
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   className="input w-full h-24 resize-none"
-                  placeholder="Add a comment for the approval record..."
+                  placeholder="Lägg till en kommentar för godkännandehistoriken..."
                 />
               </div>
 
               <div className="bg-amber-50 rounded-xl p-4 flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-amber-800">Approval Confirmation</p>
-                  <p className="text-xs text-amber-700">By approving, you confirm that you have reviewed this item and authorize the action.</p>
+                  <p className="text-sm font-medium text-amber-800">Bekräftelse av godkännande</p>
+                  <p className="text-xs text-amber-700">Genom att godkänna bekräftar du att du har granskat ärendet och godkänner åtgärden.</p>
                 </div>
               </div>
             </div>
@@ -562,14 +562,14 @@ export default function ApprovalsPage() {
                 onClick={() => setShowApproveModal(false)}
                 className="flex-1 btn-outline py-2"
               >
-                Cancel
+                Avbryt
               </button>
               <button 
                 onClick={handleApprove}
                 className="flex-1 btn-primary py-2 flex items-center justify-center gap-2"
               >
                 <Check className="w-4 h-4" />
-                Confirm Approval
+                Bekräfta godkännande
               </button>
             </div>
           </div>
@@ -596,13 +596,13 @@ export default function ApprovalsPage() {
               
               <div className="mb-4">
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                  Rejection Reason <span className="text-red-500">*</span>
+                  Anledning till avslag <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
                   className="input w-full h-24 resize-none"
-                  placeholder="Explain why this item is being rejected..."
+                  placeholder="Förklara varför ärendet avslås..."
                   required
                 />
               </div>
@@ -612,7 +612,7 @@ export default function ApprovalsPage() {
                 onClick={() => setShowRejectModal(false)}
                 className="flex-1 btn-outline py-2"
               >
-                Cancel
+                Avbryt
               </button>
               <button 
                 onClick={handleReject}
@@ -620,7 +620,7 @@ export default function ApprovalsPage() {
                 className="flex-1 py-2 flex items-center justify-center gap-2 bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <X className="w-4 h-4" />
-                Confirm Rejection
+                Bekräfta avslag
               </button>
             </div>
           </div>
