@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { 
   Building2, TrendingUp, TrendingDown, Globe,
   Download, Search, Plus, Eye, LayoutGrid, List,
-  Calendar, Wallet, ArrowUpRight, ChevronRight
+  Calendar, Wallet, ArrowUpRight, ChevronRight, X,
+  FileSpreadsheet, FileText, Check
 } from 'lucide-react';
 import {
   getFundByCompanyId, getPortfolioByCompanyId,
@@ -40,7 +41,6 @@ function MetricCard({
         : 'bg-white border border-gray-100/50 hover:shadow-xl hover:shadow-gray-200/50 hover:border-aifm-gold/20 hover:-translate-y-0.5'
       }
     `}>
-      {/* Subtle animated glow */}
       {!isPrimary && (
         <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-aifm-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       )}
@@ -97,7 +97,6 @@ function CompanyCard({
                  hover:-translate-y-1 transition-all duration-500 cursor-pointer"
     >
       <div className="p-6">
-        {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-gradient-to-br from-aifm-charcoal/5 to-aifm-charcoal/10 rounded-xl 
@@ -122,7 +121,6 @@ function CompanyCard({
           </span>
         </div>
 
-        {/* Metrics */}
         <div className="space-y-4">
           <div className="flex items-center justify-between py-2">
             <span className="text-sm text-aifm-charcoal/50">Nuvarande värde</span>
@@ -146,7 +144,6 @@ function CompanyCard({
         </div>
       </div>
 
-      {/* Footer */}
       <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100/50">
         <div className="flex items-center justify-between text-xs text-aifm-charcoal/40">
           <span className="flex items-center gap-1.5">
@@ -161,7 +158,6 @@ function CompanyCard({
         </div>
       </div>
 
-      {/* Metrics Row - if available */}
       {company.metrics && (
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
           <div className="grid grid-cols-4 gap-4 text-center">
@@ -217,10 +213,52 @@ function ViewModeTabs({
   );
 }
 
+// Sector options
+const SECTORS = [
+  'Teknologi',
+  'Hälsovård',
+  'Fintech',
+  'E-handel',
+  'SaaS',
+  'Cleantech',
+  'Fastigheter',
+  'Industri',
+  'Konsument',
+  'Övrigt'
+];
+
+// Country options
+const COUNTRIES = [
+  'Sverige',
+  'Norge',
+  'Danmark',
+  'Finland',
+  'Tyskland',
+  'Storbritannien',
+  'USA',
+  'Övrigt'
+];
+
 export default function PortfolioPage() {
   const { selectedCompany } = useCompany();
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportFormat, setExportFormat] = useState<'excel' | 'pdf' | 'csv'>('excel');
+  const [exportSuccess, setExportSuccess] = useState(false);
+  
+  // Form state for new company
+  const [newCompany, setNewCompany] = useState({
+    name: '',
+    sector: '',
+    country: 'Sverige',
+    investmentAmount: '',
+    ownership: '',
+    investmentDate: new Date().toISOString().split('T')[0],
+    description: ''
+  });
+  
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_selectedPortfolioCompany, setSelectedPortfolioCompany] = useState<PortfolioCompany | null>(null);
 
@@ -228,24 +266,91 @@ export default function PortfolioPage() {
   const portfolio = getPortfolioByCompanyId(selectedCompany.id);
   const currency = selectedFund?.currency || 'SEK';
   
-  // Filter by search
   const filteredPortfolio = portfolio.filter(pc => 
     pc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     pc.sector.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
-  // Calculate metrics
   const totalInvested = portfolio.reduce((sum, pc) => sum + pc.initialInvestment, 0);
   const totalValue = portfolio.reduce((sum, pc) => sum + pc.currentValuation, 0);
   const unrealizedGain = totalValue - totalInvested;
   const unrealizedGainPercent = totalInvested > 0 ? (unrealizedGain / totalInvested) * 100 : 0;
   const activeCompanies = portfolio.filter(pc => pc.status === 'ACTIVE').length;
 
-  // Group by sector
   const bySector = portfolio.reduce((acc, pc) => {
     acc[pc.sector] = (acc[pc.sector] || 0) + pc.currentValuation;
     return acc;
   }, {} as Record<string, number>);
+
+  // Export function
+  const handleExport = () => {
+    // Create export data
+    const exportData = portfolio.map(company => ({
+      'Bolagsnamn': company.name,
+      'Sektor': company.sector,
+      'Land': company.country,
+      'Investerat belopp': formatCurrency(company.initialInvestment, currency),
+      'Nuvarande värde': formatCurrency(company.currentValuation, currency),
+      'Avkastning (%)': formatPercentage((company.currentValuation - company.initialInvestment) / company.initialInvestment * 100),
+      'Ägarandel (%)': formatPercentage(company.ownership),
+      'Status': company.status === 'ACTIVE' ? 'Aktiv' : company.status === 'REALIZED' ? 'Realiserad' : company.status,
+      'Investeringsdatum': formatDate(company.investmentDate)
+    }));
+
+    if (exportFormat === 'csv') {
+      // Create CSV
+      const headers = Object.keys(exportData[0]).join(';');
+      const rows = exportData.map(row => Object.values(row).join(';')).join('\n');
+      const csv = `${headers}\n${rows}`;
+      
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `portfölj_${selectedCompany.shortName}_${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+    } else if (exportFormat === 'excel') {
+      // Simulate Excel export (in production, use a library like xlsx)
+      const headers = Object.keys(exportData[0]).join('\t');
+      const rows = exportData.map(row => Object.values(row).join('\t')).join('\n');
+      const tsv = `${headers}\n${rows}`;
+      
+      const blob = new Blob(['\ufeff' + tsv], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `portfölj_${selectedCompany.shortName}_${new Date().toISOString().split('T')[0]}.xls`;
+      link.click();
+    } else {
+      // PDF - show message (would need a library like jspdf in production)
+      alert('PDF-export genereras... (Demo - i produktion skulle en PDF-fil laddas ner)');
+    }
+    
+    setExportSuccess(true);
+    setTimeout(() => {
+      setExportSuccess(false);
+      setShowExportModal(false);
+    }, 1500);
+  };
+
+  // Handle add company
+  const handleAddCompany = () => {
+    if (!newCompany.name || !newCompany.sector || !newCompany.investmentAmount) {
+      alert('Vänligen fyll i alla obligatoriska fält');
+      return;
+    }
+    
+    // In production, this would make an API call
+    alert(`Bolag "${newCompany.name}" tillagt! (Demo)`);
+    setShowAddModal(false);
+    setNewCompany({
+      name: '',
+      sector: '',
+      country: 'Sverige',
+      investmentAmount: '',
+      ownership: '',
+      investmentDate: new Date().toISOString().split('T')[0],
+      description: ''
+    });
+  };
 
   return (
     <DashboardLayout>
@@ -257,15 +362,21 @@ export default function PortfolioPage() {
         </div>
         
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-aifm-charcoal/70 
-                             bg-white border border-gray-200 rounded-xl hover:border-aifm-gold/30 
-                             hover:text-aifm-charcoal transition-all duration-300">
+          <button 
+            onClick={() => setShowExportModal(true)}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-aifm-charcoal/70 
+                       bg-white border border-gray-200 rounded-xl hover:border-aifm-gold/30 
+                       hover:text-aifm-charcoal transition-all duration-300"
+          >
             <Download className="w-4 h-4" />
             Exportera
           </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white 
-                             bg-aifm-charcoal rounded-xl hover:bg-aifm-charcoal/90 
-                             shadow-lg shadow-aifm-charcoal/20 transition-all duration-300">
+          <button 
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white 
+                       bg-aifm-charcoal rounded-xl hover:bg-aifm-charcoal/90 
+                       shadow-lg shadow-aifm-charcoal/20 transition-all duration-300"
+          >
             <Plus className="w-4 h-4" />
             Lägg till bolag
           </button>
@@ -418,6 +529,284 @@ export default function PortfolioPage() {
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Add Company Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+            <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
+              <div>
+                <h3 className="text-xl font-semibold text-aifm-charcoal">Lägg till portföljbolag</h3>
+                <p className="text-sm text-aifm-charcoal/40 mt-1">Registrera en ny investering i portföljen</p>
+              </div>
+              <button 
+                onClick={() => setShowAddModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+              >
+                <X className="w-5 h-5 text-aifm-charcoal/50" />
+              </button>
+            </div>
+            
+            <div className="p-8 space-y-6">
+              {/* Company Info */}
+              <div className="grid grid-cols-2 gap-6">
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">
+                    Bolagsnamn *
+                  </label>
+                  <input
+                    type="text"
+                    value={newCompany.name}
+                    onChange={(e) => setNewCompany({ ...newCompany, name: e.target.value })}
+                    className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm
+                               focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10 transition-all"
+                    placeholder="t.ex. TechStartup AB"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">
+                    Sektor *
+                  </label>
+                  <select
+                    value={newCompany.sector}
+                    onChange={(e) => setNewCompany({ ...newCompany, sector: e.target.value })}
+                    className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm
+                               focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10 transition-all"
+                  >
+                    <option value="">Välj sektor</option>
+                    {SECTORS.map(sector => (
+                      <option key={sector} value={sector}>{sector}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">
+                    Land
+                  </label>
+                  <select
+                    value={newCompany.country}
+                    onChange={(e) => setNewCompany({ ...newCompany, country: e.target.value })}
+                    className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm
+                               focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10 transition-all"
+                  >
+                    {COUNTRIES.map(country => (
+                      <option key={country} value={country}>{country}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+
+              {/* Investment Details */}
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">
+                    Investeringsbelopp ({currency}) *
+                  </label>
+                  <input
+                    type="number"
+                    value={newCompany.investmentAmount}
+                    onChange={(e) => setNewCompany({ ...newCompany, investmentAmount: e.target.value })}
+                    className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm
+                               focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10 transition-all"
+                    placeholder="10000000"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">
+                    Ägarandel (%)
+                  </label>
+                  <input
+                    type="number"
+                    value={newCompany.ownership}
+                    onChange={(e) => setNewCompany({ ...newCompany, ownership: e.target.value })}
+                    className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm
+                               focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10 transition-all"
+                    placeholder="15"
+                    max="100"
+                    min="0"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">
+                    Investeringsdatum
+                  </label>
+                  <input
+                    type="date"
+                    value={newCompany.investmentDate}
+                    onChange={(e) => setNewCompany({ ...newCompany, investmentDate: e.target.value })}
+                    className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm
+                               focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">
+                  Beskrivning / Anteckningar
+                </label>
+                <textarea
+                  value={newCompany.description}
+                  onChange={(e) => setNewCompany({ ...newCompany, description: e.target.value })}
+                  className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm h-24 resize-none
+                             focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10 transition-all"
+                  placeholder="Kort beskrivning av investeringen..."
+                />
+              </div>
+
+              {/* Preview */}
+              {newCompany.name && newCompany.investmentAmount && (
+                <div className="bg-aifm-gold/5 rounded-xl p-5 border border-aifm-gold/10">
+                  <p className="text-xs font-semibold text-aifm-charcoal/50 uppercase tracking-wider mb-3">Förhandsgranskning</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-aifm-gold/20 rounded-xl flex items-center justify-center">
+                        <Building2 className="w-5 h-5 text-aifm-gold" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-aifm-charcoal">{newCompany.name}</p>
+                        <p className="text-xs text-aifm-charcoal/50">{newCompany.sector || 'Ingen sektor'} • {newCompany.country}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-aifm-charcoal">{formatCurrency(parseFloat(newCompany.investmentAmount) || 0, currency)}</p>
+                      {newCompany.ownership && (
+                        <p className="text-xs text-aifm-charcoal/50">{newCompany.ownership}% ägande</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="px-8 py-6 border-t border-gray-100 flex gap-3 sticky bottom-0 bg-white rounded-b-2xl">
+              <button 
+                onClick={() => setShowAddModal(false)}
+                className="flex-1 py-3 px-4 text-sm font-medium text-aifm-charcoal/70 
+                           bg-white border border-gray-200 rounded-xl hover:border-aifm-charcoal/30 transition-all"
+              >
+                Avbryt
+              </button>
+              <button 
+                onClick={handleAddCompany}
+                className="flex-1 py-3 px-4 text-sm font-medium text-white 
+                           bg-aifm-charcoal rounded-xl hover:bg-aifm-charcoal/90 
+                           shadow-lg shadow-aifm-charcoal/20 transition-all flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Lägg till bolag
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-aifm-charcoal">Exportera portfölj</h3>
+                <p className="text-sm text-aifm-charcoal/40 mt-0.5">{portfolio.length} bolag • {selectedCompany.shortName}</p>
+              </div>
+              <button 
+                onClick={() => setShowExportModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+              >
+                <X className="w-5 h-5 text-aifm-charcoal/50" />
+              </button>
+            </div>
+            
+            {exportSuccess ? (
+              <div className="p-12 text-center">
+                <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Check className="w-8 h-8 text-emerald-600" />
+                </div>
+                <p className="text-lg font-semibold text-aifm-charcoal">Export klar!</p>
+                <p className="text-sm text-aifm-charcoal/50 mt-1">Filen laddas ner...</p>
+              </div>
+            ) : (
+              <>
+                <div className="p-6 space-y-4">
+                  <p className="text-sm text-aifm-charcoal/60">Välj exportformat:</p>
+                  
+                  <div className="space-y-3">
+                    {[
+                      { id: 'excel', icon: FileSpreadsheet, label: 'Excel (.xls)', desc: 'Öppnas i Excel, Numbers' },
+                      { id: 'csv', icon: FileText, label: 'CSV (.csv)', desc: 'Universellt format' },
+                      { id: 'pdf', icon: FileText, label: 'PDF (.pdf)', desc: 'Rapport för utskrift' },
+                    ].map((format) => (
+                      <button
+                        key={format.id}
+                        onClick={() => setExportFormat(format.id as typeof exportFormat)}
+                        className={`w-full p-4 rounded-xl border-2 transition-all duration-300 flex items-center gap-4 ${
+                          exportFormat === format.id
+                            ? 'border-aifm-gold bg-aifm-gold/5'
+                            : 'border-gray-100 hover:border-gray-200'
+                        }`}
+                      >
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                          exportFormat === format.id ? 'bg-aifm-gold/20' : 'bg-gray-100'
+                        }`}>
+                          <format.icon className={`w-5 h-5 ${exportFormat === format.id ? 'text-aifm-gold' : 'text-aifm-charcoal/40'}`} />
+                        </div>
+                        <div className="text-left flex-1">
+                          <p className={`font-medium ${exportFormat === format.id ? 'text-aifm-charcoal' : 'text-aifm-charcoal/70'}`}>
+                            {format.label}
+                          </p>
+                          <p className="text-xs text-aifm-charcoal/40">{format.desc}</p>
+                        </div>
+                        {exportFormat === format.id && (
+                          <div className="w-6 h-6 bg-aifm-gold rounded-full flex items-center justify-center">
+                            <Check className="w-4 h-4 text-white" />
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="bg-gray-50 rounded-xl p-4 mt-4">
+                    <p className="text-xs font-semibold text-aifm-charcoal/50 uppercase tracking-wider mb-2">Inkluderar</p>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-aifm-charcoal/60">
+                      <span>• Bolagsnamn</span>
+                      <span>• Sektor & land</span>
+                      <span>• Investerat belopp</span>
+                      <span>• Nuvarande värde</span>
+                      <span>• Avkastning</span>
+                      <span>• Ägarandel</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="px-6 py-5 border-t border-gray-100 flex gap-3">
+                  <button 
+                    onClick={() => setShowExportModal(false)}
+                    className="flex-1 py-3 px-4 text-sm font-medium text-aifm-charcoal/70 
+                               bg-white border border-gray-200 rounded-xl hover:border-aifm-charcoal/30 transition-all"
+                  >
+                    Avbryt
+                  </button>
+                  <button 
+                    onClick={handleExport}
+                    className="flex-1 py-3 px-4 text-sm font-medium text-white 
+                               bg-aifm-charcoal rounded-xl hover:bg-aifm-charcoal/90 
+                               shadow-lg shadow-aifm-charcoal/20 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Exportera
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

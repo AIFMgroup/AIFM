@@ -369,9 +369,12 @@ export default function DataRoomsPage() {
       {/* New Room Modal */}
       {showNewRoomModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-aifm-charcoal">Nytt datarum</h3>
+          <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-semibold text-aifm-charcoal">Skapa nytt datarum</h3>
+                <p className="text-sm text-aifm-charcoal/40 mt-1">Säker delning av dokument med kontrollerad åtkomst</p>
+              </div>
               <button 
                 onClick={() => setShowNewRoomModal(false)}
                 className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-aifm-charcoal/50"
@@ -382,44 +385,48 @@ export default function DataRoomsPage() {
               </button>
             </div>
             
-            <div className="p-6 space-y-5">
-              <div>
-                <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">
-                  Rumsnamn
-                </label>
-                <input
-                  type="text"
-                  className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm
-                             focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10 transition-all"
-                  placeholder="t.ex. Projekt Alpha Due Diligence"
-                />
+            <div className="p-8 space-y-6">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">
+                    Rumsnamn *
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm
+                               focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10 transition-all"
+                    placeholder="t.ex. Projekt Alpha Due Diligence"
+                  />
+                </div>
+                
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">
+                    Beskrivning
+                  </label>
+                  <textarea
+                    className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm h-20 resize-none
+                               focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10 transition-all"
+                    placeholder="Kort beskrivning av rummets syfte och innehåll..."
+                  />
+                </div>
               </div>
-              
-              <div>
-                <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">
-                  Beskrivning
-                </label>
-                <textarea
-                  className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm h-20 resize-none
-                             focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10 transition-all"
-                  placeholder="Kort beskrivning av rummets syfte..."
-                />
-              </div>
+
+              <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
               
               <div>
                 <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-3 uppercase tracking-wider">
-                  Rumstyp
+                  Rumstyp *
                 </label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-3">
                   {roomTypes.map((type) => (
                     <button
                       key={type.value}
                       type="button"
                       onClick={() => setNewRoomType(type.value)}
-                      className={`px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
+                      className={`px-4 py-4 rounded-xl text-sm font-medium transition-all duration-300 border-2 ${
                         newRoomType === type.value
-                          ? 'bg-aifm-charcoal text-white shadow-lg shadow-aifm-charcoal/20'
-                          : 'bg-gray-100 text-aifm-charcoal/60 hover:bg-gray-200'
+                          ? 'bg-aifm-charcoal text-white border-aifm-charcoal shadow-lg shadow-aifm-charcoal/20'
+                          : 'bg-white text-aifm-charcoal/60 border-gray-100 hover:border-gray-200 hover:bg-gray-50'
                       }`}
                     >
                       {type.label}
@@ -427,31 +434,68 @@ export default function DataRoomsPage() {
                   ))}
                 </div>
               </div>
+
+              <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-6">
                 <div>
                   <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">
-                    Utgångsdatum
+                    Utgångsdatum (valfritt)
                   </label>
                   <input 
                     type="date" 
                     className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm
                                focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10 transition-all"
                   />
+                  <p className="text-xs text-aifm-charcoal/40 mt-2">Rummet stängs automatiskt efter detta datum</p>
                 </div>
-                <div className="flex items-end pb-1">
-                  <label className="flex items-center gap-3 cursor-pointer group">
+                <div>
+                  <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">
+                    Fond
+                  </label>
+                  <select className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm
+                                     focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10 transition-all">
+                    <option>Nordic Growth Fund I</option>
+                    <option>Scandinavian Tech Fund II</option>
+                    <option>Baltic Real Estate Fund</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="bg-gray-50/80 rounded-xl p-5 border border-gray-100">
+                <p className="text-xs font-semibold text-aifm-charcoal/50 uppercase tracking-wider mb-4">Säkerhetsinställningar</p>
+                <div className="space-y-4">
+                  <label className="flex items-center justify-between cursor-pointer group">
+                    <div>
+                      <span className="text-sm font-medium text-aifm-charcoal group-hover:text-aifm-gold transition-colors">Vattenstämpel på dokument</span>
+                      <p className="text-xs text-aifm-charcoal/40 mt-0.5">Lägger till mottagarens namn på nedladdade filer</p>
+                    </div>
                     <input type="checkbox" className="w-5 h-5 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold" defaultChecked />
-                    <span className="text-sm text-aifm-charcoal/70 group-hover:text-aifm-charcoal transition-colors">Vattenstämpel</span>
+                  </label>
+                  <div className="h-px bg-gray-200" />
+                  <label className="flex items-center justify-between cursor-pointer group">
+                    <div>
+                      <span className="text-sm font-medium text-aifm-charcoal group-hover:text-aifm-gold transition-colors">Tillåt nedladdning</span>
+                      <p className="text-xs text-aifm-charcoal/40 mt-0.5">Medlemmar kan ladda ner dokument (annars endast visa)</p>
+                    </div>
+                    <input type="checkbox" className="w-5 h-5 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold" defaultChecked />
+                  </label>
+                  <div className="h-px bg-gray-200" />
+                  <label className="flex items-center justify-between cursor-pointer group">
+                    <div>
+                      <span className="text-sm font-medium text-aifm-charcoal group-hover:text-aifm-gold transition-colors">Kräv NDA</span>
+                      <p className="text-xs text-aifm-charcoal/40 mt-0.5">Medlemmar måste acceptera NDA innan åtkomst</p>
+                    </div>
+                    <input type="checkbox" className="w-5 h-5 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold" />
                   </label>
                 </div>
               </div>
             </div>
             
-            <div className="px-6 py-5 border-t border-gray-100 flex gap-3">
+            <div className="px-8 py-6 border-t border-gray-100 flex gap-3">
               <button 
                 onClick={() => setShowNewRoomModal(false)}
-                className="flex-1 py-3 px-4 text-sm font-medium text-aifm-charcoal/70 
+                className="flex-1 py-3.5 px-4 text-sm font-medium text-aifm-charcoal/70 
                            bg-white border border-gray-200 rounded-xl hover:border-aifm-charcoal/30 transition-all"
               >
                 Avbryt
@@ -461,11 +505,12 @@ export default function DataRoomsPage() {
                   alert('Datarum skapat! (Demo)');
                   setShowNewRoomModal(false);
                 }}
-                className="flex-1 py-3 px-4 text-sm font-medium text-white 
+                className="flex-1 py-3.5 px-4 text-sm font-medium text-white 
                            bg-aifm-charcoal rounded-xl hover:bg-aifm-charcoal/90 
-                           shadow-lg shadow-aifm-charcoal/20 transition-all"
+                           shadow-lg shadow-aifm-charcoal/20 transition-all flex items-center justify-center gap-2"
               >
-                Skapa rum
+                <FolderLock className="w-4 h-4" />
+                Skapa datarum
               </button>
             </div>
           </div>
