@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, Briefcase, CheckSquare,
   Settings, LogOut, ChevronDown,
-  ChevronLeft, ChevronRight, Banknote, FolderOpen, BookOpen
+  ChevronLeft, ChevronRight, Banknote, FolderOpen, BookOpen, Bot
 } from 'lucide-react';
 import { useSidebar } from './SidebarContext';
 
@@ -59,6 +59,15 @@ const navItems: NavItem[] = [
     label: 'Uppgifter', 
     icon: CheckSquare, 
     href: '/approvals' 
+  },
+  { 
+    id: 'compliance-agent', 
+    label: 'Compliance Agent', 
+    icon: Bot,
+    children: [
+      { id: 'compliance-docs', label: 'Ladda upp dokument', href: '/compliance/documents' },
+      { id: 'compliance-chat', label: 'Compliance Agent', href: '/compliance/chat' },
+    ]
   },
 ];
 
