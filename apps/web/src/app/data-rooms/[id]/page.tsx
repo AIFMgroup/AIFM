@@ -498,7 +498,7 @@ export default function DataRoomDetailPage() {
                     className="input max-w-xs"
                   />
                 </div>
-                <button className="btn-primary py-2 px-4">Save Changes</button>
+                <button className="btn-primary py-2 px-4">Spara ändringar</button>
               </div>
             </div>
 

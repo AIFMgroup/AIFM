@@ -95,7 +95,7 @@ export default function DataRoomsPage() {
 
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Documents</span>
+              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Dokument</span>
               <FileText className="w-5 h-5 text-aifm-charcoal/30" />
             </div>
             <p className="text-2xl font-medium text-aifm-charcoal">{totalDocuments}</p>
@@ -201,11 +201,11 @@ export default function DataRoomsPage() {
                 <div className="grid grid-cols-3 gap-2 pt-4 border-t border-gray-100">
                   <div className="text-center">
                     <p className="text-lg font-medium text-aifm-charcoal">{room.documentsCount}</p>
-                    <p className="text-xs text-aifm-charcoal/50">Documents</p>
+                    <p className="text-xs text-aifm-charcoal/50">Dokument</p>
                   </div>
                   <div className="text-center border-x border-gray-100">
                     <p className="text-lg font-medium text-aifm-charcoal">{room.membersCount}</p>
-                    <p className="text-xs text-aifm-charcoal/50">Members</p>
+                    <p className="text-xs text-aifm-charcoal/50">Medlemmar</p>
                   </div>
                   <div className="text-center">
                     <p className="text-sm font-medium text-aifm-charcoal">{formatDate(room.lastActivity)}</p>

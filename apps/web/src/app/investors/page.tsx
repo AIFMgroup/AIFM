@@ -192,7 +192,7 @@ export default function InvestorsPage() {
             }`}
           >
             <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Flagged</span>
+              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Flaggade</span>
               <AlertTriangle className="w-5 h-5 text-red-500" />
             </div>
             <p className="text-3xl font-medium text-red-600">{stats.flagged}</p>

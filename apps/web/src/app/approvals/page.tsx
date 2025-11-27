@@ -301,7 +301,7 @@ export default function ApprovalsPage() {
 
           <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-2xl p-6 text-white">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium uppercase tracking-wider text-white/70">Approved Today</span>
+              <span className="text-xs font-medium uppercase tracking-wider text-white/70">Godkänt idag</span>
               <CheckCircle2 className="w-5 h-5 text-white/50" />
             </div>
             <p className="text-2xl font-medium">{mockApprovals.filter(i => i.status === 'APPROVED').length}</p>
@@ -413,11 +413,11 @@ export default function ApprovalsPage() {
                       <p className="font-medium text-aifm-charcoal">{selectedItem.fundName}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Created By</p>
+                      <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Skapad av</p>
                       <p className="font-medium text-aifm-charcoal">{selectedItem.createdBy}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Created At</p>
+                      <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Skapad</p>
                       <p className="font-medium text-aifm-charcoal">{formatDate(selectedItem.createdAt)}</p>
                     </div>
                   </div>
@@ -554,7 +554,7 @@ export default function ApprovalsPage() {
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-xl">
             <div className="px-6 py-4 border-b border-gray-100">
-              <h3 className="text-lg font-medium text-aifm-charcoal uppercase tracking-wider">Confirm Approval</h3>
+              <h3 className="text-lg font-medium text-aifm-charcoal uppercase tracking-wider">Bekräfta godkännande</h3>
             </div>
             <div className="p-6">
               <div className="flex items-center gap-4 mb-6">

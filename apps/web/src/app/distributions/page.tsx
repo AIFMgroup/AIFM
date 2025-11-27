@@ -435,7 +435,7 @@ export default function DistributionsPage() {
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-xl">
             <div className="px-6 py-4 border-b border-gray-100">
-              <h3 className="text-lg font-medium text-aifm-charcoal uppercase tracking-wider">Confirm Approval</h3>
+              <h3 className="text-lg font-medium text-aifm-charcoal uppercase tracking-wider">Bekräfta godkännande</h3>
             </div>
             <div className="p-6">
               <div className="flex items-center gap-4 mb-6">
