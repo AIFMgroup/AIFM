@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAIModelForTask, buildAIMessages } from '@/lib/ai-knowledge';
 
 /**
  * AI Process API - DEMO MODE
