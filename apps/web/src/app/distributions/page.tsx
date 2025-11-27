@@ -59,10 +59,10 @@ export default function DistributionsPage() {
                 <span className="font-medium tracking-widest text-aifm-charcoal uppercase text-sm">AIFM</span>
               </Link>
               <nav className="hidden md:flex items-center gap-6">
-                <Link href="/fund" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Funds</Link>
-                <Link href="/capital-calls" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Capital Calls</Link>
-                <Link href="/distributions" className="text-sm font-medium text-aifm-gold uppercase tracking-wider">Distributions</Link>
-                <Link href="/investors" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Investors</Link>
+                <Link href="/fund" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Fonder</Link>
+                <Link href="/capital-calls" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Kapitalanrop</Link>
+                <Link href="/distributions" className="text-sm font-medium text-aifm-gold uppercase tracking-wider">Utdelningar</Link>
+                <Link href="/investors" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Investerare</Link>
               </nav>
             </div>
             <div className="flex items-center gap-3">
@@ -71,7 +71,7 @@ export default function DistributionsPage() {
                 className="btn-primary py-2 px-4 flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
-                New Distribution
+                Ny utdelning
               </button>
             </div>
           </div>
@@ -83,7 +83,7 @@ export default function DistributionsPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <h1 className="heading-2">Distributions</h1>
+              <h1 className="heading-2">Utdelningar</h1>
               <HelpTooltip 
                 {...helpContent.distributions}
                 learnMoreLink="/guide#distributions"
@@ -92,7 +92,7 @@ export default function DistributionsPage() {
               />
             </div>
             <div className="flex items-center gap-4">
-              <p className="text-aifm-charcoal/60">Manage fund distributions with 4-eyes approval</p>
+              <p className="text-aifm-charcoal/60">Hantera fondutdelningar med 4-ögon godkännande</p>
               <Link href="/guide#distributions" className="text-xs text-aifm-gold hover:underline flex items-center gap-1">
                 <BookOpen className="w-3 h-3" />
                 Guide

@@ -128,7 +128,7 @@ export default function InvestorsPage() {
             />
           </div>
           <div className="flex items-center gap-4">
-            <p className="text-aifm-charcoal/60">Manage investors, KYC/AML compliance, and commitments</p>
+              <p className="text-aifm-charcoal/60">Hantera investerare, KYC/AML-efterlevnad och åtaganden</p>
             <Link href="/guide#investors" className="text-xs text-aifm-gold hover:underline flex items-center gap-1">
               <BookOpen className="w-3 h-3" />
               Guide

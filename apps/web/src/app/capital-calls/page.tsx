@@ -64,10 +64,10 @@ export default function CapitalCallsPage() {
                 <span className="font-medium tracking-widest text-aifm-charcoal uppercase text-sm">AIFM</span>
               </Link>
               <nav className="hidden md:flex items-center gap-6">
-                <Link href="/fund" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Funds</Link>
-                <Link href="/capital-calls" className="text-sm font-medium text-aifm-gold uppercase tracking-wider">Capital Calls</Link>
-                <Link href="/distributions" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Distributions</Link>
-                <Link href="/investors" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Investors</Link>
+                <Link href="/fund" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Fonder</Link>
+                <Link href="/capital-calls" className="text-sm font-medium text-aifm-gold uppercase tracking-wider">Kapitalanrop</Link>
+                <Link href="/distributions" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Utdelningar</Link>
+                <Link href="/investors" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Investerare</Link>
               </nav>
             </div>
             <div className="flex items-center gap-3">
@@ -76,7 +76,7 @@ export default function CapitalCallsPage() {
                 className="btn-primary py-2 px-4 flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
-                New Capital Call
+                Nytt kapitalanrop
               </button>
             </div>
           </div>
@@ -88,7 +88,7 @@ export default function CapitalCallsPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <h1 className="heading-2">Capital Calls</h1>
+              <h1 className="heading-2">Kapitalanrop</h1>
               <HelpTooltip 
                 {...helpContent.capitalCalls}
                 learnMoreLink="/guide#capital-calls"
@@ -97,7 +97,7 @@ export default function CapitalCallsPage() {
               />
             </div>
             <div className="flex items-center gap-4">
-              <p className="text-aifm-charcoal/60">Manage capital calls and track investor payments</p>
+              <p className="text-aifm-charcoal/60">Hantera kapitalanrop och spåra investerares inbetalningar</p>
               <Link href="/guide#capital-calls" className="text-xs text-aifm-gold hover:underline flex items-center gap-1">
                 <BookOpen className="w-3 h-3" />
                 Guide

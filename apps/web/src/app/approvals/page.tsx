@@ -238,7 +238,7 @@ export default function ApprovalsPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <h1 className="heading-2">Approval Center</h1>
+              <h1 className="heading-2">Godkännandecenter</h1>
               <HelpTooltip 
                 {...helpContent.approvals}
                 learnMoreLink="/guide#approvals"
@@ -247,7 +247,7 @@ export default function ApprovalsPage() {
               />
             </div>
             <div className="flex items-center gap-4">
-              <p className="text-aifm-charcoal/60">4-Eyes Principle: All financial actions require dual approval</p>
+              <p className="text-aifm-charcoal/60">4-ögon principen: Alla finansiella åtgärder kräver dubbelt godkännande</p>
               <Link href="/guide#approvals" className="text-xs text-aifm-gold hover:underline flex items-center gap-1">
                 <BookOpen className="w-3 h-3" />
                 Guide
@@ -261,10 +261,10 @@ export default function ApprovalsPage() {
               onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
               className="input py-2 px-4"
             >
-              <option value="all">All Items</option>
-              <option value="pending">Pending ({pendingCount})</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
+              <option value="all">Alla ärenden</option>
+              <option value="pending">Väntande ({pendingCount})</option>
+              <option value="approved">Godkända</option>
+              <option value="rejected">Avslagna</option>
             </select>
           </div>
         </div>
@@ -273,7 +273,7 @@ export default function ApprovalsPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Pending</span>
+              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Väntande</span>
               <Clock className="w-5 h-5 text-amber-500" />
             </div>
             <p className="text-2xl font-medium text-aifm-charcoal">{pendingCount}</p>
