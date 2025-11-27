@@ -1,14 +1,10 @@
 /**
- * RAG (Retrieval Augmented Generation) Service
- * Uses vector search to find relevant documents and generates AI responses
+ * RAG (Retrieval Augmented Generation) Service - DEMO MODE
+ * Returns mock responses without AI
+ * Replace with OpenAI integration when going to production
  */
 
-import OpenAI from 'openai';
 import { searchDocuments, VectorSearchResult } from './vector-search';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 export interface RAGResponse {
   answer: string;
@@ -22,7 +18,8 @@ export interface RAGResponse {
 }
 
 /**
- * Generate RAG response: retrieve relevant documents and generate answer
+ * Generate RAG response - DEMO MODE
+ * Returns document search results with a mock answer
  */
 export async function generateRAGResponse(
   question: string,
@@ -36,12 +33,10 @@ export async function generateRAGResponse(
 ): Promise<RAGResponse> {
   try {
     // Step 1: Retrieve relevant documents using vector search
-    // If specific document IDs provided, filter by them
     let searchResults: VectorSearchResult[];
     
     if (filters?.documentIds && filters.documentIds.length > 0) {
-      // Search only in specified documents
-      const allDocs = await searchDocuments(question, 100, filters); // Get more to filter
+      const allDocs = await searchDocuments(question, 100, filters);
       searchResults = allDocs.filter(doc => filters.documentIds!.includes(doc.documentId)).slice(0, maxSources);
     } else {
       searchResults = await searchDocuments(question, maxSources, filters);
@@ -49,58 +44,13 @@ export async function generateRAGResponse(
 
     if (searchResults.length === 0) {
       return {
-        answer: 'I could not find any relevant documents to answer your question.',
+        answer: 'Inga relevanta dokument hittades för din fråga. Prova att omformulera eller ladda upp fler dokument.',
         sources: [],
         citations: [],
       };
     }
 
-    // Step 2: Build context from retrieved documents
-    const context = searchResults
-      .map((result, index) => {
-        // Extract relevant excerpt (first 500 chars around matches)
-        const excerpt = result.text.substring(0, 500);
-        return `[Document ${index + 1}: ${result.fileName}]\n${excerpt}\n`;
-      })
-      .join('\n---\n\n');
-
-    // Step 3: Generate answer using OpenAI with context
-    const prompt = `You are a helpful assistant that answers questions based on the provided documents.
-
-Documents:
-${context}
-
-Question: ${question}
-
-Instructions:
-- Answer the question based ONLY on the information provided in the documents above
-- If the documents don't contain enough information, say so
-- Cite specific documents when referencing information (e.g., "According to Document 1...")
-- Be concise and accurate
-- Respond in English
-
-Answer:`;
-
-    const response = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are a helpful assistant that answers questions based on provided documents. Always cite your sources.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.3,
-      max_tokens: 1000,
-    });
-
-    const answer = response.choices[0].message.content || '';
-
-    // Step 4: Format sources and citations
+    // Step 2: Format sources
     const sources = searchResults.map(result => ({
       documentId: result.documentId,
       fileName: result.fileName,
@@ -108,28 +58,38 @@ Answer:`;
       score: result.score,
     }));
 
-    // Extract citations from answer (simple pattern matching)
-    const citations: string[] = [];
-    const citationPattern = /(?:Document|Dokument)\s+(\d+)/gi;
-    let match;
-    while ((match = citationPattern.exec(answer)) !== null) {
-      const docIndex = parseInt(match[1]) - 1;
-      if (docIndex >= 0 && docIndex < sources.length) {
-        citations.push(sources[docIndex].fileName);
-      }
-    }
+    // Step 3: Generate mock answer (DEMO MODE)
+    const documentList = sources.map((s, i) => `${i + 1}. ${s.fileName}`).join('\n');
+    
+    const answer = `📚 **Demo-läge - Dokumentsökning**
 
-    // Remove duplicates
-    const uniqueCitations = [...new Set(citations)];
+Jag hittade ${sources.length} relevanta dokument för din fråga: "${question}"
+
+**Relevanta dokument:**
+${documentList}
+
+---
+
+*I produktionsläge skulle AI analysera dessa dokument och generera ett detaljerat svar baserat på innehållet.*
+
+**För att aktivera full AI-funktionalitet:**
+1. Lägg till OPENAI_API_KEY i miljövariabler
+2. Återaktivera OpenAI-integration i koden
+
+*Demo-svar genererat ${new Date().toLocaleString('sv-SE')}*`;
 
     return {
       answer,
       sources,
-      citations: uniqueCitations,
+      citations: sources.map(s => s.fileName),
     };
   } catch (error: any) {
     console.error('RAG generation error:', error);
-    throw new Error(`Failed to generate RAG response: ${error.message}`);
+    return {
+      answer: `Ett fel uppstod vid dokumentsökning: ${error.message}`,
+      sources: [],
+      citations: [],
+    };
   }
 }
 
@@ -145,11 +105,9 @@ export async function askDocumentQuestion(
     documentType?: string;
   }
 ): Promise<RAGResponse> {
-  // If specific document ID provided, include it in filters
   const searchFilters = documentId
     ? { ...filters, documentIds: [documentId] }
     : filters;
 
   return generateRAGResponse(question, searchFilters);
 }
-

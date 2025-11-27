@@ -1,14 +1,10 @@
 /**
- * Compliance Policy Engine
- * Defines and checks compliance policies against documents
+ * Compliance Policy Engine - DEMO MODE
+ * Uses rule-based checks only (no AI)
+ * Replace with OpenAI integration when going to production
  */
 
 import { prisma } from '@/lib/prisma';
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 export interface PolicyRule {
   id: string;
@@ -16,8 +12,8 @@ export interface PolicyRule {
   description: string;
   requirement: string;
   checkType: 'text_match' | 'date' | 'presence' | 'ai_analysis';
-  pattern?: string; // For text_match
-  validator?: (document: any) => boolean; // For custom validation
+  pattern?: string;
+  validator?: (document: any) => boolean;
 }
 
 export interface ComplianceCheckResult {
@@ -25,7 +21,7 @@ export interface ComplianceCheckResult {
   policyName: string;
   requirement: string;
   status: 'COMPLIANT' | 'NON_COMPLIANT' | 'NEEDS_REVIEW' | 'PENDING';
-  score: number; // 0-1 compliance score
+  score: number;
   evidence?: string[];
   gaps?: string[];
   notes?: string;
@@ -53,7 +49,6 @@ export async function checkCompliance(
   policyId: string
 ): Promise<ComplianceCheckResult> {
   try {
-    // Get document and policy
     const document = await prisma.document.findUnique({
       where: { id: documentId },
       include: {
@@ -75,7 +70,6 @@ export async function checkCompliance(
       throw new Error(`Policy not found: ${policyId}`);
     }
 
-    // Get policy rules
     const rules = policy.rules as any as PolicyRule[];
 
     if (!Array.isArray(rules) || rules.length === 0) {
@@ -88,7 +82,6 @@ export async function checkCompliance(
       };
     }
 
-    // Check each rule
     const checkResults: ComplianceCheckResult[] = [];
 
     for (const rule of rules) {
@@ -101,7 +94,6 @@ export async function checkCompliance(
       });
     }
 
-    // Aggregate results
     const overallScore =
       checkResults.reduce((sum, r) => sum + r.score, 0) / checkResults.length;
     const allCompliant = checkResults.every(r => r.status === 'COMPLIANT');
@@ -116,7 +108,6 @@ export async function checkCompliance(
       overallStatus = 'NEEDS_REVIEW';
     }
 
-    // Collect all gaps
     const gaps = checkResults
       .filter(r => r.gaps && r.gaps.length > 0)
       .flatMap(r => r.gaps || []);
@@ -168,7 +159,12 @@ async function checkRule(
       return checkDate(document, rule);
 
     case 'ai_analysis':
-      return await checkAIAnalysis(text, rule);
+      // In demo mode, return needs_review for AI checks
+      return {
+        status: 'NEEDS_REVIEW',
+        score: 0.5,
+        notes: 'Demo-läge: AI-analys är inaktiverad. Aktivera OpenAI för full funktionalitet.',
+      };
 
     default:
       return {
@@ -198,7 +194,7 @@ function checkTextMatch(text: string, rule: PolicyRule): Omit<ComplianceCheckRes
     return {
       status: 'COMPLIANT',
       score: 1.0,
-      evidence: matches.slice(0, 3), // First 3 matches
+      evidence: matches.slice(0, 3),
     };
   }
 
@@ -249,11 +245,9 @@ function checkPresence(document: any, rule: PolicyRule): Omit<ComplianceCheckRes
  * Check date rule
  */
 function checkDate(document: any, _rule: PolicyRule): Omit<ComplianceCheckResult, 'policyId' | 'policyName' | 'requirement'> {
-  // Check if document has required dates
   const hasPublishDate = !!document.publishDate;
   const hasEffectiveDate = !!document.effectiveDate;
 
-  // Check if dates are valid
   const now = new Date();
   const isExpired = document.expiryDate && new Date(document.expiryDate) < now;
   const isNotYetEffective = document.effectiveDate && new Date(document.effectiveDate) > now;
@@ -290,64 +284,6 @@ function checkDate(document: any, _rule: PolicyRule): Omit<ComplianceCheckResult
 }
 
 /**
- * Check using AI analysis
- */
-async function checkAIAnalysis(text: string, rule: PolicyRule): Promise<Omit<ComplianceCheckResult, 'policyId' | 'policyName' | 'requirement'>> {
-  try {
-    const prompt = `Analyze this document text for compliance with the following requirement:
-
-Requirement: ${rule.description || rule.name}
-
-Document text (preview): ${text.substring(0, 2000)}${text.length > 2000 ? '...' : ''}
-
-Return JSON with:
-- compliant: boolean
-- score: number (0-1)
-- evidence: array of strings (evidence found)
-- gaps: array of strings (what's missing)
-
-Return only valid JSON, no markdown.`;
-
-    const response = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a compliance expert. Analyze documents and return structured JSON compliance results.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.3,
-    });
-
-    const content = response.choices[0].message.content;
-    if (!content) {
-      throw new Error('Empty response from AI');
-    }
-
-    const result = JSON.parse(content);
-
-    return {
-      status: result.compliant ? 'COMPLIANT' : 'NON_COMPLIANT',
-      score: result.score || 0,
-      evidence: result.evidence || [],
-      gaps: result.gaps || [],
-    };
-  } catch (error: any) {
-    console.error('AI compliance check error:', error);
-    return {
-      status: 'NEEDS_REVIEW',
-      score: 0.5,
-      notes: `AI analysis failed: ${error.message}`,
-    };
-  }
-}
-
-/**
  * Helper: Get nested value from object
  */
 function getNestedValue(obj: any, path: string): any {
@@ -368,7 +304,6 @@ export async function checkAllPolicies(documentId: string): Promise<ComplianceCh
     const result = await checkCompliance(documentId, policy.id);
     results.push(result);
 
-    // Save check result to database
     await prisma.complianceCheck.create({
       data: {
         documentId,
@@ -433,4 +368,3 @@ export async function getDocumentComplianceStatus(documentId: string): Promise<{
     gaps,
   };
 }
-

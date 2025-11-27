@@ -1,43 +1,95 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+/**
+ * AI Report Generation API - DEMO MODE
+ * Returns mock reports for demonstration purposes
+ * Replace with real OpenAI integration when going to production
+ */
+
+const MOCK_REPORTS: Record<string, string> = {
+  quarterly: `# Quarterly Fund Report - Q4 2024
+
+## Executive Summary
+This report provides a comprehensive overview of fund performance during Q4 2024.
+
+## Performance Highlights
+- **Total AUM**: SEK 2.5 billion
+- **Quarterly Return**: +3.2%
+- **YTD Return**: +12.8%
+
+## Portfolio Allocation
+| Asset Class | Allocation | Change |
+|-------------|------------|--------|
+| Equities | 65% | +2% |
+| Fixed Income | 25% | -1% |
+| Alternatives | 8% | -1% |
+| Cash | 2% | 0% |
+
+## Risk Metrics
+- Sharpe Ratio: 1.45
+- Max Drawdown: -4.2%
+- Volatility: 8.3%
+
+## Compliance Status
+All regulatory requirements met. No breaches reported.
+
+---
+*This is a demo report generated for demonstration purposes.*`,
+
+  annual: `# Annual Fund Report - 2024
+
+## Year in Review
+The fund delivered strong performance throughout 2024, outperforming benchmark by 2.3%.
+
+## Key Achievements
+1. Successfully completed 3 new fund launches
+2. AUM growth of 18%
+3. Zero compliance breaches
+4. Implemented new ESG framework
+
+## Financial Summary
+- Opening NAV: SEK 2.1 billion
+- Closing NAV: SEK 2.5 billion
+- Total distributions: SEK 45 million
+
+---
+*This is a demo report generated for demonstration purposes.*`,
+
+  compliance: `# Compliance Report
+
+## Regulatory Status: ✅ COMPLIANT
+
+### Checks Performed
+- [x] AIF Directive compliance
+- [x] UCITS requirements
+- [x] Risk limits
+- [x] Leverage ratios
+- [x] Investor eligibility
+
+### No issues found
+
+---
+*This is a demo report generated for demonstration purposes.*`,
+};
 
 export async function POST(request: NextRequest) {
   try {
     const { clientName, reportType, data } = await request.json();
 
-    const model = process.env.OPENAI_MODEL || 'gpt-5-mini';
-    const isGPT5Mini = model === 'gpt-5-mini';
+    // Simulate AI processing delay
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-    const requestParams: any = {
-      model,
-      messages: [
-        {
-          role: 'system',
-          content: `You are a professional fund accounting report writer. Generate professional, accurate reports.`,
-        },
-        {
-          role: 'user',
-          content: `Generate a ${reportType} report for ${clientName}. Data: ${JSON.stringify(data)}`,
-        },
-      ],
-    };
+    // Get mock report based on type
+    const reportKey = reportType?.toLowerCase() || 'quarterly';
+    let content = MOCK_REPORTS[reportKey] || MOCK_REPORTS.quarterly;
 
-    // GPT-5-mini specific parameters (no temperature or max_tokens)
-    if (isGPT5Mini) {
-      requestParams.verbosity = 'high'; // Use high for detailed reports
-      requestParams.reasoning_effort = 'medium'; // low, medium, high
+    // Personalize with client name if provided
+    if (clientName) {
+      content = content.replace(/Fund Report/g, `${clientName} Fund Report`);
     }
 
-    const response = await openai.chat.completions.create(requestParams);
-
-    const content = response.choices[0].message.content;
-    if (!content) {
-      throw new Error('Empty response from OpenAI');
-    }
+    // Add timestamp
+    content += `\n\n*Generated: ${new Date().toISOString()}*`;
 
     return NextResponse.json({ content });
   } catch (error) {
