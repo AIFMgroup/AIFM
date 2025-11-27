@@ -4,13 +4,14 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { 
   FolderLock, Plus, Users, FileText, Clock, Shield,
-  Search, Lock, Building2, Archive, BookOpen
+  Search, Lock, Building2, Archive, BookOpen, Filter
 } from 'lucide-react';
 import {
   mockDataRooms, getTypeColor, getTypeLabel
 } from '@/lib/dataRoomData';
 import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
 import { formatDate } from '@/lib/fundData';
+import { CustomSelect } from '@/components/CustomSelect';
 
 export default function DataRoomsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -141,27 +142,33 @@ export default function DataRoomsPage() {
               className="input pl-10 w-full"
             />
           </div>
-          <select
+          <CustomSelect
+            options={[
+              { value: 'all', label: 'Alla typer', icon: <Filter className="w-4 h-4 text-aifm-charcoal/40" /> },
+              { value: 'DEAL_ROOM', label: 'Affärsrum', icon: <Building2 className="w-4 h-4 text-blue-500" /> },
+              { value: 'DUE_DILIGENCE', label: 'Due Diligence', icon: <Search className="w-4 h-4 text-green-500" /> },
+              { value: 'INVESTOR_PORTAL', label: 'Investerarportal', icon: <Users className="w-4 h-4 text-purple-500" /> },
+              { value: 'BOARD', label: 'Styrelserum', icon: <Shield className="w-4 h-4 text-amber-500" /> },
+              { value: 'COMPLIANCE', label: 'Compliance', icon: <Lock className="w-4 h-4 text-red-500" /> },
+            ]}
             value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="input py-2 px-4 min-w-[180px]"
-          >
-            <option value="all">Alla typer</option>
-            <option value="DEAL_ROOM">Affärsrum</option>
-            <option value="DUE_DILIGENCE">Due Diligence</option>
-            <option value="INVESTOR_PORTAL">Investor Portals</option>
-            <option value="BOARD">Board Rooms</option>
-            <option value="COMPLIANCE">Compliance</option>
-          </select>
-          <select
+            onChange={setFilterType}
+            className="min-w-[200px]"
+            variant="minimal"
+            size="md"
+          />
+          <CustomSelect
+            options={[
+              { value: 'all', label: 'Alla statusar', icon: <FolderLock className="w-4 h-4 text-aifm-charcoal/40" /> },
+              { value: 'active', label: 'Aktiva', icon: <Clock className="w-4 h-4 text-green-500" /> },
+              { value: 'archived', label: 'Arkiverade', icon: <Archive className="w-4 h-4 text-gray-400" /> },
+            ]}
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="input py-2 px-4 min-w-[150px]"
-          >
-            <option value="all">Alla statusar</option>
-            <option value="active">Aktiva</option>
-            <option value="archived">Arkiverade</option>
-          </select>
+            onChange={setFilterStatus}
+            className="min-w-[170px]"
+            variant="minimal"
+            size="md"
+          />
         </div>
 
         {/* Data Rooms Grid */}
@@ -280,26 +287,40 @@ export default function DataRoomsPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                  Room Type
+                  Rumstyp
                 </label>
-                <select className="input w-full">
-                  <option value="DEAL_ROOM">Deal Room</option>
-                  <option value="DUE_DILIGENCE">Due Diligence</option>
-                  <option value="INVESTOR_PORTAL">Investor Portal</option>
-                  <option value="BOARD">Board Room</option>
-                  <option value="COMPLIANCE">Compliance</option>
-                  <option value="GENERAL">General</option>
-                </select>
+                <CustomSelect
+                  options={[
+                    { value: 'DEAL_ROOM', label: 'Affärsrum', icon: <Building2 className="w-4 h-4 text-blue-500" /> },
+                    { value: 'DUE_DILIGENCE', label: 'Due Diligence', icon: <Search className="w-4 h-4 text-green-500" /> },
+                    { value: 'INVESTOR_PORTAL', label: 'Investerarportal', icon: <Users className="w-4 h-4 text-purple-500" /> },
+                    { value: 'BOARD', label: 'Styrelserum', icon: <Shield className="w-4 h-4 text-amber-500" /> },
+                    { value: 'COMPLIANCE', label: 'Compliance', icon: <Lock className="w-4 h-4 text-red-500" /> },
+                    { value: 'GENERAL', label: 'Allmänt', icon: <FolderLock className="w-4 h-4 text-gray-500" /> },
+                  ]}
+                  value="DEAL_ROOM"
+                  onChange={() => {}}
+                  className="w-full"
+                  variant="default"
+                  size="md"
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
-                  Fund
+                  Fond
                 </label>
-                <select className="input w-full">
-                  <option value="fund-1">Nordic Growth Fund I</option>
-                  <option value="fund-2">Scandinavian Tech Fund II</option>
-                  <option value="fund-3">Baltic Real Estate Fund</option>
-                </select>
+                <CustomSelect
+                  options={[
+                    { value: 'fund-1', label: 'Nordic Growth Fund I' },
+                    { value: 'fund-2', label: 'Scandinavian Tech Fund II' },
+                    { value: 'fund-3', label: 'Baltic Real Estate Fund' },
+                  ]}
+                  value="fund-1"
+                  onChange={() => {}}
+                  className="w-full"
+                  variant="default"
+                  size="md"
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
