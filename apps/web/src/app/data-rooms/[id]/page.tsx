@@ -34,9 +34,9 @@ export default function DataRoomDetailPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <FolderLock className="w-12 h-12 text-aifm-charcoal/20 mx-auto mb-4" />
-          <p className="text-aifm-charcoal/60 mb-4">Data room not found</p>
+          <p className="text-aifm-charcoal/60 mb-4">Datarummet hittades inte</p>
           <Link href="/data-rooms" className="btn-primary py-2 px-4">
-            Back to Data Rooms
+            Tillbaka till datarum
           </Link>
         </div>
       </div>
