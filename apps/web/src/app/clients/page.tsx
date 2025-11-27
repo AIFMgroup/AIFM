@@ -23,16 +23,6 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function _formatDate(date: Date): string {
-  return new Intl.DateTimeFormat('sv-SE', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date);
-}
-
 type TabType = 'clients' | 'documents' | 'bookkeeping' | 'funds';
 
 export default function ClientsPage() {
