@@ -71,7 +71,7 @@ function MetricCard({
   );
 }
 
-// Animated Bar for charts
+// Animated Bar for charts - thinner bars
 function AnimatedBar({ 
   height, 
   color, 
@@ -100,18 +100,18 @@ function AnimatedBar({
       onMouseLeave={() => setIsHovered(false)}
     >
       {isHovered && value !== undefined && (
-        <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-aifm-charcoal text-white 
-                        text-xs font-medium rounded-lg whitespace-nowrap z-20 shadow-lg">
-          {value.toFixed(2)}
-          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-aifm-charcoal rotate-45" />
+        <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-aifm-charcoal text-white 
+                        text-[10px] font-medium rounded whitespace-nowrap z-20 shadow-lg">
+          {value.toFixed(1)}
+          <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-aifm-charcoal rotate-45" />
         </div>
       )}
       <div 
-        className={`w-6 rounded-lg transition-all duration-700 ease-out ${isActual ? '' : 'opacity-40'}`}
+        className={`w-4 rounded transition-all duration-700 ease-out ${isActual ? '' : 'opacity-40'}`}
         style={{ 
           height: `${animatedHeight}%`,
           backgroundColor: color,
-          boxShadow: isHovered ? `0 0 20px ${color}50, 0 4px 12px ${color}30` : 'none'
+          boxShadow: isHovered ? `0 0 12px ${color}40` : 'none'
         }}
       />
     </div>
@@ -378,15 +378,15 @@ export default function OverviewPage() {
               <KPITabs options={kpiOptions} value={selectedKPI} onChange={setSelectedKPI} />
             </div>
             
-            <div className="p-8 lg:p-12">
+            <div className="p-6 lg:p-8">
               {/* Current Value Display */}
-              <div className="mb-10">
-                <p className="text-5xl font-semibold text-aifm-charcoal tracking-tight">
+              <div className="mb-6">
+                <p className="text-3xl font-semibold text-aifm-charcoal tracking-tight">
                   {selectedKPI === 'NAV' && `${(metrics.nav / 1000000).toFixed(1)} MSEK`}
                   {selectedKPI === 'IRR' && `${metrics.irr.toFixed(1)}%`}
                   {selectedKPI === 'MOIC' && `${metrics.moic.toFixed(2)}x`}
                 </p>
-                <p className="text-sm text-aifm-charcoal/40 mt-2">
+                <p className="text-xs text-aifm-charcoal/40 mt-1">
                   {selectedKPI === 'NAV' && 'Nettotillgångsvärde'}
                   {selectedKPI === 'IRR' && 'Internränta (årlig)'}
                   {selectedKPI === 'MOIC' && 'Multiple on Invested Capital'}
@@ -394,7 +394,7 @@ export default function OverviewPage() {
               </div>
               
               {/* Chart */}
-              <div className="h-80 flex items-end justify-between gap-6 lg:gap-10 px-4">
+              <div className="h-64 flex items-end justify-between gap-4 lg:gap-8 px-8 pt-8">
                 {(() => {
                   const currentKpiData = selectedKPI === 'NAV' ? kpiDataSet.nav 
                     : selectedKPI === 'IRR' ? kpiDataSet.irr 
@@ -402,15 +402,15 @@ export default function OverviewPage() {
                   const maxValue = Math.max(...currentKpiData.map(d => Math.max(d.value1, d.value2)));
                   
                   return currentKpiData.map((data, index) => {
-                    const height1 = (data.value1 / maxValue) * 90;
-                    const height2 = (data.value2 / maxValue) * 90;
+                    const height1 = (data.value1 / maxValue) * 80;
+                    const height2 = (data.value2 / maxValue) * 80;
                     return (
                       <div key={data.month} className="flex-1 flex flex-col items-center">
-                        <div className="w-full h-64 flex items-end justify-center gap-2">
+                        <div className="w-full h-48 flex items-end justify-center gap-1.5">
                           <AnimatedBar height={height1} color="#c0a280" delay={index * 100} value={data.value1} isActual={true} />
                           <AnimatedBar height={height2} color="#2d2a26" delay={index * 100 + 50} value={data.value2} isActual={false} />
                         </div>
-                        <span className="text-xs text-aifm-charcoal/40 mt-4 uppercase tracking-wider font-medium">{data.month}</span>
+                        <span className="text-[10px] text-aifm-charcoal/40 mt-3 uppercase tracking-wider font-medium">{data.month}</span>
                       </div>
                     );
                   });
