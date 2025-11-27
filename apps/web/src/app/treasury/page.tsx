@@ -9,22 +9,24 @@ import {
   Wallet, FileText, Send, BookOpen
 } from 'lucide-react';
 import {
-  mockFunds, getBankAccountsByFund, getTransactionsByAccount, getInvoicesByFund,
-  formatCurrency, formatDate, Fund, BankAccount
+  getFundByCompanyId, getBankAccountsByCompanyId, getTransactionsByAccount, getInvoicesByCompanyId,
+  formatCurrency, formatDate, BankAccount
 } from '@/lib/fundData';
 import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
-import { CustomSelect } from '@/components/CustomSelect';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { useCompany } from '@/components/CompanyContext';
 
 export default function TreasuryPage() {
-  const [selectedFund, setSelectedFund] = useState<Fund>(mockFunds[0]);
+  const { selectedCompany } = useCompany();
   const [selectedAccount, setSelectedAccount] = useState<BankAccount | null>(null);
   const [activeTab, setActiveTab] = useState<'accounts' | 'transactions' | 'invoices' | 'payments'>('accounts');
   const [refreshing, setRefreshing] = useState(false);
 
-  const accounts = getBankAccountsByFund(selectedFund.id);
+  const selectedFund = getFundByCompanyId(selectedCompany.id);
+  const accounts = getBankAccountsByCompanyId(selectedCompany.id);
   const allTransactions = accounts.flatMap(acc => getTransactionsByAccount(acc.id));
-  const invoices = getInvoicesByFund(selectedFund.id);
+  const invoices = getInvoicesByCompanyId(selectedCompany.id);
+  const currency = selectedFund?.currency || 'SEK';
 
   // Calculate totals
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
@@ -61,24 +63,6 @@ export default function TreasuryPage() {
         </div>
         
         <div className="flex items-center gap-3">
-          <CustomSelect
-            options={mockFunds.map((fund) => ({
-              value: fund.id,
-              label: fund.name,
-              icon: <Wallet className="w-4 h-4 text-aifm-gold" />
-            }))}
-            value={selectedFund.id}
-            onChange={(value) => {
-              const fund = mockFunds.find(f => f.id === value);
-              if (fund) {
-                setSelectedFund(fund);
-                setSelectedAccount(null);
-              }
-            }}
-            className="min-w-[280px]"
-            variant="gold"
-            size="md"
-          />
           <button 
             onClick={handleRefresh}
             className="p-2 text-aifm-charcoal/60 hover:text-aifm-gold hover:bg-aifm-gold/10 rounded-lg transition-colors"
@@ -99,7 +83,7 @@ export default function TreasuryPage() {
             <span className="text-xs font-medium uppercase tracking-wider text-white/60">Totalt saldo</span>
             <Wallet className="w-5 h-5 text-white/40" />
           </div>
-          <p className="text-3xl font-medium">{formatCurrency(totalBalance, selectedFund.currency)}</p>
+          <p className="text-3xl font-medium">{formatCurrency(totalBalance, currency)}</p>
           <p className="text-sm text-white/60 mt-2">{accounts.length} bankkonto{accounts.length !== 1 ? 'n' : ''}</p>
         </div>
 
@@ -108,7 +92,7 @@ export default function TreasuryPage() {
             <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Väntande betalningar</span>
             <Clock className="w-5 h-5 text-amber-500" />
           </div>
-          <p className="text-2xl font-medium text-aifm-charcoal">{formatCurrency(pendingAmount, selectedFund.currency)}</p>
+          <p className="text-2xl font-medium text-aifm-charcoal">{formatCurrency(pendingAmount, currency)}</p>
           <p className="text-sm text-aifm-charcoal/60 mt-2">{pendingInvoices.length} faktura{pendingInvoices.length !== 1 ? 'or' : ''} väntar</p>
         </div>
 

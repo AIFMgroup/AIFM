@@ -869,3 +869,13 @@ export function getDistributionsByCompanyId(companyId: string): Distribution[] {
   return fundId ? mockDistributions.filter(d => d.fundId === fundId) : [];
 }
 
+export function getBankAccountsByCompanyId(companyId: string): BankAccount[] {
+  const fundId = companyToFundMap[companyId];
+  return fundId ? getBankAccountsByFund(fundId) : [];
+}
+
+export function getInvoicesByCompanyId(companyId: string): Invoice[] {
+  const fundId = companyToFundMap[companyId];
+  return fundId ? getInvoicesByFund(fundId) : [];
+}
+

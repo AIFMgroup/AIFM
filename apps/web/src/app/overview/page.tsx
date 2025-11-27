@@ -6,10 +6,10 @@ import {
   ChevronRight, ArrowUpRight, ArrowDownRight, FolderLock
 } from 'lucide-react';
 import {
-  mockCompanies, getCompanyDashboard, formatCurrencyCompact,
-  Company
+  getCompanyDashboard, formatCurrencyCompact
 } from '@/lib/companyData';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { useCompany } from '@/components/CompanyContext';
 
 // Custom Select Component
 function CustomSelect({ 
@@ -106,7 +106,7 @@ function AnimatedBar({
         </div>
       )}
       <div 
-        className="w-5 rounded-t transition-all duration-700 ease-out hover:opacity-80"
+        className="w-8 rounded-t transition-all duration-700 ease-out hover:opacity-80"
         style={{ 
           height: `${animatedHeight}%`,
           backgroundColor: color,
@@ -171,7 +171,7 @@ function DonutSegment({
 }
 
 export default function OverviewPage() {
-  const [selectedCompany, setSelectedCompany] = useState<Company>(mockCompanies[0]);
+  const { selectedCompany } = useCompany();
   const [selectedKPI, setSelectedKPI] = useState('NAV');
   const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
   
@@ -216,10 +216,7 @@ export default function OverviewPage() {
   const hoveredInfo = portfolio.find(p => p.name === hoveredSegment);
 
   return (
-    <DashboardLayout 
-      selectedCompany={selectedCompany} 
-      onCompanyChange={setSelectedCompany}
-    >
+    <DashboardLayout>
       {/* Page Title - More space */}
       <div className="mb-10">
         <h2 className="text-2xl font-medium text-aifm-charcoal uppercase tracking-wider">Översikt</h2>
@@ -335,7 +332,7 @@ export default function OverviewPage() {
                 </span>
               </div>
               {/* Much larger chart area */}
-              <div className="h-96 flex items-end justify-between gap-8 px-4 pb-8">
+              <div className="h-[500px] flex items-end justify-between gap-10 px-6 pb-8">
                 {(() => {
                   const currentKpiData = selectedKPI === 'NAV' ? kpiDataSet.nav 
                     : selectedKPI === 'IRR' ? kpiDataSet.irr 
@@ -343,15 +340,15 @@ export default function OverviewPage() {
                   const maxValue = Math.max(...currentKpiData.map(d => Math.max(d.value1, d.value2)));
                   
                   return currentKpiData.map((data, index) => {
-                    const height1 = (data.value1 / maxValue) * 85;
-                    const height2 = (data.value2 / maxValue) * 85;
+                    const height1 = (data.value1 / maxValue) * 90;
+                    const height2 = (data.value2 / maxValue) * 90;
                     return (
                       <div key={data.month} className="flex-1 flex flex-col items-center">
-                        <div className="w-full h-72 flex items-end justify-center gap-3">
+                        <div className="w-full h-[400px] flex items-end justify-center gap-4">
                           <AnimatedBar height={height1} color="#c0a280" delay={index * 80} value={data.value1} />
                           <AnimatedBar height={height2} color="#615c59" delay={index * 80 + 40} value={data.value2} />
                         </div>
-                        <span className="text-[10px] text-aifm-charcoal/40 mt-4 uppercase tracking-wider">{data.month}</span>
+                        <span className="text-xs text-aifm-charcoal/50 mt-6 uppercase tracking-wider font-medium">{data.month}</span>
                       </div>
                     );
                   });
