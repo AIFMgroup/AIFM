@@ -5,12 +5,13 @@ import Link from 'next/link';
 import { 
   ArrowDownRight, Plus, CheckCircle2,
   Users, DollarSign, FileText,
-  Check, X, Shield, Eye, Download
+  Check, X, Shield, Eye, Download, BookOpen
 } from 'lucide-react';
 import {
   mockFunds, mockDistributions, getCommitmentsByFund,
   formatCurrency, formatDate, Fund, Distribution
 } from '@/lib/fundData';
+import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
 
 export default function DistributionsPage() {
   const [selectedFund, setSelectedFund] = useState<Fund>(mockFunds[0]);
@@ -81,8 +82,22 @@ export default function DistributionsPage() {
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="heading-2 mb-2">Distributions</h1>
-            <p className="text-aifm-charcoal/60">Manage fund distributions with 4-eyes approval</p>
+            <div className="flex items-center gap-2 mb-2">
+              <h1 className="heading-2">Distributions</h1>
+              <HelpTooltip 
+                {...helpContent.distributions}
+                learnMoreLink="/guide#distributions"
+                position="bottom"
+                size="md"
+              />
+            </div>
+            <div className="flex items-center gap-4">
+              <p className="text-aifm-charcoal/60">Manage fund distributions with 4-eyes approval</p>
+              <Link href="/guide#distributions" className="text-xs text-aifm-gold hover:underline flex items-center gap-1">
+                <BookOpen className="w-3 h-3" />
+                Guide
+              </Link>
+            </div>
           </div>
           
           <select

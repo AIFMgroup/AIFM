@@ -4,12 +4,13 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { 
   ArrowUpRight, Plus, CheckCircle2, Clock,
-  Send, Download, DollarSign, FileText, Bell, X
+  Send, Download, DollarSign, FileText, Bell, X, BookOpen
 } from 'lucide-react';
 import {
   mockFunds, mockCapitalCalls, getCommitmentsByFund,
   formatCurrency, formatDate, formatPercentage, Fund, CapitalCall
 } from '@/lib/fundData';
+import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
 
 export default function CapitalCallsPage() {
   const [selectedFund, setSelectedFund] = useState<Fund>(mockFunds[0]);
@@ -86,8 +87,22 @@ export default function CapitalCallsPage() {
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="heading-2 mb-2">Capital Calls</h1>
-            <p className="text-aifm-charcoal/60">Manage capital calls and track investor payments</p>
+            <div className="flex items-center gap-2 mb-2">
+              <h1 className="heading-2">Capital Calls</h1>
+              <HelpTooltip 
+                {...helpContent.capitalCalls}
+                learnMoreLink="/guide#capital-calls"
+                position="bottom"
+                size="md"
+              />
+            </div>
+            <div className="flex items-center gap-4">
+              <p className="text-aifm-charcoal/60">Manage capital calls and track investor payments</p>
+              <Link href="/guide#capital-calls" className="text-xs text-aifm-gold hover:underline flex items-center gap-1">
+                <BookOpen className="w-3 h-3" />
+                Guide
+              </Link>
+            </div>
           </div>
           
           <select

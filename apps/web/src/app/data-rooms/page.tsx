@@ -4,11 +4,12 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { 
   FolderLock, Plus, Users, FileText, Clock, Shield,
-  Search, Lock, Building2, Archive
+  Search, Lock, Building2, Archive, BookOpen
 } from 'lucide-react';
 import {
   mockDataRooms, getTypeColor, getTypeLabel
 } from '@/lib/dataRoomData';
+import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
 import { formatDate } from '@/lib/fundData';
 
 export default function DataRoomsPage() {
@@ -64,8 +65,22 @@ export default function DataRoomsPage() {
       <main className="max-w-7xl mx-auto px-6 lg:px-12 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="heading-2 mb-2">Secure Data Rooms</h1>
-          <p className="text-aifm-charcoal/60">Share documents securely with controlled access and full audit trails</p>
+          <div className="flex items-center gap-2 mb-2">
+            <h1 className="heading-2">Secure Data Rooms</h1>
+            <HelpTooltip 
+              {...helpContent.dataRooms}
+              learnMoreLink="/guide#data-rooms"
+              position="bottom"
+              size="md"
+            />
+          </div>
+          <div className="flex items-center gap-4">
+            <p className="text-aifm-charcoal/60">Share documents securely with controlled access and full audit trails</p>
+            <Link href="/guide#data-rooms" className="text-xs text-aifm-gold hover:underline flex items-center gap-1">
+              <BookOpen className="w-3 h-3" />
+              Guide
+            </Link>
+          </div>
         </div>
 
         {/* Stats */}
