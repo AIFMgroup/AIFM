@@ -602,7 +602,7 @@ function DashboardLayoutInner({
     <div className="min-h-screen bg-white flex">
       <DashboardSidebar />
       
-      <main className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out ${collapsed ? 'ml-[72px]' : 'ml-64'}`}>
+      <main className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out ${collapsed ? 'ml-[72px]' : 'ml-56'}`}>
         {/* Header with company selector - ALWAYS visible */}
         <header className="bg-white border-b border-gray-100 sticky top-0 z-30">
           <div className="px-6 py-3">
