@@ -99,7 +99,7 @@ export default function ClientDashboardPage() {
         </div>
 
         {loading ? (
-          <div className="text-center py-8 text-muted-foreground">Loading...</div>
+          <div className="text-center py-8 text-muted-foreground">Laddar...</div>
         ) : dataFeeds.length === 0 ? (
           <Card>
             <CardContent className="pt-6">

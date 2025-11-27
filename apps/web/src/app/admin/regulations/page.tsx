@@ -134,7 +134,7 @@ export default function RegulationsPage() {
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="page-container py-8">
-          <div className="animate-pulse text-gray-500 uppercase tracking-wide">Loading regulations...</div>
+          <div className="animate-pulse text-gray-500 uppercase tracking-wide">Laddar regelverk...</div>
         </div>
         <Footer />
       </div>
@@ -299,7 +299,7 @@ export default function RegulationsPage() {
                     {editingRegulation ? 'Update' : 'Create'} Regulation
                   </Button>
                   <Button type="button" onClick={resetForm} variant="outline" className="rounded-2xl uppercase tracking-wide">
-                    Cancel
+                    Avbryt
                   </Button>
                 </div>
               </form>

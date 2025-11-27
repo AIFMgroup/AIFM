@@ -85,7 +85,7 @@ export default function RiskManagementPage() {
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="page-container py-12 text-center">
-          <div className="animate-pulse">Loading risk data...</div>
+          <div className="animate-pulse">Laddar riskdata...</div>
         </div>
       </div>
     );

@@ -146,8 +146,8 @@ export default function DataRoomsPage() {
             onChange={(e) => setFilterType(e.target.value)}
             className="input py-2 px-4 min-w-[180px]"
           >
-            <option value="all">All Types</option>
-            <option value="DEAL_ROOM">Deal Rooms</option>
+            <option value="all">Alla typer</option>
+            <option value="DEAL_ROOM">Affärsrum</option>
             <option value="DUE_DILIGENCE">Due Diligence</option>
             <option value="INVESTOR_PORTAL">Investor Portals</option>
             <option value="BOARD">Board Rooms</option>
@@ -311,7 +311,7 @@ export default function DataRoomsPage() {
                 <div className="flex items-end pb-2">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold" defaultChecked />
-                    <span className="text-sm text-aifm-charcoal">Enable Watermarks</span>
+                    <span className="text-sm text-aifm-charcoal">Aktivera vattenstämpel</span>
                   </label>
                 </div>
               </div>

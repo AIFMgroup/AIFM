@@ -183,7 +183,7 @@ export default function SpecialistBoardPage() {
         {/* Kanban Board or List View */}
         {loading ? (
           <div className="text-center py-16">
-            <div className="animate-pulse text-gray-500 uppercase tracking-wide">Loading reports...</div>
+            <div className="animate-pulse text-gray-500 uppercase tracking-wide">Laddar rapporter...</div>
           </div>
         ) : activeTab === 'ALL' ? (
           // List view for all reports

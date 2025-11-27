@@ -40,7 +40,7 @@ export default function SignInPage() {
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300">
       <div className="w-full max-w-md bg-white border-2 border-gray-300 rounded-3xl shadow-2xl p-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2 text-center">AIFM Portal</h1>
-        <p className="text-gray-600 text-center mb-8">Sign in to your account</p>
+        <p className="text-gray-600 text-center mb-8">Logga in på ditt konto</p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (

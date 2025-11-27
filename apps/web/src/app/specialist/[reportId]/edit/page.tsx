@@ -76,7 +76,7 @@ export default function ReportEditorPage() {
   };
 
   if (loading || !report) {
-    return <div className="page-container text-center py-12">Loading report...</div>;
+    return <div className="page-container text-center py-12">Laddar rapport...</div>;
   }
 
   return (

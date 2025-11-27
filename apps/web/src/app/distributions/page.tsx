@@ -315,7 +315,7 @@ export default function DistributionsPage() {
                   <div className="flex gap-3">
                     <button className="flex-1 btn-outline py-2 flex items-center justify-center gap-2">
                       <Eye className="w-4 h-4" />
-                      View Details
+                      Visa detaljer
                     </button>
                     <button className="flex-1 btn-outline py-2 flex items-center justify-center gap-2">
                       <Download className="w-4 h-4" />

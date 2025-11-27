@@ -609,7 +609,7 @@ export default function DataRoomDetailPage() {
               <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:border-aifm-gold/50 transition-colors">
                 <Upload className="w-12 h-12 text-aifm-charcoal/20 mx-auto mb-4" />
                 <p className="text-aifm-charcoal font-medium mb-1">Drop files here or click to upload</p>
-                <p className="text-sm text-aifm-charcoal/50">Supports PDF, Word, Excel, PowerPoint, and images</p>
+                <p className="text-sm text-aifm-charcoal/50">Stöder PDF, Word, Excel, PowerPoint och bilder</p>
                 <input type="file" className="hidden" multiple />
                 <button className="btn-outline py-2 px-4 mt-4">
                   Browse Files
