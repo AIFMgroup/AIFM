@@ -3,10 +3,11 @@
 import { ReactNode, useState, useRef, useEffect } from 'react';
 import { 
   Bell, Building2, ChevronDown, Search, Check, Plus, X,
-  HelpCircle, Users, FileText, Briefcase, Shield, ArrowRight, ArrowLeft,
+  HelpCircle, Users, Briefcase, Shield, ArrowRight, ArrowLeft,
   CheckCircle2, AlertCircle
 } from 'lucide-react';
 import { DashboardSidebar } from './DashboardSidebar';
+import { SidebarProvider, useSidebar } from './SidebarContext';
 import { mockCompanies, Company } from '@/lib/companyData';
 
 interface DashboardLayoutProps {
@@ -815,7 +816,8 @@ function CompanySelector({
   );
 }
 
-export function DashboardLayout({ 
+// Inner layout component that uses the sidebar context
+function DashboardLayoutInner({ 
   children, 
   showCompanySelector = true,
   selectedCompany: externalSelectedCompany,
@@ -823,6 +825,7 @@ export function DashboardLayout({
 }: DashboardLayoutProps) {
   const [internalSelectedCompany, setInternalSelectedCompany] = useState<Company>(mockCompanies[0]);
   const [showOnboardingWizard, setShowOnboardingWizard] = useState(false);
+  const { collapsed } = useSidebar();
   
   const selectedCompany = externalSelectedCompany || internalSelectedCompany;
   const handleCompanyChange = onCompanyChange || setInternalSelectedCompany;
@@ -831,7 +834,7 @@ export function DashboardLayout({
     <div className="min-h-screen bg-white flex">
       <DashboardSidebar />
       
-      <main className="flex-1 flex flex-col min-h-screen ml-64">
+      <main className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out ${collapsed ? 'ml-[72px]' : 'ml-64'}`}>
         {/* Header with company selector */}
         {showCompanySelector && (
           <header className="bg-white border-b border-gray-100 sticky top-0 z-30">
@@ -873,5 +876,14 @@ export function DashboardLayout({
         onClose={() => setShowOnboardingWizard(false)} 
       />
     </div>
+  );
+}
+
+// Main export that wraps with SidebarProvider
+export function DashboardLayout(props: DashboardLayoutProps) {
+  return (
+    <SidebarProvider>
+      <DashboardLayoutInner {...props} />
+    </SidebarProvider>
   );
 }
