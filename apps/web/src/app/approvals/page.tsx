@@ -1,0 +1,647 @@
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { 
+  Shield, Check, X, Clock, AlertCircle, FileText,
+  DollarSign, Users, CheckCircle2,
+  ArrowRight, RefreshCw
+} from 'lucide-react';
+import { formatCurrency, formatDate } from '@/lib/fundData';
+
+// Types for approval workflow
+interface ApprovalItem {
+  id: string;
+  type: 'DISTRIBUTION' | 'PAYMENT' | 'INVOICE' | 'TRANSFER' | 'CAPITAL_CALL';
+  title: string;
+  description: string;
+  amount: number;
+  currency: string;
+  fundName: string;
+  createdAt: Date;
+  createdBy: string;
+  status: 'PENDING_FIRST' | 'PENDING_SECOND' | 'APPROVED' | 'REJECTED';
+  firstApproval?: {
+    approvedBy: string;
+    approvedAt: Date;
+    comment?: string;
+  };
+  secondApproval?: {
+    approvedBy: string;
+    approvedAt: Date;
+    comment?: string;
+  };
+  rejectedBy?: string;
+  rejectedAt?: Date;
+  rejectionReason?: string;
+  metadata?: Record<string, string | number>;
+}
+
+// Mock approval items
+const mockApprovals: ApprovalItem[] = [
+  {
+    id: 'appr-1',
+    type: 'DISTRIBUTION',
+    title: 'Profit Distribution - Q4 2024',
+    description: 'Quarterly profit distribution to 5 investors based on ownership percentages',
+    amount: 15000000,
+    currency: 'SEK',
+    fundName: 'Nordic Growth Fund I',
+    createdAt: new Date('2024-11-25'),
+    createdBy: 'Anna Svensson',
+    status: 'PENDING_SECOND',
+    firstApproval: {
+      approvedBy: 'Carl Johansson',
+      approvedAt: new Date('2024-11-26'),
+      comment: 'Verified calculation matches NAV report',
+    },
+  },
+  {
+    id: 'appr-2',
+    type: 'PAYMENT',
+    title: 'Legal Services Payment',
+    description: 'Payment to Advokatfirman Lindahl for Q4 compliance review',
+    amount: 185000,
+    currency: 'SEK',
+    fundName: 'Nordic Growth Fund I',
+    createdAt: new Date('2024-11-24'),
+    createdBy: 'AI Agent',
+    status: 'PENDING_FIRST',
+    metadata: {
+      vendor: 'Advokatfirman Lindahl',
+      invoiceNumber: 'LIN-2024-5678',
+    },
+  },
+  {
+    id: 'appr-3',
+    type: 'TRANSFER',
+    title: 'Inter-fund Transfer',
+    description: 'Transfer from operating account to custody account',
+    amount: 5000000,
+    currency: 'SEK',
+    fundName: 'Nordic Growth Fund I',
+    createdAt: new Date('2024-11-23'),
+    createdBy: 'System',
+    status: 'PENDING_FIRST',
+    metadata: {
+      fromAccount: 'SEB Operating',
+      toAccount: 'Swedbank Custody',
+    },
+  },
+  {
+    id: 'appr-4',
+    type: 'INVOICE',
+    title: 'Audit Services Invoice',
+    description: 'Annual audit services from KPMG',
+    amount: 245000,
+    currency: 'SEK',
+    fundName: 'Nordic Growth Fund I',
+    createdAt: new Date('2024-11-22'),
+    createdBy: 'AI Agent',
+    status: 'PENDING_SECOND',
+    firstApproval: {
+      approvedBy: 'Anna Svensson',
+      approvedAt: new Date('2024-11-23'),
+    },
+    metadata: {
+      vendor: 'KPMG',
+      invoiceNumber: 'KPMG-2024-9012',
+      account: '6420 - Revisorsarvoden',
+    },
+  },
+  {
+    id: 'appr-5',
+    type: 'DISTRIBUTION',
+    title: 'Return of Capital',
+    description: 'Return of capital from Baltic Real Estate Fund exit',
+    amount: 12000000,
+    currency: 'EUR',
+    fundName: 'Baltic Real Estate Fund',
+    createdAt: new Date('2024-11-20'),
+    createdBy: 'Eva Larsson',
+    status: 'APPROVED',
+    firstApproval: {
+      approvedBy: 'Carl Johansson',
+      approvedAt: new Date('2024-11-21'),
+    },
+    secondApproval: {
+      approvedBy: 'Anna Svensson',
+      approvedAt: new Date('2024-11-22'),
+    },
+  },
+  {
+    id: 'appr-6',
+    type: 'PAYMENT',
+    title: 'Suspicious Vendor Payment',
+    description: 'Payment request from unverified vendor',
+    amount: 500000,
+    currency: 'SEK',
+    fundName: 'Nordic Growth Fund I',
+    createdAt: new Date('2024-11-18'),
+    createdBy: 'Unknown',
+    status: 'REJECTED',
+    rejectedBy: 'Anna Svensson',
+    rejectedAt: new Date('2024-11-19'),
+    rejectionReason: 'Vendor not in approved vendor list. Requires compliance review.',
+  },
+];
+
+export default function ApprovalsPage() {
+  const [selectedItem, setSelectedItem] = useState<ApprovalItem | null>(null);
+  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [comment, setComment] = useState('');
+  const [rejectionReason, setRejectionReason] = useState('');
+
+  const filteredItems = mockApprovals.filter(item => {
+    if (filterStatus === 'all') return true;
+    if (filterStatus === 'pending') return item.status.startsWith('PENDING');
+    if (filterStatus === 'approved') return item.status === 'APPROVED';
+    if (filterStatus === 'rejected') return item.status === 'REJECTED';
+    return true;
+  });
+
+  const pendingCount = mockApprovals.filter(i => i.status.startsWith('PENDING')).length;
+
+  const getTypeIcon = (type: ApprovalItem['type']) => {
+    switch (type) {
+      case 'DISTRIBUTION': return <DollarSign className="w-5 h-5" />;
+      case 'PAYMENT': return <ArrowRight className="w-5 h-5" />;
+      case 'INVOICE': return <FileText className="w-5 h-5" />;
+      case 'TRANSFER': return <RefreshCw className="w-5 h-5" />;
+      case 'CAPITAL_CALL': return <Users className="w-5 h-5" />;
+      default: return <Shield className="w-5 h-5" />;
+    }
+  };
+
+  const getStatusColor = (status: ApprovalItem['status']) => {
+    switch (status) {
+      case 'PENDING_FIRST': return 'bg-amber-100 text-amber-700';
+      case 'PENDING_SECOND': return 'bg-blue-100 text-blue-700';
+      case 'APPROVED': return 'bg-green-100 text-green-700';
+      case 'REJECTED': return 'bg-red-100 text-red-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  };
+
+  const getStatusLabel = (status: ApprovalItem['status']) => {
+    switch (status) {
+      case 'PENDING_FIRST': return 'Awaiting 1st Approval';
+      case 'PENDING_SECOND': return 'Awaiting 2nd Approval';
+      case 'APPROVED': return 'Approved';
+      case 'REJECTED': return 'Rejected';
+      default: return status;
+    }
+  };
+
+  const handleApprove = () => {
+    alert(`Item approved with comment: ${comment || '(no comment)'}\n\nThis would trigger the next step in the approval workflow.`);
+    setShowApproveModal(false);
+    setComment('');
+    setSelectedItem(null);
+  };
+
+  const handleReject = () => {
+    alert(`Item rejected. Reason: ${rejectionReason}\n\nThe creator will be notified.`);
+    setShowRejectModal(false);
+    setRejectionReason('');
+    setSelectedItem(null);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <Link href="/" className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-aifm-gold rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">A</span>
+                </div>
+                <span className="font-medium tracking-widest text-aifm-charcoal uppercase text-sm">AIFM</span>
+              </Link>
+              <nav className="hidden md:flex items-center gap-6">
+                <Link href="/fund" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Funds</Link>
+                <Link href="/treasury" className="text-sm font-medium text-aifm-charcoal/60 hover:text-aifm-gold uppercase tracking-wider">Treasury</Link>
+                <Link href="/approvals" className="text-sm font-medium text-aifm-gold uppercase tracking-wider">Approvals</Link>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-6 lg:px-12 py-8">
+        {/* Page Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="heading-2 mb-2">Approval Center</h1>
+            <p className="text-aifm-charcoal/60">4-Eyes Principle: All financial actions require dual approval</p>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
+              className="input py-2 px-4"
+            >
+              <option value="all">All Items</option>
+              <option value="pending">Pending ({pendingCount})</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">Pending</span>
+              <Clock className="w-5 h-5 text-amber-500" />
+            </div>
+            <p className="text-2xl font-medium text-aifm-charcoal">{pendingCount}</p>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">1st Approval</span>
+              <Shield className="w-5 h-5 text-amber-500" />
+            </div>
+            <p className="text-2xl font-medium text-aifm-charcoal">
+              {mockApprovals.filter(i => i.status === 'PENDING_FIRST').length}
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium uppercase tracking-wider text-aifm-charcoal/60">2nd Approval</span>
+              <Shield className="w-5 h-5 text-blue-500" />
+            </div>
+            <p className="text-2xl font-medium text-aifm-charcoal">
+              {mockApprovals.filter(i => i.status === 'PENDING_SECOND').length}
+            </p>
+          </div>
+
+          <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-2xl p-6 text-white">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium uppercase tracking-wider text-white/70">Approved Today</span>
+              <CheckCircle2 className="w-5 h-5 text-white/50" />
+            </div>
+            <p className="text-2xl font-medium">{mockApprovals.filter(i => i.status === 'APPROVED').length}</p>
+          </div>
+        </div>
+
+        {/* 4-Eyes Notice */}
+        <div className="bg-gradient-to-r from-aifm-gold/10 to-aifm-gold/5 border border-aifm-gold/30 rounded-2xl p-6 mb-8">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-aifm-gold/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Shield className="w-6 h-6 text-aifm-gold" />
+            </div>
+            <div>
+              <h3 className="font-medium text-aifm-charcoal mb-1">4-Eyes Principle (Vier-Augen-Prinzip)</h3>
+              <p className="text-sm text-aifm-charcoal/70 mb-3">
+                All financial transactions require approval from two separate authorized users before execution. 
+                This dual-control mechanism ensures accuracy, prevents fraud, and maintains regulatory compliance.
+              </p>
+              <div className="flex flex-wrap gap-4 text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-amber-500 rounded-full" />
+                  <span className="text-aifm-charcoal/60">1st Approval: Initial review & verification</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                  <span className="text-aifm-charcoal/60">2nd Approval: Final authorization & execution</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Approval Queue */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Approval Queue</h3>
+              <span className="text-xs text-aifm-charcoal/50">{filteredItems.length} items</span>
+            </div>
+            <div className="divide-y divide-gray-50 max-h-[600px] overflow-y-auto">
+              {filteredItems.length === 0 ? (
+                <div className="p-8 text-center">
+                  <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                  <p className="text-aifm-charcoal/60">No items matching filter</p>
+                </div>
+              ) : (
+                filteredItems.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => setSelectedItem(item)}
+                    className={`p-4 cursor-pointer transition-colors ${
+                      selectedItem?.id === item.id ? 'bg-aifm-gold/5' : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        item.status === 'APPROVED' ? 'bg-green-100 text-green-600' :
+                        item.status === 'REJECTED' ? 'bg-red-100 text-red-600' :
+                        'bg-aifm-gold/10 text-aifm-gold'
+                      }`}>
+                        {getTypeIcon(item.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <p className="font-medium text-aifm-charcoal truncate">{item.title}</p>
+                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap ${getStatusColor(item.status)}`}>
+                            {getStatusLabel(item.status)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-aifm-charcoal/60 mb-2 line-clamp-1">{item.description}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-aifm-charcoal">
+                            {formatCurrency(item.amount, item.currency)}
+                          </span>
+                          <span className="text-xs text-aifm-charcoal/50">{item.fundName}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Selected Item Details */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            {selectedItem ? (
+              <>
+                <div className="px-6 py-4 border-b border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider">Details</h3>
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(selectedItem.status)}`}>
+                      {getStatusLabel(selectedItem.status)}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="p-6 border-b border-gray-100">
+                  <h4 className="font-medium text-aifm-charcoal mb-2">{selectedItem.title}</h4>
+                  <p className="text-sm text-aifm-charcoal/60 mb-4">{selectedItem.description}</p>
+                  
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Amount</p>
+                      <p className="font-medium text-aifm-charcoal">{formatCurrency(selectedItem.amount, selectedItem.currency)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Fund</p>
+                      <p className="font-medium text-aifm-charcoal">{selectedItem.fundName}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Created By</p>
+                      <p className="font-medium text-aifm-charcoal">{selectedItem.createdBy}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Created At</p>
+                      <p className="font-medium text-aifm-charcoal">{formatDate(selectedItem.createdAt)}</p>
+                    </div>
+                  </div>
+
+                  {selectedItem.metadata && (
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-2">Additional Details</p>
+                      {Object.entries(selectedItem.metadata).map(([key, value]) => (
+                        <div key={key} className="flex justify-between text-sm mb-1 last:mb-0">
+                          <span className="text-aifm-charcoal/60 capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
+                          <span className="font-medium text-aifm-charcoal">{value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Approval Trail */}
+                <div className="p-6 border-b border-gray-100">
+                  <h4 className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider mb-4">Approval Trail</h4>
+                  <div className="space-y-4">
+                    {/* First Approval */}
+                    <div className="flex items-start gap-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        selectedItem.firstApproval ? 'bg-green-100' : 'bg-gray-100'
+                      }`}>
+                        {selectedItem.firstApproval ? (
+                          <Check className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <span className="text-xs font-medium text-gray-400">1</span>
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium text-aifm-charcoal text-sm">First Approval</p>
+                        {selectedItem.firstApproval ? (
+                          <>
+                            <p className="text-xs text-aifm-charcoal/60">
+                              {selectedItem.firstApproval.approvedBy} • {formatDate(selectedItem.firstApproval.approvedAt)}
+                            </p>
+                            {selectedItem.firstApproval.comment && (
+                              <p className="text-xs text-aifm-charcoal/50 mt-1 italic">
+                                &ldquo;{selectedItem.firstApproval.comment}&rdquo;
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-xs text-amber-600">Pending</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Second Approval */}
+                    <div className="flex items-start gap-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        selectedItem.secondApproval ? 'bg-green-100' : 
+                        selectedItem.firstApproval ? 'bg-blue-100' : 'bg-gray-100'
+                      }`}>
+                        {selectedItem.secondApproval ? (
+                          <Check className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <span className={`text-xs font-medium ${selectedItem.firstApproval ? 'text-blue-600' : 'text-gray-400'}`}>2</span>
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium text-aifm-charcoal text-sm">Second Approval</p>
+                        {selectedItem.secondApproval ? (
+                          <p className="text-xs text-aifm-charcoal/60">
+                            {selectedItem.secondApproval.approvedBy} • {formatDate(selectedItem.secondApproval.approvedAt)}
+                          </p>
+                        ) : selectedItem.firstApproval ? (
+                          <p className="text-xs text-blue-600">Awaiting your approval</p>
+                        ) : (
+                          <p className="text-xs text-gray-400">Waiting for first approval</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Rejection (if applicable) */}
+                    {selectedItem.status === 'REJECTED' && (
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-red-100">
+                          <X className="w-4 h-4 text-red-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-aifm-charcoal text-sm">Rejected</p>
+                          <p className="text-xs text-aifm-charcoal/60">
+                            {selectedItem.rejectedBy} • {selectedItem.rejectedAt && formatDate(selectedItem.rejectedAt)}
+                          </p>
+                          {selectedItem.rejectionReason && (
+                            <p className="text-xs text-red-600 mt-1">
+                              {selectedItem.rejectionReason}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                {selectedItem.status.startsWith('PENDING') && (
+                  <div className="p-6 bg-gray-50">
+                    <div className="flex gap-3">
+                      <button 
+                        onClick={() => setShowRejectModal(true)}
+                        className="flex-1 btn-outline py-2 flex items-center justify-center gap-2 text-red-600 border-red-200 hover:bg-red-50"
+                      >
+                        <X className="w-4 h-4" />
+                        Reject
+                      </button>
+                      <button 
+                        onClick={() => setShowApproveModal(true)}
+                        className="flex-1 btn-primary py-2 flex items-center justify-center gap-2"
+                      >
+                        <Check className="w-4 h-4" />
+                        Approve
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="p-12 text-center">
+                <Shield className="w-12 h-12 text-aifm-charcoal/20 mx-auto mb-4" />
+                <p className="text-aifm-charcoal/60">Select an item to view details</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+
+      {/* Approve Modal */}
+      {showApproveModal && selectedItem && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-xl">
+            <div className="px-6 py-4 border-b border-gray-100">
+              <h3 className="text-lg font-medium text-aifm-charcoal uppercase tracking-wider">Confirm Approval</h3>
+            </div>
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                  <Check className="w-6 h-6 text-green-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-aifm-charcoal">{selectedItem.title}</p>
+                  <p className="text-sm text-aifm-charcoal/60">{formatCurrency(selectedItem.amount, selectedItem.currency)}</p>
+                </div>
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
+                  Comment (Optional)
+                </label>
+                <textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  className="input w-full h-24 resize-none"
+                  placeholder="Add a comment for the approval record..."
+                />
+              </div>
+
+              <div className="bg-amber-50 rounded-xl p-4 flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-amber-800">Approval Confirmation</p>
+                  <p className="text-xs text-amber-700">By approving, you confirm that you have reviewed this item and authorize the action.</p>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
+              <button 
+                onClick={() => setShowApproveModal(false)}
+                className="flex-1 btn-outline py-2"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleApprove}
+                className="flex-1 btn-primary py-2 flex items-center justify-center gap-2"
+              >
+                <Check className="w-4 h-4" />
+                Confirm Approval
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Modal */}
+      {showRejectModal && selectedItem && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-xl">
+            <div className="px-6 py-4 border-b border-gray-100">
+              <h3 className="text-lg font-medium text-aifm-charcoal uppercase tracking-wider">Reject Item</h3>
+            </div>
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                  <X className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-aifm-charcoal">{selectedItem.title}</p>
+                  <p className="text-sm text-aifm-charcoal/60">{formatCurrency(selectedItem.amount, selectedItem.currency)}</p>
+                </div>
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-xs font-medium text-aifm-charcoal/70 mb-2 uppercase tracking-wider">
+                  Rejection Reason <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  className="input w-full h-24 resize-none"
+                  placeholder="Explain why this item is being rejected..."
+                  required
+                />
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
+              <button 
+                onClick={() => setShowRejectModal(false)}
+                className="flex-1 btn-outline py-2"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleReject}
+                disabled={!rejectionReason.trim()}
+                className="flex-1 py-2 flex items-center justify-center gap-2 bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <X className="w-4 h-4" />
+                Confirm Rejection
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
