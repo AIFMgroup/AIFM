@@ -11,7 +11,7 @@ import {
   ArrowRight, ExternalLink, Target, Zap
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { guideSections, GuideSection, GuideStep } from '@/lib/guideData';
+import { guideSections, GuideStep } from '@/lib/guideData';
 
 // Icon mapping
 const iconMap: Record<string, React.ElementType> = {
