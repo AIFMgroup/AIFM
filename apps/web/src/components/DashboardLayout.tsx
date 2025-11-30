@@ -2,7 +2,7 @@
 
 import { ReactNode, useState, useRef, useEffect } from 'react';
 import { 
-  Bell, Building2, ChevronDown, Search, Check, Plus, X, Menu,
+  Building2, ChevronDown, Search, Check, Plus, X, Menu,
   HelpCircle, ArrowRight, ArrowLeft, CheckCircle2
 } from 'lucide-react';
 import { DashboardSidebar } from './DashboardSidebar';
@@ -10,6 +10,7 @@ import { SidebarProvider, useSidebar } from './SidebarContext';
 import { useCompany } from './CompanyContext';
 import { LoadingOverlay } from './LoadingOverlay';
 import { ChatWidget } from './ChatWidget';
+import { NotificationPanel } from './NotificationPanel';
 import { Company } from '@/lib/companyData';
 
 interface DashboardLayoutProps {
@@ -732,10 +733,7 @@ function DashboardLayoutInner({
               />
               
               {/* Right side - notification */}
-              <button className="relative p-2 text-aifm-charcoal/50 hover:text-aifm-gold hover:bg-aifm-gold/5 rounded-xl transition-all duration-200">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-aifm-gold rounded-full animate-pulse" />
-              </button>
+              <NotificationPanel />
             </div>
           </div>
         </header>
