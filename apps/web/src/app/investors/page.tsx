@@ -71,22 +71,22 @@ function FilterTab({
     <button
       onClick={onClick}
       className={`
-        group relative p-6 rounded-2xl border-2 transition-all duration-300 text-left
+        group relative p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 transition-all duration-300 text-left
         hover:shadow-lg hover:shadow-gray-100/50 hover:-translate-y-0.5
         ${isActive ? styles.active : styles.inactive}
       `}
     >
-      <div className="flex items-start justify-between mb-4">
-        <div className={`p-2.5 rounded-xl transition-colors duration-300 ${
+      <div className="flex items-start justify-between mb-2 sm:mb-4">
+        <div className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-colors duration-300 ${
           isActive ? 'bg-white/80' : 'bg-gray-50 group-hover:bg-gray-100'
         }`}>
-          <Icon className={`w-5 h-5 transition-colors duration-300 ${
+          <Icon className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors duration-300 ${
             isActive ? styles.iconActive : styles.iconInactive
           }`} />
         </div>
       </div>
-      <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider font-medium mb-2">{label}</p>
-      <p className={`text-3xl font-semibold ${isActive ? styles.countActive : styles.countInactive}`}>{count}</p>
+      <p className="text-[10px] sm:text-xs text-aifm-charcoal/50 uppercase tracking-wider font-medium mb-1 sm:mb-2">{label}</p>
+      <p className={`text-2xl sm:text-3xl font-semibold ${isActive ? styles.countActive : styles.countInactive}`}>{count}</p>
     </button>
   );
 }

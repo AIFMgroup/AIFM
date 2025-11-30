@@ -41,7 +41,7 @@ function HeroMetricCard({
 
   return (
     <div className={`
-      relative group rounded-2xl p-6 
+      relative group rounded-xl sm:rounded-2xl p-4 sm:p-6 
       transition-all duration-700 ease-out
       hover:-translate-y-1
       ${isPrimary 
@@ -51,18 +51,18 @@ function HeroMetricCard({
       ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
     `}>
       {!isPrimary && (
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-aifm-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-br from-aifm-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       )}
       
       <div className="relative">
-        <div className="flex items-start justify-between mb-4">
-          <div className={`p-2.5 rounded-xl transition-colors duration-300 ${
+        <div className="flex items-start justify-between mb-2 sm:mb-4">
+          <div className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-colors duration-300 ${
             isPrimary ? 'bg-white/10' : 'bg-aifm-charcoal/5 group-hover:bg-aifm-gold/10'
           }`}>
-            <Icon className={`w-5 h-5 ${isPrimary ? 'text-white/60' : 'text-aifm-charcoal/60 group-hover:text-aifm-gold'} transition-colors duration-300`} />
+            <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${isPrimary ? 'text-white/60' : 'text-aifm-charcoal/60 group-hover:text-aifm-gold'} transition-colors duration-300`} />
           </div>
           {trend && (
-            <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
+            <div className={`hidden sm:flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
               trend === 'up' 
                 ? isPrimary ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-50 text-emerald-600' 
                 : isPrimary ? 'bg-red-500/20 text-red-300' : 'bg-red-50 text-red-600'
@@ -73,10 +73,10 @@ function HeroMetricCard({
           )}
         </div>
         
-        <p className={`text-xs uppercase tracking-wider font-medium mb-2 ${isPrimary ? 'text-white/50' : 'text-aifm-charcoal/50'}`}>
+        <p className={`text-[10px] sm:text-xs uppercase tracking-wider font-medium mb-1 sm:mb-2 ${isPrimary ? 'text-white/50' : 'text-aifm-charcoal/50'}`}>
           {label}
         </p>
-        <p className={`text-2xl font-semibold tracking-tight ${isPrimary ? 'text-white' : 'text-aifm-charcoal'}`}>
+        <p className={`text-lg sm:text-2xl font-semibold tracking-tight ${isPrimary ? 'text-white' : 'text-aifm-charcoal'}`}>
           {value}
         </p>
       </div>
@@ -330,13 +330,13 @@ export default function OverviewPage() {
   return (
     <DashboardLayout>
       {/* Page Header */}
-      <div className="mb-10">
-        <h1 className="text-3xl font-semibold text-aifm-charcoal tracking-tight">Översikt</h1>
-        <p className="text-aifm-charcoal/40 mt-2 text-sm">{selectedCompany.name}</p>
+      <div className="mb-6 sm:mb-10">
+        <h1 className="text-2xl sm:text-3xl font-semibold text-aifm-charcoal tracking-tight">Översikt</h1>
+        <p className="text-aifm-charcoal/40 mt-1 sm:mt-2 text-sm">{selectedCompany.name}</p>
       </div>
 
       {/* HERO: Key Metrics - Always Visible */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-10">
         <HeroMetricCard 
           label="Nettotillgångsvärde" 
           value={formatCurrencyCompact(metrics.nav)}
@@ -369,30 +369,33 @@ export default function OverviewPage() {
       </div>
 
       {/* Quick Actions Bar */}
-      <div className="flex flex-wrap gap-3 mb-10">
+      <div className="flex flex-wrap gap-2 sm:gap-3 mb-6 sm:mb-10">
         <Link 
           href="/capital-calls" 
-          className="flex items-center gap-2 px-5 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium 
+          className="flex items-center gap-2 px-3 sm:px-5 py-2 sm:py-3 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-medium 
                      text-aifm-charcoal/70 hover:border-aifm-gold/30 hover:text-aifm-charcoal transition-all"
         >
           <ArrowUpRight className="w-4 h-4" />
-          Nytt kapitalanrop
+          <span className="hidden sm:inline">Nytt kapitalanrop</span>
+          <span className="sm:hidden">Kapitalanrop</span>
         </Link>
         <Link 
           href="/distributions" 
-          className="flex items-center gap-2 px-5 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium 
+          className="flex items-center gap-2 px-3 sm:px-5 py-2 sm:py-3 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-medium 
                      text-aifm-charcoal/70 hover:border-aifm-gold/30 hover:text-aifm-charcoal transition-all"
         >
           <ArrowDownRight className="w-4 h-4" />
-          Ny utdelning
+          <span className="hidden sm:inline">Ny utdelning</span>
+          <span className="sm:hidden">Utdelning</span>
         </Link>
         <Link 
           href="/data-rooms" 
-          className="flex items-center gap-2 px-5 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium 
+          className="flex items-center gap-2 px-3 sm:px-5 py-2 sm:py-3 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-medium 
                      text-aifm-charcoal/70 hover:border-aifm-gold/30 hover:text-aifm-charcoal transition-all"
         >
           <FolderOpen className="w-4 h-4" />
-          Öppna datarum
+          <span className="hidden sm:inline">Öppna datarum</span>
+          <span className="sm:hidden">Datarum</span>
         </Link>
       </div>
 

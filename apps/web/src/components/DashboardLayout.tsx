@@ -2,12 +2,13 @@
 
 import { ReactNode, useState, useRef, useEffect } from 'react';
 import { 
-  Bell, Building2, ChevronDown, Search, Check, Plus, X,
+  Bell, Building2, ChevronDown, Search, Check, Plus, X, Menu,
   HelpCircle, ArrowRight, ArrowLeft, CheckCircle2
 } from 'lucide-react';
 import { DashboardSidebar } from './DashboardSidebar';
 import { SidebarProvider, useSidebar } from './SidebarContext';
 import { useCompany } from './CompanyContext';
+import { LoadingOverlay } from './LoadingOverlay';
 import { Company } from '@/lib/companyData';
 
 interface DashboardLayoutProps {
@@ -119,13 +120,13 @@ function OnboardingWizard({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      {/* Fixed size container - 720px width, 620px height for better visibility */}
-      <div className="bg-white rounded-2xl w-[720px] h-[620px] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      {/* Responsive container */}
+      <div className="bg-white rounded-2xl w-full max-w-[720px] max-h-[90vh] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         
         {/* Minimal Header */}
-        <div className="px-8 py-5 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+        <div className="px-4 sm:px-8 py-4 sm:py-5 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
           <div>
-            <h2 className="text-lg font-medium text-aifm-charcoal">Nytt bolag</h2>
+            <h2 className="text-base sm:text-lg font-medium text-aifm-charcoal">Nytt bolag</h2>
             <p className="text-xs text-aifm-charcoal/50 mt-0.5">Steg {currentStep + 1} av {steps.length}</p>
           </div>
           <button
@@ -137,8 +138,8 @@ function OnboardingWizard({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
         </div>
 
         {/* Step Indicator - Minimal */}
-        <div className="px-8 py-3 border-b border-gray-50 flex-shrink-0">
-          <div className="flex items-center gap-8">
+        <div className="px-4 sm:px-8 py-3 border-b border-gray-50 flex-shrink-0">
+          <div className="flex items-center gap-4 sm:gap-8">
             {steps.map((step, index) => (
               <button
                 key={step}
@@ -153,7 +154,7 @@ function OnboardingWizard({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
                       : 'bg-gray-100 text-gray-400'}`}>
                   {index < currentStep ? <Check className="w-3 h-3" /> : index + 1}
                 </div>
-                <span className={`text-sm transition-colors ${index === currentStep ? 'text-aifm-charcoal font-medium' : 'text-aifm-charcoal/40'}`}>
+                <span className={`text-sm transition-colors hidden sm:inline ${index === currentStep ? 'text-aifm-charcoal font-medium' : 'text-aifm-charcoal/40'}`}>
                   {step}
                 </span>
               </button>
@@ -162,11 +163,11 @@ function OnboardingWizard({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
         </div>
 
         {/* Content Area - Fixed Height with scroll if needed */}
-        <div className="flex-1 px-8 py-6 overflow-y-auto">
+        <div className="flex-1 px-4 sm:px-8 py-4 sm:py-6 overflow-y-auto">
           
           {/* Step 1: Company Info */}
           {currentStep === 0 && (
-            <div className="space-y-5">
+            <div className="space-y-4 sm:space-y-5">
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <label className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wide">Bolagsnamn</label>
@@ -181,7 +182,7 @@ function OnboardingWizard({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <label className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wide">Kortnamn</label>
@@ -215,7 +216,7 @@ function OnboardingWizard({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
                   <label className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wide">Fondtyp</label>
                   <HelpTooltip text="Välj den typ av fond som bäst beskriver investeringsstrategin." />
                 </div>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {fundTypes.map((type) => (
                     <button
                       key={type.value}
@@ -236,7 +237,7 @@ function OnboardingWizard({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
 
           {/* Step 2: Structure */}
           {currentStep === 1 && (
-            <div className="space-y-5">
+            <div className="space-y-4 sm:space-y-5">
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <label className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wide">Registreringsland</label>
@@ -264,7 +265,7 @@ function OnboardingWizard({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
                   <label className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wide">Fondstruktur</label>
                   <HelpTooltip text="Den juridiska strukturen som fonden är organiserad under." />
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {structures.map((struct) => (
                     <button
                       key={struct.value}
@@ -281,7 +282,7 @@ function OnboardingWizard({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <label className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wide">Målstorlek (MSEK)</label>
@@ -322,7 +323,7 @@ function OnboardingWizard({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
 
           {/* Step 3: Contact */}
           {currentStep === 2 && (
-            <div className="space-y-5">
+            <div className="space-y-4 sm:space-y-5">
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <label className="text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wide">Kontaktperson</label>
@@ -351,9 +352,9 @@ function OnboardingWizard({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
                 />
               </div>
 
-              <div className="mt-6 p-4 bg-gray-50 rounded-xl">
+              <div className="mt-4 sm:mt-6 p-4 bg-gray-50 rounded-xl">
                 <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-aifm-charcoal/30 mt-0.5" />
+                  <CheckCircle2 className="w-5 h-5 text-aifm-charcoal/30 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-medium text-aifm-charcoal/70">Redo att skapa</p>
                     <p className="text-xs text-aifm-charcoal/50 mt-1">
@@ -367,7 +368,7 @@ function OnboardingWizard({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
         </div>
 
         {/* Footer - Fixed */}
-        <div className="px-8 py-4 border-t border-gray-100 flex items-center justify-between flex-shrink-0 bg-gray-50/50">
+        <div className="px-4 sm:px-8 py-4 border-t border-gray-100 flex items-center justify-between flex-shrink-0 bg-gray-50/50">
           <button
             onClick={prevStep}
             disabled={currentStep === 0}
@@ -375,7 +376,7 @@ function OnboardingWizard({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
               ${currentStep === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-aifm-charcoal/60 hover:text-aifm-charcoal hover:bg-white'}`}
           >
             <ArrowLeft className="w-4 h-4" />
-            Tillbaka
+            <span className="hidden sm:inline">Tillbaka</span>
           </button>
 
           <div className="flex items-center gap-1.5">
@@ -390,16 +391,16 @@ function OnboardingWizard({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
           {currentStep === steps.length - 1 ? (
             <button
               onClick={handleSubmit}
-              className="px-6 py-2 bg-aifm-charcoal text-white rounded-xl text-sm font-medium hover:bg-aifm-charcoal/90 transition-all"
+              className="px-4 sm:px-6 py-2 bg-aifm-charcoal text-white rounded-xl text-sm font-medium hover:bg-aifm-charcoal/90 transition-all"
             >
               Skapa bolag
             </button>
           ) : (
             <button
               onClick={nextStep}
-              className="px-6 py-2 bg-aifm-charcoal text-white rounded-xl text-sm font-medium hover:bg-aifm-charcoal/90 transition-all flex items-center gap-2"
+              className="px-4 sm:px-6 py-2 bg-aifm-charcoal text-white rounded-xl text-sm font-medium hover:bg-aifm-charcoal/90 transition-all flex items-center gap-2"
             >
-              Nästa
+              <span className="hidden sm:inline">Nästa</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           )}
@@ -462,7 +463,7 @@ function CompanySelector({
         title="Lägg till nytt bolag"
       >
         <Plus className="w-4 h-4" />
-        <span className="text-sm font-medium hidden sm:inline">Nytt bolag</span>
+        <span className="text-sm font-medium hidden lg:inline">Nytt bolag</span>
       </button>
 
       {/* Dropdown */}
@@ -470,9 +471,9 @@ function CompanySelector({
         {/* Dropdown Trigger Button */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-3 px-4 py-2.5 bg-white border border-gray-200 rounded-xl 
+          className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 bg-white border border-gray-200 rounded-xl 
                      hover:border-aifm-gold/50 hover:shadow-lg hover:shadow-aifm-gold/10
-                     transition-all duration-300 group min-w-[280px]"
+                     transition-all duration-300 group min-w-0 sm:min-w-[280px]"
         >
           <div 
             className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -480,8 +481,8 @@ function CompanySelector({
           >
             <Building2 className="w-4 h-4" style={{ color: selectedCompany.color }} />
           </div>
-          <div className="flex-1 text-left">
-            <p className="text-sm font-medium text-aifm-charcoal">{selectedCompany.shortName}</p>
+          <div className="flex-1 text-left hidden sm:block">
+            <p className="text-sm font-medium text-aifm-charcoal truncate">{selectedCompany.shortName}</p>
             <p className="text-xs text-aifm-charcoal/50">{selectedCompany.orgNumber}</p>
           </div>
           <ChevronDown 
@@ -492,7 +493,7 @@ function CompanySelector({
 
         {/* Dropdown Menu */}
         {isOpen && (
-          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[340px] bg-white rounded-2xl 
+          <div className="absolute top-full right-0 sm:left-1/2 sm:-translate-x-1/2 mt-2 w-[300px] sm:w-[340px] bg-white rounded-2xl 
                           border border-gray-100 shadow-2xl shadow-black/10 overflow-hidden z-50
                           animate-in fade-in slide-in-from-top-2 duration-200">
             {/* Search Input */}
@@ -554,11 +555,11 @@ function CompanySelector({
                       >
                         <Building2 className="w-5 h-5" style={{ color: company.color }} />
                       </div>
-                      <div className="flex-1 text-left">
-                        <p className={`text-sm font-medium ${isSelected ? 'text-aifm-gold' : 'text-aifm-charcoal'}`}>
+                      <div className="flex-1 text-left min-w-0">
+                        <p className={`text-sm font-medium truncate ${isSelected ? 'text-aifm-gold' : 'text-aifm-charcoal'}`}>
                           {company.shortName}
                         </p>
-                        <p className="text-xs text-aifm-charcoal/50">{company.name}</p>
+                        <p className="text-xs text-aifm-charcoal/50 truncate">{company.name}</p>
                         <p className="text-[10px] text-aifm-charcoal/40 mt-0.5">Org.nr: {company.orgNumber}</p>
                       </div>
                       {isSelected && (
@@ -605,7 +606,7 @@ function CollapsibleCompanyHeader({
       {!isExpanded && (
         <button
           onClick={() => setIsExpanded(true)}
-          className="flex items-center gap-3 px-4 py-2 bg-white border border-gray-200 rounded-xl 
+          className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 bg-white border border-gray-200 rounded-xl 
                      hover:border-aifm-gold/50 hover:shadow-lg hover:shadow-aifm-gold/10
                      transition-all duration-300 group"
         >
@@ -615,7 +616,7 @@ function CollapsibleCompanyHeader({
           >
             <Building2 className="w-4 h-4" style={{ color: selectedCompany.color }} />
           </div>
-          <div className="text-left">
+          <div className="text-left hidden sm:block">
             <p className="text-sm font-medium text-aifm-charcoal">{selectedCompany.shortName}</p>
             <p className="text-xs text-aifm-charcoal/50">{selectedCompany.orgNumber}</p>
           </div>
@@ -626,7 +627,7 @@ function CollapsibleCompanyHeader({
 
       {/* Expanded view - full company selector */}
       {isExpanded && (
-        <div className="flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="flex items-center gap-2 sm:gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
           <CompanySelector
             selectedCompany={selectedCompany}
             companies={companies}
@@ -649,31 +650,77 @@ function CollapsibleCompanyHeader({
   );
 }
 
+// Mobile Sidebar Drawer
+function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  return (
+    <>
+      {/* Backdrop */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+      
+      {/* Drawer */}
+      <div className={`fixed inset-y-0 left-0 z-50 lg:hidden transform transition-transform duration-300 ease-in-out ${
+        isOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        <div className="relative h-full">
+          <DashboardSidebar />
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-lg"
+          >
+            <X className="w-5 h-5 text-aifm-charcoal" />
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // Inner layout component that uses the sidebar context
 function DashboardLayoutInner({ 
   children, 
   selectedCompany: externalSelectedCompany,
   onCompanyChange 
 }: DashboardLayoutProps) {
-  const { selectedCompany: contextCompany, setSelectedCompany, companies } = useCompany();
+  const { selectedCompany: contextCompany, switchCompany, companies } = useCompany();
   const [showOnboardingWizard, setShowOnboardingWizard] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { collapsed } = useSidebar();
   
   // Use external props if provided, otherwise use context
   const selectedCompany = externalSelectedCompany || contextCompany;
-  const handleCompanyChange = onCompanyChange || setSelectedCompany;
+  const handleCompanyChange = onCompanyChange || switchCompany;
 
   return (
     <div className="min-h-screen bg-white flex">
-      <DashboardSidebar />
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:block">
+        <DashboardSidebar />
+      </div>
       
-      <main className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out ${collapsed ? 'ml-[72px]' : 'ml-56'}`}>
+      {/* Mobile Sidebar */}
+      <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
+      
+      <main className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out lg:${collapsed ? 'ml-[72px]' : 'ml-56'}`}>
         {/* Header with company selector - ALWAYS visible */}
         <header className="bg-white border-b border-gray-100 sticky top-0 z-30">
-          <div className="px-6 py-3">
+          <div className="px-4 sm:px-6 py-3">
             <div className="flex items-center justify-between">
-              {/* Left spacer for centering */}
-              <div className="w-10" />
+              {/* Mobile menu button */}
+              <button 
+                onClick={() => setMobileMenuOpen(true)}
+                className="lg:hidden p-2 -ml-2 text-aifm-charcoal/70 hover:text-aifm-charcoal hover:bg-gray-100 rounded-xl transition-colors"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+              
+              {/* Left spacer for centering (desktop only) */}
+              <div className="hidden lg:block w-10" />
               
               {/* Centered Collapsible Company Header */}
               <CollapsibleCompanyHeader
@@ -693,7 +740,7 @@ function DashboardLayoutInner({
         </header>
 
         {/* Main content area */}
-        <div className="flex-1 p-6 bg-gradient-to-br from-gray-50 to-gray-100/50 overflow-auto">
+        <div className="flex-1 p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-gray-100/50 overflow-auto">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
@@ -705,6 +752,9 @@ function DashboardLayoutInner({
         isOpen={showOnboardingWizard} 
         onClose={() => setShowOnboardingWizard(false)} 
       />
+      
+      {/* Loading Overlay */}
+      <LoadingOverlay />
     </div>
   );
 }

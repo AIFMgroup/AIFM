@@ -36,23 +36,23 @@ function HeroMetricCard({
   
   return (
     <div className={`
-      relative group rounded-2xl p-5 transition-all duration-500
+      relative group rounded-xl sm:rounded-2xl p-4 sm:p-5 transition-all duration-500
       ${isPrimary 
         ? 'bg-gradient-to-br from-aifm-charcoal via-aifm-charcoal to-aifm-charcoal/90 text-white shadow-xl shadow-aifm-charcoal/20' 
         : 'bg-white border border-gray-100/50 hover:shadow-xl hover:shadow-gray-200/50 hover:border-aifm-gold/20 hover:-translate-y-0.5'
       }
     `}>
       {!isPrimary && (
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-aifm-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-br from-aifm-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       )}
       
       <div className="relative">
-        <div className="flex items-start justify-between mb-3">
-          <div className={`p-2 rounded-xl ${isPrimary ? 'bg-white/10' : 'bg-aifm-charcoal/5 group-hover:bg-aifm-gold/10'} transition-colors duration-300`}>
-            <Icon className={`w-4 h-4 ${isPrimary ? 'text-white/60' : 'text-aifm-charcoal/50 group-hover:text-aifm-gold'} transition-colors duration-300`} />
+        <div className="flex items-start justify-between mb-2 sm:mb-3">
+          <div className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl ${isPrimary ? 'bg-white/10' : 'bg-aifm-charcoal/5 group-hover:bg-aifm-gold/10'} transition-colors duration-300`}>
+            <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isPrimary ? 'text-white/60' : 'text-aifm-charcoal/50 group-hover:text-aifm-gold'} transition-colors duration-300`} />
           </div>
           {trend && (
-            <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
+            <div className={`hidden sm:flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
               trend.positive 
                 ? isPrimary ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-50 text-emerald-600'
                 : isPrimary ? 'bg-red-500/20 text-red-300' : 'bg-red-50 text-red-600'
@@ -63,14 +63,14 @@ function HeroMetricCard({
           )}
         </div>
         
-        <p className={`text-xs uppercase tracking-wider font-medium mb-1.5 ${isPrimary ? 'text-white/50' : 'text-aifm-charcoal/50'}`}>
+        <p className={`text-[10px] sm:text-xs uppercase tracking-wider font-medium mb-1 sm:mb-1.5 ${isPrimary ? 'text-white/50' : 'text-aifm-charcoal/50'}`}>
           {label}
         </p>
-        <p className={`text-xl font-semibold tracking-tight ${isPrimary ? 'text-white' : 'text-aifm-charcoal'}`}>
+        <p className={`text-base sm:text-xl font-semibold tracking-tight ${isPrimary ? 'text-white' : 'text-aifm-charcoal'}`}>
           {value}
         </p>
         {subLabel && (
-          <p className={`text-xs mt-1.5 ${isPrimary ? 'text-white/50' : 'text-aifm-charcoal/40'}`}>{subLabel}</p>
+          <p className={`text-[10px] sm:text-xs mt-1 sm:mt-1.5 ${isPrimary ? 'text-white/50' : 'text-aifm-charcoal/40'}`}>{subLabel}</p>
         )}
       </div>
     </div>
@@ -92,21 +92,21 @@ function TabNavigation({
   ];
 
   return (
-    <div className="flex bg-gray-100/80 rounded-xl p-1.5 mb-8">
+    <div className="flex bg-gray-100/80 rounded-xl p-1 sm:p-1.5 mb-6 sm:mb-8">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         return (
           <button
             key={tab.value}
             onClick={() => onChange(tab.value)}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${
+            className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 ${
               activeTab === tab.value
                 ? 'bg-white text-aifm-charcoal shadow-lg'
                 : 'text-aifm-charcoal/50 hover:text-aifm-charcoal'
             }`}
           >
             <Icon className="w-4 h-4" />
-            {tab.label}
+            <span className="hidden sm:inline">{tab.label}</span>
           </button>
         );
       })}
@@ -311,35 +311,35 @@ export default function PortfolioPage() {
   return (
     <DashboardLayout>
       {/* Page Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-2xl font-semibold text-aifm-charcoal tracking-tight">Portfölj</h1>
+          <h1 className="text-xl sm:text-2xl font-semibold text-aifm-charcoal tracking-tight">Portfölj</h1>
           <p className="text-aifm-charcoal/40 mt-1 text-sm">Följ portföljbolagens utveckling</p>
         </div>
         
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setShowExportModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-aifm-charcoal/70 
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium text-aifm-charcoal/70 
                        bg-white border border-gray-200 rounded-xl hover:border-aifm-gold/30 transition-all"
           >
             <Download className="w-4 h-4" />
-            Exportera
+            <span className="hidden sm:inline">Exportera</span>
           </button>
           <button 
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white 
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium text-white 
                        bg-aifm-charcoal rounded-xl hover:bg-aifm-charcoal/90 
                        shadow-lg shadow-aifm-charcoal/20 transition-all"
           >
             <Plus className="w-4 h-4" />
-            Lägg till
+            <span className="hidden sm:inline">Lägg till</span>
           </button>
         </div>
       </div>
 
       {/* Hero Metrics - Always Visible */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <HeroMetricCard 
           label="Portföljvärde" 
           value={formatCurrency(totalValue, currency)}
@@ -409,7 +409,7 @@ export default function PortfolioPage() {
 
           {/* Grid View */}
           {viewMode === 'grid' ? (
-            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
               {filteredPortfolio.map((company) => (
                 <CompanyCard 
                   key={company.id} 

@@ -23,20 +23,20 @@ function HeroMetricCard({
 }) {
   const isPrimary = variant === 'primary';
   return (
-    <div className={`group relative rounded-2xl p-5 transition-all duration-500 hover:-translate-y-0.5 ${
+    <div className={`group relative rounded-xl sm:rounded-2xl p-4 sm:p-5 transition-all duration-500 hover:-translate-y-0.5 ${
       isPrimary 
         ? 'bg-gradient-to-br from-aifm-charcoal via-aifm-charcoal to-aifm-charcoal/90 text-white shadow-xl shadow-aifm-charcoal/20' 
         : 'bg-white border border-gray-100/50 hover:shadow-xl hover:shadow-gray-200/50'
     }`}>
       <div className="relative">
-        <div className="flex items-start justify-between mb-3">
-          <div className={`p-2 rounded-xl transition-colors duration-300 ${isPrimary ? 'bg-white/10' : 'bg-aifm-charcoal/5 group-hover:bg-aifm-gold/10'}`}>
-            <Icon className={`w-4 h-4 ${isPrimary ? 'text-white/60' : 'text-aifm-charcoal/50 group-hover:text-aifm-gold'}`} />
+        <div className="flex items-start justify-between mb-2 sm:mb-3">
+          <div className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-colors duration-300 ${isPrimary ? 'bg-white/10' : 'bg-aifm-charcoal/5 group-hover:bg-aifm-gold/10'}`}>
+            <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isPrimary ? 'text-white/60' : 'text-aifm-charcoal/50 group-hover:text-aifm-gold'}`} />
           </div>
         </div>
-        <p className={`text-xs uppercase tracking-wider font-medium mb-1.5 ${isPrimary ? 'text-white/50' : 'text-aifm-charcoal/50'}`}>{label}</p>
-        <p className={`text-xl font-semibold tracking-tight ${isPrimary ? 'text-white' : 'text-aifm-charcoal'}`}>{value}</p>
-        {subValue && <p className={`text-xs mt-1.5 ${isPrimary ? 'text-white/60' : 'text-aifm-charcoal/40'}`}>{subValue}</p>}
+        <p className={`text-[10px] sm:text-xs uppercase tracking-wider font-medium mb-1 sm:mb-1.5 ${isPrimary ? 'text-white/50' : 'text-aifm-charcoal/50'}`}>{label}</p>
+        <p className={`text-base sm:text-xl font-semibold tracking-tight ${isPrimary ? 'text-white' : 'text-aifm-charcoal'}`}>{value}</p>
+        {subValue && <p className={`text-[10px] sm:text-xs mt-1 sm:mt-1.5 ${isPrimary ? 'text-white/60' : 'text-aifm-charcoal/40'}`}>{subValue}</p>}
       </div>
     </div>
   );
@@ -51,19 +51,19 @@ function TabNavigation({ activeTab, onChange }: { activeTab: TabType; onChange: 
   ];
 
   return (
-    <div className="flex bg-gray-100/80 rounded-xl p-1.5 mb-8">
+    <div className="flex bg-gray-100/80 rounded-xl p-1 sm:p-1.5 mb-6 sm:mb-8">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         return (
           <button
             key={tab.value}
             onClick={() => onChange(tab.value)}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${
+            className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 ${
               activeTab === tab.value ? 'bg-white text-aifm-charcoal shadow-lg' : 'text-aifm-charcoal/50 hover:text-aifm-charcoal'
             }`}
           >
             <Icon className="w-4 h-4" />
-            {tab.label}
+            <span className="hidden sm:inline">{tab.label}</span>
           </button>
         );
       })}
