@@ -86,16 +86,16 @@ export default function ClosingPage() {
   return (
     <DashboardLayout>
       {/* Page Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 text-sm text-aifm-charcoal/40 mb-2">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex items-center gap-2 text-xs sm:text-sm text-aifm-charcoal/40 mb-2">
           <Link href="/accounting" className="hover:text-aifm-gold transition-colors">Bokföring</Link>
           <span>/</span>
           <span className="text-aifm-charcoal">Bokslut</span>
         </div>
-        <h1 className="text-2xl font-medium text-aifm-charcoal uppercase tracking-wider mb-2">
+        <h1 className="text-xl sm:text-2xl font-semibold text-aifm-charcoal tracking-tight mb-1 sm:mb-2">
           Bokslut
         </h1>
-        <p className="text-aifm-charcoal/60">
+        <p className="text-sm text-aifm-charcoal/60">
           Förbered och stäng av bokföringsperioden
         </p>
       </div>

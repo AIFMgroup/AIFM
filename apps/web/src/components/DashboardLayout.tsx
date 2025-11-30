@@ -9,6 +9,7 @@ import { DashboardSidebar } from './DashboardSidebar';
 import { SidebarProvider, useSidebar } from './SidebarContext';
 import { useCompany } from './CompanyContext';
 import { LoadingOverlay } from './LoadingOverlay';
+import { ChatWidget } from './ChatWidget';
 import { Company } from '@/lib/companyData';
 
 interface DashboardLayoutProps {
@@ -755,6 +756,9 @@ function DashboardLayoutInner({
       
       {/* Loading Overlay */}
       <LoadingOverlay />
+      
+      {/* Chat Widget - Global Help Assistant */}
+      <ChatWidget />
     </div>
   );
 }

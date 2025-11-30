@@ -232,25 +232,25 @@ export default function BookkeepingPage() {
   return (
     <DashboardLayout>
       {/* Page Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 text-sm text-aifm-charcoal/40 mb-2">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex items-center gap-2 text-xs sm:text-sm text-aifm-charcoal/40 mb-2">
           <Link href="/accounting" className="hover:text-aifm-gold transition-colors">Bokföring</Link>
           <span>/</span>
           <span className="text-aifm-charcoal">Löpande bokföring</span>
         </div>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-medium text-aifm-charcoal uppercase tracking-wider mb-2">
+            <h1 className="text-xl sm:text-2xl font-semibold text-aifm-charcoal tracking-tight mb-1 sm:mb-2">
               Löpande bokföring
             </h1>
-            <p className="text-aifm-charcoal/60">
+            <p className="text-sm text-aifm-charcoal/60">
               Granska och godkänn transaktioner klassificerade av AI
             </p>
           </div>
           {selectedTransactions.length > 0 && (
             <button
               onClick={handleBulkApprove}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+              className="px-4 py-2.5 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 transition-colors flex items-center gap-2 shadow-lg shadow-green-600/20 self-start sm:self-auto"
             >
               <CheckCircle2 className="w-4 h-4" />
               Godkänn {selectedTransactions.length} valda
@@ -260,56 +260,62 @@ export default function BookkeepingPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-5 gap-4 mb-8">
-        <div className="bg-white rounded-xl p-5 border border-gray-100">
-          <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Totalt</p>
-          <p className="text-2xl font-medium text-aifm-charcoal">{transactions.length}</p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100/50 hover:shadow-lg transition-all duration-300">
+          <p className="text-[10px] sm:text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Totalt</p>
+          <p className="text-xl sm:text-2xl font-semibold text-aifm-charcoal">{transactions.length}</p>
         </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-100">
-          <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Godkända</p>
-          <p className="text-2xl font-medium text-green-600">{approvedCount}</p>
+        <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100/50 hover:shadow-lg transition-all duration-300">
+          <p className="text-[10px] sm:text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Godkända</p>
+          <p className="text-xl sm:text-2xl font-semibold text-green-600">{approvedCount}</p>
         </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-100">
-          <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Väntar</p>
-          <p className="text-2xl font-medium text-amber-600">{pendingCount}</p>
+        <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100/50 hover:shadow-lg transition-all duration-300">
+          <p className="text-[10px] sm:text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Väntar</p>
+          <p className="text-xl sm:text-2xl font-semibold text-amber-600">{pendingCount}</p>
         </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-100">
-          <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Intäkter</p>
-          <p className="text-2xl font-medium text-green-600">{formatCurrency(totalIncome)}</p>
+        <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100/50 hover:shadow-lg transition-all duration-300 hidden sm:block">
+          <p className="text-[10px] sm:text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Intäkter</p>
+          <p className="text-lg sm:text-2xl font-semibold text-green-600">{formatCurrency(totalIncome)}</p>
         </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-100">
-          <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Kostnader</p>
-          <p className="text-2xl font-medium text-aifm-charcoal">{formatCurrency(totalExpense)}</p>
+        <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100/50 hover:shadow-lg transition-all duration-300 hidden lg:block">
+          <p className="text-[10px] sm:text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Kostnader</p>
+          <p className="text-lg sm:text-2xl font-semibold text-aifm-charcoal">{formatCurrency(totalExpense)}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-100 p-4 mb-6">
-        <div className="flex items-center gap-4">
+      <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-100/50 p-3 sm:p-4 mb-4 sm:mb-6">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Sök transaktion, konto eller kategori..."
+              placeholder="Sök transaktion..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm
-                         focus:outline-none focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold"
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border-0 rounded-xl text-sm
+                         focus:bg-white focus:ring-2 focus:ring-aifm-gold/10 transition-all"
             />
           </div>
-          <div className="relative">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-              className="pl-4 pr-10 py-2 border border-gray-200 rounded-lg text-sm appearance-none bg-white
-                         focus:outline-none focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold"
-            >
-              <option value="all">Alla status</option>
-              <option value="approved">Godkända</option>
-              <option value="pending">Väntar</option>
-              <option value="needs_review">Behöver granskas</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          <div className="flex gap-2 bg-gray-100 rounded-xl p-1">
+            {[
+              { value: 'all', label: 'Alla' },
+              { value: 'pending', label: 'Väntar' },
+              { value: 'needs_review', label: 'Granska' },
+              { value: 'approved', label: 'Godkända' },
+            ].map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setStatusFilter(option.value as typeof statusFilter)}
+                className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                  statusFilter === option.value
+                    ? 'bg-white shadow-sm text-aifm-charcoal'
+                    : 'text-aifm-charcoal/50 hover:text-aifm-charcoal'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>

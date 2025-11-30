@@ -184,34 +184,35 @@ export default function PaymentsPage() {
   return (
     <DashboardLayout>
       {/* Page Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 text-sm text-aifm-charcoal/40 mb-2">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex items-center gap-2 text-xs sm:text-sm text-aifm-charcoal/40 mb-2">
           <Link href="/accounting" className="hover:text-aifm-gold transition-colors">Bokföring</Link>
           <span>/</span>
           <span className="text-aifm-charcoal">Betalningar</span>
         </div>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-medium text-aifm-charcoal uppercase tracking-wider mb-2">
+            <h1 className="text-xl sm:text-2xl font-semibold text-aifm-charcoal tracking-tight mb-1 sm:mb-2">
               Betalningar
             </h1>
-            <p className="text-aifm-charcoal/60">
+            <p className="text-sm text-aifm-charcoal/60">
               Hantera utgående betalningar, skatter och löner
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {selectedPayments.length > 0 && (
               <button
                 onClick={handleBulkPay}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+                className="px-3 sm:px-4 py-2 sm:py-2.5 bg-green-600 text-white rounded-xl text-xs sm:text-sm font-medium hover:bg-green-700 transition-colors flex items-center gap-2 shadow-lg shadow-green-600/20"
               >
                 <Send className="w-4 h-4" />
-                Betala {selectedPayments.length} valda
+                <span className="hidden sm:inline">Betala {selectedPayments.length} valda</span>
+                <span className="sm:hidden">{selectedPayments.length}</span>
               </button>
             )}
-            <button className="px-4 py-2 bg-aifm-charcoal text-white rounded-lg text-sm font-medium hover:bg-aifm-charcoal/90 transition-colors flex items-center gap-2">
+            <button className="px-3 sm:px-4 py-2 sm:py-2.5 bg-aifm-charcoal text-white rounded-xl text-xs sm:text-sm font-medium hover:bg-aifm-charcoal/90 transition-colors flex items-center gap-2 shadow-lg shadow-aifm-charcoal/20">
               <Plus className="w-4 h-4" />
-              Ny betalning
+              <span className="hidden sm:inline">Ny betalning</span>
             </button>
           </div>
         </div>

@@ -59,18 +59,18 @@ export default function AnnualReportPage() {
   return (
     <DashboardLayout>
       {/* Page Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 text-sm text-aifm-charcoal/40 mb-2">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex items-center gap-2 text-xs sm:text-sm text-aifm-charcoal/40 mb-2">
           <Link href="/accounting" className="hover:text-aifm-gold transition-colors">Bokföring</Link>
           <span>/</span>
           <span className="text-aifm-charcoal">Årsredovisning</span>
         </div>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-medium text-aifm-charcoal uppercase tracking-wider mb-2">
+            <h1 className="text-xl sm:text-2xl font-semibold text-aifm-charcoal tracking-tight mb-1 sm:mb-2">
               Årsredovisning
             </h1>
-            <p className="text-aifm-charcoal/60">
+            <p className="text-sm text-aifm-charcoal/60">
               Generera och granska årsredovisningen för räkenskapsåret {selectedYear}
             </p>
           </div>
