@@ -23,9 +23,17 @@ const iconMap: Record<string, React.ElementType> = {
 // Navigation sections for sidebar
 const navSections = [
   { id: 'overview', title: 'Välkommen till AIFM', icon: 'Sparkles' },
+  { id: 'portfolio', title: 'Portfölj', icon: 'BarChart3' },
+  { id: 'investors', title: 'Investerare', icon: 'Users' },
   { id: 'capital-calls', title: 'Kapitalanrop', icon: 'DollarSign' },
   { id: 'distributions', title: 'Utdelningar', icon: 'ArrowLeftRight' },
-  { id: 'investors', title: 'Investerare', icon: 'Users' },
+  { id: 'treasury', title: 'Treasury', icon: 'Wallet' },
+  { id: 'accounting', title: 'Bokföring', icon: 'Calculator' },
+  { id: 'data-rooms', title: 'Datarum', icon: 'FolderLock' },
+  { id: 'compliance', title: 'Compliance', icon: 'Shield' },
+  { id: 'tasks', title: 'Uppgifter', icon: 'ClipboardList' },
+  { id: 'approvals', title: 'Godkännanden', icon: 'CheckSquare' },
+  { id: 'settings', title: 'Inställningar', icon: 'Settings' },
 ];
 
 // Step Detail Modal Component

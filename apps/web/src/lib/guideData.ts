@@ -715,6 +715,781 @@ export const guideSections: GuideSection[] = [
     ],
     link: '/investors',
   },
+  {
+    id: 'portfolio',
+    title: 'Portfölj',
+    icon: 'BarChart3',
+    description: 'Överblick och hantering av alla portföljbolag med värdering och nyckeltal.',
+    introduction: 'Portföljmodulen ger dig fullständig kontroll över alla dina investeringar. Se aktuella värderingar, sektorsfördelning och bolagsspecifika nyckeltal. AI-funktioner hjälper till att extrahera data automatiskt från uppladdade rapporter.',
+    keyBenefits: [
+      'Samlad överblick över alla portföljbolag',
+      'Automatisk värderingsuppdatering',
+      'Sektorsanalys och diversifiering',
+      'AI-extraktion från kvartalsrapporter',
+      'Export för LP-rapportering',
+    ],
+    hasVideo: true,
+    steps: [
+      {
+        id: 'view-portfolio',
+        title: 'Se portföljöversikt',
+        shortDescription: 'Granska alla bolag med aktuell värdering',
+        detailedContent: {
+          overview: 'Portföljöversikten visar alla dina investeringar med aktuell värdering, ägarandel och status. Använd tabs för att växla mellan olika vyer.',
+          howItWorks: [
+            'Navigera till Portfölj i sidomenyn',
+            'Översikten visar alla portföljbolag i kort-format',
+            'Varje kort visar: Bolagsnamn, Sektor, Värdering, Ägarandel',
+            'Använd tabs: Bolag / Sektorer / Statistik för olika vyer',
+            'Klicka på ett bolag för detaljerad information',
+          ],
+          useCases: [
+            'Daglig överblick av portföljvärde',
+            'Förberedelse inför styrelsemöte',
+            'LP-rapportering och uppdateringar',
+          ],
+          commonMistakes: [
+            'Glömmer uppdatera värderingar regelbundet',
+            'Missar att ladda upp nya kvartalsrapporter',
+          ],
+          proTips: [
+            'Använd Sektorer-tab för att se diversifiering',
+            'Statistik-tab ger aggregerade nyckeltal',
+            'Exportera regelbundet för dokumentation',
+          ],
+          relatedFeatures: ['Rapporter', 'Export', 'Värdering'],
+          faq: [
+            { question: 'Hur ofta uppdateras värderingar?', answer: 'Värderingar uppdateras manuellt eller automatiskt när du laddar upp nya rapporter. AI kan extrahera värden från PDF-rapporter.' },
+            { question: 'Kan jag se historiska värderingar?', answer: 'Ja, klicka på ett bolag för att se värderingshistorik över tid.' },
+          ],
+        },
+      },
+      {
+        id: 'add-company',
+        title: 'Lägg till bolag',
+        shortDescription: 'Registrera nya portföljbolag',
+        detailedContent: {
+          overview: 'När fonden gör en ny investering behöver du registrera portföljbolaget i systemet med grundläggande information och investeringsdetaljer.',
+          howItWorks: [
+            'Klicka på "Lägg till bolag"',
+            'Fyll i bolagsnamn och organisationsnummer',
+            'Välj sektor och land',
+            'Ange investeringsbelopp och datum',
+            'Ange initial värdering och ägarandel',
+            'Spara för att registrera bolaget',
+          ],
+          useCases: [
+            'Ny investering har genomförts',
+            'Uppföljningsinvestering i befintligt bolag',
+            'Import av historiska investeringar',
+          ],
+          commonMistakes: [
+            'Fel ägarandel anges',
+            'Glömmer ange investeringsdatum',
+            'Väljer fel sektor',
+          ],
+          proTips: [
+            'Dubbelkolla ägarandel mot aktieägaravtal',
+            'Använd samma sektorindelning konsekvent',
+            'Lägg till kontaktperson direkt',
+          ],
+          relatedFeatures: ['Investeringar', 'Dokument', 'Kontakter'],
+          faq: [
+            { question: 'Kan jag lägga till flera investeringar i samma bolag?', answer: 'Ja, systemet spårar varje investering separat och summerar totalt investerat belopp.' },
+          ],
+        },
+      },
+      {
+        id: 'export-portfolio',
+        title: 'Exportera portföljdata',
+        shortDescription: 'Ladda ner rapporter i olika format',
+        detailedContent: {
+          overview: 'Exportfunktionen låter dig ladda ner portföljdata i olika format för rapportering, analys eller delning med investerare.',
+          howItWorks: [
+            'Klicka på "Exportera"-knappen',
+            'Välj format: Excel, CSV eller PDF',
+            'Välj vilka kolumner/data som ska inkluderas',
+            'Klicka på "Ladda ner"',
+            'Filen laddas ner till din dator',
+          ],
+          useCases: [
+            'Kvartalsrapport till LPs',
+            'Styrelsepresentation',
+            'Extern analys i Excel',
+          ],
+          commonMistakes: [
+            'Exporterar fel period',
+            'Glömmer filtrera innan export',
+          ],
+          proTips: [
+            'PDF är bäst för delning med investerare',
+            'Excel för vidare analys',
+            'Skapa standardmallar för återkommande rapporter',
+          ],
+          relatedFeatures: ['Rapporter', 'LP-kommunikation'],
+          faq: [
+            { question: 'Kan jag schemalägga automatisk export?', answer: 'Inte ännu, men detta är planerat för framtida versioner.' },
+          ],
+        },
+      },
+    ],
+    features: [
+      { title: 'Värderingsöversikt', description: 'Se aktuell värdering för varje bolag och totalt portföljvärde.' },
+      { title: 'Sektorsfördelning', description: 'Visualisering av hur portföljen är fördelad över sektorer.' },
+      { title: 'AI-extraktion', description: 'Ladda upp rapporter och låt AI extrahera nyckeltal automatiskt.' },
+      { title: 'Export', description: 'Exportera data till Excel, CSV eller PDF för rapportering.' },
+    ],
+    tips: [
+      'Håll värderingar uppdaterade - det påverkar NAV-beräkningen',
+      'Använd sektorsöversikten för att analysera diversifiering',
+      'Ladda upp kvartalsrapporter för automatisk dataextraktion',
+    ],
+    link: '/portfolio',
+  },
+  {
+    id: 'treasury',
+    title: 'Treasury',
+    icon: 'Wallet',
+    description: 'Hantera likviditet, bankkonton och kassaflöde.',
+    introduction: 'Treasury-modulen ger dig fullständig kontroll över fondens likviditet. Se saldo på alla bankkonton, granska transaktioner och initiera betalningar - allt med 4-ögon godkännande för säkerhet.',
+    keyBenefits: [
+      'Samlad överblick över alla bankkonton',
+      'Real-tids saldon och transaktioner',
+      'AI-matchning av inkommande betalningar',
+      'Säker betalningshantering med 4-ögon princip',
+      'Kassaflödesprognos',
+    ],
+    hasVideo: true,
+    steps: [
+      {
+        id: 'view-accounts',
+        title: 'Se bankkonton',
+        shortDescription: 'Överblick av alla konton och saldon',
+        detailedContent: {
+          overview: 'Treasury-sidan visar alla fondens bankkonton med aktuella saldon, senaste transaktioner och status.',
+          howItWorks: [
+            'Navigera till Treasury i sidomenyn',
+            'Totalsaldo visas överst',
+            'Varje konto visas som ett kort med saldo och bankinfo',
+            'Klicka på ett konto för att se transaktioner',
+            'Status visar när saldot senast uppdaterades',
+          ],
+          useCases: [
+            'Daglig likviditetskontroll',
+            'Verifiera att kapitalanrop har betalats in',
+            'Planera för kommande utbetalningar',
+          ],
+          commonMistakes: [
+            'Glömmer kontrollera att saldon är uppdaterade',
+            'Missar omatchade transaktioner',
+          ],
+          proTips: [
+            'Kontrollera "Senast synkad"-tiden för varje konto',
+            'Gröna transaktioner är matchade, gula behöver granskning',
+            'Använd sökning för att hitta specifika transaktioner',
+          ],
+          relatedFeatures: ['Kapitalanrop', 'Utdelningar', 'Betalningar'],
+          faq: [
+            { question: 'Hur ofta uppdateras saldon?', answer: 'Saldon synkas automatiskt flera gånger per dag, eller manuellt vid behov.' },
+            { question: 'Vilka banker stöds?', answer: 'Vi stödjer de flesta nordiska banker via Open Banking-API:er.' },
+          ],
+        },
+      },
+      {
+        id: 'match-payments',
+        title: 'Matcha betalningar',
+        shortDescription: 'AI hjälper till att matcha inkommande betalningar',
+        detailedContent: {
+          overview: 'När betalningar kommer in försöker AI automatiskt matcha dem mot kapitalanrop eller fakturor. Du granskar och bekräftar matchningen.',
+          howItWorks: [
+            'Inkommande betalningar visas med status "Ej matchad"',
+            'AI föreslår matchning baserat på belopp och referens',
+            'Du granskar förslaget',
+            'Bekräfta om korrekt, eller korrigera manuellt',
+            'Matchad betalning uppdaterar kapitalanropets status',
+          ],
+          useCases: [
+            'Investerare betalar kapitalanrop',
+            'Portföljbolag betalar utdelning',
+            'Återbetalning av kostnader',
+          ],
+          commonMistakes: [
+            'Bekräftar matchning utan att granska',
+            'Missar delbetalningar',
+          ],
+          proTips: [
+            'Granska alltid belopp och avsändare före bekräftelse',
+            'Delbetalningar kan matchas manuellt',
+            'Kontakta investerare vid oklara betalningar',
+          ],
+          relatedFeatures: ['Kapitalanrop', 'Bokföring'],
+          faq: [
+            { question: 'Vad händer om AI matchar fel?', answer: 'Du kan alltid korrigera matchningen manuellt. AI lär sig av dina korrigeringar.' },
+          ],
+        },
+      },
+    ],
+    features: [
+      { title: 'Multi-bank', description: 'Se alla bankkonton på ett ställe.' },
+      { title: 'AI-matchning', description: 'Automatisk matchning av betalningar.' },
+      { title: 'Kassaflödesprognos', description: 'Se förväntade in- och utbetalningar.' },
+      { title: '4-ögon betalningar', description: 'Säker betalningshantering med dubbelt godkännande.' },
+    ],
+    tips: [
+      'Granska omatchade transaktioner dagligen',
+      'Använd kassaflödesprognosen för planering',
+      'Stora betalningar kräver extra godkännande',
+    ],
+    link: '/treasury',
+  },
+  {
+    id: 'accounting',
+    title: 'Bokföring',
+    icon: 'Calculator',
+    description: 'AI-driven bokföring från uppladdning till årsredovisning.',
+    introduction: 'Bokföringsmodulen automatiserar hela bokföringsflödet med AI. Ladda upp fakturor och kvitton, få automatiska konteringsförslag enligt BAS-kontoplanen, stäm av perioder och generera årsredovisning.',
+    keyBenefits: [
+      'AI läser och klassificerar dokument automatiskt',
+      'Automatiska konteringsförslag enligt BAS',
+      'Momsberäkning och avstämning',
+      'Export till Fortnox, Visma, SIE',
+      'Komplett audit trail',
+    ],
+    hasVideo: true,
+    steps: [
+      {
+        id: 'upload-docs',
+        title: 'Ladda upp dokument',
+        shortDescription: 'Dra och släpp fakturor och kvitton',
+        detailedContent: {
+          overview: 'Det första steget i bokföringsprocessen är att ladda upp verifikationer. AI läser dokumenten och extraherar relevant information automatiskt.',
+          howItWorks: [
+            'Gå till Bokföring > Uppladdning',
+            'Dra och släpp filer till uppladdningsytan',
+            'AI analyserar dokumenten automatiskt',
+            'Dokumenttyp identifieras (faktura, kvitto, etc.)',
+            'Data extraheras: belopp, datum, leverantör',
+            'Dokument köas för kontering',
+          ],
+          useCases: [
+            'Leverantörsfakturor',
+            'Kvitton från utlägg',
+            'Kontoutdrag',
+            'Kreditfakturor',
+          ],
+          commonMistakes: [
+            'Laddar upp suddiga bilder',
+            'Laddar upp samma faktura flera gånger',
+            'Fel period på dokumentet',
+          ],
+          proTips: [
+            'Bättre bildkvalitet ger bättre AI-resultat',
+            'Ladda upp flera filer samtidigt för effektivitet',
+            'Kontrollera att alla sidor är med vid flersidiga fakturor',
+          ],
+          relatedFeatures: ['AI-klassificering', 'OCR', 'Kontering'],
+          faq: [
+            { question: 'Vilka filformat stöds?', answer: 'PDF, JPG, PNG och Excel-filer stöds.' },
+            { question: 'Hur vet jag om AI läst rätt?', answer: 'Du kan alltid granska och korrigera AI:s förslag i nästa steg.' },
+          ],
+        },
+      },
+      {
+        id: 'review-booking',
+        title: 'Granska kontering',
+        shortDescription: 'AI föreslår kontering - du godkänner',
+        detailedContent: {
+          overview: 'Efter uppladdning föreslår AI kontering enligt BAS-kontoplanen. Du granskar, justerar vid behov och godkänner.',
+          howItWorks: [
+            'Gå till Bokföring > Kontering',
+            'Se lista med väntande verifikationer',
+            'Klicka på en verifikation för att se AI:s förslag',
+            'Granska debet- och kreditkonton',
+            'Justera vid behov genom att klicka på fälten',
+            'Godkänn för att bokföra',
+          ],
+          useCases: [
+            'Daglig bokföring av inkomna fakturor',
+            'Kvartalsavstämning',
+            'Korrigering av felaktiga bokningar',
+          ],
+          commonMistakes: [
+            'Godkänner utan att granska',
+            'Fel period valt',
+            'Glömmer momsavdrag',
+          ],
+          proTips: [
+            'AI lär sig av dina korrigeringar',
+            'Använd snabbsök för att hitta rätt konto',
+            'Dubbelkolla momskonto vid osäkerhet',
+          ],
+          relatedFeatures: ['BAS-kontoplan', 'Moms', 'Verifikationer'],
+          faq: [
+            { question: 'Kan jag ändra en bokföring efteråt?', answer: 'Ja, genom att skapa en korrigeringsverifikation. Låsta perioder kan inte ändras.' },
+          ],
+        },
+      },
+      {
+        id: 'close-period',
+        title: 'Stäm av period',
+        shortDescription: 'Stäng månaden och verifiera balanser',
+        detailedContent: {
+          overview: 'Periodavstämning säkerställer att alla bokningar är korrekta innan perioden låses. En checklista guidar dig genom processen.',
+          howItWorks: [
+            'Gå till Bokföring > Avstämning',
+            'Välj period att stämma av',
+            'Gå igenom checklistan punkt för punkt',
+            'Verifiera balanser mot kontoutdrag',
+            'Korrigera eventuella avvikelser',
+            'Lås perioden när allt stämmer',
+          ],
+          useCases: [
+            'Månadsavslut',
+            'Kvartalsrapportering',
+            'Förberedelse för revision',
+          ],
+          commonMistakes: [
+            'Låser period med kända avvikelser',
+            'Glömmer stämma av alla konton',
+            'Missar periodiseringar',
+          ],
+          proTips: [
+            'Följ checklistan i ordning',
+            'Dokumentera alltid avvikelser',
+            'Låsta perioder går inte att ändra',
+          ],
+          relatedFeatures: ['Checklista', 'Balanser', 'Revision'],
+          faq: [
+            { question: 'Kan jag låsa upp en period?', answer: 'Nej, låsta perioder kan inte ändras. Korrigeringar görs i ny period.' },
+          ],
+        },
+      },
+      {
+        id: 'annual-report',
+        title: 'Årsredovisning',
+        shortDescription: 'Generera årsredovisning och bokslut',
+        detailedContent: {
+          overview: 'När räkenskapsåret är slut hjälper systemet dig att ta fram årsredovisning med resultat- och balansräkning.',
+          howItWorks: [
+            'Gå till Bokföring > Årsredovisning',
+            'Välj räkenskapsår',
+            'Systemet genererar resultaträkning',
+            'Balansräkning skapas automatiskt',
+            'Granska och justera vid behov',
+            'Exportera till PDF eller skicka direkt till revisor',
+          ],
+          useCases: [
+            'Årsbokslut',
+            'Delårsrapport',
+            'Underlag för revision',
+          ],
+          commonMistakes: [
+            'Alla perioder är inte avstämda',
+            'Saknade periodiseringar',
+          ],
+          proTips: [
+            'Stäm av alla perioder innan årsboksut',
+            'Exportera tidigt för revisorsgranskning',
+            'Spara alltid en kopia',
+          ],
+          relatedFeatures: ['Resultaträkning', 'Balansräkning', 'Revision'],
+          faq: [
+            { question: 'Kan revisorn få tillgång till systemet?', answer: 'Ja, du kan bjuda in revisorn med läsrättigheter.' },
+          ],
+        },
+      },
+    ],
+    features: [
+      { title: 'AI-klassificering', description: 'Dokument klassificeras automatiskt av AI.' },
+      { title: 'BAS-kontering', description: 'Automatiska konteringsförslag enligt BAS.' },
+      { title: 'Periodavstämning', description: 'Strukturerad process för att stänga perioder.' },
+      { title: 'Export', description: 'Export till Fortnox, Visma, SIE-format.' },
+    ],
+    tips: [
+      'Ladda upp dokument löpande för jämnare arbetsbelastning',
+      'Granska alltid AI-förslag innan godkännande',
+      'Stäm av månadsvis för bättre kontroll',
+    ],
+    link: '/accounting',
+  },
+  {
+    id: 'data-rooms',
+    title: 'Datarum',
+    icon: 'FolderLock',
+    description: 'Säkra, krypterade utrymmen för känsliga dokument.',
+    introduction: 'Datarum ger dig möjlighet att dela känsliga dokument säkert med externa parter. Varje datarum har granulär åtkomstkontroll, tidsbegränsning och komplett aktivitetslogg.',
+    keyBenefits: [
+      'Krypterad lagring av känsliga dokument',
+      'Granulär åtkomstkontroll per användare',
+      'Tidsbegränsad åtkomst',
+      'Automatisk vattenmärkning',
+      'Komplett aktivitetslogg',
+    ],
+    hasVideo: true,
+    steps: [
+      {
+        id: 'create-room',
+        title: 'Skapa datarum',
+        shortDescription: 'Skapa ett nytt säkert datarum',
+        detailedContent: {
+          overview: 'Skapa ett datarum för att säkert dela dokument med investerare, due diligence-team eller andra externa parter.',
+          howItWorks: [
+            'Klicka på "Nytt datarum"',
+            'Ange namn och beskrivning',
+            'Välj typ: Due Diligence, LP-rapporter, Investor Relations, etc.',
+            'Sätt utgångsdatum om tillämpligt',
+            'Aktivera vattenmärkning om önskat',
+            'Spara för att skapa rummet',
+          ],
+          useCases: [
+            'Due diligence vid fondinsamling',
+            'Dela kvartalsrapporter med LPs',
+            'Exit-process med köpare',
+          ],
+          commonMistakes: [
+            'För brett åtkomstbibliotek',
+            'Glömmer sätta utgångsdatum',
+            'Laddar upp fel dokument',
+          ],
+          proTips: [
+            'Skapa separata rum för olika processer',
+            'Sätt alltid utgångsdatum för externa användare',
+            'Använd mappar för att organisera dokument',
+          ],
+          relatedFeatures: ['Dokument', 'Åtkomst', 'Aktivitetslogg'],
+          faq: [
+            { question: 'Hur säkra är datarummen?', answer: 'Alla dokument är krypterade både vid lagring och överföring. Vi använder bankstandard för säkerhet.' },
+          ],
+        },
+      },
+      {
+        id: 'invite-members',
+        title: 'Bjud in medlemmar',
+        shortDescription: 'Ge åtkomst till rätt personer',
+        detailedContent: {
+          overview: 'Bjud in externa användare till datarummet med specifika rättigheter. Du kontrollerar vem som kan se, ladda ner eller redigera.',
+          howItWorks: [
+            'Öppna datarummet',
+            'Klicka på "Bjud in"',
+            'Ange e-postadress',
+            'Välj rättighet: Visa, Ladda ner, eller Redigera',
+            'Sätt eventuell tidsbegränsning',
+            'Skicka inbjudan',
+          ],
+          useCases: [
+            'Due diligence-team behöver tillgång',
+            'LP vill granska rapporter',
+            'Juridisk rådgivare behöver dokument',
+          ],
+          commonMistakes: [
+            'Ger för breda rättigheter',
+            'Glömmer återkalla åtkomst efter process',
+          ],
+          proTips: [
+            'Använd "Endast visa" för känsliga dokument',
+            'Sätt alltid tidsbegränsning för externa',
+            'Granska regelbundet vem som har åtkomst',
+          ],
+          relatedFeatures: ['Rättigheter', 'Inbjudningar', 'Åtkomstkontroll'],
+          faq: [
+            { question: 'Kan jag återkalla åtkomst?', answer: 'Ja, du kan när som helst ta bort en användares åtkomst.' },
+          ],
+        },
+      },
+    ],
+    features: [
+      { title: 'Granulär åtkomst', description: 'Styr exakt vem som kan se vad.' },
+      { title: 'Vattenmärkning', description: 'Automatisk vattenmärkning med användarinfo.' },
+      { title: 'Aktivitetslogg', description: 'Se vem som gjort vad och när.' },
+      { title: 'Tidsbegränsning', description: 'Sätt utgångsdatum för åtkomst.' },
+    ],
+    tips: [
+      'Använd "Endast visa" för extra känsliga dokument',
+      'Granska aktivitetsloggen regelbundet',
+      'Stäng datarum när processen är klar',
+    ],
+    link: '/data-rooms',
+  },
+  {
+    id: 'compliance',
+    title: 'Compliance',
+    icon: 'Shield',
+    description: 'AI-driven compliance med dokumenthantering och regulatorisk hjälp.',
+    introduction: 'Compliance-modulen hjälper dig säkerställa regelefterlevnad. AI-agenten kan svara på regulatoriska frågor, och dokumenthanteringen håller ordning på alla compliance-dokument.',
+    keyBenefits: [
+      'AI-agent tränad på AIFMD, SFDR, MiFID II',
+      'Automatisk dokumentklassificering',
+      'KYC/AML-övervakning',
+      'Regulatorisk rapportering',
+      'Utgångsdatumspårning',
+    ],
+    hasVideo: true,
+    steps: [
+      {
+        id: 'use-ai-agent',
+        title: 'Använd AI-agenten',
+        shortDescription: 'Ställ frågor om regelverk och compliance',
+        detailedContent: {
+          overview: 'Compliance AI-agenten är tränad på relevanta regelverk och kan ge snabba svar på regulatoriska frågor.',
+          howItWorks: [
+            'Gå till Compliance > AI-Agent',
+            'Skriv din fråga i chattfältet',
+            'AI-agenten svarar med relevant information',
+            'Källor och hänvisningar visas',
+            'Ställ följdfrågor för fördjupning',
+          ],
+          useCases: [
+            'Frågor om AIFMD-krav',
+            'SFDR-klassificering',
+            'KYC-processer',
+            'Rapporteringskrav',
+          ],
+          commonMistakes: [
+            'Förlitar sig helt på AI utan egen bedömning',
+            'Ställer för vaga frågor',
+          ],
+          proTips: [
+            'Var specifik i dina frågor',
+            'Följ källhänvisningarna för detaljer',
+            'AI ersätter inte juridisk rådgivning vid komplexa frågor',
+          ],
+          relatedFeatures: ['Compliance-dokument', 'Rapportering'],
+          faq: [
+            { question: 'Vilka regelverk kan AI:n?', answer: 'AI:n är tränad på AIFMD, SFDR, MiFID II, KYC/AML-regelverk och svensk fondlagstiftning.' },
+          ],
+        },
+      },
+      {
+        id: 'manage-docs',
+        title: 'Hantera compliance-dokument',
+        shortDescription: 'Ladda upp och organisera dokument',
+        detailedContent: {
+          overview: 'Håll alla compliance-relaterade dokument organiserade med automatisk klassificering och utgångsdatumspårning.',
+          howItWorks: [
+            'Gå till Compliance > Dokument',
+            'Ladda upp dokument genom att dra och släppa',
+            'AI klassificerar dokumenttypen automatiskt',
+            'Sätt utgångsdatum för dokument som behöver förnyas',
+            'Organisera i mappar efter typ',
+          ],
+          useCases: [
+            'KYC-dokument för investerare',
+            'Policydokument',
+            'Regulatoriska rapporter',
+            'Avtal och tillstånd',
+          ],
+          commonMistakes: [
+            'Glömmer uppdatera utgående dokument',
+            'Dålig mappstruktur',
+          ],
+          proTips: [
+            'Sätt påminnelser för dokument som snart utgår',
+            'Använd konsekvent namngivning',
+            'Granska regelbundet dokumentstatus',
+          ],
+          relatedFeatures: ['Dokumenthantering', 'Påminnelser', 'KYC'],
+          faq: [
+            { question: 'Får jag påminnelser om utgående dokument?', answer: 'Ja, systemet skickar automatiskt påminnelser när dokument närmar sig utgångsdatum.' },
+          ],
+        },
+      },
+    ],
+    features: [
+      { title: 'AI-agent', description: 'Ställ frågor om regelverk och få snabba svar.' },
+      { title: 'Dokumenthantering', description: 'Organisera alla compliance-dokument.' },
+      { title: 'Utgångsdatum', description: 'Spåra och få påminnelser om dokument som utgår.' },
+      { title: 'Rapportering', description: 'Generera regulatoriska rapporter.' },
+    ],
+    tips: [
+      'Använd AI-agenten för snabba svar på vanliga frågor',
+      'Håll KYC-dokument uppdaterade',
+      'Granska compliance-status regelbundet',
+    ],
+    link: '/compliance',
+  },
+  {
+    id: 'tasks',
+    title: 'Uppgifter',
+    icon: 'ClipboardList',
+    description: 'Hantera och prioritera arbetsuppgifter.',
+    introduction: 'Uppgiftsmodulen hjälper dig hålla koll på allt som behöver göras. Se dina uppgifter, deadlines och prioriteringar på ett ställe.',
+    keyBenefits: [
+      'Samlad överblick över alla uppgifter',
+      'Prioritering och deadline-spårning',
+      'Kategorisering per område',
+      'Tilldelning till teammedlemmar',
+    ],
+    hasVideo: true,
+    steps: [
+      {
+        id: 'view-tasks',
+        title: 'Se uppgifter',
+        shortDescription: 'Överblick av alla dina uppgifter',
+        detailedContent: {
+          overview: 'Uppgiftslistan visar allt du behöver göra, sorterat efter prioritet och deadline.',
+          howItWorks: [
+            'Gå till Uppgifter i sidomenyn',
+            'Se alla uppgifter i en lista',
+            'Filtrera på status: Att göra, Pågående, Klart',
+            'Sortera på deadline eller prioritet',
+            'Klicka på en uppgift för detaljer',
+          ],
+          useCases: [
+            'Daglig planering',
+            'Veckoöversikt',
+            'Teamkoordinering',
+          ],
+          commonMistakes: [
+            'Ignorerar hög-prioritet uppgifter',
+            'Glömmer uppdatera status',
+          ],
+          proTips: [
+            'Börja dagen med att granska uppgiftslistan',
+            'Markera uppgifter klara direkt när de är gjorda',
+            'Använd filter för att fokusera',
+          ],
+          relatedFeatures: ['Notifikationer', 'Kalender'],
+          faq: [
+            { question: 'Kan jag skapa egna uppgifter?', answer: 'Ja, klicka på "Ny uppgift" för att skapa en uppgift.' },
+          ],
+        },
+      },
+    ],
+    features: [
+      { title: 'Prioritering', description: 'Hög, medium, låg prioritet.' },
+      { title: 'Deadline-spårning', description: 'Se och hantera deadlines.' },
+      { title: 'Kategorisering', description: 'Organisera uppgifter per område.' },
+      { title: 'Tilldelning', description: 'Tilldela uppgifter till teammedlemmar.' },
+    ],
+    tips: [
+      'Fokusera på röda (hög prioritet) uppgifter först',
+      'Uppdatera status löpande',
+      'Granska uppgiftslistan dagligen',
+    ],
+    link: '/tasks',
+  },
+  {
+    id: 'approvals',
+    title: 'Godkännanden',
+    icon: 'CheckSquare',
+    description: '4-ögon godkännande för finansiella transaktioner.',
+    introduction: '4-ögon principen säkerställer att alla finansiella transaktioner granskas av minst två personer. Godkännandemodulen visar alla ärenden som väntar på din granskning.',
+    keyBenefits: [
+      'Separation of duties',
+      'Komplett audit trail',
+      'Säker hantering av finansiella transaktioner',
+      'Tydlig översikt av väntande ärenden',
+    ],
+    hasVideo: true,
+    steps: [
+      {
+        id: 'review-pending',
+        title: 'Granska väntande',
+        shortDescription: 'Se ärenden som väntar på ditt godkännande',
+        detailedContent: {
+          overview: 'Godkännandesidan visar alla ärenden som väntar på din granskning - utdelningar, betalningar och andra transaktioner.',
+          howItWorks: [
+            'Gå till Godkännanden i sidomenyn',
+            'Se lista med väntande ärenden',
+            'Klicka på ett ärende för detaljer',
+            'Granska belopp, mottagare, syfte',
+            'Godkänn eller avslå med motivering',
+          ],
+          useCases: [
+            'Godkänna utdelningar',
+            'Granska betalningar',
+            'Verifiera transaktioner',
+          ],
+          commonMistakes: [
+            'Godkänner utan att granska noggrant',
+            'Avslår utan motivering',
+          ],
+          proTips: [
+            'Ta alltid tid att granska detaljer',
+            'Kontrollera originalunderlag vid stora belopp',
+            'Avslå med tydlig motivering',
+          ],
+          relatedFeatures: ['Utdelningar', 'Betalningar', 'Audit trail'],
+          faq: [
+            { question: 'Kan jag godkänna mina egna ärenden?', answer: 'Nej, du kan inte godkänna ärenden du själv skapat. Det är kärnan i 4-ögon principen.' },
+          ],
+        },
+      },
+    ],
+    features: [
+      { title: '4-ögon princip', description: 'Minst två personer måste granska.' },
+      { title: 'Audit trail', description: 'Komplett logg över alla godkännanden.' },
+      { title: 'Motivering', description: 'Avslag kräver alltid motivering.' },
+      { title: 'Notifikationer', description: 'Få notis när nya ärenden väntar.' },
+    ],
+    tips: [
+      'Granska väntande ärenden dagligen',
+      'Kontrollera alltid belopp och mottagare',
+      'Vid tveksamhet - avslå och efterfråga mer info',
+    ],
+    link: '/approvals',
+  },
+  {
+    id: 'settings',
+    title: 'Inställningar',
+    icon: 'Settings',
+    description: 'Konfigurera ditt konto och systeminställningar.',
+    introduction: 'I inställningarna kan du hantera din profil, säkerhetsinställningar, teammedlemmar och integrationer.',
+    keyBenefits: [
+      'Personliga profilinställningar',
+      'Säkerhet och tvåfaktorsautentisering',
+      'Teamhantering och roller',
+      'API-integrationer',
+    ],
+    hasVideo: true,
+    steps: [
+      {
+        id: 'manage-profile',
+        title: 'Hantera profil',
+        shortDescription: 'Uppdatera dina personliga uppgifter',
+        detailedContent: {
+          overview: 'Håll din profil uppdaterad med korrekta kontaktuppgifter och inställningar.',
+          howItWorks: [
+            'Gå till Inställningar',
+            'Klicka på Profil',
+            'Uppdatera namn och kontaktuppgifter',
+            'Ändra lösenord om behov',
+            'Aktivera tvåfaktorsautentisering',
+          ],
+          useCases: [
+            'Uppdatera telefonnummer',
+            'Ändra e-postadress',
+            'Aktivera extra säkerhet',
+          ],
+          commonMistakes: [
+            'Glömmer aktivera 2FA',
+            'Svagt lösenord',
+          ],
+          proTips: [
+            'Aktivera alltid tvåfaktorsautentisering',
+            'Använd en lösenordshanterare',
+            'Håll kontaktuppgifter aktuella',
+          ],
+          relatedFeatures: ['Säkerhet', '2FA', 'Lösenord'],
+          faq: [
+            { question: 'Är tvåfaktorsautentisering obligatoriskt?', answer: 'Det är starkt rekommenderat och kan vara obligatoriskt beroende på företagets policy.' },
+          ],
+        },
+      },
+    ],
+    features: [
+      { title: 'Profil', description: 'Hantera dina personliga uppgifter.' },
+      { title: 'Säkerhet', description: 'Lösenord och tvåfaktorsautentisering.' },
+      { title: 'Team', description: 'Hantera teammedlemmar och roller.' },
+      { title: 'Integrationer', description: 'Anslut externa system.' },
+    ],
+    tips: [
+      'Aktivera tvåfaktorsautentisering för extra säkerhet',
+      'Granska teammedlemmars rättigheter regelbundet',
+      'Testa integrationer i sandbox-läge först',
+    ],
+    link: '/settings',
+  },
 ];
 
 // Helper function to get section by ID
