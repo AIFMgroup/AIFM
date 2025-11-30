@@ -164,9 +164,9 @@ export function ChatWidget() {
           onClick={() => setIsOpen(true)}
           className="fixed bottom-6 right-6 z-50 group"
         >
-          {/* Pulsing ring effect */}
-          <div className="absolute inset-0 bg-aifm-gold/30 rounded-full animate-ping" />
-          <div className="absolute inset-0 bg-aifm-gold/20 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
+          {/* Pulsing ring effect - white rings */}
+          <div className="absolute inset-0 bg-white/40 rounded-full animate-ping" />
+          <div className="absolute inset-0 bg-white/30 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
           
           {/* Main button */}
           <div className="relative w-16 h-16 bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/90 rounded-full 

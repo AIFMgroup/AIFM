@@ -708,7 +708,7 @@ function DashboardLayoutInner({
       {/* Mobile Sidebar */}
       <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       
-      <main className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out lg:${collapsed ? 'ml-[72px]' : 'ml-56'}`}>
+      <main className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out ${collapsed ? 'lg:ml-[72px]' : 'lg:ml-56'}`}>
         {/* Header with company selector - ALWAYS visible */}
         <header className="bg-white border-b border-gray-100 sticky top-0 z-30">
           <div className="px-4 sm:px-6 py-3">
