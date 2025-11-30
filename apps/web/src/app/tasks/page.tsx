@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   CheckCircle2, Clock, AlertCircle, Circle, 
-  Filter, Search, Calendar, User, Tag,
+  Search, Calendar, User, Tag,
   ArrowRight, Plus, MoreHorizontal, Bell,
   FileText, DollarSign, Users, Building2, Calculator
 } from 'lucide-react';
