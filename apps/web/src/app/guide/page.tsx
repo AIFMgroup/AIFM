@@ -237,12 +237,10 @@ function StepDetailModal({
 function StepCard({ 
   step, 
   index, 
-  sectionTitle,
   onClick 
 }: { 
   step: GuideStep; 
   index: number; 
-  sectionTitle: string;
   onClick: () => void;
 }) {
   return (
@@ -386,7 +384,6 @@ export default function GuidePage() {
                     key={step.id}
                     step={step}
                     index={index}
-                    sectionTitle={section.title}
                     onClick={() => setSelectedStep({ step, index, sectionTitle: section.title })}
                   />
                 ))}
