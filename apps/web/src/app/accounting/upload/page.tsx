@@ -278,63 +278,63 @@ export default function AccountingUploadPage() {
   return (
     <DashboardLayout>
       {/* Page Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 text-sm text-aifm-charcoal/40 mb-2">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex items-center gap-2 text-xs sm:text-sm text-aifm-charcoal/40 mb-2">
           <Link href="/accounting" className="hover:text-aifm-gold transition-colors">Bokföring</Link>
           <span>/</span>
           <span className="text-aifm-charcoal">Ladda upp material</span>
         </div>
-        <h1 className="text-2xl font-medium text-aifm-charcoal uppercase tracking-wider mb-2">
+        <h1 className="text-xl sm:text-2xl font-semibold text-aifm-charcoal tracking-tight mb-1 sm:mb-2">
           Ladda upp material
         </h1>
-        <p className="text-aifm-charcoal/60">
+        <p className="text-sm text-aifm-charcoal/60">
           Ladda upp kvitton, fakturor och andra underlag. AI:n analyserar och klassificerar automatiskt.
         </p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-xl p-5 border border-gray-100">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100/50 hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-500">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-aifm-gold/10 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-aifm-gold" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-aifm-gold/10 flex items-center justify-center">
+              <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-aifm-gold" />
             </div>
             <div>
-              <p className="text-2xl font-medium text-aifm-charcoal">{documents.length}</p>
-              <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider">Totalt</p>
+              <p className="text-xl sm:text-2xl font-semibold text-aifm-charcoal">{documents.length}</p>
+              <p className="text-[10px] sm:text-xs text-aifm-charcoal/50 uppercase tracking-wider">Totalt</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-100">
+        <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100/50 hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-500">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-green-100 flex items-center justify-center">
+              <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
             </div>
             <div>
-              <p className="text-2xl font-medium text-aifm-charcoal">{classifiedCount}</p>
-              <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider">Klassificerade</p>
+              <p className="text-xl sm:text-2xl font-semibold text-aifm-charcoal">{classifiedCount}</p>
+              <p className="text-[10px] sm:text-xs text-aifm-charcoal/50 uppercase tracking-wider">Klassificerade</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-100">
+        <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100/50 hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-500">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-              <AlertCircle className="w-5 h-5 text-amber-600" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+              <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
             </div>
             <div>
-              <p className="text-2xl font-medium text-aifm-charcoal">{needsReviewCount}</p>
-              <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider">Behöver granskas</p>
+              <p className="text-xl sm:text-2xl font-semibold text-aifm-charcoal">{needsReviewCount}</p>
+              <p className="text-[10px] sm:text-xs text-aifm-charcoal/50 uppercase tracking-wider">Att granska</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-100">
+        <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100/50 hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-500">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-aifm-gold/20 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-aifm-gold" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-aifm-gold/20 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-aifm-gold animate-pulse" />
             </div>
             <div>
-              <p className="text-2xl font-medium text-aifm-charcoal">{analyzingCount}</p>
-              <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider">Analyseras</p>
+              <p className="text-xl sm:text-2xl font-semibold text-aifm-charcoal">{analyzingCount}</p>
+              <p className="text-[10px] sm:text-xs text-aifm-charcoal/50 uppercase tracking-wider">Analyseras</p>
             </div>
           </div>
         </div>
@@ -342,9 +342,9 @@ export default function AccountingUploadPage() {
 
       {/* Upload Area */}
       <div 
-        className={`relative mb-8 border-2 border-dashed rounded-2xl transition-all duration-300 
+        className={`relative mb-6 sm:mb-8 border-2 border-dashed rounded-xl sm:rounded-2xl transition-all duration-300 
           ${isDragging 
-            ? 'border-aifm-gold bg-aifm-gold/5' 
+            ? 'border-aifm-gold bg-aifm-gold/5 shadow-xl shadow-aifm-gold/10' 
             : 'border-gray-200 bg-white hover:border-aifm-gold/50 hover:bg-gray-50'
           }`}
         onDragOver={handleDragOver}
@@ -359,22 +359,23 @@ export default function AccountingUploadPage() {
           onChange={handleFileSelect}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         />
-        <div className="p-12 text-center">
-          <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-6 transition-colors
-            ${isDragging ? 'bg-aifm-gold/20' : 'bg-gray-100'}`}>
-            <Upload className={`w-10 h-10 ${isDragging ? 'text-aifm-gold' : 'text-gray-400'}`} />
+        <div className="p-8 sm:p-12 text-center">
+          <div className={`w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full flex items-center justify-center mb-4 sm:mb-6 transition-all duration-300
+            ${isDragging ? 'bg-aifm-gold/20 scale-110' : 'bg-gray-100'}`}>
+            <Upload className={`w-8 h-8 sm:w-10 sm:h-10 transition-colors duration-300 ${isDragging ? 'text-aifm-gold' : 'text-gray-400'}`} />
           </div>
-          <h3 className="text-xl font-medium text-aifm-charcoal mb-2">
+          <h3 className="text-lg sm:text-xl font-semibold text-aifm-charcoal mb-2">
             {isDragging ? 'Släpp filerna här' : 'Dra och släpp filer här'}
           </h3>
-          <p className="text-aifm-charcoal/50 mb-4">
+          <p className="text-sm text-aifm-charcoal/50 mb-4">
             eller klicka för att välja filer
           </p>
           <div className="flex items-center justify-center gap-2 text-xs text-aifm-charcoal/40">
             <Sparkles className="w-4 h-4 text-aifm-gold" />
-            <span>AI analyserar och klassificerar automatiskt dina underlag</span>
+            <span className="hidden sm:inline">AI analyserar och klassificerar automatiskt dina underlag</span>
+            <span className="sm:hidden">AI klassificerar automatiskt</span>
           </div>
-          <p className="text-xs text-aifm-charcoal/30 mt-4">
+          <p className="text-xs text-aifm-charcoal/30 mt-3 sm:mt-4">
             Stödda format: PDF, JPG, PNG, Excel, Word
           </p>
         </div>
