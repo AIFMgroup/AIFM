@@ -326,7 +326,7 @@ export default function TasksPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div>
           <h1 className="text-2xl sm:text-3xl font-semibold text-aifm-charcoal tracking-tight">Uppgifter</h1>
-          <p className="text-aifm-charcoal/40 mt-1 text-sm">Hantera alla dina uppgifter på ett ställe</p>
+          <p className="text-aifm-charcoal/40 mt-1 text-sm">Hantera uppgifter för {selectedCompany.shortName}</p>
         </div>
         
         <button className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white 
