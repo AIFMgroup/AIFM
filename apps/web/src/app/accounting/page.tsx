@@ -278,10 +278,10 @@ export default function AccountingOverviewPage() {
   return (
     <DashboardLayout>
       {/* Page Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6 mb-6 sm:mb-10">
         <div>
-          <h1 className="text-3xl font-semibold text-aifm-charcoal tracking-tight">Bokföring</h1>
-          <p className="text-aifm-charcoal/40 mt-2">Hantera hela bokföringskedjan från underlag till årsredovisning</p>
+          <h1 className="text-2xl sm:text-3xl font-semibold text-aifm-charcoal tracking-tight">Bokföring</h1>
+          <p className="text-aifm-charcoal/40 mt-1 sm:mt-2 text-sm">Hantera hela bokföringskedjan från underlag till årsredovisning</p>
         </div>
         <div className="flex items-center gap-3">
           <select
@@ -307,7 +307,7 @@ export default function AccountingOverviewPage() {
       </div>
 
       {/* Progress Overview */}
-      <div className="grid lg:grid-cols-3 gap-8 mb-10">
+      <div className="grid lg:grid-cols-3 gap-4 sm:gap-8 mb-6 sm:mb-10">
         {/* Main Progress */}
         <div className="bg-gradient-to-br from-aifm-charcoal via-aifm-charcoal to-aifm-charcoal/90 rounded-2xl p-8 text-white shadow-xl shadow-aifm-charcoal/20">
           <div className="flex items-start justify-between mb-6">

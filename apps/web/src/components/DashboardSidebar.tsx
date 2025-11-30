@@ -79,7 +79,7 @@ const navItems: NavItem[] = [
     id: 'tasks', 
     label: 'Uppgifter', 
     icon: CheckSquare, 
-    href: '/approvals' 
+    href: '/tasks' 
   },
 ];
 
