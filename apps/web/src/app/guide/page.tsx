@@ -52,7 +52,7 @@ function StepDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-8">
+      <div className="bg-white rounded-2xl w-full max-w-4xl h-[700px] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-8">
         
         {/* Header */}
         <div className="px-6 py-5 border-b border-gray-100 flex items-start justify-between bg-gradient-to-r from-aifm-charcoal/5 to-transparent flex-shrink-0">

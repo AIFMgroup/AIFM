@@ -2,10 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { 
-  Send, Bot, User, FileText, Sparkles,
+  Send, User, FileText, Sparkles,
   ThumbsUp, ThumbsDown, Copy, CheckCircle2, MessageCircle
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import Image from 'next/image';
 
 interface Message {
   id: string;
@@ -304,8 +305,14 @@ Försök gärna omformulera din fråga eller välj ett av de föreslagna ämnena
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/80 
                             flex items-center justify-center shadow-lg shadow-aifm-charcoal/20
-                            animate-pulse-slow">
-              <Bot className="w-7 h-7 text-white" />
+                            animate-pulse-slow overflow-hidden">
+              <Image
+                src="/maskot7.png"
+                alt="Compliance Agent"
+                width={56}
+                height={56}
+                className="rounded-xl"
+              />
             </div>
             <div>
               <h1 className="text-2xl font-semibold text-aifm-charcoal tracking-tight">
@@ -333,14 +340,14 @@ Försök gärna omformulera din fråga eller välj ett av de föreslagna ämnena
                 className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
               >
                 {/* Avatar */}
-                <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-md
+                <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-md overflow-hidden
                   ${message.role === 'assistant' 
                     ? 'bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/80' 
                     : 'bg-gradient-to-br from-aifm-gold to-aifm-gold/80'
                   }`}
                 >
                   {message.role === 'assistant' 
-                    ? <Bot className="w-5 h-5 text-white" />
+                    ? <Image src="/maskot7.png" alt="Agent" width={40} height={40} className="rounded-full" />
                     : <User className="w-5 h-5 text-white" />
                   }
                 </div>
@@ -410,8 +417,8 @@ Försök gärna omformulera din fråga eller välj ett av de föreslagna ämnena
             {isTyping && (
               <div className="flex gap-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/80 
-                                flex items-center justify-center shadow-md">
-                  <Bot className="w-5 h-5 text-white" />
+                                flex items-center justify-center shadow-md overflow-hidden">
+                  <Image src="/maskot7.png" alt="Agent" width={40} height={40} className="rounded-full" />
                 </div>
                 <div className="bg-aifm-charcoal rounded-2xl rounded-tl-md px-5 py-4 shadow-sm">
                   <div className="flex items-center gap-3">

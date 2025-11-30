@@ -174,7 +174,7 @@ export function ChatWidget() {
                           group-hover:scale-110 group-hover:shadow-aifm-gold/20 transition-all duration-300
                           border-2 border-white/10">
             <Image
-              src="/maskot6.png"
+              src="/maskot7.png"
               alt="AIFM Assistant"
               width={40}
               height={40}
@@ -206,7 +206,7 @@ export function ChatWidget() {
             <div className="flex items-center gap-3">
               <div className="relative">
                 <Image
-                  src="/maskot6.png"
+                  src="/maskot7.png"
                   alt="AIFM Assistant"
                   width={44}
                   height={44}
@@ -245,7 +245,7 @@ export function ChatWidget() {
               <div className="text-center py-8">
                 <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-aifm-gold/20 to-aifm-charcoal/10 rounded-full flex items-center justify-center">
                   <Image
-                    src="/maskot6.png"
+                    src="/maskot7.png"
                     alt="AIFM Assistant"
                     width={56}
                     height={56}
