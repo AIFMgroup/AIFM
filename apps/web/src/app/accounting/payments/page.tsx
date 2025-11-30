@@ -4,9 +4,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { 
   CheckCircle2, Clock, AlertCircle, CreditCard, Send,
-  Calendar, Building2, FileText, ChevronDown, Plus, Search
+  Calendar, Building2, FileText, Plus, Search, ChevronRight,
+  Filter, Download, TrendingUp, TrendingDown, Wallet
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { useCompany } from '@/components/CompanyContext';
 
 interface Payment {
   id: string;
@@ -151,18 +153,83 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
+// Tab Button Component
+function TabButton({ active, onClick, children, count }: { active: boolean; onClick: () => void; children: React.ReactNode; count?: number }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-4 sm:px-6 py-3 text-xs sm:text-sm font-medium transition-all relative whitespace-nowrap ${
+        active 
+          ? 'text-aifm-charcoal' 
+          : 'text-aifm-charcoal/50 hover:text-aifm-charcoal/70'
+      }`}
+    >
+      <span className="flex items-center gap-2">
+        {children}
+        {count !== undefined && count > 0 && (
+          <span className={`px-1.5 py-0.5 rounded-full text-xs ${
+            active ? 'bg-aifm-gold/20 text-aifm-gold' : 'bg-gray-100 text-gray-500'
+          }`}>
+            {count}
+          </span>
+        )}
+      </span>
+      {active && (
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-aifm-gold rounded-full" />
+      )}
+    </button>
+  );
+}
+
+// Hero Metric
+function HeroMetric({ label, value, color = 'white', icon: Icon }: { label: string; value: string; color?: 'white' | 'green' | 'red' | 'amber'; icon: React.ElementType }) {
+  const textColors = {
+    white: 'text-white',
+    green: 'text-emerald-400',
+    red: 'text-red-400',
+    amber: 'text-amber-400',
+  };
+  
+  return (
+    <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+          <Icon className="w-5 h-5 text-white/70" />
+        </div>
+        <div>
+          <p className={`text-xl sm:text-2xl font-bold ${textColors[color]}`}>{value}</p>
+          <p className="text-[10px] sm:text-xs text-white/50 uppercase tracking-wider">{label}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PaymentsPage() {
+  useCompany(); // Context for layout
   const [payments, setPayments] = useState<Payment[]>(mockPayments);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'paid' | 'pending' | 'scheduled' | 'overdue'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'scheduled' | 'overdue' | 'paid'>('all');
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
 
-  const filteredPayments = payments.filter(payment => {
-    const matchesSearch = payment.recipient.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         payment.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const getFilteredPayments = () => {
+    let filtered = payments;
+    
+    if (searchQuery) {
+      filtered = filtered.filter(p => 
+        p.recipient.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    if (activeTab !== 'all') {
+      filtered = filtered.filter(p => p.status === activeTab);
+    }
+    
+    return filtered;
+  };
+
+  const filteredPayments = getFilteredPayments();
 
   const handlePay = (id: string) => {
     setPayments(prev => prev.map(p => p.id === id ? { ...p, status: 'paid' as const } : p));
@@ -177,70 +244,104 @@ export default function PaymentsPage() {
     setSelectedPayments(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
 
+  const pendingCount = payments.filter(p => p.status === 'pending').length;
+  const scheduledCount = payments.filter(p => p.status === 'scheduled').length;
+  const overdueCount = payments.filter(p => p.status === 'overdue').length;
+  const paidCount = payments.filter(p => p.status === 'paid').length;
+
   const pendingAmount = payments.filter(p => p.status === 'pending' || p.status === 'scheduled').reduce((sum, p) => sum + p.amount, 0);
   const overdueAmount = payments.filter(p => p.status === 'overdue').reduce((sum, p) => sum + p.amount, 0);
   const paidThisMonth = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0);
 
   return (
     <DashboardLayout>
-      {/* Page Header */}
-      <div className="mb-6 sm:mb-8">
-        <div className="flex items-center gap-2 text-xs sm:text-sm text-aifm-charcoal/40 mb-2">
-          <Link href="/accounting" className="hover:text-aifm-gold transition-colors">Bokföring</Link>
-          <span>/</span>
-          <span className="text-aifm-charcoal">Betalningar</span>
+      {/* Hero Section */}
+      <div className="relative bg-gradient-to-br from-aifm-charcoal via-aifm-charcoal to-aifm-charcoal/90 rounded-2xl sm:rounded-3xl p-6 sm:p-8 mb-6 sm:mb-8 overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
+            backgroundSize: '32px 32px'
+          }} />
         </div>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-semibold text-aifm-charcoal tracking-tight mb-1 sm:mb-2">
-              Betalningar
-            </h1>
-            <p className="text-sm text-aifm-charcoal/60">
-              Hantera utgående betalningar, skatter och löner
-            </p>
+        
+        <div className="relative">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-xs sm:text-sm text-white/40 mb-4">
+            <Link href="/accounting" className="hover:text-white/60 transition-colors">Bokföring</Link>
+            <ChevronRight className="w-3 h-3" />
+            <span className="text-white/70">Betalningar</span>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            {selectedPayments.length > 0 && (
-              <button
-                onClick={handleBulkPay}
-                className="px-3 sm:px-4 py-2 sm:py-2.5 bg-green-600 text-white rounded-xl text-xs sm:text-sm font-medium hover:bg-green-700 transition-colors flex items-center gap-2 shadow-lg shadow-green-600/20"
-              >
-                <Send className="w-4 h-4" />
-                <span className="hidden sm:inline">Betala {selectedPayments.length} valda</span>
-                <span className="sm:hidden">{selectedPayments.length}</span>
+          
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+                Betalningar
+              </h1>
+              <p className="text-white/60 text-sm">
+                Hantera utgående betalningar, skatter och löner
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              {selectedPayments.length > 0 && (
+                <button
+                  onClick={handleBulkPay}
+                  className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white 
+                             bg-emerald-500 rounded-xl hover:bg-emerald-600 
+                             shadow-lg shadow-emerald-500/30 transition-all"
+                >
+                  <Send className="w-4 h-4" />
+                  Betala {selectedPayments.length}
+                </button>
+              )}
+              <button className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-aifm-charcoal 
+                         bg-aifm-gold rounded-xl hover:bg-aifm-gold/90 
+                         shadow-lg shadow-aifm-gold/30 transition-all">
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">Ny betalning</span>
               </button>
-            )}
-            <button className="px-3 sm:px-4 py-2 sm:py-2.5 bg-aifm-charcoal text-white rounded-xl text-xs sm:text-sm font-medium hover:bg-aifm-charcoal/90 transition-colors flex items-center gap-2 shadow-lg shadow-aifm-charcoal/20">
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Ny betalning</span>
-            </button>
+            </div>
+          </div>
+
+          {/* Hero Metrics */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <HeroMetric label="Att betala" value={formatCurrency(pendingAmount)} icon={Wallet} />
+            <HeroMetric label="Förfallna" value={formatCurrency(overdueAmount)} color="red" icon={AlertCircle} />
+            <HeroMetric label="Betalt i månaden" value={formatCurrency(paidThisMonth)} color="green" icon={CheckCircle2} />
+            <HeroMetric label="Nästa förfallodag" value="5 dec" color="amber" icon={Calendar} />
           </div>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-xl p-5 border border-gray-100">
-          <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Att betala</p>
-          <p className="text-2xl font-medium text-aifm-charcoal">{formatCurrency(pendingAmount)}</p>
-        </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-100">
-          <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Förfallna</p>
-          <p className="text-2xl font-medium text-red-600">{formatCurrency(overdueAmount)}</p>
-        </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-100">
-          <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Betalt denna månad</p>
-          <p className="text-2xl font-medium text-green-600">{formatCurrency(paidThisMonth)}</p>
-        </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-100">
-          <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Nästa förfallodag</p>
-          <p className="text-2xl font-medium text-aifm-charcoal">5 dec</p>
+      {/* Tabs */}
+      <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-100/50 mb-6 overflow-x-auto">
+        <div className="flex border-b border-gray-100 min-w-max">
+          <TabButton active={activeTab === 'all'} onClick={() => setActiveTab('all')} count={payments.length}>
+            <Wallet className="w-4 h-4" />
+            Alla
+          </TabButton>
+          <TabButton active={activeTab === 'pending'} onClick={() => setActiveTab('pending')} count={pendingCount}>
+            <Clock className="w-4 h-4" />
+            Väntar
+          </TabButton>
+          <TabButton active={activeTab === 'scheduled'} onClick={() => setActiveTab('scheduled')} count={scheduledCount}>
+            <Calendar className="w-4 h-4" />
+            Schemalagda
+          </TabButton>
+          <TabButton active={activeTab === 'overdue'} onClick={() => setActiveTab('overdue')} count={overdueCount}>
+            <AlertCircle className="w-4 h-4" />
+            Förfallna
+          </TabButton>
+          <TabButton active={activeTab === 'paid'} onClick={() => setActiveTab('paid')} count={paidCount}>
+            <CheckCircle2 className="w-4 h-4" />
+            Betalda
+          </TabButton>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-100 p-4 mb-6">
-        <div className="flex items-center gap-4">
+      {/* Search & Actions */}
+      <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-100/50 p-3 sm:p-4 mb-6">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -248,110 +349,107 @@ export default function PaymentsPage() {
               placeholder="Sök mottagare eller beskrivning..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm
-                         focus:outline-none focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold"
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border-0 rounded-xl text-sm
+                         focus:bg-white focus:ring-2 focus:ring-aifm-gold/10 transition-all"
             />
           </div>
-          <div className="relative">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-              className="pl-4 pr-10 py-2 border border-gray-200 rounded-lg text-sm appearance-none bg-white
-                         focus:outline-none focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold"
-            >
-              <option value="all">Alla status</option>
-              <option value="pending">Väntar</option>
-              <option value="scheduled">Schemalagda</option>
-              <option value="overdue">Förfallna</option>
-              <option value="paid">Betalda</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          <div className="flex gap-2">
+            <button className="px-4 py-2.5 text-sm font-medium text-aifm-charcoal/60 bg-gray-100 rounded-xl flex items-center gap-2 hover:bg-gray-200 transition-colors">
+              <Filter className="w-4 h-4" />
+              <span className="hidden sm:inline">Filter</span>
+            </button>
+            <button className="px-4 py-2.5 text-sm font-medium text-white bg-aifm-charcoal rounded-xl flex items-center gap-2 hover:bg-aifm-charcoal/90 transition-colors">
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">Exportera</span>
+            </button>
           </div>
         </div>
       </div>
 
       {/* Payments Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-100">
-            <tr>
-              <th className="px-4 py-3 text-left w-10">
-                <input
-                  type="checkbox"
-                  onChange={() => {
-                    const unpaidIds = filteredPayments.filter(p => p.status !== 'paid').map(p => p.id);
-                    setSelectedPayments(prev => prev.length === unpaidIds.length ? [] : unpaidIds);
-                  }}
-                  checked={selectedPayments.length === filteredPayments.filter(p => p.status !== 'paid').length && selectedPayments.length > 0}
-                  className="rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold"
-                />
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Mottagare</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Beskrivning</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Förfallodatum</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Belopp</th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Status</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Åtgärd</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {filteredPayments.map((payment) => (
-              <tr key={payment.id} className={`hover:bg-gray-50/50 transition-colors ${payment.status === 'overdue' ? 'bg-red-50/30' : ''}`}>
-                <td className="px-4 py-3">
-                  {payment.status !== 'paid' && (
-                    <input
-                      type="checkbox"
-                      checked={selectedPayments.includes(payment.id)}
-                      onChange={() => toggleSelection(payment.id)}
-                      className="rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold"
-                    />
-                  )}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center
-                      ${payment.type === 'tax' ? 'bg-blue-100 text-blue-600' :
-                        payment.type === 'salary' ? 'bg-purple-100 text-purple-600' :
-                        'bg-gray-100 text-gray-600'}`}
-                    >
-                      {getTypeIcon(payment.type)}
-                    </div>
-                    <span className="text-sm font-medium text-aifm-charcoal">{payment.recipient}</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <p className="text-sm text-aifm-charcoal">{payment.description}</p>
-                  {payment.reference && (
-                    <p className="text-xs text-aifm-charcoal/50 mt-0.5">{payment.reference}</p>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-sm text-aifm-charcoal/70">{payment.dueDate}</td>
-                <td className="px-4 py-3 text-sm font-medium text-aifm-charcoal text-right">
-                  {formatCurrency(payment.amount)}
-                </td>
-                <td className="px-4 py-3 text-center">
-                  {getStatusBadge(payment.status)}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  {payment.status !== 'paid' && (
-                    <button
-                      onClick={() => handlePay(payment.id)}
-                      className="px-3 py-1.5 bg-aifm-gold text-white text-xs font-medium rounded-lg hover:bg-aifm-gold/90 transition-colors flex items-center gap-1 ml-auto"
-                    >
-                      <Send className="w-3.5 h-3.5" />
-                      Betala
-                    </button>
-                  )}
-                </td>
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-8">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[700px]">
+            <thead className="bg-gray-50 border-b border-gray-100">
+              <tr>
+                <th className="px-4 py-3 text-left w-10">
+                  <input
+                    type="checkbox"
+                    onChange={() => {
+                      const unpaidIds = filteredPayments.filter(p => p.status !== 'paid').map(p => p.id);
+                      setSelectedPayments(prev => prev.length === unpaidIds.length ? [] : unpaidIds);
+                    }}
+                    checked={selectedPayments.length === filteredPayments.filter(p => p.status !== 'paid').length && selectedPayments.length > 0}
+                    className="rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold"
+                  />
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Mottagare</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Beskrivning</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Förfallodatum</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Belopp</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Åtgärd</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {filteredPayments.map((payment) => (
+                <tr key={payment.id} className={`hover:bg-gray-50/50 transition-colors ${payment.status === 'overdue' ? 'bg-red-50/30' : ''}`}>
+                  <td className="px-4 py-3">
+                    {payment.status !== 'paid' && (
+                      <input
+                        type="checkbox"
+                        checked={selectedPayments.includes(payment.id)}
+                        onChange={() => toggleSelection(payment.id)}
+                        className="rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold"
+                      />
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center
+                        ${payment.type === 'tax' ? 'bg-blue-100 text-blue-600' :
+                          payment.type === 'salary' ? 'bg-purple-100 text-purple-600' :
+                          'bg-gray-100 text-gray-600'}`}
+                      >
+                        {getTypeIcon(payment.type)}
+                      </div>
+                      <span className="text-sm font-medium text-aifm-charcoal">{payment.recipient}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="text-sm text-aifm-charcoal">{payment.description}</p>
+                    {payment.reference && (
+                      <p className="text-xs text-aifm-charcoal/50 mt-0.5">{payment.reference}</p>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-aifm-charcoal/70">{payment.dueDate}</td>
+                  <td className="px-4 py-3 text-sm font-medium text-aifm-charcoal text-right">
+                    {formatCurrency(payment.amount)}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {getStatusBadge(payment.status)}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    {payment.status !== 'paid' && (
+                      <button
+                        onClick={() => handlePay(payment.id)}
+                        className="px-3 py-1.5 bg-aifm-gold text-white text-xs font-medium rounded-lg hover:bg-aifm-gold/90 transition-colors flex items-center gap-1 ml-auto"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        Betala
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Upcoming Payments Summary */}
-      <div className="mt-8 grid md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
+      {/* Summary Cards */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-100 p-5 sm:p-6">
           <h3 className="text-sm font-medium text-aifm-charcoal/60 uppercase tracking-wider mb-4">
             Kommande skatteinbetalningar
           </h3>
@@ -374,7 +472,7 @@ export default function PaymentsPage() {
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-100 p-5 sm:p-6">
           <h3 className="text-sm font-medium text-aifm-charcoal/60 uppercase tracking-wider mb-4">
             Löneutbetalning december
           </h3>
@@ -394,7 +492,7 @@ export default function PaymentsPage() {
           </div>
           <p className="text-xs text-aifm-charcoal/50 mt-3">Utbetalningsdag: 25 december</p>
         </div>
-        <div className="bg-aifm-charcoal rounded-xl p-6 text-white">
+        <div className="bg-aifm-charcoal rounded-xl sm:rounded-2xl p-5 sm:p-6 text-white">
           <h3 className="text-xs font-medium text-white/60 uppercase tracking-wider mb-4">
             Kassaprognos
           </h3>
@@ -403,13 +501,19 @@ export default function PaymentsPage() {
               <span className="text-sm text-white/70">Aktuellt saldo</span>
               <span className="text-sm font-medium">1 850 000 SEK</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <span className="text-sm text-white/70">Kommande inbetalningar</span>
-              <span className="text-sm font-medium text-green-400">+450 000 SEK</span>
+              <span className="text-sm font-medium text-green-400 flex items-center gap-1">
+                <TrendingUp className="w-3 h-3" />
+                +450 000 SEK
+              </span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <span className="text-sm text-white/70">Kommande utbetalningar</span>
-              <span className="text-sm font-medium text-red-400">-947 000 SEK</span>
+              <span className="text-sm font-medium text-red-400 flex items-center gap-1">
+                <TrendingDown className="w-3 h-3" />
+                -947 000 SEK
+              </span>
             </div>
             <div className="border-t border-white/10 pt-3 flex justify-between">
               <span className="text-sm font-medium">Prognos 31 dec</span>
@@ -421,5 +525,3 @@ export default function PaymentsPage() {
     </DashboardLayout>
   );
 }
-
-
