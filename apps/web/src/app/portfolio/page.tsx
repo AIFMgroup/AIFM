@@ -633,104 +633,175 @@ export default function PortfolioPage() {
         </div>
       )}
 
-      {/* Add Company Modal */}
+      {/* Add Company Modal - Minimalist Design */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[85vh] overflow-y-auto">
-            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
+          <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="px-6 sm:px-8 py-5 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
               <div>
                 <h3 className="text-lg font-semibold text-aifm-charcoal">Lägg till bolag</h3>
-                <p className="text-xs text-aifm-charcoal/40 mt-0.5">Registrera ny investering</p>
+                <p className="text-xs text-aifm-charcoal/40 mt-0.5">Registrera ny investering i portföljen</p>
               </div>
               <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
                 <X className="w-5 h-5 text-aifm-charcoal/50" />
               </button>
             </div>
             
-            <div className="p-6 space-y-4">
+            {/* Content - Scrollable */}
+            <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6">
+              {/* Company Name */}
               <div>
-                <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">Bolagsnamn *</label>
+                <label className="block text-xs font-medium text-aifm-charcoal/60 mb-3">Bolagsnamn</label>
                 <input
                   type="text"
                   value={newCompany.name}
                   onChange={(e) => setNewCompany({ ...newCompany, name: e.target.value })}
-                  className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10"
+                  className="w-full py-3.5 px-4 bg-gray-50 border-0 rounded-xl text-sm font-medium
+                             focus:bg-white focus:ring-2 focus:ring-aifm-charcoal/10 transition-all
+                             placeholder:text-aifm-charcoal/30 placeholder:font-normal"
                   placeholder="t.ex. TechStartup AB"
                 />
               </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">Sektor *</label>
-                  <select
-                    value={newCompany.sector}
-                    onChange={(e) => setNewCompany({ ...newCompany, sector: e.target.value })}
-                    className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-aifm-gold/30"
-                  >
-                    <option value="">Välj sektor</option>
-                    {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">Land</label>
-                  <select
-                    value={newCompany.country}
-                    onChange={(e) => setNewCompany({ ...newCompany, country: e.target.value })}
-                    className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-aifm-gold/30"
-                  >
-                    {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+
+              {/* Sector - Pills */}
+              <div>
+                <label className="block text-xs font-medium text-aifm-charcoal/60 mb-3">Sektor</label>
+                <div className="flex flex-wrap gap-2">
+                  {SECTORS.slice(0, 8).map((sector) => (
+                    <button
+                      key={sector}
+                      type="button"
+                      onClick={() => setNewCompany({ ...newCompany, sector })}
+                      className={`px-4 py-2 rounded-full text-sm transition-all duration-200 ${
+                        newCompany.sector === sector
+                          ? 'bg-aifm-charcoal text-white shadow-lg shadow-aifm-charcoal/20'
+                          : 'bg-gray-100 text-aifm-charcoal/70 hover:bg-gray-200'
+                      }`}
+                    >
+                      {sector}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">Investering ({currency}) *</label>
-                  <input
-                    type="number"
-                    value={newCompany.investmentAmount}
-                    onChange={(e) => setNewCompany({ ...newCompany, investmentAmount: e.target.value })}
-                    className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-aifm-gold/30"
-                    placeholder="10000000"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">Ägarandel (%)</label>
-                  <input
-                    type="number"
-                    value={newCompany.ownership}
-                    onChange={(e) => setNewCompany({ ...newCompany, ownership: e.target.value })}
-                    className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-aifm-gold/30"
-                    placeholder="15"
-                  />
+              {/* Country - Pills */}
+              <div>
+                <label className="block text-xs font-medium text-aifm-charcoal/60 mb-3">Land</label>
+                <div className="flex flex-wrap gap-2">
+                  {COUNTRIES.slice(0, 6).map((country) => (
+                    <button
+                      key={country}
+                      type="button"
+                      onClick={() => setNewCompany({ ...newCompany, country })}
+                      className={`px-4 py-2 rounded-full text-sm transition-all duration-200 ${
+                        newCompany.country === country
+                          ? 'bg-aifm-charcoal text-white shadow-lg shadow-aifm-charcoal/20'
+                          : 'bg-gray-100 text-aifm-charcoal/70 hover:bg-gray-200'
+                      }`}
+                    >
+                      {country}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {newCompany.name && newCompany.investmentAmount && (
-                <div className="bg-aifm-gold/5 rounded-xl p-4 border border-aifm-gold/10">
+              {/* Investment & Ownership - Side by side */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-aifm-charcoal/60 mb-3">Investering ({currency})</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={newCompany.investmentAmount}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        setNewCompany({ ...newCompany, investmentAmount: val });
+                      }}
+                      className="w-full py-3.5 px-4 bg-gray-50 border-0 rounded-xl text-sm font-medium
+                                 focus:bg-white focus:ring-2 focus:ring-aifm-charcoal/10 transition-all
+                                 placeholder:text-aifm-charcoal/30 placeholder:font-normal"
+                      placeholder="10 000 000"
+                    />
+                    {newCompany.investmentAmount && (
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-aifm-charcoal/40">
+                        {currency}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-aifm-charcoal/60 mb-3">Ägarandel</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={newCompany.ownership}
+                      onChange={(e) => setNewCompany({ ...newCompany, ownership: e.target.value })}
+                      className="w-full py-3.5 px-4 bg-gray-50 border-0 rounded-xl text-sm font-medium
+                                 focus:bg-white focus:ring-2 focus:ring-aifm-charcoal/10 transition-all
+                                 placeholder:text-aifm-charcoal/30 placeholder:font-normal"
+                      placeholder="15"
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-aifm-charcoal/40">
+                      %
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Preview Card */}
+              {newCompany.name && (
+                <div className="bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/90 rounded-2xl p-5 text-white mt-2">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-aifm-gold/20 rounded-lg flex items-center justify-center">
-                        <Building2 className="w-4 h-4 text-aifm-gold" />
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center">
+                        <Building2 className="w-6 h-6 text-white/60" />
                       </div>
                       <div>
-                        <p className="font-semibold text-aifm-charcoal text-sm">{newCompany.name}</p>
-                        <p className="text-xs text-aifm-charcoal/50">{newCompany.sector || 'Ingen sektor'}</p>
+                        <p className="font-semibold text-white">{newCompany.name}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          {newCompany.sector && (
+                            <span className="text-xs text-white/50 bg-white/10 px-2 py-0.5 rounded-full">{newCompany.sector}</span>
+                          )}
+                          {newCompany.country && (
+                            <span className="text-xs text-white/50">{newCompany.country}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <p className="font-semibold text-aifm-charcoal text-sm">{formatCurrency(parseFloat(newCompany.investmentAmount) || 0, currency)}</p>
+                    <div className="text-right">
+                      <p className="text-lg font-semibold text-white">
+                        {newCompany.investmentAmount ? formatCurrency(parseFloat(newCompany.investmentAmount), currency) : '–'}
+                      </p>
+                      {newCompany.ownership && (
+                        <p className="text-xs text-white/50">{newCompany.ownership}% ägande</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
             </div>
             
-            <div className="px-6 py-4 border-t border-gray-100 flex gap-3 sticky bottom-0 bg-white rounded-b-2xl">
-              <button onClick={() => setShowAddModal(false)} className="flex-1 py-3 px-4 text-sm font-medium text-aifm-charcoal/70 bg-white border border-gray-200 rounded-xl hover:border-aifm-charcoal/30">
+            {/* Footer */}
+            <div className="px-6 sm:px-8 py-4 border-t border-gray-100 flex gap-3 flex-shrink-0 bg-gray-50/50">
+              <button 
+                onClick={() => setShowAddModal(false)} 
+                className="flex-1 py-3 px-4 text-sm font-medium text-aifm-charcoal/70 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+              >
                 Avbryt
               </button>
-              <button onClick={handleAddCompany} className="flex-1 py-3 px-4 text-sm font-medium text-white bg-aifm-charcoal rounded-xl hover:bg-aifm-charcoal/90 shadow-lg shadow-aifm-charcoal/20 flex items-center justify-center gap-2">
+              <button 
+                onClick={handleAddCompany} 
+                disabled={!newCompany.name || !newCompany.sector || !newCompany.investmentAmount}
+                className="flex-1 py-3 px-4 text-sm font-medium text-white bg-aifm-charcoal rounded-xl 
+                           hover:bg-aifm-charcoal/90 shadow-lg shadow-aifm-charcoal/20 
+                           disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none
+                           transition-all flex items-center justify-center gap-2"
+              >
                 <Plus className="w-4 h-4" />
-                Lägg till
+                Lägg till bolag
               </button>
             </div>
           </div>
