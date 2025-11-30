@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { 
-  X, Send, Sparkles, ChevronDown, Maximize2, Minimize2,
+  X, Send, Sparkles, Maximize2, Minimize2,
   HelpCircle, BookOpen, Settings, BarChart3, Users, Calculator
 } from 'lucide-react';
 
