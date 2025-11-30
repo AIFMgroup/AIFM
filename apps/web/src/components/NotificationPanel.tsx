@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Bell, X, Check, Clock, AlertCircle, CheckCircle2, 
-  DollarSign, Users, FileText, Shield, Calendar,
+  DollarSign, FileText, Shield, Calendar,
   ArrowRight, Trash2, CheckCheck
 } from 'lucide-react';
 import { useCompany } from './CompanyContext';
