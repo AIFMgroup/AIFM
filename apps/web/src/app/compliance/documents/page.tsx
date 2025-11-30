@@ -3,8 +3,8 @@
 import { useState, useRef } from 'react';
 import { 
   Upload, FileText, CheckCircle2, Clock, Trash2, 
-  File, FileSpreadsheet, FileImage, AlertCircle, Brain, Shield, Eye,
-  Home, Search, Filter
+  File, FileSpreadsheet, FileImage, Brain, Shield, Eye,
+  Home, Search
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useCompany } from '@/components/CompanyContext';
