@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useCompany } from '@/components/CompanyContext';
+import { MinimalSelect } from '@/components/MinimalSelect';
 
 interface ClosingTask {
   id: string;
@@ -183,18 +184,15 @@ export default function ClosingPage() {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <select
+              <MinimalSelect
                 value={selectedPeriod}
-                onChange={(e) => setSelectedPeriod(e.target.value)}
-                className="px-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-sm text-white
-                           focus:outline-none focus:ring-2 focus:ring-aifm-gold/50 transition-all"
-              >
-                {periods.filter(p => p.status !== 'future').map(p => (
-                  <option key={p.id} value={p.id} className="text-aifm-charcoal">
-                    {p.month} 2024
-                  </option>
-                ))}
-              </select>
+                onChange={setSelectedPeriod}
+                options={periods.filter(p => p.status !== 'future').map(p => ({
+                  value: p.id,
+                  label: `${p.month} 2024`
+                }))}
+                variant="dark"
+              />
             </div>
           </div>
 

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useCompany } from '@/components/CompanyContext';
+import { MinimalSelect } from '@/components/MinimalSelect';
 
 interface AccountingStep {
   id: string;
@@ -314,16 +315,16 @@ export default function AccountingOverviewPage() {
               <p className="text-white/60 mt-1 text-sm">Räkenskapsår {selectedPeriod}</p>
             </div>
             <div className="flex items-center gap-3">
-              <select
+              <MinimalSelect
                 value={selectedPeriod}
-                onChange={(e) => setSelectedPeriod(e.target.value)}
-                className="px-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-sm text-white
-                           focus:outline-none focus:ring-2 focus:ring-aifm-gold/50 transition-all"
-              >
-                <option value="2024" className="text-aifm-charcoal">Räkenskapsår 2024</option>
-                <option value="2023" className="text-aifm-charcoal">Räkenskapsår 2023</option>
-                <option value="2022" className="text-aifm-charcoal">Räkenskapsår 2022</option>
-              </select>
+                onChange={setSelectedPeriod}
+                options={[
+                  { value: '2024', label: 'Räkenskapsår 2024' },
+                  { value: '2023', label: 'Räkenskapsår 2023' },
+                  { value: '2022', label: 'Räkenskapsår 2022' },
+                ]}
+                variant="dark"
+              />
               <Link 
                 href="/accounting/upload"
                 className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-aifm-charcoal 
