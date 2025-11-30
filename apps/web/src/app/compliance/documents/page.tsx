@@ -3,9 +3,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { 
   Upload, FileText, CheckCircle2, Clock, Trash2, 
-  File, FileSpreadsheet, FileImage, AlertCircle, Brain, Shield, Eye
+  File, FileSpreadsheet, FileImage, AlertCircle, Brain, Shield, Eye,
+  Home, Search, Filter
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { useCompany } from '@/components/CompanyContext';
 
 interface UploadedDocument {
   id: string;
@@ -17,6 +19,7 @@ interface UploadedDocument {
   pages?: number;
   summary?: string;
   confidence?: number;
+  category?: string;
 }
 
 // Mock uploaded documents
@@ -30,7 +33,8 @@ const mockDocuments: UploadedDocument[] = [
     uploadedAt: new Date('2024-11-20'),
     pages: 45,
     summary: 'Årsredovisning för Nordic Ventures I AB för räkenskapsåret 2023. Innehåller balansräkning, resultaträkning och förvaltningsberättelse.',
-    confidence: 98
+    confidence: 98,
+    category: 'Finansiellt'
   },
   {
     id: '2',
@@ -41,7 +45,8 @@ const mockDocuments: UploadedDocument[] = [
     uploadedAt: new Date('2024-11-18'),
     pages: 28,
     summary: 'Fondbestämmelser för Nordic Ventures I med information om investeringsstrategi, avgifter och utdelningspolicy.',
-    confidence: 95
+    confidence: 95,
+    category: 'Juridiskt'
   },
   {
     id: '3',
@@ -52,7 +57,8 @@ const mockDocuments: UploadedDocument[] = [
     uploadedAt: new Date('2024-11-15'),
     pages: 12,
     summary: 'Due diligence-rapport för potentiell investering i TechCorp AB. Innehåller finansiell analys och riskbedömning.',
-    confidence: 92
+    confidence: 92,
+    category: 'Due Diligence'
   },
   {
     id: '4',
@@ -61,6 +67,7 @@ const mockDocuments: UploadedDocument[] = [
     type: 'pdf',
     status: 'processing',
     uploadedAt: new Date('2024-11-25'),
+    category: 'Juridiskt'
   },
   {
     id: '5',
@@ -71,9 +78,67 @@ const mockDocuments: UploadedDocument[] = [
     uploadedAt: new Date('2024-10-30'),
     pages: 18,
     summary: 'Kvartalsbokslut Q3 2024 med resultatutveckling, kassaflödesanalys och portföljuppdatering.',
-    confidence: 97
+    confidence: 97,
+    category: 'Finansiellt'
   },
 ];
+
+// Tab Button Component
+function TabButton({ 
+  label, 
+  isActive, 
+  onClick,
+  count
+}: { 
+  label: string; 
+  isActive: boolean; 
+  onClick: () => void;
+  count?: number;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
+        isActive
+          ? 'bg-white text-aifm-charcoal shadow-sm'
+          : 'text-white/70 hover:text-white hover:bg-white/10'
+      }`}
+    >
+      {label}
+      {count !== undefined && (
+        <span className={`ml-2 ${isActive ? 'text-aifm-charcoal/50' : 'text-white/50'}`}>
+          {count}
+        </span>
+      )}
+    </button>
+  );
+}
+
+// Hero Metric Card
+function HeroMetric({ 
+  label, 
+  value, 
+  subValue,
+  icon: Icon
+}: { 
+  label: string; 
+  value: string; 
+  subValue?: string;
+  icon: React.ElementType;
+}) {
+  return (
+    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="p-2 bg-white/10 rounded-lg">
+          <Icon className="w-4 h-4 text-white/70" />
+        </div>
+        <p className="text-xs text-white/50 uppercase tracking-wider font-medium">{label}</p>
+      </div>
+      <p className="text-2xl font-semibold text-white">{value}</p>
+      {subValue && <p className="text-sm text-white/60 mt-1">{subValue}</p>}
+    </div>
+  );
+}
 
 function getFileIcon(type: string) {
   const iconClass = "w-6 h-6";
@@ -99,66 +164,13 @@ function formatDate(date: Date): string {
   }).format(date);
 }
 
-// Animated Stat Card
-function StatCard({ 
-  icon: Icon, 
-  value, 
-  label, 
-  color, 
-  delay = 0 
-}: { 
-  icon: React.ElementType; 
-  value: number; 
-  label: string; 
-  color: string;
-  delay?: number;
-}) {
-  const [isVisible, setIsVisible] = useState(false);
-  const [animatedValue, setAnimatedValue] = useState(0);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), delay);
-    return () => clearTimeout(timer);
-  }, [delay]);
-
-  useEffect(() => {
-    if (isVisible) {
-      const duration = 1000;
-      const start = Date.now();
-      const animate = () => {
-        const elapsed = Date.now() - start;
-        const progress = Math.min(elapsed / duration, 1);
-        setAnimatedValue(Math.floor(progress * value));
-        if (progress < 1) requestAnimationFrame(animate);
-      };
-      animate();
-    }
-  }, [isVisible, value]);
-
-  return (
-    <div className={`
-      relative group bg-white rounded-2xl p-6 border border-gray-100/50
-      transition-all duration-500 ease-out
-      hover:shadow-xl hover:shadow-${color}/10 hover:-translate-y-1
-      ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
-    `}>
-      <div className="flex items-center gap-4">
-        <div className={`w-12 h-12 rounded-xl bg-${color}/10 flex items-center justify-center
-                        group-hover:scale-110 transition-transform duration-300`}>
-          <Icon className={`w-6 h-6 text-${color}`} />
-        </div>
-        <div>
-          <p className="text-3xl font-semibold text-aifm-charcoal tracking-tight">{animatedValue}</p>
-          <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider font-medium">{label}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function ComplianceDocumentsPage() {
+  const { selectedCompany } = useCompany();
   const [documents, setDocuments] = useState<UploadedDocument[]>(mockDocuments);
   const [isDragging, setIsDragging] = useState(false);
+  const [activeTab, setActiveTab] = useState<'upload' | 'indexed' | 'all'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDoc, setSelectedDoc] = useState<UploadedDocument | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -208,7 +220,8 @@ export default function ComplianceDocumentsPage() {
                   status: 'completed' as const, 
                   pages: Math.floor(Math.random() * 30) + 5,
                   summary: `Dokumentet "${file.name}" har analyserats och indexerats för Compliance Agent.`,
-                  confidence: Math.floor(Math.random() * 10) + 90
+                  confidence: Math.floor(Math.random() * 10) + 90,
+                  category: 'Nytt'
                 } 
               : doc
           )
@@ -225,7 +238,15 @@ export default function ComplianceDocumentsPage() {
 
   const handleDelete = (id: string) => {
     setDocuments(prev => prev.filter(doc => doc.id !== id));
+    if (selectedDoc?.id === id) setSelectedDoc(null);
   };
+
+  const filteredDocs = documents.filter(doc => {
+    const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase());
+    if (activeTab === 'upload') return matchesSearch && doc.status === 'processing';
+    if (activeTab === 'indexed') return matchesSearch && doc.status === 'completed';
+    return matchesSearch;
+  });
 
   const completedCount = documents.filter(d => d.status === 'completed').length;
   const processingCount = documents.filter(d => d.status === 'processing').length;
@@ -233,238 +254,360 @@ export default function ComplianceDocumentsPage() {
 
   return (
     <DashboardLayout>
-      {/* Page Header */}
-      <div className="mb-10">
-        <div className="flex items-center gap-4 mb-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/80 
-                          flex items-center justify-center shadow-lg shadow-aifm-charcoal/20">
-            <Brain className="w-6 h-6 text-white" />
+      {/* Hero Section */}
+      <div className="bg-gradient-to-br from-aifm-charcoal via-aifm-charcoal to-aifm-charcoal/90 -mx-4 lg:-mx-8 -mt-4 lg:-mt-8 px-4 lg:px-8 pt-6 lg:pt-8 pb-6 mb-8 rounded-b-3xl">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-sm text-white/40 mb-6">
+          <Home className="w-4 h-4" />
+          <span>/</span>
+          <span>Compliance</span>
+          <span>/</span>
+          <span className="text-white">Dokument</span>
+        </div>
+
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 mb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
+              <Brain className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl lg:text-3xl font-semibold text-white tracking-tight mb-1">
+                Dokumenthantering
+              </h1>
+              <p className="text-white/50 text-sm lg:text-base">
+                AI-driven analys för {selectedCompany.shortName}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-semibold text-aifm-charcoal tracking-tight">
-              Dokumenthantering
-            </h1>
-            <p className="text-sm text-aifm-charcoal/50">
-              Ladda upp dokument för AI-analys och compliance-sökning
-            </p>
-          </div>
+        </div>
+
+        {/* Hero Metrics */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <HeroMetric 
+            label="Totalt dokument"
+            value={documents.length.toString()}
+            icon={FileText}
+          />
+          <HeroMetric 
+            label="Indexerade"
+            value={completedCount.toString()}
+            subValue={`${Math.round((completedCount / documents.length) * 100)}% klar`}
+            icon={CheckCircle2}
+          />
+          <HeroMetric 
+            label="Bearbetas"
+            value={processingCount.toString()}
+            icon={Clock}
+          />
+          <HeroMetric 
+            label="Sidor analyserade"
+            value={totalPages.toString()}
+            icon={Eye}
+          />
+        </div>
+
+        {/* Tabs */}
+        <div className="flex items-center gap-2 bg-white/5 rounded-xl p-1.5 w-fit">
+          <TabButton 
+            label="Alla" 
+            isActive={activeTab === 'all'} 
+            onClick={() => setActiveTab('all')}
+            count={documents.length}
+          />
+          <TabButton 
+            label="Indexerade" 
+            isActive={activeTab === 'indexed'} 
+            onClick={() => setActiveTab('indexed')}
+            count={completedCount}
+          />
+          <TabButton 
+            label="Bearbetas" 
+            isActive={activeTab === 'upload'} 
+            onClick={() => setActiveTab('upload')}
+            count={processingCount}
+          />
         </div>
       </div>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
-        <StatCard 
-          icon={FileText} 
-          value={documents.length} 
-          label="Totalt dokument" 
-          color="aifm-gold"
-          delay={0}
-        />
-        <StatCard 
-          icon={CheckCircle2} 
-          value={completedCount} 
-          label="Indexerade" 
-          color="emerald-500"
-          delay={100}
-        />
-        <StatCard 
-          icon={Clock} 
-          value={processingCount} 
-          label="Bearbetas" 
-          color="amber-500"
-          delay={200}
-        />
-        <StatCard 
-          icon={Eye} 
-          value={totalPages} 
-          label="Sidor analyserade" 
-          color="blue-500"
-          delay={300}
-        />
-      </div>
+      {/* Main Content - Master-Detail Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left: Upload + List */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Upload Area */}
+          <div 
+            className={`relative rounded-2xl transition-all duration-500 overflow-hidden
+              ${isDragging 
+                ? 'bg-aifm-gold/5 border-2 border-aifm-gold shadow-xl shadow-aifm-gold/20' 
+                : 'bg-white border-2 border-dashed border-gray-200 hover:border-aifm-gold/50 hover:shadow-lg'
+              }`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
+              onChange={handleFileSelect}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+            />
+            
+            <div className="relative p-8 lg:p-10 text-center">
+              <div className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4 
+                              transition-all duration-500 ${isDragging 
+                                ? 'bg-aifm-gold scale-110 shadow-xl shadow-aifm-gold/30' 
+                                : 'bg-gray-100'}`}>
+                <Upload className={`w-8 h-8 transition-colors duration-500 ${
+                  isDragging ? 'text-white' : 'text-gray-400'
+                }`} />
+              </div>
+              
+              <h3 className="text-lg font-semibold text-aifm-charcoal mb-1">
+                {isDragging ? 'Släpp filerna här' : 'Dra och släpp filer'}
+              </h3>
+              <p className="text-sm text-aifm-charcoal/50 mb-3">
+                eller <span className="text-aifm-gold font-medium cursor-pointer hover:underline">bläddra</span>
+              </p>
+              
+              <div className="flex items-center justify-center gap-2 text-xs text-aifm-charcoal/40">
+                <span className="px-2 py-1 bg-gray-100 rounded-full">PDF</span>
+                <span className="px-2 py-1 bg-gray-100 rounded-full">Word</span>
+                <span className="px-2 py-1 bg-gray-100 rounded-full">Excel</span>
+              </div>
+            </div>
+          </div>
 
-      {/* Upload Area */}
-      <div 
-        className={`relative mb-10 rounded-2xl transition-all duration-500 overflow-hidden
-          ${isDragging 
-            ? 'bg-aifm-gold/5 border-2 border-aifm-gold shadow-xl shadow-aifm-gold/20' 
-            : 'bg-white border-2 border-dashed border-gray-200 hover:border-aifm-gold/50 hover:shadow-lg'
-          }`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute inset-0" 
-               style={{
-                 backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)',
-                 backgroundSize: '24px 24px'
-               }} />
+          {/* Search */}
+          <div className="relative">
+            <Search className="w-4 h-4 text-aifm-charcoal/30 absolute left-4 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Sök dokument..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full py-3 pl-11 pr-4 bg-white border border-gray-200 rounded-xl text-sm
+                         placeholder:text-aifm-charcoal/30 focus:outline-none focus:border-aifm-gold/30 
+                         focus:ring-2 focus:ring-aifm-gold/10 transition-all"
+            />
+          </div>
+
+          {/* Document List */}
+          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-aifm-charcoal">
+                Dokument
+              </h2>
+              <span className="text-xs text-aifm-charcoal/40">{filteredDocs.length} filer</span>
+            </div>
+            
+            <div className="divide-y divide-gray-50 max-h-[500px] overflow-y-auto">
+              {filteredDocs.length === 0 ? (
+                <div className="p-12 text-center">
+                  <div className="w-16 h-16 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
+                    <FileText className="w-8 h-8 text-gray-300" />
+                  </div>
+                  <p className="text-aifm-charcoal/60 font-medium">Inga dokument</p>
+                  <p className="text-xs text-aifm-charcoal/40 mt-1">Ladda upp för att börja</p>
+                </div>
+              ) : (
+                filteredDocs.map((doc) => (
+                  <div 
+                    key={doc.id} 
+                    className={`group px-5 py-4 cursor-pointer transition-all duration-300 ${
+                      selectedDoc?.id === doc.id 
+                        ? 'bg-aifm-gold/5 border-l-2 border-aifm-gold' 
+                        : 'hover:bg-gray-50/50 border-l-2 border-transparent'
+                    }`}
+                    onClick={() => setSelectedDoc(doc)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center
+                        ${doc.type === 'pdf' ? 'bg-red-50' : 
+                          doc.type === 'xlsx' || doc.type === 'xls' ? 'bg-emerald-50' : 'bg-gray-50'}`}>
+                        {getFileIcon(doc.type)}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-aifm-charcoal text-sm truncate">
+                          {doc.name}
+                        </h3>
+                        <div className="flex items-center gap-2 mt-0.5 text-xs text-aifm-charcoal/50">
+                          <span>{doc.size}</span>
+                          <span className="w-1 h-1 bg-aifm-charcoal/20 rounded-full" />
+                          <span>{formatDate(doc.uploadedAt)}</span>
+                        </div>
+                      </div>
+                      
+                      {doc.status === 'processing' ? (
+                        <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
-          onChange={handleFileSelect}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-        />
-        
-        <div className="relative p-12 lg:p-16 text-center">
-          <div className={`w-20 h-20 mx-auto rounded-2xl flex items-center justify-center mb-6 
-                          transition-all duration-500 ${isDragging 
-                            ? 'bg-aifm-gold scale-110 shadow-xl shadow-aifm-gold/30' 
-                            : 'bg-gray-100'}`}>
-            <Upload className={`w-10 h-10 transition-colors duration-500 ${
-              isDragging ? 'text-white' : 'text-gray-400'
-            }`} />
-          </div>
-          
-          <h3 className="text-xl font-semibold text-aifm-charcoal mb-2">
-            {isDragging ? 'Släpp filerna här' : 'Dra och släpp filer här'}
-          </h3>
-          <p className="text-aifm-charcoal/50 mb-4">
-            eller <span className="text-aifm-gold font-medium cursor-pointer hover:underline">bläddra</span> för att välja
-          </p>
-          
-          <div className="flex items-center justify-center gap-4 text-xs text-aifm-charcoal/40">
-            <span className="px-3 py-1 bg-gray-100 rounded-full">PDF</span>
-            <span className="px-3 py-1 bg-gray-100 rounded-full">Word</span>
-            <span className="px-3 py-1 bg-gray-100 rounded-full">Excel</span>
-            <span className="px-3 py-1 bg-gray-100 rounded-full">TXT</span>
-          </div>
+        {/* Right: Detail Panel */}
+        <div className="hidden lg:block">
+          {selectedDoc ? (
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden sticky top-4">
+              {/* Header */}
+              <div className="p-5 border-b border-gray-100 bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/90">
+                <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4
+                  ${selectedDoc.type === 'pdf' ? 'bg-red-500/20' : 
+                    selectedDoc.type === 'xlsx' || selectedDoc.type === 'xls' ? 'bg-emerald-500/20' : 'bg-white/10'}`}>
+                  {getFileIcon(selectedDoc.type)}
+                </div>
+                <h3 className="font-semibold text-white text-sm truncate mb-1">{selectedDoc.name}</h3>
+                <p className="text-white/50 text-xs">{selectedDoc.size} • {formatDate(selectedDoc.uploadedAt)}</p>
+              </div>
+
+              {/* Content */}
+              <div className="p-5 space-y-5">
+                {/* Status */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-aifm-charcoal/50 uppercase tracking-wider">Status</span>
+                  {selectedDoc.status === 'completed' ? (
+                    <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-medium">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Indexerad
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-600 text-xs font-medium">
+                      <Clock className="w-3.5 h-3.5" />
+                      Bearbetas
+                    </span>
+                  )}
+                </div>
+
+                {/* Stats Grid */}
+                {selectedDoc.status === 'completed' && (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-gray-50 rounded-xl p-3">
+                        <p className="text-xs text-aifm-charcoal/50 mb-1">Sidor</p>
+                        <p className="text-lg font-semibold text-aifm-charcoal">{selectedDoc.pages}</p>
+                      </div>
+                      <div className="bg-gray-50 rounded-xl p-3">
+                        <p className="text-xs text-aifm-charcoal/50 mb-1">Konfidens</p>
+                        <p className="text-lg font-semibold text-aifm-charcoal">{selectedDoc.confidence}%</p>
+                      </div>
+                    </div>
+
+                    {selectedDoc.category && (
+                      <div>
+                        <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-2">Kategori</p>
+                        <span className="px-3 py-1.5 bg-aifm-charcoal/5 rounded-full text-sm font-medium text-aifm-charcoal">
+                          {selectedDoc.category}
+                        </span>
+                      </div>
+                    )}
+
+                    {selectedDoc.summary && (
+                      <div>
+                        <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-2">AI-sammanfattning</p>
+                        <p className="text-sm text-aifm-charcoal/70 leading-relaxed bg-gray-50 rounded-xl p-4">
+                          {selectedDoc.summary}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Actions */}
+                <div className="flex gap-2 pt-3 border-t border-gray-100">
+                  <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-aifm-charcoal/70 
+                                     bg-gray-100 rounded-xl hover:bg-gray-200 transition-all">
+                    <Eye className="w-4 h-4" />
+                    Visa
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(selectedDoc.id)}
+                    className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-red-600 
+                               bg-red-50 rounded-xl hover:bg-red-100 transition-all"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-gray-50 rounded-2xl border border-gray-100 p-8 text-center h-[400px] flex flex-col items-center justify-center">
+              <div className="w-16 h-16 bg-gray-200 rounded-2xl flex items-center justify-center mb-4">
+                <FileText className="w-8 h-8 text-gray-400" />
+              </div>
+              <p className="text-aifm-charcoal/50 font-medium">Välj ett dokument</p>
+              <p className="text-sm text-aifm-charcoal/30 mt-1">Klicka på ett dokument för att se detaljer</p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* AI Processing Notice */}
-      <div className="bg-gradient-to-r from-aifm-charcoal to-aifm-charcoal/90 rounded-2xl p-6 mb-8 text-white">
+      {/* AI Notice */}
+      <div className="mt-8 bg-gradient-to-r from-aifm-charcoal to-aifm-charcoal/90 rounded-2xl p-5 text-white">
         <div className="flex items-start gap-4">
           <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
             <Shield className="w-5 h-5 text-aifm-gold" />
           </div>
           <div>
-            <h3 className="font-semibold mb-1">AI-driven dokumentanalys</h3>
-            <p className="text-sm text-white/70">
-              Uppladdade dokument analyseras av GPT Vision för automatisk klassificering, 
-              extrahering av nyckelinformation och indexering för snabb compliance-sökning.
+            <h3 className="font-semibold mb-1 text-sm">AI-driven dokumentanalys</h3>
+            <p className="text-xs text-white/70">
+              Uppladdade dokument analyseras av GPT Vision för automatisk klassificering och indexering för snabb compliance-sökning.
             </p>
           </div>
         </div>
       </div>
 
-      {/* Document List */}
-      <div className="bg-white rounded-2xl border border-gray-100/50 overflow-hidden shadow-sm">
-        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-aifm-charcoal uppercase tracking-wider">
-            Uppladdade dokument
-          </h2>
-          <span className="text-xs text-aifm-charcoal/40">{documents.length} filer</span>
-        </div>
-        
-        <div className="divide-y divide-gray-50">
-          {documents.length === 0 ? (
-            <div className="p-16 text-center">
-              <div className="w-20 h-20 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center mb-6">
-                <FileText className="w-10 h-10 text-gray-300" />
-              </div>
-              <p className="text-aifm-charcoal/60 font-medium">Inga dokument uppladdade ännu</p>
-              <p className="text-sm text-aifm-charcoal/40 mt-2">
-                Ladda upp dokument för att börja använda Compliance Agent
-              </p>
+      {/* Mobile Detail Modal */}
+      {selectedDoc && (
+        <div className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end">
+          <div className="bg-white rounded-t-3xl w-full max-h-[80vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between">
+              <h3 className="font-semibold text-aifm-charcoal truncate flex-1 mr-4">{selectedDoc.name}</h3>
+              <button onClick={() => setSelectedDoc(null)} className="p-2 text-aifm-charcoal/50">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
-          ) : (
-            documents.map((doc, index) => (
-              <div 
-                key={doc.id} 
-                className="group px-6 py-5 hover:bg-gray-50/50 transition-all duration-300"
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <div className="flex items-start gap-4">
-                  {/* File Icon with type background */}
-                  <div className={`flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center
-                    ${doc.type === 'pdf' ? 'bg-red-50' : 
-                      doc.type === 'xlsx' || doc.type === 'xls' ? 'bg-emerald-50' : 'bg-gray-50'}
-                    group-hover:scale-105 transition-transform duration-300`}>
-                    {getFileIcon(doc.type)}
-                  </div>
-                  
-                  {/* Document Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4 mb-2">
-                      <div>
-                        <h3 className="font-medium text-aifm-charcoal group-hover:text-aifm-gold transition-colors">
-                          {doc.name}
-                        </h3>
-                        <div className="flex items-center gap-3 mt-1 text-sm text-aifm-charcoal/50">
-                          <span>{doc.size}</span>
-                          <span className="w-1 h-1 bg-aifm-charcoal/20 rounded-full" />
-                          <span>{formatDate(doc.uploadedAt)}</span>
-                          {doc.pages && (
-                            <>
-                              <span className="w-1 h-1 bg-aifm-charcoal/20 rounded-full" />
-                              <span>{doc.pages} sidor</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {/* Status & Actions */}
-                      <div className="flex items-center gap-3">
-                        {doc.status === 'processing' ? (
-                          <span className="flex items-center gap-2 px-4 py-2 rounded-full 
-                                         bg-amber-100 text-amber-700 text-xs font-medium">
-                            <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-                            Analyserar...
-                          </span>
-                        ) : doc.status === 'completed' ? (
-                          <div className="flex items-center gap-2">
-                            {doc.confidence && (
-                              <span className="text-xs text-aifm-charcoal/40">
-                                {doc.confidence}% konfidensgrad
-                              </span>
-                            )}
-                            <span className="flex items-center gap-1.5 px-4 py-2 rounded-full 
-                                           bg-emerald-100 text-emerald-700 text-xs font-medium">
-                              <CheckCircle2 className="w-4 h-4" />
-                              Indexerad
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="flex items-center gap-1.5 px-4 py-2 rounded-full 
-                                         bg-red-100 text-red-700 text-xs font-medium">
-                            <AlertCircle className="w-4 h-4" />
-                            Fel
-                          </span>
-                        )}
-                        
-                        <button
-                          onClick={() => handleDelete(doc.id)}
-                          className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 
-                                   rounded-xl transition-all duration-200 opacity-0 group-hover:opacity-100"
-                          title="Ta bort"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
+            <div className="p-5 space-y-5">
+              {selectedDoc.status === 'completed' ? (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <p className="text-xs text-aifm-charcoal/50 mb-1">Sidor</p>
+                      <p className="text-xl font-semibold text-aifm-charcoal">{selectedDoc.pages}</p>
                     </div>
-                    
-                    {/* Summary */}
-                    {doc.summary && (
-                      <div className="mt-3 p-4 bg-gray-50 rounded-xl">
-                        <p className="text-sm text-aifm-charcoal/60 leading-relaxed">
-                          {doc.summary}
-                        </p>
-                      </div>
-                    )}
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <p className="text-xs text-aifm-charcoal/50 mb-1">Konfidens</p>
+                      <p className="text-xl font-semibold text-aifm-charcoal">{selectedDoc.confidence}%</p>
+                    </div>
                   </div>
+                  {selectedDoc.summary && (
+                    <div>
+                      <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-2">AI-sammanfattning</p>
+                      <p className="text-sm text-aifm-charcoal/70 leading-relaxed bg-gray-50 rounded-xl p-4">
+                        {selectedDoc.summary}
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                  <p className="text-sm text-aifm-charcoal/60">Analyserar dokument...</p>
                 </div>
-              </div>
-            ))
-          )}
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </DashboardLayout>
   );
 }
