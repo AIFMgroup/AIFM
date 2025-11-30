@@ -284,7 +284,6 @@ export const mockFunds: Fund[] = [
     status: 'INVESTING',
     targetSize: 80000000,
     committedCapital: 63000000,
-    calledAmount: 42000000,
     calledCapital: 42000000,
     distributedCapital: 12000000,
     nav: 63000000,
