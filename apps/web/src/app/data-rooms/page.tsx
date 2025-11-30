@@ -4,8 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { 
   FolderLock, Plus, Clock, Shield,
-  Search, Lock, Archive, FileText, Users, Eye, Home,
-  TrendingUp, Activity, Settings
+  Search, Lock, Archive, FileText, Users, Eye, Home
 } from 'lucide-react';
 import {
   mockDataRooms, getTypeLabel
