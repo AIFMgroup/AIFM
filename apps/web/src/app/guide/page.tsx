@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { 
-  ChevronRight, Play, Building2, Users, DollarSign, ArrowLeftRight,
+  Building2, Users, DollarSign, ArrowLeftRight,
   Wallet, FolderLock, CheckSquare, FileText, Calculator, Settings,
   MessageSquare, Home, Shield, ClipboardList, HelpCircle, Sparkles,
-  BarChart3, Upload, BookOpen, FileCheck, CreditCard, X, ChevronDown,
+  BarChart3, Upload, BookOpen, FileCheck, CreditCard, X,
   AlertTriangle, Lightbulb, CheckCircle2, HelpCircle as QuestionIcon,
   ArrowRight, ExternalLink, Target, Zap
 } from 'lucide-react';
