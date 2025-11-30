@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { 
   CheckCircle2, Clock, AlertCircle, Search,
-  ArrowUpRight, ArrowDownRight, Eye, Check, X, ChevronDown,
+  ArrowUpRight, ArrowDownRight, Eye, Check, X,
   FileText, Sparkles
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
