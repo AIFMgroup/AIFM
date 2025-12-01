@@ -446,11 +446,9 @@ function HistoricalNAVChart({ data }: { data: { month: string; nav: number; }[] 
 
 // Investor Breakdown Table
 function InvestorBreakdown({ 
-  investors,
-  totalNAV
+  investors
 }: { 
   investors: typeof navDataByCompany['company-1']['investorBreakdown'];
-  totalNAV: number;
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -793,7 +791,6 @@ export default function NAVCalculationPage() {
       {activeTab === 'investors' && (
         <InvestorBreakdown 
           investors={navData.investorBreakdown}
-          totalNAV={calculatedNAV || navData.currentNAV}
         />
       )}
 
