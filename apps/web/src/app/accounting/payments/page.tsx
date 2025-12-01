@@ -6,7 +6,7 @@ import {
   CheckCircle2, Clock, AlertCircle, CreditCard, Send,
   Calendar, Building2, FileText, Plus, Search, ChevronRight,
   Filter, Download, TrendingUp, TrendingDown, Wallet, X, Check,
-  Sparkles, User
+  Sparkles
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useCompany } from '@/components/CompanyContext';
