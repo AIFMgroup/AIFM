@@ -716,6 +716,212 @@ export const guideSections: GuideSection[] = [
     link: '/investors',
   },
   {
+    id: 'nav-calculation',
+    title: 'NAV-beräkning',
+    icon: 'Calculator',
+    description: 'Beräkna och visualisera fondens nettotillgångsvärde med interaktiv kalkylator.',
+    introduction: 'NAV-beräkningsmodulen ger dig fullständig kontroll över fondens nettotillgångsvärde (Net Asset Value). Med interaktiv kalkylator, waterfall-visualisering och per-investerare breakdown kan du enkelt se hur NAV beräknas och fördelas.',
+    keyBenefits: [
+      'Real-tids NAV-beräkning baserat på tillgångar och skulder',
+      'Visuell waterfall-graf som visar beräkningsstegen',
+      'Historisk NAV-utveckling över tid',
+      'Per-investerare NAV-breakdown med TVPI',
+      'Interaktiv kalkylator för what-if analyser',
+    ],
+    hasVideo: false,
+    steps: [
+      {
+        id: 'view-nav',
+        title: 'Se aktuellt NAV',
+        shortDescription: 'Överblick av fondens nettotillgångsvärde',
+        detailedContent: {
+          overview: 'NAV-översikten visar fondens aktuella nettotillgångsvärde tillsammans med förändring sedan förra perioden och nyckeltal som tillgångar och skulder.',
+          howItWorks: [
+            'Navigera till Fond > NAV-beräkning i sidomenyn',
+            'Hero-sektionen visar aktuellt NAV med trend',
+            'Totala tillgångar och skulder visas som separata kort',
+            'Antal investerare och deras totala ägarandel visas',
+            'Välj flik för att se olika vyer: Översikt, Kalkylator, Investerare',
+          ],
+          useCases: [
+            'Kvartalsrapportering till investerare',
+            'Intern uppföljning av fondvärdering',
+            'Due diligence och revision',
+          ],
+          commonMistakes: [
+            'Glömmer att uppdatera portföljvärderingar innan NAV-beräkning',
+            'Missar att inkludera upplupna avgifter',
+            'Använder föråldrade valuteringar',
+          ],
+          proTips: [
+            'Kör NAV-beräkning i slutet av varje månad för konsekvent historik',
+            'Använd kalkylatorn för att simulera olika värderingsscenarier',
+            'Exportera rapporten för dokumentation',
+          ],
+          relatedFeatures: ['Portfölj', 'Treasury', 'Rapporter'],
+          faq: [
+            { question: 'Hur ofta uppdateras NAV automatiskt?', answer: 'NAV beräknas baserat på de senaste inmatade värdena. Uppdatera portföljvärderingar manuellt för att se aktuellt NAV.' },
+            { question: 'Kan jag exportera NAV-rapporten?', answer: 'Ja, använd Exportera-knappen för att ladda ner som PDF eller Excel.' },
+          ],
+        },
+      },
+      {
+        id: 'waterfall-view',
+        title: 'Waterfall-visualisering',
+        shortDescription: 'Se hur tillgångar minus skulder blir NAV',
+        detailedContent: {
+          overview: 'Waterfall-diagrammet visualiserar steg-för-steg hur fondens NAV beräknas, från bruttotillgångar till nettotillgångsvärde.',
+          howItWorks: [
+            'Klicka på fliken Översikt',
+            'Waterfall-diagrammet visas till vänster',
+            'Gröna staplar representerar tillgångar',
+            'Röda staplar representerar skulder (avdrag)',
+            'Slutresultatet visar beräknat NAV',
+            'Hover över staplar för att se exakta belopp',
+          ],
+          useCases: [
+            'Förklara NAV-beräkning för investerare',
+            'Identifiera stora poster som påverkar NAV',
+            'Presentationer för styrelsen',
+          ],
+          commonMistakes: [
+            'Fokuserar bara på totalen utan att förstå komponenterna',
+            'Ignorerar carried interest-reservens påverkan',
+          ],
+          proTips: [
+            'Använd waterfall-vyn när du förklarar NAV för nya investerare',
+            'Jämför med tidigare perioder för att se trender',
+            'Notera förändringar i förvaltningsavgift och carried interest',
+          ],
+          relatedFeatures: ['Rapporter', 'Bokföring', 'Historik'],
+          faq: [
+            { question: 'Vad ingår i portföljvärdering?', answer: 'Portföljvärderingen inkluderar fair value på alla aktiva investeringar baserat på senaste värdering.' },
+            { question: 'Hur beräknas carried interest-reserv?', answer: 'Carried interest beräknas baserat på överavkastning enligt fondavtalet, vanligtvis 20% av vinst över en hurdle rate.' },
+          ],
+        },
+      },
+      {
+        id: 'interactive-calculator',
+        title: 'Interaktiv kalkylator',
+        shortDescription: 'Simulera olika scenarier med editerbara värden',
+        detailedContent: {
+          overview: 'Den interaktiva kalkylatorn låter dig justera tillgångar och skulder för att se hur NAV påverkas i olika scenarier.',
+          howItWorks: [
+            'Klicka på fliken Kalkylator',
+            'Tillgångar visas till vänster: Portföljvärdering, Kassa, Fordringar, etc.',
+            'Skulder visas till höger: Leverantörsskulder, Förvaltningsavgift, etc.',
+            'Ändra valfritt värde genom att skriva i fältet',
+            'Klicka på "Beräkna NAV" för att se uppdaterat resultat',
+            'Det beräknade NAV visas längst ner med guldfärgad highlight',
+          ],
+          useCases: [
+            'What-if analyser för potentiella investeringar',
+            'Scenario-planering för olika utfall',
+            'Förstå känsligheten i NAV-beräkningen',
+          ],
+          commonMistakes: [
+            'Glömmer att klicka Beräkna NAV efter ändringar',
+            'Ändrar för många värden samtidigt och tappar bort sig',
+          ],
+          proTips: [
+            'Ändra ett värde i taget för att förstå påverkan',
+            'Notera utgångsvärdet innan du börjar justera',
+            'Använd kalkylatorn för att planera framtida kapitalanrop',
+          ],
+          relatedFeatures: ['Kapitalanrop', 'Treasury', 'Rapporter'],
+          faq: [
+            { question: 'Sparas mina ändringar i kalkylatorn?', answer: 'Nej, kalkylatorn är för simulering. Ändringar påverkar inte den officiella NAV-beräkningen.' },
+            { question: 'Kan jag spara ett scenario?', answer: 'För närvarande kan du exportera rapporten med dina simulerade värden.' },
+          ],
+        },
+      },
+      {
+        id: 'investor-breakdown',
+        title: 'Per-investerare breakdown',
+        shortDescription: 'Se varje investerares NAV-andel och TVPI',
+        detailedContent: {
+          overview: 'Investerare-vyn visar hur fondens NAV fördelas mellan alla limited partners (LPs) baserat på deras ägarandel.',
+          howItWorks: [
+            'Klicka på fliken Investerare',
+            'Listan visar alla investerare med deras NAV-andel',
+            'Varje rad visar: Namn, Typ, NAV-andel, Ägarandel %',
+            'Klicka på en investerare för att expandera och se detaljer',
+            'Detaljerna visar: Commitment, Inbetalt kapital, Utdelningar, TVPI',
+            'TVPI (Total Value to Paid-In) beräknas automatiskt',
+          ],
+          useCases: [
+            'Kvartalsrapporter till individuella investerare',
+            'Beräkna utdelningsbelopp per LP',
+            'Analysera avkastning per investerartyp',
+          ],
+          commonMistakes: [
+            'Blandar ihop commitment och inbetalt kapital',
+            'Glömmer att inkludera tidigare utdelningar i TVPI',
+          ],
+          proTips: [
+            'Exportera listan före varje utdelning för dokumentation',
+            'Jämför TVPI mellan investerare för att se om alla behandlas lika',
+            'Använd typer (Pension, Family Office, etc.) för analys',
+          ],
+          relatedFeatures: ['Investerare', 'Utdelningar', 'Rapporter'],
+          faq: [
+            { question: 'Hur beräknas TVPI?', answer: 'TVPI = (NAV-andel + Utdelningar) / Inbetalt kapital. Ett TVPI på 1.5x betyder 50% avkastning.' },
+            { question: 'Varför stämmer inte summorna exakt?', answer: 'Avrundningar kan ge små differenser. Den officiella NAV-beräkningen använder exakta tal.' },
+          ],
+        },
+      },
+      {
+        id: 'historical-nav',
+        title: 'Historisk utveckling',
+        shortDescription: 'Se NAV-trend över tid med graf',
+        detailedContent: {
+          overview: 'Den historiska grafen visar hur fondens NAV har utvecklats över tid, med trendanalys och jämförelsepunkter.',
+          howItWorks: [
+            'Gå till fliken Översikt',
+            'Grafen till höger visar NAV per månad',
+            'Staplar visar absolut NAV för varje period',
+            'Den senaste perioden markeras med guld',
+            'Under grafen visas: Startvärde, Nuvarande värde, Förändring',
+            'YTD-förändring visas i procent',
+          ],
+          useCases: [
+            'Årsrapporter och investerarpresentationer',
+            'Identifiera trender och säsongsmönster',
+            'Jämföra utveckling med benchmark',
+          ],
+          commonMistakes: [
+            'Drar slutsatser från för kort tidsperiod',
+            'Ignorerar engångshändelser som påverkat NAV',
+          ],
+          proTips: [
+            'Lägg in noter för stora NAV-förändringar',
+            'Jämför med marknadsindex för kontext',
+            'Använd grafen i investerarkommunikation',
+          ],
+          relatedFeatures: ['Rapporter', 'Översikt', 'Dashboard'],
+          faq: [
+            { question: 'Hur långt tillbaka går historiken?', answer: 'Historiken går tillbaka till fondens start, eller så långt som data har matats in.' },
+            { question: 'Kan jag exportera grafdata?', answer: 'Ja, exportera rapporten för att få all underliggande data.' },
+          ],
+        },
+      },
+    ],
+    features: [
+      { title: 'Waterfall-diagram', description: 'Visuell representation av NAV-beräkningen steg för steg' },
+      { title: 'Interaktiv kalkylator', description: 'What-if analyser med editerbara fält' },
+      { title: 'Investerare-breakdown', description: 'NAV per LP med TVPI-beräkning' },
+      { title: 'Historisk graf', description: 'Trend över tid med YTD-jämförelse' },
+      { title: 'Export', description: 'Exportera rapport som PDF eller Excel' },
+    ],
+    tips: [
+      'Kör NAV-beräkning i slutet av varje månad för konsekvent rapportering',
+      'Använd kalkylatorn för att simulera effekten av nya investeringar',
+      'Jämför TVPI mellan investerare för att säkerställa rättvisa',
+      'Exportera alltid en rapport före utdelningar för dokumentation',
+    ],
+    link: '/nav-calculation',
+  },
+  {
     id: 'portfolio',
     title: 'Portfölj',
     icon: 'BarChart3',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   Calculator, TrendingUp, TrendingDown, DollarSign, Building2,
   Users, Wallet, FileText, ChevronDown, ChevronUp, Home,
