@@ -33,6 +33,7 @@ const navItems: NavItem[] = [
     children: [
       { id: 'portfolio', label: 'Portfölj', href: '/portfolio' },
       { id: 'investors', label: 'Investerare', href: '/investors' },
+      { id: 'nav-calculation', label: 'NAV-beräkning', href: '/nav-calculation' },
     ]
   },
   { 
