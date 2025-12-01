@@ -161,7 +161,7 @@ function DataRoomCard({
 }
 
 export default function DataRoomsPage() {
-  const { selectedCompany } = useCompany();
+  useCompany(); // Keep context connection
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'archived'>('all');
   const [activeTypeTab, setActiveTypeTab] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
