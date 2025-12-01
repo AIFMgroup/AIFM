@@ -1,14 +1,87 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   CheckCircle2, Clock, AlertCircle, CreditCard, Send,
   Calendar, Building2, FileText, Plus, Search, ChevronRight,
-  Filter, Download, TrendingUp, TrendingDown, Wallet
+  Filter, Download, TrendingUp, TrendingDown, Wallet, X, Check,
+  Sparkles, User
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useCompany } from '@/components/CompanyContext';
+
+// Minimalist Select Component
+function MinimalSelect({ 
+  options, 
+  value, 
+  onChange, 
+  placeholder = 'Välj...',
+  icon: Icon
+}: { 
+  options: { value: string; label: string }[]; 
+  value: string; 
+  onChange: (value: string) => void;
+  placeholder?: string;
+  icon?: React.ElementType;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(o => o.value === value);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full px-4 py-3 bg-gray-50 rounded-xl text-sm text-left flex items-center justify-between
+                   hover:bg-gray-100 transition-all ${isOpen ? 'ring-2 ring-aifm-gold/20' : ''}`}
+      >
+        <div className="flex items-center gap-3">
+          {Icon && <Icon className="w-4 h-4 text-aifm-charcoal/40" />}
+          <span className={selectedOption ? 'text-aifm-charcoal' : 'text-aifm-charcoal/40'}>
+            {selectedOption?.label || placeholder}
+          </span>
+        </div>
+        <ChevronRight className={`w-4 h-4 text-aifm-charcoal/40 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+      </button>
+      
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 
+                        overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+          {options.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => {
+                onChange(option.value);
+                setIsOpen(false);
+              }}
+              className={`w-full px-4 py-3 text-sm text-left flex items-center justify-between
+                         hover:bg-gray-50 transition-colors ${value === option.value ? 'bg-aifm-gold/5' : ''}`}
+            >
+              <span className={value === option.value ? 'text-aifm-gold font-medium' : 'text-aifm-charcoal'}>
+                {option.label}
+              </span>
+              {value === option.value && <Check className="w-4 h-4 text-aifm-gold" />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface Payment {
   id: string;
@@ -205,12 +278,251 @@ function HeroMetric({ label, value, color = 'white', icon: Icon }: { label: stri
   );
 }
 
+// Payment Type Options
+const paymentTypes = [
+  { value: 'invoice', label: 'Faktura' },
+  { value: 'tax', label: 'Skatt' },
+  { value: 'salary', label: 'Lön' },
+  { value: 'other', label: 'Övrigt' },
+];
+
+// Bank Account Options
+const bankAccounts = [
+  { value: 'seb-1', label: 'SEB Företagskonto ****4521' },
+  { value: 'nordea-1', label: 'Nordea Huvudkonto ****8834' },
+  { value: 'swedbank-1', label: 'Swedbank Likviditet ****2290' },
+];
+
+// New Payment Modal
+function NewPaymentModal({ 
+  isOpen, 
+  onClose,
+  onSubmit 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void;
+  onSubmit: (payment: Omit<Payment, 'id' | 'status'>) => void;
+}) {
+  const [recipient, setRecipient] = useState('');
+  const [description, setDescription] = useState('');
+  const [amount, setAmount] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [type, setType] = useState('');
+  const [reference, setReference] = useState('');
+  const [bankAccount, setBankAccount] = useState('');
+  const [isScheduled, setIsScheduled] = useState(false);
+
+  const handleSubmit = () => {
+    if (!recipient || !description || !amount || !dueDate || !type) {
+      return;
+    }
+    onSubmit({
+      recipient,
+      description,
+      amount: parseFloat(amount),
+      dueDate,
+      type: type as Payment['type'],
+      reference: reference || undefined,
+      bankAccount: bankAccount || undefined,
+    });
+    // Reset form
+    setRecipient('');
+    setDescription('');
+    setAmount('');
+    setDueDate('');
+    setType('');
+    setReference('');
+    setBankAccount('');
+    setIsScheduled(false);
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl w-full max-w-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-aifm-gold/10 flex items-center justify-center">
+              <Send className="w-5 h-5 text-aifm-gold" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-aifm-charcoal">Ny betalning</h2>
+              <p className="text-xs text-aifm-charcoal/50">Skapa en ny utgående betalning</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+            <X className="w-5 h-5 text-aifm-charcoal/50" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 space-y-5">
+          {/* Recipient & Type */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider mb-2">
+                Mottagare *
+              </label>
+              <input
+                type="text"
+                value={recipient}
+                onChange={(e) => setRecipient(e.target.value)}
+                placeholder="Företagsnamn eller person"
+                className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-sm
+                           focus:bg-white focus:ring-2 focus:ring-aifm-gold/20 transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider mb-2">
+                Typ *
+              </label>
+              <MinimalSelect
+                options={paymentTypes}
+                value={type}
+                onChange={setType}
+                placeholder="Välj typ"
+                icon={FileText}
+              />
+            </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider mb-2">
+              Beskrivning *
+            </label>
+            <input
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="t.ex. Faktura december 2024"
+              className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-sm
+                         focus:bg-white focus:ring-2 focus:ring-aifm-gold/20 transition-all"
+            />
+          </div>
+
+          {/* Amount & Due Date */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider mb-2">
+                Belopp (SEK) *
+              </label>
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0"
+                className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-sm
+                           focus:bg-white focus:ring-2 focus:ring-aifm-gold/20 transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider mb-2">
+                Förfallodatum *
+              </label>
+              <input
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-sm
+                           focus:bg-white focus:ring-2 focus:ring-aifm-gold/20 transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Reference & Bank Account */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider mb-2">
+                Referens
+              </label>
+              <input
+                type="text"
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+                placeholder="Fakturanummer eller OCR"
+                className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-sm
+                           focus:bg-white focus:ring-2 focus:ring-aifm-gold/20 transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider mb-2">
+                Från konto
+              </label>
+              <MinimalSelect
+                options={bankAccounts}
+                value={bankAccount}
+                onChange={setBankAccount}
+                placeholder="Välj konto"
+                icon={CreditCard}
+              />
+            </div>
+          </div>
+
+          {/* Schedule Option */}
+          <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+            <input
+              type="checkbox"
+              id="schedule"
+              checked={isScheduled}
+              onChange={(e) => setIsScheduled(e.target.checked)}
+              className="rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold"
+            />
+            <label htmlFor="schedule" className="flex-1 text-sm text-aifm-charcoal cursor-pointer">
+              <span className="font-medium">Schemalägg betalning</span>
+              <p className="text-xs text-aifm-charcoal/50 mt-0.5">Betalningen utförs automatiskt på förfallodagen</p>
+            </label>
+            <Calendar className="w-5 h-5 text-aifm-charcoal/30" />
+          </div>
+
+          {/* AI Suggestion */}
+          <div className="flex items-start gap-3 p-4 bg-aifm-gold/5 rounded-xl border border-aifm-gold/20">
+            <Sparkles className="w-5 h-5 text-aifm-gold flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-aifm-charcoal">AI-förslag</p>
+              <p className="text-xs text-aifm-charcoal/60 mt-0.5">
+                Baserat på tidigare betalningar till denna mottagare rekommenderar vi konto SEB Företagskonto.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-gray-100 flex gap-3 bg-gray-50/50">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 px-4 text-sm font-medium text-aifm-charcoal/70 
+                       bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all"
+          >
+            Avbryt
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={!recipient || !description || !amount || !dueDate || !type}
+            className="flex-1 py-3 px-4 text-sm font-medium text-white 
+                       bg-aifm-charcoal rounded-xl hover:bg-aifm-charcoal/90 
+                       disabled:opacity-50 disabled:cursor-not-allowed
+                       shadow-lg shadow-aifm-charcoal/20 transition-all flex items-center justify-center gap-2"
+          >
+            <Send className="w-4 h-4" />
+            {isScheduled ? 'Schemalägg' : 'Skapa betalning'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PaymentsPage() {
   useCompany(); // Context for layout
   const [payments, setPayments] = useState<Payment[]>(mockPayments);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'scheduled' | 'overdue' | 'paid'>('all');
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
+  const [showNewPaymentModal, setShowNewPaymentModal] = useState(false);
 
   const getFilteredPayments = () => {
     let filtered = payments;
@@ -238,6 +550,15 @@ export default function PaymentsPage() {
   const handleBulkPay = () => {
     setPayments(prev => prev.map(p => selectedPayments.includes(p.id) ? { ...p, status: 'paid' as const } : p));
     setSelectedPayments([]);
+  };
+
+  const handleNewPayment = (paymentData: Omit<Payment, 'id' | 'status'>) => {
+    const newPayment: Payment = {
+      ...paymentData,
+      id: `new-${Date.now()}`,
+      status: 'pending',
+    };
+    setPayments(prev => [newPayment, ...prev]);
   };
 
   const toggleSelection = (id: string) => {
@@ -294,7 +615,9 @@ export default function PaymentsPage() {
                   Betala {selectedPayments.length}
                 </button>
               )}
-              <button className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-aifm-charcoal 
+              <button 
+                onClick={() => setShowNewPaymentModal(true)}
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-aifm-charcoal 
                          bg-aifm-gold rounded-xl hover:bg-aifm-gold/90 
                          shadow-lg shadow-aifm-gold/30 transition-all">
                 <Plus className="w-4 h-4" />
@@ -522,6 +845,13 @@ export default function PaymentsPage() {
           </div>
         </div>
       </div>
+
+      {/* New Payment Modal */}
+      <NewPaymentModal 
+        isOpen={showNewPaymentModal}
+        onClose={() => setShowNewPaymentModal(false)}
+        onSubmit={handleNewPayment}
+      />
     </DashboardLayout>
   );
 }
