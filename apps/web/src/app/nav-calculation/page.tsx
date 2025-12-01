@@ -692,7 +692,7 @@ export default function NAVCalculationPage() {
   return (
     <DashboardLayout>
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-aifm-charcoal via-aifm-charcoal to-aifm-charcoal/90 -mx-4 lg:-mx-8 -mt-4 lg:-mt-8 px-4 lg:px-8 pt-6 lg:pt-8 pb-6 mb-8 rounded-b-3xl">
+      <div className="bg-gradient-to-br from-aifm-charcoal via-aifm-charcoal to-aifm-charcoal/90 -mx-4 sm:-mx-6 -mt-4 sm:-mt-6 px-4 sm:px-6 pt-6 pb-6 mb-8 rounded-b-3xl">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-white/40 mb-6">
           <Home className="w-4 h-4" />
