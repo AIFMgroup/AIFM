@@ -3,9 +3,8 @@
 import { useState } from 'react';
 import { 
   Users, Shield, CheckCircle2, AlertCircle, Clock,
-  Download, Search, ChevronRight, ChevronDown,
-  Plus, Eye, Mail, Phone, Globe, Building2, User,
-  FileText, AlertTriangle, XCircle, TrendingUp, BarChart3, Home
+  Download, Search, Plus, Eye, Mail, Phone, Globe, Building2, User,
+  FileText, AlertTriangle, XCircle, TrendingUp, Home
 } from 'lucide-react';
 import {
   getInvestorsByCompanyId, getCommitmentsByInvestor,
