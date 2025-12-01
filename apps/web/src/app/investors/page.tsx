@@ -91,15 +91,6 @@ function InvestorRow({
     }
   };
 
-  const getRiskStyles = (rating: string) => {
-    switch (rating) {
-      case 'LOW': return 'bg-emerald-50 text-emerald-600';
-      case 'MEDIUM': return 'bg-amber-50 text-amber-600';
-      case 'HIGH': return 'bg-red-50 text-red-600';
-      default: return 'bg-gray-50 text-gray-600';
-    }
-  };
-
   const getInvestorIcon = (type: string) => {
     switch (type) {
       case 'INDIVIDUAL': return User;
