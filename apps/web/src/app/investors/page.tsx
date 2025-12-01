@@ -73,17 +73,13 @@ function HeroMetric({
 // Investor Row Component
 function InvestorRow({ 
   investor, 
-  commitments,
   isSelected,
   onSelect
 }: { 
   investor: Investor;
-  commitments: ReturnType<typeof getCommitmentsByInvestor>;
   isSelected: boolean;
   onSelect: () => void;
 }) {
-  const totalCommitted = commitments.reduce((sum, c) => sum + c.committedAmount, 0);
-
   const getKYCStatusStyles = (status: string) => {
     switch (status) {
       case 'APPROVED': return { bg: 'bg-emerald-50', text: 'text-emerald-600', icon: CheckCircle2 };
@@ -483,7 +479,6 @@ export default function InvestorsPage() {
                 <InvestorRow 
                   key={investor.id}
                   investor={investor}
-                  commitments={getCommitmentsByInvestor(investor.id)}
                   isSelected={selectedInvestorId === investor.id}
                   onSelect={() => setSelectedInvestorId(investor.id)}
                 />
