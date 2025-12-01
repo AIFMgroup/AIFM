@@ -73,15 +73,11 @@ function HeroMetric({
 // Investor Row Component
 function InvestorRow({ 
   investor, 
-  isExpanded, 
-  onToggle,
   commitments,
   isSelected,
   onSelect
 }: { 
   investor: Investor;
-  isExpanded: boolean;
-  onToggle: () => void;
   commitments: ReturnType<typeof getCommitmentsByInvestor>;
   isSelected: boolean;
   onSelect: () => void;
@@ -487,8 +483,6 @@ export default function InvestorsPage() {
                 <InvestorRow 
                   key={investor.id}
                   investor={investor}
-                  isExpanded={false}
-                  onToggle={() => {}}
                   commitments={getCommitmentsByInvestor(investor.id)}
                   isSelected={selectedInvestorId === investor.id}
                   onSelect={() => setSelectedInvestorId(investor.id)}
