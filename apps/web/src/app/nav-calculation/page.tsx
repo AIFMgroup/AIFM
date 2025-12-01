@@ -2,16 +2,15 @@
 
 import { useState } from 'react';
 import { 
-  Calculator, TrendingUp, TrendingDown, DollarSign, Building2,
-  Users, Wallet, FileText, ChevronDown, ChevronUp, Home,
-  PieChart, BarChart3, Minus, Plus, RefreshCw, Download,
-  AlertCircle, CheckCircle2, Clock, ArrowRight
+  Calculator, TrendingUp, TrendingDown, Building2,
+  Users, Wallet, FileText, ChevronDown, Home,
+  BarChart3, Minus, Plus, RefreshCw, Download,
+  CheckCircle2, Clock
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useCompany } from '@/components/CompanyContext';
 import { 
-  getFundByCompanyId, getCommitmentsByFund, getPortfolioCompaniesByFund,
-  formatCurrency, formatPercentage
+  getFundByCompanyId, formatCurrency, formatPercentage
 } from '@/lib/fundData';
 
 // NAV data per company
