@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/auth';
 import { sendEmail } from '@/lib/email';
+import { requireAuth } from '@/lib/authz';
 
 /**
  * POST /api/compliance/notify
  * Send email notifications for compliance issues
+ * Roles: ADMIN, CONTROLLER, REVIEWER, COORDINATOR
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const { error } = await requireAuth(request, { roles: ['ADMIN', 'CONTROLLER', 'REVIEWER', 'COORDINATOR'] });
+    if (error) return error;
 
     const { documentId, complianceStatus, recipients } = await request.json();
 
@@ -82,4 +81,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

@@ -9,7 +9,7 @@ const envSchema = z.object({
   SENDGRID_FROM_EMAIL: z.string().optional(),
 });
 
-export const env = envSchema.parse({
+const parsed = envSchema.parse({
   NODE_ENV: process.env.NODE_ENV,
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
@@ -18,4 +18,14 @@ export const env = envSchema.parse({
   SENDGRID_FROM_EMAIL: process.env.SENDGRID_FROM_EMAIL,
 });
 
-export const isProd = env.NODE_ENV === 'production';
+const isProd = parsed.NODE_ENV === 'production';
+
+if (isProd) {
+  const missing = ['NEXTAUTH_SECRET', 'DATABASE_URL'].filter((key) => !parsed[key as keyof typeof parsed]);
+  if (missing.length > 0) {
+    throw new Error(`Missing required environment variables in production: ${missing.join(', ')}`);
+  }
+}
+
+export const env = parsed;
+export { isProd };
