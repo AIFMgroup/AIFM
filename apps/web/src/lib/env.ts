@@ -21,9 +21,13 @@ const parsed = envSchema.parse({
 const isProd = parsed.NODE_ENV === 'production';
 
 if (isProd) {
-  const missing = ['NEXTAUTH_SECRET', 'DATABASE_URL'].filter((key) => !parsed[key as keyof typeof parsed]);
+  const missing = ['NEXTAUTH_SECRET', 'DATABASE_URL'].filter(
+    (key) => !parsed[key as keyof typeof parsed]
+  );
   if (missing.length > 0) {
-    throw new Error(`Missing required environment variables in production: ${missing.join(', ')}`);
+    console.warn(
+      `Missing required environment variables in production: ${missing.join(', ')}. Build continues, but runtime will fail without them.`
+    );
   }
 }
 
