@@ -3,6 +3,8 @@
  * Provides email sending functionality for compliance notifications
  */
 
+import { env } from './env';
+
 interface SendEmailOptions {
   to: string;
   subject: string;
@@ -24,7 +26,7 @@ let sgMail: SendGridClient = null;
  */
 async function loadSendGrid() {
   if (typeof window !== 'undefined') return null;
-  if (!process.env.SENDGRID_API_KEY) return null;
+  if (!env.SENDGRID_API_KEY) return null;
   if (sgMail) return sgMail;
 
   try {
@@ -34,7 +36,7 @@ async function loadSendGrid() {
     const sgMailModule = await dynamicImport('@sendgrid/mail');
     const client = sgMailModule?.default ?? sgMailModule;
     if (client?.setApiKey) {
-      client.setApiKey(process.env.SENDGRID_API_KEY);
+      client.setApiKey(env.SENDGRID_API_KEY);
       sgMail = client;
     }
   } catch (error) {
@@ -57,7 +59,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
     if (sg) {
       const msg: any = {
         to,
-        from: process.env.SENDGRID_FROM_EMAIL || 'noreply@aifm.com',
+        from: env.SENDGRID_FROM_EMAIL || 'noreply@aifm.com',
         subject,
         html,
       };
