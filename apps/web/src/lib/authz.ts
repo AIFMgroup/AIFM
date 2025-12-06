@@ -22,9 +22,13 @@ export async function requireAuth(request: NextRequest, opts: GuardOptions = {})
 
   const userRole = (session.user as any)?.role as Role | undefined;
 
-  if (opts.roles && !opts.roles.includes(userRole ?? '')) {
+  if (opts.roles && userRole && !opts.roles.includes(userRole)) {
     return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
   }
+  if (opts.roles && !userRole) {
+    return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
+  }
+
 
   if (opts.requireTwoManRule) {
     // Placeholder for real 4-ögon: expect header x-two-man-approval=true
