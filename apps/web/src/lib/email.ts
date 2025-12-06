@@ -11,25 +11,37 @@ interface SendEmailOptions {
   bcc?: string[];
 }
 
-let sgMail: any = null;
+type SendGridClient = {
+  setApiKey: (key: string) => void;
+  send: (msg: any) => Promise<any>;
+} | null;
 
-// Initialize SendGrid (lazy load)
-async function getSgMail() {
-  if (!sgMail) {
-    try {
-      // Try to load SendGrid if available
-      // Using template string to prevent Next.js from statically analyzing the import
-      const moduleName = '@sendgrid/' + 'mail';
-      const sgMailModule = await import(moduleName);
-      sgMail = sgMailModule.default || sgMailModule;
-      if (process.env.SENDGRID_API_KEY) {
-        sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-      }
-    } catch (error) {
-      // SendGrid not installed, will use console fallback
-      sgMail = null;
+let sgMail: SendGridClient = null;
+
+/**
+ * Lazy-load SendGrid only when a key exists and on the server.
+ * Uses runtime import to avoid bundling an optional dependency in the client build.
+ */
+async function loadSendGrid() {
+  if (typeof window !== 'undefined') return null;
+  if (!process.env.SENDGRID_API_KEY) return null;
+  if (sgMail) return sgMail;
+
+  try {
+    const dynamicImport = new Function('modulePath', 'return import(modulePath);') as (
+      modulePath: string
+    ) => Promise<any>;
+    const sgMailModule = await dynamicImport('@sendgrid/mail');
+    const client = sgMailModule?.default ?? sgMailModule;
+    if (client?.setApiKey) {
+      client.setApiKey(process.env.SENDGRID_API_KEY);
+      sgMail = client;
     }
+  } catch (error) {
+    console.warn('SendGrid not available, falling back to console logging', error);
+    sgMail = null;
   }
+
   return sgMail;
 }
 
@@ -41,23 +53,21 @@ export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
     const { to, subject, html, cc, bcc } = options;
 
     // Check if SendGrid is configured
-    if (process.env.SENDGRID_API_KEY) {
-      const sg = await getSgMail();
-      if (sg) {
-        const msg: any = {
-          to,
-          from: process.env.SENDGRID_FROM_EMAIL || 'noreply@aifm.com',
-          subject,
-          html,
-        };
+    const sg = await loadSendGrid();
+    if (sg) {
+      const msg: any = {
+        to,
+        from: process.env.SENDGRID_FROM_EMAIL || 'noreply@aifm.com',
+        subject,
+        html,
+      };
 
-        if (cc && cc.length > 0) msg.cc = cc;
-        if (bcc && bcc.length > 0) msg.bcc = bcc;
+      if (cc && cc.length > 0) msg.cc = cc;
+      if (bcc && bcc.length > 0) msg.bcc = bcc;
 
-        await sg.send(msg);
-        console.log('Email sent successfully via SendGrid', { to, subject });
-        return true;
-      }
+      await sg.send(msg);
+      console.log('Email sent successfully via SendGrid', { to, subject });
+      return true;
     }
 
     // Fallback: Log to console in development/production if SendGrid not configured
