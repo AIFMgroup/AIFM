@@ -708,10 +708,10 @@ function DashboardLayoutInner({
       {/* Mobile Sidebar */}
       <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       
-      <main className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out ${collapsed ? 'lg:ml-[72px]' : 'lg:ml-56'}`}>
+      <main className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out overflow-x-hidden ${collapsed ? 'lg:ml-[72px]' : 'lg:ml-56'}`}>
         {/* Header with company selector - ALWAYS visible */}
         <header className="bg-white border-b border-gray-100 sticky top-0 z-30">
-          <div className="px-4 sm:px-6 py-3">
+          <div className="px-3 sm:px-6 py-3">
             <div className="flex items-center justify-between">
               {/* Mobile menu button */}
               <button 
@@ -739,8 +739,8 @@ function DashboardLayoutInner({
         </header>
 
         {/* Main content area */}
-        <div className="flex-1 p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-gray-100/50 overflow-auto">
-          <div className="max-w-7xl mx-auto">
+        <div className="flex-1 p-3 sm:p-6 bg-gradient-to-br from-gray-50 to-gray-100/50 overflow-auto">
+          <div className="max-w-7xl mx-auto w-full px-1 sm:px-0">
             {children}
           </div>
         </div>
