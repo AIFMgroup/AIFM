@@ -10,8 +10,9 @@ import {
   getFundByCompanyId, getCapitalCallsByCompanyId, getCommitmentsByFund,
   formatCurrency, formatDate, formatPercentage, CapitalCall
 } from '@/lib/fundData';
-import { DashboardLayout } from '@/components/DashboardLayout';
+
 import { useCompany } from '@/components/CompanyContext';
+import { PageHeader, PrimaryButton } from '@/components/shared/PageHeader';
 
 type TabType = 'active' | 'history' | 'statistics';
 
@@ -182,29 +183,26 @@ export default function CapitalCallsPage() {
   ];
 
   return (
-    <DashboardLayout>
-      {/* Page Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-semibold text-aifm-charcoal tracking-tight">Kapitalanrop</h1>
-          <p className="text-aifm-charcoal/40 mt-1 text-sm">Hantera kapitalanrop och inbetalningar</p>
-        </div>
-        <button 
-          onClick={() => setShowNewCallModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-aifm-charcoal rounded-xl hover:bg-aifm-charcoal/90 shadow-lg shadow-aifm-charcoal/20 transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          Nytt anrop
-        </button>
-      </div>
-
-      {/* Hero Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <HeroMetricCard label="Totalt åtagande" value={formatCurrency(totalCommitted, currency)} icon={Wallet} variant="primary" />
-        <HeroMetricCard label="Inropat" value={formatCurrency(totalCalled, currency)} subValue={`${formatPercentage(callPercentage)}`} icon={ArrowUpRight} />
-        <HeroMetricCard label="Återstående" value={formatCurrency(remainingToCall, currency)} icon={Clock} />
-        <HeroMetricCard label="Aktiva anrop" value={activeCalls.length.toString()} icon={Bell} variant="highlight" />
-      </div>
+    <>
+      <PageHeader
+        title="Kapitalanrop"
+        description="Hantera kapitalanrop och inbetalningar"
+        breadcrumbs={[
+          { label: 'Kapital' },
+          { label: 'Kapitalanrop' }
+        ]}
+        stats={[
+          { label: 'Totalt åtagande', value: formatCurrency(totalCommitted, currency), icon: Wallet },
+          { label: 'Inropat', value: formatCurrency(totalCalled, currency), subValue: formatPercentage(callPercentage), icon: ArrowUpRight },
+          { label: 'Återstående', value: formatCurrency(remainingToCall, currency), icon: Clock },
+          { label: 'Aktiva anrop', value: activeCalls.length.toString(), icon: Bell },
+        ]}
+        actions={
+          <PrimaryButton icon={Plus} onClick={() => setShowNewCallModal(true)}>
+            Nytt anrop
+          </PrimaryButton>
+        }
+      />
 
       {/* Progress Bar */}
       <div className="bg-white rounded-2xl border border-gray-100/50 p-6 mb-8">
@@ -535,6 +533,6 @@ export default function CapitalCallsPage() {
           </div>
         </div>
       )}
-    </DashboardLayout>
+    </>
   );
 }

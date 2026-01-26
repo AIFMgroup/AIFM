@@ -1,73 +1,45 @@
 'use client';
 
 import { useState } from 'react';
+import type { ComponentType } from 'react';
 import { 
   Users, Shield, CheckCircle2, AlertCircle, Clock,
   Download, Search, Plus, Eye, Mail, Phone, Globe, Building2, User,
-  FileText, AlertTriangle, XCircle, TrendingUp, Home
+  FileText, AlertTriangle, XCircle, TrendingUp
 } from 'lucide-react';
 import {
   getInvestorsByCompanyId, getCommitmentsByInvestor,
   formatCurrency, formatPercentage, formatDate, Investor
 } from '@/lib/fundData';
-import { DashboardLayout } from '@/components/DashboardLayout';
-import { useCompany } from '@/components/CompanyContext';
 
-// Tab Button Component
-function TabButton({ 
-  label, 
-  isActive, 
-  onClick,
-  count
-}: { 
-  label: string; 
-  isActive: boolean; 
-  onClick: () => void;
-  count?: number;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
-        isActive
-          ? 'bg-white text-aifm-charcoal shadow-sm'
-          : 'text-white/70 hover:text-white hover:bg-white/10'
-      }`}
-    >
-      {label}
-      {count !== undefined && (
-        <span className={`ml-2 ${isActive ? 'text-aifm-charcoal/50' : 'text-white/50'}`}>
-          {count}
-        </span>
-      )}
-    </button>
-  );
+import { useCompany } from '@/components/CompanyContext';
+import { PageHeader, PrimaryButton, SecondaryButton } from '@/components/shared/PageHeader';
+
+type IconComponent = ComponentType<{ className?: string }>;
+
+const KYC_STATUS_STYLES: Record<string, { bg: string; text: string; icon: IconComponent }> = {
+  APPROVED: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', icon: CheckCircle2 },
+  PENDING: { bg: 'bg-amber-500/20', text: 'text-amber-400', icon: Clock },
+  IN_PROGRESS: { bg: 'bg-blue-500/20', text: 'text-blue-400', icon: Clock },
+  REJECTED: { bg: 'bg-red-500/20', text: 'text-red-400', icon: XCircle },
+  EXPIRED: { bg: 'bg-red-500/20', text: 'text-red-400', icon: AlertCircle },
+  DEFAULT: { bg: 'bg-gray-500/20', text: 'text-gray-400', icon: Clock },
+};
+
+const INVESTOR_ICON_BY_TYPE: Record<string, IconComponent> = {
+  INDIVIDUAL: User,
+  INSTITUTION: Building2,
+  FAMILY_OFFICE: Users,
+  PENSION_FUND: Shield,
+  ENDOWMENT: Building2,
+};
+
+function getKYCStatusStyles(status: string) {
+  return KYC_STATUS_STYLES[status] || KYC_STATUS_STYLES.DEFAULT;
 }
 
-// Hero Metric Card
-function HeroMetric({ 
-  label, 
-  value, 
-  subValue,
-  icon: Icon
-}: { 
-  label: string; 
-  value: string; 
-  subValue?: string;
-  icon: React.ElementType;
-}) {
-  return (
-    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-      <div className="flex items-center gap-3 mb-2">
-        <div className="p-2 bg-white/10 rounded-lg">
-          <Icon className="w-4 h-4 text-white/70" />
-        </div>
-        <p className="text-xs text-white/50 uppercase tracking-wider font-medium">{label}</p>
-      </div>
-      <p className="text-2xl font-semibold text-white">{value}</p>
-      {subValue && <p className="text-sm text-white/60 mt-1">{subValue}</p>}
-    </div>
-  );
+function getInvestorIcon(type: string) {
+  return INVESTOR_ICON_BY_TYPE[type] || User;
 }
 
 // Investor Row Component
@@ -80,28 +52,6 @@ function InvestorRow({
   isSelected: boolean;
   onSelect: () => void;
 }) {
-  const getKYCStatusStyles = (status: string) => {
-    switch (status) {
-      case 'APPROVED': return { bg: 'bg-emerald-50', text: 'text-emerald-600', icon: CheckCircle2 };
-      case 'PENDING': return { bg: 'bg-amber-50', text: 'text-amber-600', icon: Clock };
-      case 'IN_PROGRESS': return { bg: 'bg-blue-50', text: 'text-blue-600', icon: Clock };
-      case 'REJECTED': return { bg: 'bg-red-50', text: 'text-red-600', icon: XCircle };
-      case 'EXPIRED': return { bg: 'bg-red-50', text: 'text-red-600', icon: AlertCircle };
-      default: return { bg: 'bg-gray-50', text: 'text-gray-600', icon: Clock };
-    }
-  };
-
-  const getInvestorIcon = (type: string) => {
-    switch (type) {
-      case 'INDIVIDUAL': return User;
-      case 'INSTITUTION': return Building2;
-      case 'FAMILY_OFFICE': return Users;
-      case 'PENSION_FUND': return Shield;
-      case 'ENDOWMENT': return Building2;
-      default: return User;
-    }
-  };
-
   const kycStyles = getKYCStatusStyles(investor.kycStatus);
   const KYCIcon = kycStyles.icon;
   const InvestorIcon = getInvestorIcon(investor.type);
@@ -139,11 +89,11 @@ function InvestorRow({
             </div>
           </div>
 
-          {/* Status Badge - Mobile only shows icon */}
-          <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${kycStyles.bg} ${kycStyles.text}`}>
-              <KYCIcon className="w-3 h-3" />
-              <span className="hidden sm:inline">{investor.kycStatus.replace(/_/g, ' ')}</span>
+          {/* KYC Status */}
+          <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full ${kycStyles.bg}`}>
+            <KYCIcon className={`w-3.5 h-3.5 ${kycStyles.text}`} />
+            <span className={`text-xs font-medium ${kycStyles.text}`}>
+              {investor.kycStatus.replace(/_/g, ' ')}
             </span>
           </div>
         </div>
@@ -152,120 +102,69 @@ function InvestorRow({
   );
 }
 
-// Investor Detail Panel
-function InvestorDetailPanel({ 
-  investor, 
-  commitments,
-  onClose
-}: { 
-  investor: Investor;
-  commitments: ReturnType<typeof getCommitmentsByInvestor>;
-  onClose: () => void;
-}) {
-  const totalCommitted = commitments.reduce((sum, c) => sum + c.committedAmount, 0);
-
-  const getKYCStatusStyles = (status: string) => {
-    switch (status) {
-      case 'APPROVED': return { bg: 'bg-emerald-50', text: 'text-emerald-600', icon: CheckCircle2 };
-      case 'PENDING': return { bg: 'bg-amber-50', text: 'text-amber-600', icon: Clock };
-      case 'IN_PROGRESS': return { bg: 'bg-blue-50', text: 'text-blue-600', icon: Clock };
-      case 'REJECTED': return { bg: 'bg-red-50', text: 'text-red-600', icon: XCircle };
-      case 'EXPIRED': return { bg: 'bg-red-50', text: 'text-red-600', icon: AlertCircle };
-      default: return { bg: 'bg-gray-50', text: 'text-gray-600', icon: Clock };
-    }
-  };
-
-  const getRiskStyles = (rating: string) => {
-    switch (rating) {
-      case 'LOW': return 'bg-emerald-50 text-emerald-600';
-      case 'MEDIUM': return 'bg-amber-50 text-amber-600';
-      case 'HIGH': return 'bg-red-50 text-red-600';
-      default: return 'bg-gray-50 text-gray-600';
-    }
-  };
-
+// Selected Investor Detail Panel
+function InvestorDetail({ investor }: { investor: Investor }) {
   const kycStyles = getKYCStatusStyles(investor.kycStatus);
+  const KYCIcon = kycStyles.icon;
+  const commitments = getCommitmentsByInvestor(investor.id);
+
+  const detailItems = [
+    { label: 'Email', value: investor.email, icon: Mail },
+    { label: 'Telefon', value: investor.phone, icon: Phone },
+    { label: 'Land', value: investor.country, icon: Globe },
+    { label: 'Typ', value: investor.type.replace(/_/g, ' '), icon: Building2 },
+  ];
+
+  const kycDetails = [
+    { label: 'KYC Status', value: investor.kycStatus.replace(/_/g, ' '), status: investor.kycStatus === 'APPROVED' ? 'success' : investor.kycStatus === 'REJECTED' ? 'error' : 'pending' },
+    { label: 'AML Status', value: investor.amlStatus || 'N/A', status: investor.amlStatus === 'CLEAR' ? 'success' : investor.amlStatus === 'FLAGGED' ? 'error' : 'pending' },
+    { label: 'Risknivå', value: investor.riskRating || 'N/A', status: investor.riskRating === 'LOW' ? 'success' : investor.riskRating === 'HIGH' ? 'error' : 'pending' },
+  ];
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden h-full flex flex-col">
+    <div className="bg-white rounded-2xl border border-gray-100 h-fit sticky top-4">
       {/* Header */}
-      <div className="p-6 border-b border-gray-100 bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/90">
-        <div className="flex items-start justify-between mb-4">
-          <div className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center">
-            <Users className="w-7 h-7 text-white" />
+      <div className="p-5 border-b border-gray-100">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-aifm-charcoal">{investor.name}</h2>
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${kycStyles.bg}`}>
+            <KYCIcon className={`w-3.5 h-3.5 ${kycStyles.text}`} />
+            <span className={`text-xs font-medium ${kycStyles.text}`}>{investor.kycStatus.replace(/_/g, ' ')}</span>
           </div>
-          <button onClick={onClose} className="lg:hidden p-2 text-white/60 hover:text-white">
-            <XCircle className="w-5 h-5" />
-          </button>
         </div>
-        <h2 className="text-xl font-semibold text-white mb-1">{investor.name}</h2>
-        <p className="text-white/60 text-sm">{investor.type.replace(/_/g, ' ')}</p>
-        <div className="flex items-center gap-2 mt-3">
-          <span className={`px-3 py-1 text-xs font-medium rounded-full ${kycStyles.bg} ${kycStyles.text}`}>
-            {investor.kycStatus.replace(/_/g, ' ')}
-          </span>
-          <span className={`px-3 py-1 text-xs font-medium rounded-full ${getRiskStyles(investor.riskRating)}`}>
-            {investor.riskRating === 'LOW' ? 'Låg risk' : investor.riskRating === 'MEDIUM' ? 'Medel risk' : 'Hög risk'}
-          </span>
-        </div>
+        {investor.pepStatus && (
+          <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-xl">
+            <AlertTriangle className="w-4 h-4 text-purple-600" />
+            <span className="text-sm text-purple-700 font-medium">Politiskt exponerad person (PEP)</span>
+          </div>
+        )}
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        {/* Key Stats */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-gray-50 rounded-xl p-4">
-            <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Totalt åtagande</p>
-            <p className="text-xl font-semibold text-aifm-charcoal">{formatCurrency(totalCommitted, 'SEK')}</p>
-          </div>
-          <div className="bg-gray-50 rounded-xl p-4">
-            <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-1">Antal fonder</p>
-            <p className="text-xl font-semibold text-aifm-charcoal">{commitments.length}</p>
-          </div>
-        </div>
-
-        {/* Contact Info */}
+      {/* Contact Info */}
+      <div className="p-5 space-y-4">
         <div>
           <h4 className="text-xs font-semibold text-aifm-charcoal/50 uppercase tracking-wider mb-4">Kontaktinformation</h4>
           <div className="space-y-3">
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-              <Mail className="w-4 h-4 text-aifm-charcoal/40" />
-              <a href={`mailto:${investor.email}`} className="text-sm text-aifm-gold hover:underline">
-                {investor.email}
-              </a>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-              <Phone className="w-4 h-4 text-aifm-charcoal/40" />
-              <span className="text-sm text-aifm-charcoal">{investor.phone}</span>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-              <Globe className="w-4 h-4 text-aifm-charcoal/40" />
-              <span className="text-sm text-aifm-charcoal">{investor.country}</span>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-              <FileText className="w-4 h-4 text-aifm-charcoal/40" />
-              <span className="text-sm text-aifm-charcoal">Tax ID: {investor.taxId}</span>
-            </div>
+            {detailItems.map((item) => (
+              <div key={item.label} className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-aifm-charcoal/5 flex items-center justify-center">
+                  <item.icon className="w-4 h-4 text-aifm-charcoal/50" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-aifm-charcoal/40 uppercase tracking-wider">{item.label}</p>
+                  <p className="text-sm text-aifm-charcoal">{item.value}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Compliance Status */}
+        {/* KYC/AML Details */}
         <div>
-          <h4 className="text-xs font-semibold text-aifm-charcoal/50 uppercase tracking-wider mb-4">Efterlevnadsstatus</h4>
-          <div className="space-y-3">
-            {[
-              { 
-                label: 'AML-screening', 
-                value: investor.amlStatus === 'CLEAR' ? 'Godkänd' : investor.amlStatus === 'FLAGGED' ? 'Flaggad' : 'Granskas',
-                status: investor.amlStatus === 'CLEAR' ? 'success' : investor.amlStatus === 'FLAGGED' ? 'error' : 'warning'
-              },
-              { 
-                label: 'PEP-status', 
-                value: investor.pepStatus ? 'Ja' : 'Nej',
-                status: investor.pepStatus ? 'warning' : 'success'
-              },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+          <h4 className="text-xs font-semibold text-aifm-charcoal/50 uppercase tracking-wider mb-4">Compliance Status</h4>
+          <div className="space-y-2">
+            {kycDetails.map((item) => (
+              <div key={item.label} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
                 <span className="text-sm text-aifm-charcoal/70">{item.label}</span>
                 <span className={`px-3 py-1 text-xs font-medium rounded-full ${
                   item.status === 'success' ? 'bg-emerald-50 text-emerald-600' :
@@ -320,7 +219,7 @@ function InvestorDetailPanel({
 
 export default function InvestorsPage() {
   const { selectedCompany } = useCompany();
-  const [activeTab, setActiveTab] = useState<'all' | 'approved' | 'pending' | 'flagged'>('all');
+  const [activeTab, setActiveTab] = useState('all');
   const [selectedInvestorId, setSelectedInvestorId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -352,97 +251,62 @@ export default function InvestorsPage() {
     }, 0),
   };
 
+  const kycPercentage = stats.total > 0 ? Math.round((stats.approved / stats.total) * 100) : 0;
+
   return (
-    <DashboardLayout>
-      {/* Hero Section */}
-      <div className="bg-gradient-to-br from-aifm-charcoal via-aifm-charcoal to-aifm-charcoal/90 px-4 sm:px-6 pt-6 pb-6 mb-8 rounded-2xl">
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-white/40 mb-6">
-          <Home className="w-4 h-4" />
-          <span>/</span>
-          <span>Kapital</span>
-          <span>/</span>
-          <span className="text-white">Investerare</span>
-        </div>
-
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 mb-8">
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-semibold text-white tracking-tight mb-2">
-              Investerare
-            </h1>
-            <p className="text-white/50 text-sm lg:text-base">
-              Hantera investerare och KYC/AML för {selectedCompany.shortName}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white/70 
-                               bg-white/10 border border-white/10 rounded-xl hover:bg-white/20 transition-all">
-              <Download className="w-4 h-4" />
+    <>
+      <PageHeader
+        title="Investerare"
+        description={`Hantera investerare och KYC/AML för ${selectedCompany.shortName}`}
+        breadcrumbs={[
+          { label: 'Kapital' },
+          { label: 'Investerare' }
+        ]}
+        stats={[
+          { 
+            label: 'Totalt antal', 
+            value: stats.total.toString(), 
+            icon: Users 
+          },
+          { 
+            label: 'Totalt åtagande', 
+            value: formatCurrency(stats.totalCommitted, 'SEK'), 
+            icon: TrendingUp 
+          },
+          { 
+            label: 'KYC godkänd', 
+            value: `${kycPercentage}%`, 
+            subValue: `${stats.approved} av ${stats.total}`,
+            icon: CheckCircle2 
+          },
+          { 
+            label: 'Kräver åtgärd', 
+            value: stats.flagged.toString(), 
+            subValue: stats.flagged > 0 ? 'Flaggade investerare' : 'Allt i ordning',
+            icon: AlertTriangle 
+          },
+        ]}
+        tabs={{
+          items: [
+            { id: 'all', label: 'Alla', count: stats.total },
+            { id: 'approved', label: 'Godkända', count: stats.approved },
+            { id: 'pending', label: 'Väntar', count: stats.pending },
+            { id: 'flagged', label: 'Flaggade', count: stats.flagged },
+          ],
+          activeId: activeTab,
+          onChange: setActiveTab
+        }}
+        actions={
+          <>
+            <SecondaryButton icon={Download}>
               <span className="hidden sm:inline">Exportera</span>
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-aifm-charcoal 
-                               bg-white rounded-xl hover:bg-gray-100 shadow-lg transition-all">
-              <Plus className="w-4 h-4" />
+            </SecondaryButton>
+            <PrimaryButton icon={Plus}>
               <span className="hidden sm:inline">Ny investerare</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Hero Metrics */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <HeroMetric 
-            label="Totalt antal"
-            value={stats.total.toString()}
-            icon={Users}
-          />
-          <HeroMetric 
-            label="Totalt åtagande"
-            value={formatCurrency(stats.totalCommitted, 'SEK')}
-            icon={TrendingUp}
-          />
-          <HeroMetric 
-            label="KYC godkänd"
-            value={`${Math.round((stats.approved / stats.total) * 100)}%`}
-            subValue={`${stats.approved} av ${stats.total}`}
-            icon={CheckCircle2}
-          />
-          <HeroMetric 
-            label="Kräver åtgärd"
-            value={stats.flagged.toString()}
-            subValue={stats.flagged > 0 ? 'Flaggade investerare' : 'Allt i ordning'}
-            icon={AlertTriangle}
-          />
-        </div>
-
-        {/* Tabs */}
-        <div className="flex items-center gap-2 bg-white/5 rounded-xl p-1.5 w-fit">
-          <TabButton 
-            label="Alla" 
-            isActive={activeTab === 'all'} 
-            onClick={() => setActiveTab('all')}
-            count={stats.total}
-          />
-          <TabButton 
-            label="Godkända" 
-            isActive={activeTab === 'approved'} 
-            onClick={() => setActiveTab('approved')}
-            count={stats.approved}
-          />
-          <TabButton 
-            label="Väntar" 
-            isActive={activeTab === 'pending'} 
-            onClick={() => setActiveTab('pending')}
-            count={stats.pending}
-          />
-          <TabButton 
-            label="Flaggade" 
-            isActive={activeTab === 'flagged'} 
-            onClick={() => setActiveTab('flagged')}
-            count={stats.flagged}
-          />
-        </div>
-      </div>
+            </PrimaryButton>
+          </>
+        }
+      />
 
       {/* Search */}
       <div className="mb-6">
@@ -467,59 +331,41 @@ export default function InvestorsPage() {
           <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
             <div className="divide-y divide-gray-50">
               {filteredInvestors.map((investor) => (
-                <InvestorRow 
+                <InvestorRow
                   key={investor.id}
                   investor={investor}
                   isSelected={selectedInvestorId === investor.id}
-                  onSelect={() => setSelectedInvestorId(investor.id)}
+                  onSelect={() => setSelectedInvestorId(
+                    selectedInvestorId === investor.id ? null : investor.id
+                  )}
                 />
               ))}
             </div>
-
             {filteredInvestors.length === 0 && (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <Users className="w-8 h-8 text-aifm-charcoal/20" />
+              <div className="p-12 text-center">
+                <div className="w-16 h-16 rounded-full bg-aifm-charcoal/5 flex items-center justify-center mx-auto mb-4">
+                  <Users className="w-8 h-8 text-aifm-charcoal/30" />
                 </div>
-                <p className="text-aifm-charcoal/50 font-medium">Inga investerare hittades</p>
-                <p className="text-sm text-aifm-charcoal/30 mt-1">Försök med andra sökkriterier</p>
+                <p className="text-aifm-charcoal/50 text-sm">Inga investerare hittades</p>
               </div>
             )}
           </div>
         </div>
 
         {/* Detail Panel */}
-        <div className="hidden lg:block">
+        <div className="lg:col-span-1">
           {selectedInvestor ? (
-            <InvestorDetailPanel 
-              investor={selectedInvestor}
-              commitments={getCommitmentsByInvestor(selectedInvestor.id)}
-              onClose={() => setSelectedInvestorId(null)}
-            />
+            <InvestorDetail investor={selectedInvestor} />
           ) : (
-            <div className="bg-gray-50 rounded-2xl border border-gray-100 p-8 text-center h-full flex flex-col items-center justify-center">
-              <div className="w-16 h-16 bg-gray-200 rounded-2xl flex items-center justify-center mb-4">
-                <Users className="w-8 h-8 text-gray-400" />
+            <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center h-fit">
+              <div className="w-16 h-16 rounded-full bg-aifm-charcoal/5 flex items-center justify-center mx-auto mb-4">
+                <Users className="w-8 h-8 text-aifm-charcoal/30" />
               </div>
-              <p className="text-aifm-charcoal/50 font-medium">Välj en investerare</p>
-              <p className="text-sm text-aifm-charcoal/30 mt-1">Klicka på en investerare för att se detaljer</p>
+              <p className="text-aifm-charcoal/50 text-sm">Välj en investerare för att se detaljer</p>
             </div>
           )}
         </div>
       </div>
-
-      {/* Mobile Detail Modal */}
-      {selectedInvestor && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end">
-          <div className="bg-white rounded-t-3xl w-full max-h-[90vh] overflow-hidden animate-in slide-in-from-bottom duration-300">
-            <InvestorDetailPanel 
-              investor={selectedInvestor}
-              commitments={getCommitmentsByInvestor(selectedInvestor.id)}
-              onClose={() => setSelectedInvestorId(null)}
-            />
-          </div>
-        </div>
-      )}
-    </DashboardLayout>
+    </>
   );
 }

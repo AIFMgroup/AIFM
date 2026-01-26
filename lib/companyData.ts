@@ -69,59 +69,38 @@ export interface CompanyDashboard {
   };
 }
 
-// 5 Mock Companies
+// Companies (just your company for now)
 export const mockCompanies: Company[] = [
   {
-    id: 'company-1',
-    name: 'Nordic Ventures I AB',
-    shortName: 'Nordic Ventures I',
-    orgNumber: '559123-4567',
-    type: 'FUND',
-    status: 'ACTIVE',
-    color: '#c0a280',
-  },
-  {
-    id: 'company-2',
-    name: 'TechGrowth Holding AB',
-    shortName: 'TechGrowth',
-    orgNumber: '559234-5678',
-    type: 'HOLDING',
+    id: 'my-own-company',
+    name: 'Mitt Företag AB', // Ändra till ditt riktiga namn
+    shortName: 'MITT',
+    orgNumber: '55XXXX-XXXX', // Ändra till ditt org.nr
+    type: 'OPERATING',
     status: 'ACTIVE',
     color: '#4F46E5',
-  },
-  {
-    id: 'company-3',
-    name: 'Scandinavian RE Fund KB',
-    shortName: 'Scandi RE',
-    orgNumber: '969789-0123',
-    type: 'FUND',
-    status: 'ACTIVE',
-    color: '#059669',
-  },
-  {
-    id: 'company-4',
-    name: 'Impact Invest Nordic AB',
-    shortName: 'Impact Nordic',
-    orgNumber: '559345-6789',
-    type: 'FUND',
-    status: 'ACTIVE',
-    color: '#DC2626',
-  },
-  {
-    id: 'company-5',
-    name: 'Baltic Growth Partners KB',
-    shortName: 'Baltic Growth',
-    orgNumber: '969456-7890',
-    type: 'FUND',
-    status: 'ACTIVE',
-    color: '#7C3AED',
   },
 ];
 
 // Dashboard data for each company
 export const companyDashboards: Record<string, CompanyDashboard> = {
-  'company-1': {
+  'my-own-company': {
     company: mockCompanies[0],
+    portfolio: [
+      { name: 'Likvida medel', value: 1250000, percentage: 100, color: '#4F46E5' },
+    ],
+    transactions: [],
+    tasks: [
+      { id: 't-1', title: 'Koppla Fortnox', description: 'Gör första integrationstestet', dueDate: new Date(), priority: 'HIGH', status: 'TODO' },
+    ],
+    kpiData: [],
+    kpiDataSet: { nav: [], irr: [], moic: [] },
+    metrics: { moic: 1.0, irr: 0, nav: 1250000, totalInvested: 0, totalDistributed: 0, unrealizedGain: 0 }
+  },
+};
+
+/* Demo companies removed (legacy demo data kept commented-out for reference):
+    company: mockCompanies[1],
     portfolio: [
       { name: 'SaaS', value: 45000000, percentage: 35, color: '#c0a280' },
       { name: 'DeepTech', value: 32000000, percentage: 25, color: '#615c59' },
@@ -182,7 +161,7 @@ export const companyDashboards: Record<string, CompanyDashboard> = {
     },
   },
   'company-2': {
-    company: mockCompanies[1],
+    company: mockCompanies[2],
     portfolio: [
       { name: 'Företags-SaaS', value: 28000000, percentage: 40, color: '#4F46E5' },
       { name: 'B2B-plattformar', value: 21000000, percentage: 30, color: '#818CF8' },
@@ -240,7 +219,7 @@ export const companyDashboards: Record<string, CompanyDashboard> = {
     },
   },
   'company-3': {
-    company: mockCompanies[2],
+    company: mockCompanies[3],
     portfolio: [
       { name: 'Kontor', value: 85000000, percentage: 45, color: '#059669' },
       { name: 'Logistik', value: 57000000, percentage: 30, color: '#34D399' },
@@ -298,7 +277,7 @@ export const companyDashboards: Record<string, CompanyDashboard> = {
     },
   },
   'company-4': {
-    company: mockCompanies[3],
+    company: mockCompanies[4],
     portfolio: [
       { name: 'CleanTech', value: 35000000, percentage: 50, color: '#DC2626' },
       { name: 'HealthTech', value: 21000000, percentage: 30, color: '#F87171' },
@@ -354,7 +333,7 @@ export const companyDashboards: Record<string, CompanyDashboard> = {
     },
   },
   'company-5': {
-    company: mockCompanies[4],
+    company: mockCompanies[5],
     portfolio: [
       { name: 'E-handel', value: 22000000, percentage: 35, color: '#7C3AED' },
       { name: 'Logistiktech', value: 19000000, percentage: 30, color: '#A78BFA' },
@@ -413,6 +392,7 @@ export const companyDashboards: Record<string, CompanyDashboard> = {
     },
   },
 };
+*/
 
 export function getCompanyById(id: string): Company | undefined {
   return mockCompanies.find(c => c.id === id);

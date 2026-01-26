@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { 
   Building2, FileText, Clock,
-  AlertCircle, Search, Plus, ChevronRight, Zap, BookOpen,
+  AlertCircle, Search, Plus, ChevronRight, Zap,
   Users, FolderOpen, Calculator, Briefcase, Upload, Eye, Download,
   CheckCircle2, Filter, ArrowUpRight
 } from 'lucide-react';
@@ -12,7 +12,7 @@ import {
   mockClients, getOverallStats
 } from '@/lib/clientData';
 import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
-import { DashboardLayout } from '@/components/DashboardLayout';
+
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('sv-SE', {
@@ -49,7 +49,7 @@ export default function ClientsPage() {
   ];
 
   return (
-    <DashboardLayout>
+    <>
       {/* Page Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
@@ -58,18 +58,12 @@ export default function ClientsPage() {
               <h1 className="text-2xl font-medium text-aifm-charcoal uppercase tracking-wider">Bokföring & Administration</h1>
               <HelpTooltip 
                 {...helpContent.clients}
-                learnMoreLink="/guide#bookkeeping"
+                learnMoreLink=""
                 position="bottom"
                 size="md"
               />
             </div>
-            <div className="flex items-center gap-4">
-              <p className="text-aifm-charcoal/60">Hantera klienter, dokument och bokföring med AI-stöd</p>
-              <Link href="/guide#bookkeeping" className="text-xs text-aifm-gold hover:underline flex items-center gap-1">
-                <BookOpen className="w-3 h-3" />
-                Guide
-              </Link>
-            </div>
+            <p className="text-aifm-charcoal/60">Hantera klienter, dokument och bokföring med AI-stöd</p>
           </div>
           <button className="btn-primary py-2.5 px-5 flex items-center gap-2">
             <Plus className="w-4 h-4" />
@@ -408,6 +402,6 @@ export default function ClientsPage() {
           )}
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

@@ -1,17 +1,32 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import { 
   Settings, Key, Building2, Bell, Shield, Link2, 
   Users, Globe, Check, X, Eye, EyeOff,
   RefreshCw, Trash2, Plus, AlertCircle, CheckCircle2,
   BarChart3, Fingerprint, Landmark, CreditCard, MessageSquare,
   FileSpreadsheet, ChevronRight, Lock, Mail, Phone, MapPin,
-  Smartphone, Monitor, Clock
+  Smartphone, Monitor, Clock, Camera, User, Upload
 } from 'lucide-react';
-import { DashboardLayout } from '@/components/DashboardLayout';
 
-type SettingsTab = 'account' | 'company' | 'integrations' | 'notifications' | 'security' | 'team';
+import { useUserProfile } from '@/components/UserProfileContext';
+
+type SettingsTab = 'profile' | 'account' | 'company' | 'integrations' | 'notifications' | 'security' | 'team';
+
+// Loading fallback
+function SettingsLoadingFallback() {
+  return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <RefreshCw className="w-8 h-8 text-aifm-gold animate-spin mx-auto mb-4" />
+          <p className="text-sm text-aifm-charcoal/50">Laddar inställningar...</p>
+        </div>
+      </div>
+  );
+}
 
 interface Integration {
   id: string;
@@ -48,7 +63,7 @@ function TabButton({
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium 
+      className={`w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium 
                   transition-all duration-300 group relative overflow-hidden ${
         isActive
           ? 'bg-aifm-charcoal text-white shadow-lg shadow-aifm-charcoal/20'
@@ -58,10 +73,10 @@ function TabButton({
       {isActive && (
         <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent" />
       )}
-      <Icon className={`w-5 h-5 transition-transform duration-300 ${isActive ? '' : 'group-hover:scale-110'}`} />
-      <span className="relative">{label}</span>
+      <Icon className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 flex-shrink-0 ${isActive ? '' : 'group-hover:scale-110'}`} />
+      <span className="relative truncate">{label}</span>
       {isActive && (
-        <ChevronRight className="w-4 h-4 ml-auto opacity-50" />
+        <ChevronRight className="w-4 h-4 ml-auto opacity-50 hidden sm:block" />
       )}
     </button>
   );
@@ -70,9 +85,9 @@ function TabButton({
 // Section Header
 function SectionHeader({ title, description }: { title: string; description: string }) {
   return (
-    <div className="mb-8">
-      <h2 className="text-xl font-semibold text-aifm-charcoal tracking-tight">{title}</h2>
-      <p className="text-sm text-aifm-charcoal/50 mt-1">{description}</p>
+    <div className="mb-6 sm:mb-8">
+      <h2 className="text-lg sm:text-xl font-semibold text-aifm-charcoal tracking-tight">{title}</h2>
+      <p className="text-xs sm:text-sm text-aifm-charcoal/50 mt-0.5 sm:mt-1">{description}</p>
     </div>
   );
 }
@@ -143,18 +158,89 @@ function ToggleSwitch({ enabled, onChange, label }: { enabled: boolean; onChange
   );
 }
 
-export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<SettingsTab>('account');
+function SettingsPageContent() {
+  const searchParams = useSearchParams();
+  const initialTab = (searchParams.get('tab') as SettingsTab) || 'profile';
+  const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { profile, avatarSrc, refresh: refreshProfile } = useUserProfile();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsVisible(true);
   }, []);
 
+  // Update tab when URL changes
+  useEffect(() => {
+    const tab = searchParams.get('tab') as SettingsTab;
+    if (tab && ['profile', 'account', 'company', 'integrations', 'notifications', 'security', 'team'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Vänligen välj en bildfil');
+        return;
+      }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Bilden får max vara 5MB');
+        return;
+      }
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setAvatarPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+      setAvatarFile(file);
+    }
+  };
+
+  const handleAvatarUpload = async () => {
+    if (!avatarFile) return;
+    
+    setIsUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', avatarFile);
+
+      const res = await fetch('/api/profile/avatar', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error || 'Upload failed');
+      }
+
+      await refreshProfile();
+      setAvatarPreview(null);
+      setAvatarFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      alert('Profilbild sparad!');
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Upload failed');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
   const tabs = [
+    { id: 'profile' as SettingsTab, label: 'Profil', icon: User },
     { id: 'account' as SettingsTab, label: 'Konto', icon: Settings },
     { id: 'company' as SettingsTab, label: 'Företag', icon: Building2 },
     { id: 'integrations' as SettingsTab, label: 'Integrationer', icon: Link2 },
@@ -172,17 +258,17 @@ export default function SettingsPage() {
   };
 
   return (
-    <DashboardLayout>
+    <>
       {/* Page Header */}
-      <div className={`mb-10 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/80 
+      <div className={`mb-6 sm:mb-10 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/80 
                           flex items-center justify-center shadow-lg shadow-aifm-charcoal/20">
-            <Settings className="w-7 h-7 text-white" />
+            <Settings className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-semibold text-aifm-charcoal tracking-tight">Inställningar</h1>
-            <p className="text-sm text-aifm-charcoal/50">Hantera konto, integrationer och säkerhet</p>
+            <h1 className="text-xl sm:text-2xl font-semibold text-aifm-charcoal tracking-tight">Inställningar</h1>
+            <p className="text-xs sm:text-sm text-aifm-charcoal/50">Hantera konto och säkerhet</p>
           </div>
         </div>
       </div>
@@ -191,9 +277,29 @@ export default function SettingsPage() {
       <div className={`bg-white rounded-2xl border border-gray-100/50 shadow-sm overflow-hidden
                        transition-all duration-700 delay-100 hover:shadow-xl hover:shadow-gray-200/50
                        ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-        <div className="flex min-h-[700px]">
-          {/* Sidebar Tabs */}
-          <div className="w-64 border-r border-gray-100 bg-gradient-to-b from-gray-50/80 to-white p-4">
+        <div className="flex flex-col md:flex-row min-h-[600px] md:min-h-[700px]">
+          {/* Mobile Tab Bar */}
+          <div className="md:hidden overflow-x-auto border-b border-gray-100 bg-gray-50/80">
+            <div className="flex p-2 gap-1 min-w-max">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+                    activeTab === tab.id
+                      ? 'bg-aifm-charcoal text-white'
+                      : 'text-aifm-charcoal/60 hover:bg-gray-100'
+                  }`}
+                >
+                  <tab.icon className="w-4 h-4" />
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Desktop Sidebar Tabs */}
+          <div className="hidden md:block w-64 border-r border-gray-100 bg-gradient-to-b from-gray-50/80 to-white p-4">
             <nav className="space-y-1.5">
               {tabs.map((tab, index) => (
                 <div 
@@ -224,7 +330,265 @@ export default function SettingsPage() {
           </div>
 
           {/* Content Area */}
-          <div className="flex-1 p-8 overflow-y-auto">
+          <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
+            {/* Profile Settings */}
+            {activeTab === 'profile' && (
+              <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
+                <SectionHeader 
+                  title="Min Profil" 
+                  description="Hantera din profilbild och personliga information"
+                />
+
+                {/* Avatar Section */}
+                <div className="space-y-6">
+                  <h3 className="text-xs font-semibold text-aifm-charcoal/50 uppercase tracking-wider flex items-center gap-2">
+                    <Camera className="w-4 h-4" />
+                    Profilbild
+                  </h3>
+                  
+                  <div className="flex items-center gap-8">
+                    {/* Avatar Preview */}
+                    <div className="relative group">
+                      <div className="w-32 h-32 rounded-2xl overflow-hidden bg-gradient-to-br from-aifm-gold/20 to-aifm-gold/5 
+                                    border-4 border-white shadow-xl shadow-aifm-gold/10 ring-2 ring-aifm-gold/20">
+                        {avatarPreview ? (
+                          <Image
+                            src={avatarPreview}
+                            alt="Profile Preview"
+                            width={128}
+                            height={128}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : avatarSrc ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={avatarSrc} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <span className="text-4xl font-semibold text-aifm-gold">
+                              {(profile?.displayName || profile?.email || 'A').slice(0, 1).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Hover overlay */}
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="absolute inset-0 bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 
+                                 transition-all duration-300 flex items-center justify-center cursor-pointer"
+                      >
+                        <div className="text-center text-white">
+                          <Camera className="w-8 h-8 mx-auto mb-1" />
+                          <span className="text-xs font-medium">Ändra bild</span>
+                        </div>
+                      </button>
+                      
+                      {/* Hidden file input */}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarChange}
+                        className="hidden"
+                      />
+                    </div>
+
+                    {/* Upload Instructions */}
+                    <div className="flex-1 space-y-4">
+                      <div>
+                        <h4 className="text-sm font-medium text-aifm-charcoal mb-1">Ladda upp ny profilbild</h4>
+                        <p className="text-xs text-aifm-charcoal/50">
+                          JPG, PNG eller GIF. Max 5MB. Rekommenderad storlek 256x256 px.
+                        </p>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => fileInputRef.current?.click()}
+                          className="py-2.5 px-4 border border-gray-200 rounded-xl text-sm font-medium
+                                    text-aifm-charcoal hover:bg-gray-50 transition-all flex items-center gap-2
+                                    hover:border-aifm-gold hover:shadow-lg hover:shadow-aifm-gold/10"
+                        >
+                          <Upload className="w-4 h-4" />
+                          Välj fil
+                        </button>
+                        
+                        {(avatarPreview || avatarSrc) && (
+                          <>
+                            <button
+                              onClick={handleAvatarUpload}
+                              disabled={isUploadingAvatar}
+                              className="py-2.5 px-4 bg-aifm-gold text-white rounded-xl text-sm font-medium
+                                        hover:bg-aifm-gold/90 transition-all flex items-center gap-2
+                                        shadow-lg shadow-aifm-gold/20 disabled:opacity-50"
+                            >
+                              {isUploadingAvatar ? (
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Check className="w-4 h-4" />
+                              )}
+                              {isUploadingAvatar ? 'Sparar...' : 'Spara bild'}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setAvatarPreview(null);
+                                setAvatarFile(null);
+                                if (fileInputRef.current) fileInputRef.current.value = '';
+                              }}
+                              className="p-2.5 text-aifm-charcoal/40 hover:text-red-500 hover:bg-red-50 
+                                       rounded-xl transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Personal Info */}
+                <div className="space-y-6 pt-8 border-t border-gray-100">
+                  <h3 className="text-xs font-semibold text-aifm-charcoal/50 uppercase tracking-wider flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    Personlig information
+                  </h3>
+                  
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <InputField label="Förnamn" defaultValue={(profile?.displayName || 'Anna').split(' ')[0]} />
+                    <InputField label="Efternamn" defaultValue={(profile?.displayName || 'Anna Andersson').split(' ').slice(1).join(' ') || 'Andersson'} />
+                    <InputField label="E-post" type="email" defaultValue={profile?.email || 'anna@aifm.se'} icon={Mail} />
+                    <InputField label="Telefon" type="tel" defaultValue="+46 70 123 45 67" icon={Phone} />
+                    <InputField label="Titel/Roll" defaultValue={profile?.title || 'CFO'} />
+                    <InputField label="Avdelning" defaultValue="Ekonomi" />
+                  </div>
+                </div>
+
+                {/* Preferences */}
+                <div className="space-y-6 pt-8 border-t border-gray-100">
+                  <h3 className="text-xs font-semibold text-aifm-charcoal/50 uppercase tracking-wider flex items-center gap-2">
+                    <Settings className="w-4 h-4" />
+                    Preferenser
+                  </h3>
+                  
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="block text-xs font-semibold text-aifm-charcoal/50 uppercase tracking-wider">
+                        Språk
+                      </label>
+                      <select className="w-full px-4 py-3.5 bg-white border border-gray-200 rounded-xl text-sm 
+                                       focus:border-aifm-gold focus:ring-4 focus:ring-aifm-gold/10 transition-all">
+                        <option value="sv">Svenska</option>
+                        <option value="en">English</option>
+                        <option value="no">Norsk</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-xs font-semibold text-aifm-charcoal/50 uppercase tracking-wider">
+                        Tidszon
+                      </label>
+                      <select className="w-full px-4 py-3.5 bg-white border border-gray-200 rounded-xl text-sm 
+                                       focus:border-aifm-gold focus:ring-4 focus:ring-aifm-gold/10 transition-all">
+                        <option value="Europe/Stockholm">Europa/Stockholm (CET)</option>
+                        <option value="Europe/London">Europa/London (GMT)</option>
+                        <option value="America/New_York">Amerika/New York (EST)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Links */}
+                <div className="space-y-4 pt-8 border-t border-gray-100">
+                  <h3 className="text-xs font-semibold text-aifm-charcoal/50 uppercase tracking-wider">
+                    Snabblänkar
+                  </h3>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <button 
+                      onClick={() => setActiveTab('security')}
+                      className="p-4 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-100
+                               hover:shadow-lg hover:shadow-gray-200/50 transition-all duration-300 text-left group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-aifm-charcoal/5 flex items-center justify-center
+                                      group-hover:bg-aifm-gold/10 transition-colors">
+                          <Key className="w-5 h-5 text-aifm-charcoal/60 group-hover:text-aifm-gold" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-aifm-charcoal">Byt lösenord</p>
+                          <p className="text-xs text-aifm-charcoal/40">Uppdatera ditt lösenord</p>
+                        </div>
+                      </div>
+                    </button>
+                    
+                    <button 
+                      onClick={() => setActiveTab('notifications')}
+                      className="p-4 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-100
+                               hover:shadow-lg hover:shadow-gray-200/50 transition-all duration-300 text-left group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-aifm-charcoal/5 flex items-center justify-center
+                                      group-hover:bg-aifm-gold/10 transition-colors">
+                          <Bell className="w-5 h-5 text-aifm-charcoal/60 group-hover:text-aifm-gold" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-aifm-charcoal">Notifieringar</p>
+                          <p className="text-xs text-aifm-charcoal/40">Hantera aviseringar</p>
+                        </div>
+                      </div>
+                    </button>
+                    
+                    <button 
+                      onClick={() => setActiveTab('security')}
+                      className="p-4 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-100
+                               hover:shadow-lg hover:shadow-gray-200/50 transition-all duration-300 text-left group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-aifm-charcoal/5 flex items-center justify-center
+                                      group-hover:bg-aifm-gold/10 transition-colors">
+                          <Shield className="w-5 h-5 text-aifm-charcoal/60 group-hover:text-aifm-gold" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-aifm-charcoal">Tvåfaktorsautentisering</p>
+                          <p className="text-xs text-aifm-charcoal/40">Aktivera 2FA för extra säkerhet</p>
+                        </div>
+                      </div>
+                    </button>
+                    
+                    <button 
+                      onClick={() => window.location.href = '/auth/logout'}
+                      className="p-4 bg-gradient-to-br from-red-50 to-white rounded-xl border border-red-100
+                               hover:shadow-lg hover:shadow-red-100/50 transition-all duration-300 text-left group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
+                          <X className="w-5 h-5 text-red-500" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-red-600">Logga ut</p>
+                          <p className="text-xs text-red-400">Avsluta din session</p>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-8 border-t border-gray-100">
+                  <button 
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="py-3 px-6 bg-aifm-charcoal text-white rounded-xl text-sm font-medium
+                             hover:bg-aifm-charcoal/90 transition-all flex items-center gap-2
+                             shadow-lg shadow-aifm-charcoal/20 hover:shadow-xl
+                             disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                    {isSaving ? 'Sparar...' : 'Spara ändringar'}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Account Settings */}
             {activeTab === 'account' && (
               <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -814,6 +1178,15 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </>
+  );
+}
+
+// Export with Suspense boundary for useSearchParams
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<SettingsLoadingFallback />}>
+      <SettingsPageContent />
+    </Suspense>
   );
 }

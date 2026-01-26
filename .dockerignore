@@ -4,5 +4,27 @@ npm-debug.log
 .git
 .DS_Store
 
+# Env / secrets
+.env
+.env.*
+
+# Logs & caches
+*.log
+.turbo
+.swc
+.cache
+
+# Tests / coverage
+coverage
+test
+
+# Build metadata
+tsconfig.tsbuildinfo
+
+
+
+
+
+
 
 

@@ -1,22 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { 
   FolderLock, ArrowLeft, Users, FileText, Shield,
   Upload, Download, Eye, Trash2, Plus,
   Folder, File, FileSpreadsheet, Image, MoreVertical,
   Settings, UserPlus, History, Search, LayoutGrid, List,
-  CheckCircle2, X, Mail
+  CheckCircle2, X, Mail, Loader2, Link2, Activity
 } from 'lucide-react';
+import SharedLinksTab from '@/components/dataRoom/SharedLinksTab';
+import DetailedActivityTab from '@/components/dataRoom/DetailedActivityTab';
 import {
-  getDataRoomById, getMembersByRoom, getFoldersByRoom,
-  getDocumentsByRoom, getActivitiesByRoom, formatFileSize,
-  getFileIcon, getRoleColor, getTypeLabel, getActionLabel
-} from '@/lib/dataRoomData';
-import { formatDate } from '@/lib/fundData';
-import { DashboardLayout } from '@/components/DashboardLayout';
+  getDataRoom, createFolder, uploadDocument, getDownloadUrl, deleteDocument,
+  inviteMember, removeMember, updateDataRoom,
+  formatFileSize, getFileIcon, getRoleColor, getTypeLabel, getActionLabel, formatDate, formatDateTime,
+  type DataRoom, type DataRoomFolder, type DataRoomDocument, type DataRoomMember, type DataRoomActivity
+} from '@/lib/dataRooms/dataRoomClient';
+
 
 // Tab Button Component
 function TabButton({ 
@@ -62,48 +65,87 @@ function TabButton({
 export default function DataRoomDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { data: session } = useSession();
   const roomId = params.id as string;
-  const room = getDataRoomById(roomId);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [activeTab, setActiveTab] = useState<'documents' | 'members' | 'activity' | 'settings'>('documents');
+  // State
+  const [room, setRoom] = useState<DataRoom | null>(null);
+  const [folders, setFolders] = useState<DataRoomFolder[]>([]);
+  const [documents, setDocuments] = useState<DataRoomDocument[]>([]);
+  const [members, setMembers] = useState<DataRoomMember[]>([]);
+  const [activities, setActivities] = useState<DataRoomActivity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [activeTab, setActiveTab] = useState<'documents' | 'members' | 'activity' | 'shared-links' | 'settings'>('documents');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [inviteRole, setInviteRole] = useState('VIEWER');
+  const [showNewFolderModal, setShowNewFolderModal] = useState(false);
+  
+  // Form states
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteName, setInviteName] = useState('');
+  const [inviteRole, setInviteRole] = useState<DataRoomMember['role']>('VIEWER');
+  const [inviteCompany, setInviteCompany] = useState('');
+  const [newFolderName, setNewFolderName] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadFolderId, setUploadFolderId] = useState<string | null>(null);
+  const [isInviting, setIsInviting] = useState(false);
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
 
-  if (!room) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <FolderLock className="w-10 h-10 text-aifm-charcoal/20" />
-            </div>
-            <p className="text-aifm-charcoal/50 font-medium text-lg mb-2">Datarummet hittades inte</p>
-            <p className="text-sm text-aifm-charcoal/30 mb-6">Det kan ha tagits bort eller så saknar du behörighet</p>
-            <Link 
-              href="/data-rooms" 
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-aifm-charcoal text-white rounded-xl text-sm font-medium hover:bg-aifm-charcoal/90 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Tillbaka till datarum
-            </Link>
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  // Settings form
+  const [settingsName, setSettingsName] = useState('');
+  const [settingsDescription, setSettingsDescription] = useState('');
+  const [settingsWatermark, setSettingsWatermark] = useState(false);
+  const [settingsDownload, setSettingsDownload] = useState(true);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
-  const members = getMembersByRoom(roomId);
-  const folders = getFoldersByRoom(roomId);
-  const documents = getDocumentsByRoom(roomId);
-  const activities = getActivitiesByRoom(roomId);
+  // Load data
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    const response = await getDataRoom(roomId);
+    
+    if (response.error) {
+      setError(response.error);
+      setIsLoading(false);
+      return;
+    }
 
+    if (response.data) {
+      setRoom(response.data.room);
+      setFolders(response.data.folders);
+      setDocuments(response.data.documents);
+      setMembers(response.data.members);
+      setActivities(response.data.activities);
+      
+      // Initialize settings form
+      setSettingsName(response.data.room.name);
+      setSettingsDescription(response.data.room.description);
+      setSettingsWatermark(response.data.room.watermark);
+      setSettingsDownload(response.data.room.downloadEnabled);
+    }
+    
+    setIsLoading(false);
+  }, [roomId]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadData();
+  }, [loadData]);
+
+  // Filter documents by folder
   const filteredDocuments = selectedFolder 
     ? documents.filter(d => d.folderId === selectedFolder)
     : documents;
 
+  // Get file icon component
   const getFileIconComponent = (fileType: string) => {
     const iconType = getFileIcon(fileType);
     switch (iconType) {
@@ -115,8 +157,203 @@ export default function DataRoomDetailPage() {
     }
   };
 
+  // Handle file upload
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      setUploadProgress(Math.round((i / files.length) * 100));
+
+      const response = await uploadDocument(
+        roomId,
+        file,
+        uploadFolderId || undefined,
+        session?.user?.name || 'User'
+      );
+
+      if (response.data) {
+        setDocuments(prev => [response.data!.document, ...prev]);
+        // Update folder count
+        if (uploadFolderId) {
+          setFolders(prev => prev.map(f => 
+            f.id === uploadFolderId 
+              ? { ...f, documentsCount: f.documentsCount + 1 }
+              : f
+          ));
+        }
+        // Update room count
+        if (room) {
+          setRoom({ ...room, documentsCount: room.documentsCount + 1 });
+        }
+      }
+    }
+
+    setUploadProgress(100);
+    setIsUploading(false);
+    setShowUploadModal(false);
+    setUploadFolderId(null);
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Handle document download/view
+  const handleDocumentAction = async (doc: DataRoomDocument, viewOnly: boolean = false) => {
+    const response = await getDownloadUrl(roomId, doc.id, viewOnly, 'User');
+    if (response.data?.url) {
+      window.open(response.data.url, '_blank');
+      // Refresh to update view/download counts
+      loadData();
+    }
+  };
+
+  // Handle document delete
+  const handleDeleteDocument = async (doc: DataRoomDocument) => {
+    if (!confirm(`Är du säker på att du vill radera "${doc.name}"?`)) return;
+    
+    const response = await deleteDocument(roomId, doc.id, 'User');
+    if (response.data?.success) {
+      setDocuments(prev => prev.filter(d => d.id !== doc.id));
+      // Update counts
+      if (doc.folderId) {
+        setFolders(prev => prev.map(f => 
+          f.id === doc.folderId 
+            ? { ...f, documentsCount: Math.max(0, f.documentsCount - 1) }
+            : f
+        ));
+      }
+      if (room) {
+        setRoom({ ...room, documentsCount: Math.max(0, room.documentsCount - 1) });
+      }
+    }
+  };
+
+  // Handle create folder
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) return;
+    
+    setIsCreatingFolder(true);
+    const response = await createFolder(roomId, {
+      name: newFolderName,
+    });
+
+    if (response.data) {
+      setFolders(prev => [...prev, response.data!.folder]);
+      setNewFolderName('');
+      setShowNewFolderModal(false);
+    }
+    setIsCreatingFolder(false);
+  };
+
+  // Handle invite member
+  const handleInviteMember = async () => {
+    if (!inviteEmail.trim()) return;
+    
+    setIsInviting(true);
+    const response = await inviteMember(roomId, {
+      email: inviteEmail,
+      name: inviteName || undefined,
+      role: inviteRole,
+      company: inviteCompany || undefined,
+    });
+
+    if (response.data) {
+      setMembers(prev => [...prev, response.data!.member]);
+      setInviteEmail('');
+      setInviteName('');
+      setInviteRole('VIEWER');
+      setInviteCompany('');
+      setShowInviteModal(false);
+      if (room) {
+        setRoom({ ...room, membersCount: room.membersCount + 1 });
+      }
+    } else {
+      alert(response.error || 'Kunde inte bjuda in medlem');
+    }
+    setIsInviting(false);
+  };
+
+  // Handle remove member
+  const handleRemoveMember = async (member: DataRoomMember) => {
+    if (!confirm(`Är du säker på att du vill ta bort ${member.name} från datarummet?`)) return;
+    
+    const response = await removeMember(roomId, member.id);
+    if (response.data?.success) {
+      setMembers(prev => prev.filter(m => m.id !== member.id));
+      if (room) {
+        setRoom({ ...room, membersCount: Math.max(0, room.membersCount - 1) });
+      }
+    }
+  };
+
+  // Handle save settings
+  const handleSaveSettings = async () => {
+    setIsSavingSettings(true);
+    const response = await updateDataRoom(roomId, {
+      name: settingsName,
+      description: settingsDescription,
+      watermark: settingsWatermark,
+      downloadEnabled: settingsDownload,
+    });
+
+    if (response.data) {
+      setRoom(response.data.room);
+    }
+    setIsSavingSettings(false);
+  };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="w-8 h-8 text-aifm-gold animate-spin" />
+      </div>
+    );
+  }
+
+  // Error/Not found state
+  if (error || !room) {
+    return (
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <FolderLock className="w-10 h-10 text-aifm-charcoal/20" />
+            </div>
+            <p className="text-aifm-charcoal/50 font-medium text-lg mb-2">
+              {error || 'Datarummet hittades inte'}
+            </p>
+            <p className="text-sm text-aifm-charcoal/30 mb-6">Det kan ha tagits bort eller så saknar du behörighet</p>
+            <Link 
+              href="/data-rooms" 
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-aifm-charcoal text-white rounded-xl text-sm font-medium hover:bg-aifm-charcoal/90 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Tillbaka till datarum
+            </Link>
+          </div>
+        </div>
+      
+    );
+  }
+
   return (
-    <DashboardLayout>
+    <>
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={handleFileSelect}
+      />
+
       {/* Room Header */}
       <div className="mb-8">
         <div className="flex items-center gap-4 mb-6">
@@ -168,9 +405,15 @@ export default function DataRoomDetailPage() {
               />
               <TabButton 
                 label="Aktivitet" 
-                icon={History} 
+                icon={Activity} 
                 isActive={activeTab === 'activity'} 
                 onClick={() => setActiveTab('activity')} 
+              />
+              <TabButton 
+                label="Delningslänkar" 
+                icon={Link2} 
+                isActive={activeTab === 'shared-links'} 
+                onClick={() => setActiveTab('shared-links')} 
               />
               <TabButton 
                 label="Inställningar" 
@@ -241,8 +484,11 @@ export default function DataRoomDetailPage() {
                   ))}
                 </div>
                 <div className="p-4 border-t border-gray-100">
-                  <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-aifm-charcoal/70 
-                                     bg-white border border-gray-200 rounded-xl hover:border-aifm-gold/30 transition-all">
+                  <button 
+                    onClick={() => setShowNewFolderModal(true)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-aifm-charcoal/70 
+                               bg-white border border-gray-200 rounded-xl hover:border-aifm-gold/30 transition-all"
+                  >
                     <Plus className="w-4 h-4" />
                     Ny mapp
                   </button>
@@ -316,16 +562,28 @@ export default function DataRoomDetailPage() {
                             <td className="px-6 py-4 text-sm text-aifm-charcoal/60">{formatDate(doc.uploadedAt)}</td>
                             <td className="px-6 py-4">
                               <div className="flex items-center justify-end gap-1">
-                                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Förhandsgranska">
+                                <button 
+                                  onClick={() => handleDocumentAction(doc, true)}
+                                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors" 
+                                  title="Förhandsgranska"
+                                >
                                   <Eye className="w-4 h-4 text-aifm-charcoal/40" />
                                 </button>
                                 {room.downloadEnabled && (
-                                  <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Ladda ner">
+                                  <button 
+                                    onClick={() => handleDocumentAction(doc, false)}
+                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors" 
+                                    title="Ladda ner"
+                                  >
                                     <Download className="w-4 h-4 text-aifm-charcoal/40" />
                                   </button>
                                 )}
-                                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Mer">
-                                  <MoreVertical className="w-4 h-4 text-aifm-charcoal/40" />
+                                <button 
+                                  onClick={() => handleDeleteDocument(doc)}
+                                  className="p-2 hover:bg-red-50 rounded-lg transition-colors" 
+                                  title="Radera"
+                                >
+                                  <Trash2 className="w-4 h-4 text-red-500" />
                                 </button>
                               </div>
                             </td>
@@ -345,9 +603,22 @@ export default function DataRoomDetailPage() {
                           <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center group-hover:bg-aifm-gold/10 transition-colors">
                             {getFileIconComponent(doc.fileType)}
                           </div>
-                          <button className="p-1.5 hover:bg-gray-100 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                            <MoreVertical className="w-4 h-4 text-gray-400" />
-                          </button>
+                          <div className="flex gap-1">
+                            <button 
+                              onClick={() => handleDocumentAction(doc, true)}
+                              className="p-1.5 hover:bg-gray-100 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Eye className="w-4 h-4 text-gray-400" />
+                            </button>
+                            {room.downloadEnabled && (
+                              <button 
+                                onClick={() => handleDocumentAction(doc, false)}
+                                className="p-1.5 hover:bg-gray-100 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Download className="w-4 h-4 text-gray-400" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                         <h4 className="font-medium text-aifm-charcoal text-sm line-clamp-2 mb-1 group-hover:text-aifm-gold transition-colors">{doc.name}</h4>
                         <p className="text-xs text-aifm-charcoal/40 mb-4">{formatFileSize(doc.fileSize)}</p>
@@ -434,7 +705,11 @@ export default function DataRoomDetailPage() {
                             <Settings className="w-4 h-4 text-aifm-charcoal/40" />
                           </button>
                           {member.role !== 'OWNER' && (
-                            <button className="p-2 hover:bg-red-50 rounded-lg transition-colors" title="Ta bort">
+                            <button 
+                              onClick={() => handleRemoveMember(member)}
+                              className="p-2 hover:bg-red-50 rounded-lg transition-colors" 
+                              title="Ta bort"
+                            >
                               <Trash2 className="w-4 h-4 text-red-500" />
                             </button>
                           )}
@@ -447,47 +722,18 @@ export default function DataRoomDetailPage() {
             </div>
           )}
 
-          {/* Activity Tab */}
+          {/* Activity Tab - Using new detailed component */}
           {activeTab === 'activity' && (
-            <div>
-              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-aifm-charcoal/50 uppercase tracking-wider">Aktivitetslogg</h3>
-                <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-aifm-charcoal/70 
-                                   bg-white border border-gray-200 rounded-xl hover:border-aifm-gold/30 transition-all">
-                  <Download className="w-4 h-4" />
-                  Exportera
-                </button>
-              </div>
-              <div className="divide-y divide-gray-50">
-                {activities.map((activity) => (
-                  <div key={activity.id} className="px-6 py-4 flex items-center gap-4 hover:bg-gray-50/50 transition-colors">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      activity.action === 'VIEW' ? 'bg-blue-50' :
-                      activity.action === 'DOWNLOAD' ? 'bg-emerald-50' :
-                      activity.action === 'UPLOAD' ? 'bg-purple-50' :
-                      'bg-gray-100'
-                    }`}>
-                      {activity.action === 'VIEW' && <Eye className="w-5 h-5 text-blue-500" />}
-                      {activity.action === 'DOWNLOAD' && <Download className="w-5 h-5 text-emerald-500" />}
-                      {activity.action === 'UPLOAD' && <Upload className="w-5 h-5 text-purple-500" />}
-                      {activity.action === 'ACCEPT_INVITE' && <CheckCircle2 className="w-5 h-5 text-gray-500" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-aifm-charcoal">
-                        <span className="font-medium">{activity.userName}</span>
-                        {' '}
-                        <span className="text-aifm-charcoal/50">{getActionLabel(activity.action)}</span>
-                        {' '}
-                        <span className="font-medium">{activity.targetName}</span>
-                      </p>
-                      <p className="text-xs text-aifm-charcoal/40 mt-0.5">
-                        {activity.timestamp.toLocaleString('sv-SE')}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <DetailedActivityTab roomId={roomId} />
+          )}
+
+          {/* Shared Links Tab */}
+          {activeTab === 'shared-links' && (
+            <SharedLinksTab 
+              roomId={roomId} 
+              documents={documents.map(d => ({ id: d.id, name: d.name }))}
+              folders={folders.map(f => ({ id: f.id, name: f.name }))}
+            />
           )}
 
           {/* Settings Tab */}
@@ -502,7 +748,8 @@ export default function DataRoomDetailPage() {
                     </label>
                     <input 
                       type="text" 
-                      defaultValue={room.name} 
+                      value={settingsName}
+                      onChange={(e) => setSettingsName(e.target.value)}
                       className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm
                                  focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10 transition-all"
                     />
@@ -512,7 +759,8 @@ export default function DataRoomDetailPage() {
                       Beskrivning
                     </label>
                     <textarea 
-                      defaultValue={room.description} 
+                      value={settingsDescription}
+                      onChange={(e) => setSettingsDescription(e.target.value)}
                       className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm h-24 resize-none
                                  focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10 transition-all"
                     />
@@ -521,7 +769,8 @@ export default function DataRoomDetailPage() {
                     <label className="flex items-center gap-3 cursor-pointer group">
                       <input 
                         type="checkbox" 
-                        defaultChecked={room.watermark}
+                        checked={settingsWatermark}
+                        onChange={(e) => setSettingsWatermark(e.target.checked)}
                         className="w-5 h-5 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold"
                       />
                       <span className="text-sm text-aifm-charcoal/70 group-hover:text-aifm-charcoal transition-colors">
@@ -531,7 +780,8 @@ export default function DataRoomDetailPage() {
                     <label className="flex items-center gap-3 cursor-pointer group">
                       <input 
                         type="checkbox" 
-                        defaultChecked={room.downloadEnabled}
+                        checked={settingsDownload}
+                        onChange={(e) => setSettingsDownload(e.target.checked)}
                         className="w-5 h-5 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold"
                       />
                       <span className="text-sm text-aifm-charcoal/70 group-hover:text-aifm-charcoal transition-colors">
@@ -539,18 +789,12 @@ export default function DataRoomDetailPage() {
                       </span>
                     </label>
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">
-                      Utgångsdatum
-                    </label>
-                    <input 
-                      type="date" 
-                      defaultValue={room.expiresAt?.toISOString().split('T')[0]} 
-                      className="py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm
-                                 focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10 transition-all"
-                    />
-                  </div>
-                  <button className="px-5 py-2.5 bg-aifm-charcoal text-white rounded-xl text-sm font-medium hover:bg-aifm-charcoal/90 transition-colors">
+                  <button 
+                    onClick={handleSaveSettings}
+                    disabled={isSavingSettings}
+                    className="px-5 py-2.5 bg-aifm-charcoal text-white rounded-xl text-sm font-medium hover:bg-aifm-charcoal/90 transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isSavingSettings && <Loader2 className="w-4 h-4 animate-spin" />}
                     Spara ändringar
                   </button>
                 </div>
@@ -591,13 +835,28 @@ export default function DataRoomDetailPage() {
             <div className="p-6 space-y-5">
               <div>
                 <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">
-                  E-postadress
+                  E-postadress *
                 </label>
                 <input
                   type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
                   className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm
                              focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10 transition-all"
                   placeholder="namn@foretag.se"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">
+                  Namn (valfritt)
+                </label>
+                <input
+                  type="text"
+                  value={inviteName}
+                  onChange={(e) => setInviteName(e.target.value)}
+                  className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm
+                             focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10 transition-all"
+                  placeholder="Anna Andersson"
                 />
               </div>
               <div>
@@ -606,9 +865,9 @@ export default function DataRoomDetailPage() {
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { value: 'VIEWER', label: 'Läsare', desc: 'Kan visa' },
-                    { value: 'MEMBER', label: 'Medlem', desc: 'Visa & ladda ner' },
-                    { value: 'ADMIN', label: 'Admin', desc: 'Full åtkomst' },
+                    { value: 'VIEWER' as const, label: 'Läsare', desc: 'Kan visa' },
+                    { value: 'MEMBER' as const, label: 'Medlem', desc: 'Visa & ladda ner' },
+                    { value: 'ADMIN' as const, label: 'Admin', desc: 'Full åtkomst' },
                   ].map((role) => (
                     <button
                       key={role.value}
@@ -628,16 +887,6 @@ export default function DataRoomDetailPage() {
                   ))}
                 </div>
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">
-                  Meddelande (valfritt)
-                </label>
-                <textarea
-                  className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm h-20 resize-none
-                             focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10 transition-all"
-                  placeholder="Lägg till ett personligt meddelande..."
-                />
-              </div>
             </div>
             <div className="px-6 py-5 border-t border-gray-100 flex gap-3">
               <button 
@@ -648,16 +897,15 @@ export default function DataRoomDetailPage() {
                 Avbryt
               </button>
               <button 
-                onClick={() => {
-                  alert('Inbjudan skickad! (Demo)');
-                  setShowInviteModal(false);
-                }}
+                onClick={handleInviteMember}
+                disabled={isInviting || !inviteEmail.trim()}
                 className="flex-1 py-3 px-4 text-sm font-medium text-white 
                            bg-aifm-charcoal rounded-xl hover:bg-aifm-charcoal/90 
-                           shadow-lg shadow-aifm-charcoal/20 transition-all flex items-center justify-center gap-2"
+                           shadow-lg shadow-aifm-charcoal/20 transition-all flex items-center justify-center gap-2
+                           disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Mail className="w-4 h-4" />
-                Skicka inbjudan
+                {isInviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                {isInviting ? 'Skickar...' : 'Skicka inbjudan'}
               </button>
             </div>
           </div>
@@ -678,20 +926,41 @@ export default function DataRoomDetailPage() {
               </button>
             </div>
             <div className="p-6">
-              <div className="border-2 border-dashed border-gray-200 rounded-2xl p-10 text-center hover:border-aifm-gold/50 transition-colors cursor-pointer group">
-                <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-aifm-gold/10 transition-colors">
-                  <Upload className="w-8 h-8 text-aifm-charcoal/30 group-hover:text-aifm-gold transition-colors" />
-                </div>
-                <p className="text-aifm-charcoal font-medium mb-2">Släpp filer här eller klicka för att ladda upp</p>
-                <p className="text-sm text-aifm-charcoal/40">PDF, Word, Excel, PowerPoint och bilder</p>
-                <input type="file" className="hidden" multiple />
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-gray-200 rounded-2xl p-10 text-center hover:border-aifm-gold/50 transition-colors cursor-pointer group"
+              >
+                {isUploading ? (
+                  <div className="space-y-4">
+                    <Loader2 className="w-8 h-8 text-aifm-gold animate-spin mx-auto" />
+                    <p className="text-aifm-charcoal font-medium">Laddar upp... {uploadProgress}%</p>
+                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-aifm-gold transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-aifm-gold/10 transition-colors">
+                      <Upload className="w-8 h-8 text-aifm-charcoal/30 group-hover:text-aifm-gold transition-colors" />
+                    </div>
+                    <p className="text-aifm-charcoal font-medium mb-2">Släpp filer här eller klicka för att ladda upp</p>
+                    <p className="text-sm text-aifm-charcoal/40">PDF, Word, Excel, PowerPoint och bilder</p>
+                  </>
+                )}
               </div>
               <div className="mt-5">
                 <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">
                   Ladda upp till mapp
                 </label>
-                <select className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm
-                                   focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10 transition-all">
+                <select 
+                  value={uploadFolderId || ''}
+                  onChange={(e) => setUploadFolderId(e.target.value || null)}
+                  className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm
+                             focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10 transition-all"
+                >
                   <option value="">Rot (Ingen mapp)</option>
                   {folders.map(folder => (
                     <option key={folder.id} value={folder.id}>{folder.name}</option>
@@ -702,26 +971,67 @@ export default function DataRoomDetailPage() {
             <div className="px-6 py-5 border-t border-gray-100 flex gap-3">
               <button 
                 onClick={() => setShowUploadModal(false)}
+                disabled={isUploading}
+                className="flex-1 py-3 px-4 text-sm font-medium text-aifm-charcoal/70 
+                           bg-white border border-gray-200 rounded-xl hover:border-aifm-charcoal/30 transition-all"
+              >
+                {isUploading ? 'Vänta...' : 'Stäng'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Folder Modal */}
+      {showNewFolderModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-aifm-charcoal">Ny mapp</h3>
+              <button 
+                onClick={() => setShowNewFolderModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+              >
+                <X className="w-5 h-5 text-aifm-charcoal/50" />
+              </button>
+            </div>
+            <div className="p-6">
+              <label className="block text-xs font-semibold text-aifm-charcoal/50 mb-2 uppercase tracking-wider">
+                Mappnamn
+              </label>
+              <input
+                type="text"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                className="w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm
+                           focus:outline-none focus:border-aifm-gold/30 focus:ring-2 focus:ring-aifm-gold/10 transition-all"
+                placeholder="t.ex. Finansiella rapporter"
+                autoFocus
+              />
+            </div>
+            <div className="px-6 py-5 border-t border-gray-100 flex gap-3">
+              <button 
+                onClick={() => setShowNewFolderModal(false)}
                 className="flex-1 py-3 px-4 text-sm font-medium text-aifm-charcoal/70 
                            bg-white border border-gray-200 rounded-xl hover:border-aifm-charcoal/30 transition-all"
               >
                 Avbryt
               </button>
               <button 
-                onClick={() => {
-                  alert('Dokument uppladdade! (Demo)');
-                  setShowUploadModal(false);
-                }}
+                onClick={handleCreateFolder}
+                disabled={isCreatingFolder || !newFolderName.trim()}
                 className="flex-1 py-3 px-4 text-sm font-medium text-white 
                            bg-aifm-charcoal rounded-xl hover:bg-aifm-charcoal/90 
-                           shadow-lg shadow-aifm-charcoal/20 transition-all"
+                           shadow-lg shadow-aifm-charcoal/20 transition-all flex items-center justify-center gap-2
+                           disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Ladda upp
+                {isCreatingFolder ? <Loader2 className="w-4 h-4 animate-spin" /> : <Folder className="w-4 h-4" />}
+                {isCreatingFolder ? 'Skapar...' : 'Skapa mapp'}
               </button>
             </div>
           </div>
         </div>
       )}
-    </DashboardLayout>
+    </>
   );
 }

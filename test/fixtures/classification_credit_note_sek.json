@@ -1,0 +1,24 @@
+{
+  "docType": "CREDIT_NOTE",
+  "supplier": "Acme AB",
+  "invoiceNumber": "CN-2025-02",
+  "invoiceDate": "2025-11-20",
+  "dueDate": "2025-11-20",
+  "currency": "SEK",
+  "totalAmount": -1250,
+  "vatAmount": -250,
+  "lineItems": [
+    {
+      "id": "li-1",
+      "description": "Kreditnota - återbetalning",
+      "netAmount": -1000,
+      "vatAmount": -250,
+      "suggestedAccount": "6540",
+      "suggestedCostCenter": "IT",
+      "confidence": 0.9
+    }
+  ],
+  "overallConfidence": 0.9
+}
+
+

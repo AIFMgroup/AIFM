@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
@@ -8,7 +7,7 @@ import {
   Calendar, ChevronRight, Sparkles, BarChart3, Eye,
   ChevronDown, Settings, Download, Filter
 } from 'lucide-react';
-import { DashboardLayout } from '@/components/DashboardLayout';
+
 import { useCompany } from '@/components/CompanyContext';
 import { MinimalSelect } from '@/components/MinimalSelect';
 
@@ -74,20 +73,22 @@ const accountingSteps: AccountingStep[] = [
   },
 ];
 
-const recentActivity = [
-  { id: '1', action: 'Faktura uppladdad', details: 'Leverantörsfaktura #2024-1847', time: '5 min sedan', type: 'upload', icon: Upload },
-  { id: '2', action: 'Transaktion godkänd', details: 'Hyresbetalning december', time: '15 min sedan', type: 'approve', icon: CheckCircle2 },
-  { id: '3', action: 'AI-klassificering', details: '12 transaktioner klassificerade', time: '1 timme sedan', type: 'ai', icon: Sparkles },
-  { id: '4', action: 'Betalning genomförd', details: 'Skatteinbetalning Q4', time: '2 timmar sedan', type: 'payment', icon: CreditCard },
-];
-
-// Mock report data
-const reports = [
-  { id: '1', name: 'Balansräkning', period: 'Nov 2024', date: '2024-11-30', type: 'balance' },
-  { id: '2', name: 'Resultaträkning', period: 'Nov 2024', date: '2024-11-30', type: 'income' },
-  { id: '3', name: 'Huvudbok', period: 'Q4 2024', date: '2024-12-15', type: 'ledger' },
-  { id: '4', name: 'Momsrapport', period: 'Q4 2024', date: '2024-12-31', type: 'tax' },
-];
+// Helper function
+function getTimeAgo(timestamp: string): string {
+  const now = new Date();
+  const then = new Date(timestamp);
+  const diffMs = now.getTime() - then.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  
+  if (diffMins < 1) return 'Just nu';
+  if (diffMins < 60) return `${diffMins} min sedan`;
+  
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours} timme sedan`;
+  
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays} dagar sedan`;
+}
 
 // Animated progress ring
 function ProgressRing({ progress, size = 120 }: { progress: number; size?: number }) {
@@ -282,11 +283,87 @@ function TabButton({ active, onClick, children, count }: { active: boolean; onCl
   );
 }
 
+interface ActivityItem {
+  id: string;
+  action: string;
+  details: string;
+  time: string;
+  type: string;
+  icon: React.ElementType;
+}
+
+interface ReportItem {
+  id: string;
+  name: string;
+  period: string;
+  date: string;
+  type: string;
+}
+
 export default function AccountingOverviewPage() {
   const { selectedCompany } = useCompany();
-  const [selectedPeriod, setSelectedPeriod] = useState('2024');
+  const [selectedPeriod, setSelectedPeriod] = useState(new Date().getFullYear().toString());
   const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'reports' | 'settings'>('overview');
   const [showDetails, setShowDetails] = useState(true);
+  const [stats, setStats] = useState({ approved: 0, pending: 0, aiClassified: 0 });
+  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
+  const [reports, setReports] = useState<ReportItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch real stats from API
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!selectedCompany?.id) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/accounting/jobs?companyId=${selectedCompany.id}`);
+        const jobs = await response.json();
+
+        if (Array.isArray(jobs)) {
+          const approved = jobs.filter((j: { status: string }) => j.status === 'approved').length;
+          const pending = jobs.filter((j: { status: string }) => j.status === 'ready').length;
+          const aiClassified = jobs.filter((j: { aiConfidence?: number }) => j.aiConfidence && j.aiConfidence > 0).length;
+
+          setStats({ approved, pending, aiClassified });
+
+          // Create activity from recent jobs
+          const recent = jobs
+            .sort((a: { createdAt: string }, b: { createdAt: string }) => 
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(0, 4)
+            .map((job: { jobId: string; status: string; extractedData?: { supplierName?: string }; createdAt: string }) => ({
+              id: job.jobId,
+              action: job.status === 'approved' ? 'Transaktion godkänd' : 
+                     job.status === 'ready' ? 'AI-klassificering' : 'Dokument laddat',
+              details: job.extractedData?.supplierName || `Dokument ${job.jobId.slice(0, 8)}`,
+              time: getTimeAgo(job.createdAt),
+              type: job.status === 'approved' ? 'approve' : job.status === 'ready' ? 'ai' : 'upload',
+              icon: job.status === 'approved' ? CheckCircle2 : job.status === 'ready' ? Sparkles : Upload,
+            }));
+
+          setRecentActivity(recent);
+        }
+
+        // Set static reports (these would come from a real reports API)
+        setReports([
+          { id: '1', name: 'Balansräkning', period: `Nov ${selectedPeriod}`, date: `${selectedPeriod}-11-30`, type: 'balance' },
+          { id: '2', name: 'Resultaträkning', period: `Nov ${selectedPeriod}`, date: `${selectedPeriod}-11-30`, type: 'income' },
+          { id: '3', name: 'Huvudbok', period: `Q4 ${selectedPeriod}`, date: `${selectedPeriod}-12-15`, type: 'ledger' },
+          { id: '4', name: 'Momsrapport', period: `Q4 ${selectedPeriod}`, date: `${selectedPeriod}-12-31`, type: 'tax' },
+        ]);
+
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, [selectedCompany?.id, selectedPeriod]);
 
   const completedSteps = accountingSteps.filter(s => s.status === 'completed').length;
   const totalSteps = accountingSteps.length;
@@ -294,7 +371,7 @@ export default function AccountingOverviewPage() {
     accountingSteps.filter(s => s.status === 'in_progress' && s.progress).reduce((sum, s) => sum + (s.progress || 0) / totalSteps / 2, 0));
 
   return (
-    <DashboardLayout>
+    <>
       {/* Hero Section */}
       <div className="relative bg-gradient-to-br from-aifm-charcoal via-aifm-charcoal to-aifm-charcoal/90 rounded-2xl sm:rounded-3xl p-6 sm:p-8 mb-6 sm:mb-8 overflow-hidden">
         {/* Background Pattern */}
@@ -348,20 +425,18 @@ export default function AccountingOverviewPage() {
             </div>
             <HeroMetric 
               label="Godkända" 
-              value="185" 
+              value={loading ? '-' : stats.approved.toString()} 
               icon={CheckCircle2}
-              trend={{ value: '+12%', positive: true }}
             />
             <HeroMetric 
               label="Väntar" 
-              value="30" 
+              value={loading ? '-' : stats.pending.toString()} 
               icon={Clock}
             />
             <HeroMetric 
               label="AI-klassificerade" 
-              value="156" 
+              value={loading ? '-' : stats.aiClassified.toString()} 
               icon={Sparkles}
-              trend={{ value: '+23%', positive: true }}
             />
           </div>
         </div>
@@ -590,6 +665,6 @@ export default function AccountingOverviewPage() {
           </div>
         </div>
       )}
-    </DashboardLayout>
+    </>
   );
 }

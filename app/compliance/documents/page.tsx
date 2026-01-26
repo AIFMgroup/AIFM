@@ -1,12 +1,15 @@
 'use client';
 
-import { useState, useRef } from 'react';
+// Force dynamic rendering to avoid useSearchParams issues
+export const dynamic = 'force-dynamic';
+
+import { useState, useRef, Suspense } from 'react';
 import { 
   Upload, FileText, CheckCircle2, Clock, Trash2, 
   File, FileSpreadsheet, FileImage, Brain, Shield, Eye,
-  Home, Search
+  Search, RefreshCw, Download, Filter, BarChart3, Loader2
 } from 'lucide-react';
-import { DashboardLayout } from '@/components/DashboardLayout';
+
 import { useCompany } from '@/components/CompanyContext';
 
 interface UploadedDocument {
@@ -83,65 +86,27 @@ const mockDocuments: UploadedDocument[] = [
   },
 ];
 
-// Tab Button Component
-function TabButton({ 
-  label, 
-  isActive, 
-  onClick,
-  count
-}: { 
-  label: string; 
-  isActive: boolean; 
-  onClick: () => void;
-  count?: number;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
-        isActive
-          ? 'bg-white text-aifm-charcoal shadow-sm'
-          : 'text-white/70 hover:text-white hover:bg-white/10'
-      }`}
-    >
-      {label}
-      {count !== undefined && (
-        <span className={`ml-2 ${isActive ? 'text-aifm-charcoal/50' : 'text-white/50'}`}>
-          {count}
-        </span>
-      )}
-    </button>
-  );
-}
+// Simple Card components (matching bookkeeping style)
+const Card = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
+  <div className={`bg-white rounded-xl shadow-sm border border-gray-100 ${className}`}>
+    {children}
+  </div>
+);
 
-// Hero Metric Card
-function HeroMetric({ 
-  label, 
-  value, 
-  subValue,
-  icon: Icon
-}: { 
-  label: string; 
-  value: string; 
-  subValue?: string;
-  icon: React.ElementType;
-}) {
-  return (
-    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-      <div className="flex items-center gap-3 mb-2">
-        <div className="p-2 bg-white/10 rounded-lg">
-          <Icon className="w-4 h-4 text-white/70" />
-        </div>
-        <p className="text-xs text-white/50 uppercase tracking-wider font-medium">{label}</p>
-      </div>
-      <p className="text-2xl font-semibold text-white">{value}</p>
-      {subValue && <p className="text-sm text-white/60 mt-1">{subValue}</p>}
-    </div>
-  );
-}
+const CardHeader = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
+  <div className={`p-4 border-b border-gray-50 ${className}`}>{children}</div>
+);
+
+const CardTitle = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
+  <h3 className={`font-medium text-gray-900 ${className}`}>{children}</h3>
+);
+
+const CardContent = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
+  <div className={`p-4 ${className}`}>{children}</div>
+);
 
 function getFileIcon(type: string) {
-  const iconClass = "w-6 h-6";
+  const iconClass = "w-5 h-5";
   switch (type) {
     case 'pdf':
       return <FileText className={`${iconClass} text-red-500`} />;
@@ -164,13 +129,40 @@ function formatDate(date: Date): string {
   }).format(date);
 }
 
+function getStatusBadge(status: UploadedDocument['status']) {
+  switch (status) {
+    case 'completed':
+      return (
+        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-medium">
+          <CheckCircle2 className="w-3 h-3" />
+          Indexerad
+        </span>
+      );
+    case 'processing':
+      return (
+        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-medium">
+          <Clock className="w-3 h-3" />
+          Bearbetas
+        </span>
+      );
+    case 'error':
+      return (
+        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-medium">
+          <Trash2 className="w-3 h-3" />
+          Fel
+        </span>
+      );
+  }
+}
+
 export default function ComplianceDocumentsPage() {
   const { selectedCompany } = useCompany();
   const [documents, setDocuments] = useState<UploadedDocument[]>(mockDocuments);
   const [isDragging, setIsDragging] = useState(false);
-  const [activeTab, setActiveTab] = useState<'upload' | 'indexed' | 'all'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'indexed' | 'processing'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDoc, setSelectedDoc] = useState<UploadedDocument | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -241,9 +233,14 @@ export default function ComplianceDocumentsPage() {
     if (selectedDoc?.id === id) setSelectedDoc(null);
   };
 
+  const handleRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 1000);
+  };
+
   const filteredDocs = documents.filter(doc => {
     const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase());
-    if (activeTab === 'upload') return matchesSearch && doc.status === 'processing';
+    if (activeTab === 'processing') return matchesSearch && doc.status === 'processing';
     if (activeTab === 'indexed') return matchesSearch && doc.status === 'completed';
     return matchesSearch;
   });
@@ -253,93 +250,104 @@ export default function ComplianceDocumentsPage() {
   const totalPages = documents.reduce((sum, d) => sum + (d.pages || 0), 0);
 
   return (
-    <DashboardLayout>
-      {/* Hero Section */}
-      <div className="bg-gradient-to-br from-aifm-charcoal via-aifm-charcoal to-aifm-charcoal/90 px-4 sm:px-6 pt-6 pb-6 mb-8 rounded-2xl">
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-white/40 mb-6">
-          <Home className="w-4 h-4" />
-          <span>/</span>
-          <span>Compliance</span>
-          <span>/</span>
-          <span className="text-white">Dokument</span>
-        </div>
-
+    <>
+      <div className="p-6 w-full space-y-6">
         {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 mb-8">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
-              <Brain className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl lg:text-3xl font-semibold text-white tracking-tight mb-1">
-                Dokumenthantering
-              </h1>
-              <p className="text-white/50 text-sm lg:text-base">
-                AI-driven analys för {selectedCompany.shortName}
-              </p>
-            </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-light text-gray-900 tracking-tight">
+              Dokumenthantering
+            </h1>
+            <p className="text-gray-500 mt-1">
+              AI-driven analys för {selectedCompany.shortName}
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Uppdatera"
+            >
+              <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+            </button>
+            <button className="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              Exportera
+            </button>
           </div>
         </div>
 
-        {/* Hero Metrics */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <HeroMetric 
-            label="Totalt dokument"
-            value={documents.length.toString()}
-            icon={FileText}
-          />
-          <HeroMetric 
-            label="Indexerade"
-            value={completedCount.toString()}
-            subValue={`${Math.round((completedCount / documents.length) * 100)}% klar`}
-            icon={CheckCircle2}
-          />
-          <HeroMetric 
-            label="Bearbetas"
-            value={processingCount.toString()}
-            icon={Clock}
-          />
-          <HeroMetric 
-            label="Sidor analyserade"
-            value={totalPages.toString()}
-            icon={Eye}
-          />
+        {/* Processing indicator */}
+        {processingCount > 0 && (
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent>
+              <div className="flex items-center gap-3">
+                <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                <span className="text-sm text-blue-700">
+                  {processingCount} dokument bearbetas just nu...
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card className="border-l-4 border-l-gray-400">
+            <CardContent>
+              <div className="flex items-center gap-2 text-gray-500 mb-1">
+                <BarChart3 className="w-4 h-4" />
+                <span className="text-sm">Totalt</span>
+              </div>
+              <div className="text-2xl font-light text-gray-900">
+                {documents.length}
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-green-400">
+            <CardContent>
+              <div className="flex items-center gap-2 text-gray-500 mb-1">
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                <span className="text-sm">Indexerade</span>
+              </div>
+              <div className="text-2xl font-light text-gray-900">
+                {completedCount}
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-amber-400">
+            <CardContent>
+              <div className="flex items-center gap-2 text-gray-500 mb-1">
+                <Clock className="w-4 h-4 text-amber-500" />
+                <span className="text-sm">Bearbetas</span>
+              </div>
+              <div className="text-2xl font-light text-gray-900">
+                {processingCount}
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-blue-400">
+            <CardContent>
+              <div className="flex items-center gap-2 text-gray-500 mb-1">
+                <Eye className="w-4 h-4 text-blue-500" />
+                <span className="text-sm">Sidor analyserade</span>
+              </div>
+              <div className="text-2xl font-light text-gray-900">
+                {totalPages}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Tabs */}
-        <div className="flex items-center gap-2 bg-white/5 rounded-xl p-1.5 w-fit">
-          <TabButton 
-            label="Alla" 
-            isActive={activeTab === 'all'} 
-            onClick={() => setActiveTab('all')}
-            count={documents.length}
-          />
-          <TabButton 
-            label="Indexerade" 
-            isActive={activeTab === 'indexed'} 
-            onClick={() => setActiveTab('indexed')}
-            count={completedCount}
-          />
-          <TabButton 
-            label="Bearbetas" 
-            isActive={activeTab === 'upload'} 
-            onClick={() => setActiveTab('upload')}
-            count={processingCount}
-          />
-        </div>
-      </div>
-
-      {/* Main Content - Master-Detail Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Upload + List */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Upload Area */}
+        {/* Upload Area */}
+        <Card>
           <div 
-            className={`relative rounded-2xl transition-all duration-500 overflow-hidden
+            className={`relative rounded-xl transition-all duration-300 overflow-hidden
               ${isDragging 
-                ? 'bg-aifm-gold/5 border-2 border-aifm-gold shadow-xl shadow-aifm-gold/20' 
-                : 'bg-white border-2 border-dashed border-gray-200 hover:border-aifm-gold/50 hover:shadow-lg'
+                ? 'bg-[#c0a280]/5 border-2 border-[#c0a280] border-dashed' 
+                : 'border-2 border-dashed border-gray-200 hover:border-[#c0a280]/50'
               }`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -354,245 +362,302 @@ export default function ComplianceDocumentsPage() {
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
             />
             
-            <div className="relative p-8 lg:p-10 text-center">
-              <div className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4 
-                              transition-all duration-500 ${isDragging 
-                                ? 'bg-aifm-gold scale-110 shadow-xl shadow-aifm-gold/30' 
+            <div className="p-8 text-center">
+              <div className={`w-14 h-14 mx-auto rounded-xl flex items-center justify-center mb-4 
+                              transition-all duration-300 ${isDragging 
+                                ? 'bg-[#c0a280] scale-110' 
                                 : 'bg-gray-100'}`}>
-                <Upload className={`w-8 h-8 transition-colors duration-500 ${
+                <Upload className={`w-7 h-7 transition-colors duration-300 ${
                   isDragging ? 'text-white' : 'text-gray-400'
                 }`} />
               </div>
               
-              <h3 className="text-lg font-semibold text-aifm-charcoal mb-1">
+              <h3 className="text-lg font-medium text-gray-900 mb-1">
                 {isDragging ? 'Släpp filerna här' : 'Dra och släpp filer'}
               </h3>
-              <p className="text-sm text-aifm-charcoal/50 mb-3">
-                eller <span className="text-aifm-gold font-medium cursor-pointer hover:underline">bläddra</span>
+              <p className="text-sm text-gray-500 mb-3">
+                eller <span className="text-[#c0a280] font-medium cursor-pointer hover:underline">bläddra</span>
               </p>
               
-              <div className="flex items-center justify-center gap-2 text-xs text-aifm-charcoal/40">
+              <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
                 <span className="px-2 py-1 bg-gray-100 rounded-full">PDF</span>
                 <span className="px-2 py-1 bg-gray-100 rounded-full">Word</span>
                 <span className="px-2 py-1 bg-gray-100 rounded-full">Excel</span>
               </div>
             </div>
           </div>
+        </Card>
 
-          {/* Search */}
-          <div className="relative">
-            <Search className="w-4 h-4 text-aifm-charcoal/30 absolute left-4 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Sök dokument..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full py-3 pl-11 pr-4 bg-white border border-gray-200 rounded-xl text-sm
-                         placeholder:text-aifm-charcoal/30 focus:outline-none focus:border-aifm-gold/30 
-                         focus:ring-2 focus:ring-aifm-gold/10 transition-all"
-            />
-          </div>
-
-          {/* Document List */}
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-aifm-charcoal">
-                Dokument
-              </h2>
-              <span className="text-xs text-aifm-charcoal/40">{filteredDocs.length} filer</span>
+        {/* Tabs */}
+        <Card>
+          <CardContent className="p-0">
+            <div className="flex border-b border-gray-100">
+              {[
+                { key: 'all', label: 'Alla', count: documents.length, icon: BarChart3 },
+                { key: 'indexed', label: 'Indexerade', count: completedCount, icon: CheckCircle2 },
+                { key: 'processing', label: 'Bearbetas', count: processingCount, icon: Clock },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key as typeof activeTab)}
+                  className={`px-6 py-3 text-sm font-medium transition-all relative flex items-center gap-2 ${
+                    activeTab === tab.key
+                      ? 'text-gray-900'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <tab.icon className="w-4 h-4" />
+                  {tab.label}
+                  <span className={`px-1.5 py-0.5 rounded-full text-xs ${
+                    activeTab === tab.key ? 'bg-[#c0a280]/20 text-[#c0a280]' : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    {tab.count}
+                  </span>
+                  {activeTab === tab.key && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#c0a280] rounded-full" />
+                  )}
+                </button>
+              ))}
             </div>
-            
-            <div className="divide-y divide-gray-50 max-h-[500px] overflow-y-auto">
-              {filteredDocs.length === 0 ? (
-                <div className="p-12 text-center">
-                  <div className="w-16 h-16 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
-                    <FileText className="w-8 h-8 text-gray-300" />
+          </CardContent>
+        </Card>
+
+        {/* Search */}
+        <Card>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Sök dokument..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border-0 rounded-lg text-sm
+                             focus:bg-white focus:ring-2 focus:ring-[#c0a280]/10 transition-all"
+                />
+              </div>
+              <button className="px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg flex items-center gap-2 hover:bg-gray-200 transition-colors">
+                <Filter className="w-4 h-4" />
+                Filter
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Main Content - Master-Detail Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left: Document List */}
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader className="flex items-center justify-between">
+                <CardTitle>Dokument</CardTitle>
+                <span className="text-xs text-gray-500">{filteredDocs.length} filer</span>
+              </CardHeader>
+              
+              <div className="divide-y divide-gray-50 max-h-[600px] overflow-y-auto">
+                {filteredDocs.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-600 font-medium">Inga dokument</p>
+                    <p className="text-xs text-gray-400 mt-1">Ladda upp för att börja</p>
                   </div>
-                  <p className="text-aifm-charcoal/60 font-medium">Inga dokument</p>
-                  <p className="text-xs text-aifm-charcoal/40 mt-1">Ladda upp för att börja</p>
-                </div>
-              ) : (
-                filteredDocs.map((doc) => (
-                  <div 
-                    key={doc.id} 
-                    className={`group px-5 py-4 cursor-pointer transition-all duration-300 ${
-                      selectedDoc?.id === doc.id 
-                        ? 'bg-aifm-gold/5 border-l-2 border-aifm-gold' 
-                        : 'hover:bg-gray-50/50 border-l-2 border-transparent'
-                    }`}
-                    onClick={() => setSelectedDoc(doc)}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center
-                        ${doc.type === 'pdf' ? 'bg-red-50' : 
-                          doc.type === 'xlsx' || doc.type === 'xls' ? 'bg-emerald-50' : 'bg-gray-50'}`}>
-                        {getFileIcon(doc.type)}
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-aifm-charcoal text-sm truncate">
-                          {doc.name}
-                        </h3>
-                        <div className="flex items-center gap-2 mt-0.5 text-xs text-aifm-charcoal/50">
-                          <span>{doc.size}</span>
-                          <span className="w-1 h-1 bg-aifm-charcoal/20 rounded-full" />
-                          <span>{formatDate(doc.uploadedAt)}</span>
+                ) : (
+                  filteredDocs.map((doc) => (
+                    <div 
+                      key={doc.id} 
+                      className={`group px-4 py-3 cursor-pointer transition-all duration-200 ${
+                        selectedDoc?.id === doc.id 
+                          ? 'bg-[#c0a280]/5 border-l-2 border-[#c0a280]' 
+                          : 'hover:bg-gray-50 border-l-2 border-transparent'
+                      }`}
+                      onClick={() => setSelectedDoc(doc)}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center
+                          ${doc.type === 'pdf' ? 'bg-red-50' : 
+                            doc.type === 'xlsx' || doc.type === 'xls' ? 'bg-emerald-50' : 'bg-gray-50'}`}>
+                          {getFileIcon(doc.type)}
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-gray-900 text-sm truncate">
+                            {doc.name}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
+                            <span>{doc.size}</span>
+                            <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                            <span>{formatDate(doc.uploadedAt)}</span>
+                            {doc.category && (
+                              <>
+                                <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                                <span>{doc.category}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-3">
+                          {getStatusBadge(doc.status)}
+                          {doc.confidence && (
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                              doc.confidence >= 90 ? 'bg-green-100 text-green-700' :
+                              doc.confidence >= 70 ? 'bg-amber-100 text-amber-700' :
+                              'bg-red-100 text-red-700'
+                            }`}>
+                              {doc.confidence}%
+                            </span>
+                          )}
                         </div>
                       </div>
-                      
-                      {doc.status === 'processing' ? (
-                        <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                      )}
                     </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Right: Detail Panel */}
-        <div className="hidden lg:block">
-          {selectedDoc ? (
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden sticky top-4">
-              {/* Header */}
-              <div className="p-5 border-b border-gray-100 bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/90">
-                <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4
-                  ${selectedDoc.type === 'pdf' ? 'bg-red-500/20' : 
-                    selectedDoc.type === 'xlsx' || selectedDoc.type === 'xls' ? 'bg-emerald-500/20' : 'bg-white/10'}`}>
-                  {getFileIcon(selectedDoc.type)}
-                </div>
-                <h3 className="font-semibold text-white text-sm truncate mb-1">{selectedDoc.name}</h3>
-                <p className="text-white/50 text-xs">{selectedDoc.size} • {formatDate(selectedDoc.uploadedAt)}</p>
-              </div>
-
-              {/* Content */}
-              <div className="p-5 space-y-5">
-                {/* Status */}
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-aifm-charcoal/50 uppercase tracking-wider">Status</span>
-                  {selectedDoc.status === 'completed' ? (
-                    <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-medium">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      Indexerad
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-600 text-xs font-medium">
-                      <Clock className="w-3.5 h-3.5" />
-                      Bearbetas
-                    </span>
-                  )}
-                </div>
-
-                {/* Stats Grid */}
-                {selectedDoc.status === 'completed' && (
-                  <>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-gray-50 rounded-xl p-3">
-                        <p className="text-xs text-aifm-charcoal/50 mb-1">Sidor</p>
-                        <p className="text-lg font-semibold text-aifm-charcoal">{selectedDoc.pages}</p>
-                      </div>
-                      <div className="bg-gray-50 rounded-xl p-3">
-                        <p className="text-xs text-aifm-charcoal/50 mb-1">Konfidens</p>
-                        <p className="text-lg font-semibold text-aifm-charcoal">{selectedDoc.confidence}%</p>
-                      </div>
-                    </div>
-
-                    {selectedDoc.category && (
-                      <div>
-                        <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-2">Kategori</p>
-                        <span className="px-3 py-1.5 bg-aifm-charcoal/5 rounded-full text-sm font-medium text-aifm-charcoal">
-                          {selectedDoc.category}
-                        </span>
-                      </div>
-                    )}
-
-                    {selectedDoc.summary && (
-                      <div>
-                        <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-2">AI-sammanfattning</p>
-                        <p className="text-sm text-aifm-charcoal/70 leading-relaxed bg-gray-50 rounded-xl p-4">
-                          {selectedDoc.summary}
-                        </p>
-                      </div>
-                    )}
-                  </>
+                  ))
                 )}
+              </div>
+            </Card>
+          </div>
 
-                {/* Actions */}
-                <div className="flex gap-2 pt-3 border-t border-gray-100">
-                  <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-aifm-charcoal/70 
-                                     bg-gray-100 rounded-xl hover:bg-gray-200 transition-all">
-                    <Eye className="w-4 h-4" />
-                    Visa
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(selectedDoc.id)}
-                    className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-red-600 
-                               bg-red-50 rounded-xl hover:bg-red-100 transition-all"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+          {/* Right: Detail Panel */}
+          <div className="hidden lg:block">
+            {selectedDoc ? (
+              <Card className="sticky top-4">
+                {/* Header */}
+                <div className="p-5 border-b border-gray-100">
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4
+                    ${selectedDoc.type === 'pdf' ? 'bg-red-50' : 
+                      selectedDoc.type === 'xlsx' || selectedDoc.type === 'xls' ? 'bg-emerald-50' : 'bg-gray-50'}`}>
+                    {getFileIcon(selectedDoc.type)}
+                  </div>
+                  <h3 className="font-medium text-gray-900 text-sm truncate mb-1">{selectedDoc.name}</h3>
+                  <p className="text-gray-500 text-xs">{selectedDoc.size} • {formatDate(selectedDoc.uploadedAt)}</p>
                 </div>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-gray-50 rounded-2xl border border-gray-100 p-8 text-center h-[400px] flex flex-col items-center justify-center">
-              <div className="w-16 h-16 bg-gray-200 rounded-2xl flex items-center justify-center mb-4">
-                <FileText className="w-8 h-8 text-gray-400" />
-              </div>
-              <p className="text-aifm-charcoal/50 font-medium">Välj ett dokument</p>
-              <p className="text-sm text-aifm-charcoal/30 mt-1">Klicka på ett dokument för att se detaljer</p>
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* AI Notice */}
-      <div className="mt-8 bg-gradient-to-r from-aifm-charcoal to-aifm-charcoal/90 rounded-2xl p-5 text-white">
-        <div className="flex items-start gap-4">
-          <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
-            <Shield className="w-5 h-5 text-aifm-gold" />
-          </div>
-          <div>
-            <h3 className="font-semibold mb-1 text-sm">AI-driven dokumentanalys</h3>
-            <p className="text-xs text-white/70">
-              Uppladdade dokument analyseras av GPT Vision för automatisk klassificering och indexering för snabb compliance-sökning.
-            </p>
+                {/* Content */}
+                <div className="p-5 space-y-5">
+                  {/* Status */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500 uppercase tracking-wider">Status</span>
+                    {getStatusBadge(selectedDoc.status)}
+                  </div>
+
+                  {/* Stats Grid */}
+                  {selectedDoc.status === 'completed' && (
+                    <>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <p className="text-xs text-gray-500 mb-1">Sidor</p>
+                          <p className="text-lg font-semibold text-gray-900">{selectedDoc.pages}</p>
+                        </div>
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <p className="text-xs text-gray-500 mb-1">Konfidens</p>
+                          <p className="text-lg font-semibold text-gray-900">{selectedDoc.confidence}%</p>
+                        </div>
+                      </div>
+
+                      {selectedDoc.category && (
+                        <div>
+                          <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Kategori</p>
+                          <span className="px-3 py-1.5 bg-gray-100 rounded-full text-sm font-medium text-gray-700">
+                            {selectedDoc.category}
+                          </span>
+                        </div>
+                      )}
+
+                      {selectedDoc.summary && (
+                        <div>
+                          <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">AI-sammanfattning</p>
+                          <p className="text-sm text-gray-600 leading-relaxed bg-gray-50 rounded-lg p-4">
+                            {selectedDoc.summary}
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {selectedDoc.status === 'processing' && (
+                    <div className="text-center py-8">
+                      <Loader2 className="w-8 h-8 text-[#c0a280] animate-spin mx-auto mb-4" />
+                      <p className="text-sm text-gray-500">Analyserar dokument...</p>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex gap-2 pt-3 border-t border-gray-100">
+                    <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-gray-700 
+                                       bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                      <Eye className="w-4 h-4" />
+                      Visa
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(selectedDoc.id)}
+                      className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-red-600 
+                                 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </Card>
+            ) : (
+              <Card className="h-[400px] flex flex-col items-center justify-center text-center p-8">
+                <FileText className="w-12 h-12 text-gray-300 mb-4" />
+                <p className="text-gray-600 font-medium">Välj ett dokument</p>
+                <p className="text-sm text-gray-400 mt-1">Klicka på ett dokument för att se detaljer</p>
+              </Card>
+            )}
           </div>
         </div>
+
+        {/* AI Notice */}
+        <Card className="bg-[#c0a280]/10 border-[#c0a280]/20">
+          <CardContent>
+            <div className="flex items-start gap-3">
+              <Brain className="w-5 h-5 text-[#c0a280] flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm text-gray-900 font-medium">AI-driven dokumentanalys</p>
+                <p className="text-xs text-gray-700 mt-1">
+                  Uppladdade dokument analyseras av GPT Vision för automatisk klassificering och indexering för snabb compliance-sökning.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Mobile Detail Modal */}
       {selectedDoc && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end">
-          <div className="bg-white rounded-t-3xl w-full max-h-[80vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
+        <div className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end" onClick={() => setSelectedDoc(null)}>
+          <div className="bg-white rounded-t-3xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between">
-              <h3 className="font-semibold text-aifm-charcoal truncate flex-1 mr-4">{selectedDoc.name}</h3>
-              <button onClick={() => setSelectedDoc(null)} className="p-2 text-aifm-charcoal/50">
+              <h3 className="font-semibold text-gray-900 truncate flex-1 mr-4">{selectedDoc.name}</h3>
+              <button onClick={() => setSelectedDoc(null)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
             <div className="p-5 space-y-5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Status</span>
+                {getStatusBadge(selectedDoc.status)}
+              </div>
+              
               {selectedDoc.status === 'completed' ? (
                 <>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-gray-50 rounded-xl p-4">
-                      <p className="text-xs text-aifm-charcoal/50 mb-1">Sidor</p>
-                      <p className="text-xl font-semibold text-aifm-charcoal">{selectedDoc.pages}</p>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-xs text-gray-500 mb-1">Sidor</p>
+                      <p className="text-xl font-semibold text-gray-900">{selectedDoc.pages}</p>
                     </div>
-                    <div className="bg-gray-50 rounded-xl p-4">
-                      <p className="text-xs text-aifm-charcoal/50 mb-1">Konfidens</p>
-                      <p className="text-xl font-semibold text-aifm-charcoal">{selectedDoc.confidence}%</p>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-xs text-gray-500 mb-1">Konfidens</p>
+                      <p className="text-xl font-semibold text-gray-900">{selectedDoc.confidence}%</p>
                     </div>
                   </div>
                   {selectedDoc.summary && (
                     <div>
-                      <p className="text-xs text-aifm-charcoal/50 uppercase tracking-wider mb-2">AI-sammanfattning</p>
-                      <p className="text-sm text-aifm-charcoal/70 leading-relaxed bg-gray-50 rounded-xl p-4">
+                      <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">AI-sammanfattning</p>
+                      <p className="text-sm text-gray-600 leading-relaxed bg-gray-50 rounded-lg p-4">
                         {selectedDoc.summary}
                       </p>
                     </div>
@@ -600,14 +665,14 @@ export default function ComplianceDocumentsPage() {
                 </>
               ) : (
                 <div className="text-center py-8">
-                  <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                  <p className="text-sm text-aifm-charcoal/60">Analyserar dokument...</p>
+                  <Loader2 className="w-8 h-8 text-[#c0a280] animate-spin mx-auto mb-4" />
+                  <p className="text-sm text-gray-500">Analyserar dokument...</p>
                 </div>
               )}
             </div>
           </div>
         </div>
       )}
-    </DashboardLayout>
+    </>
   );
 }

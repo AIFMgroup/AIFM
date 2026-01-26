@@ -44,7 +44,10 @@ export async function GET(req: Request) {
 
   const response = new Response(html, {
     status: 200,
-    headers: { "Content-Type": "text/html" },
+    headers: {
+      "Content-Type": "text/html",
+      "Cache-Control": "no-store",
+    },
   });
 
   // Set cookies properly using append to handle multiple Set-Cookie headers

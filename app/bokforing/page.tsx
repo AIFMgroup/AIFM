@@ -7,8 +7,16 @@ export const revalidate = 0;
 
 export default async function BookkeepingPage() {
   const session = await getSession();
-  const firstName =
-    (session as any)?.given_name || (session as any)?.name || "Medarbetare";
+  const firstName = (() => {
+    const s = session as unknown;
+    if (!s || typeof s !== 'object') return 'Medarbetare';
+    const rec = s as Record<string, unknown>;
+    const given = rec['given_name'];
+    const name = rec['name'];
+    if (typeof given === 'string' && given.trim()) return given;
+    if (typeof name === 'string' && name.trim()) return name;
+    return 'Medarbetare';
+  })();
 
   return (
     <div className="flex min-h-screen flex-col bg-white">

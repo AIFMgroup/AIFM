@@ -1,15 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { 
   Shield, Check, X, Clock, AlertCircle, FileText,
   DollarSign, Users, CheckCircle2,
-  ArrowRight, RefreshCw, BookOpen, ChevronRight, Eye
+  ArrowRight, RefreshCw, ChevronRight, Eye
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/fundData';
 import { HelpTooltip, helpContent } from '@/components/HelpTooltip';
-import { DashboardLayout } from '@/components/DashboardLayout';
+
 
 // Types for approval workflow
 interface ApprovalItem {
@@ -189,6 +188,7 @@ function StatCard({
   };
 
   return (
+    <>
     <div className={`
       relative group rounded-2xl p-6
       transition-all duration-500 ease-out
@@ -207,7 +207,7 @@ function StatCard({
         {animatedValue}
       </p>
     </div>
-  );
+    </>  );
 }
 
 // Tab Filter Button
@@ -225,6 +225,7 @@ function TabButton({
   color?: string;
 }) {
   return (
+    <>
     <button
       onClick={onClick}
       className={`relative px-5 py-3 text-sm font-medium rounded-xl transition-all duration-300 ${
@@ -245,7 +246,8 @@ function TabButton({
         )}
       </span>
     </button>
-  );
+    
+    </>  );
 }
 
 export default function ApprovalsPage() {
@@ -315,7 +317,7 @@ export default function ApprovalsPage() {
   };
 
   return (
-    <DashboardLayout>
+    <>
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
         <div className="flex items-center gap-4">
@@ -328,18 +330,12 @@ export default function ApprovalsPage() {
               <h1 className="text-2xl font-semibold text-aifm-charcoal tracking-tight">Godkännandecenter</h1>
               <HelpTooltip 
                 {...helpContent.approvals}
-                learnMoreLink="/guide#approvals"
+                learnMoreLink=""
                 position="bottom"
                 size="md"
               />
             </div>
-            <div className="flex items-center gap-3">
-              <p className="text-sm text-aifm-charcoal/50">Dubbelt godkännande för säkra transaktioner</p>
-              <Link href="/guide#approvals" className="text-xs text-aifm-gold hover:underline flex items-center gap-1">
-                <BookOpen className="w-3 h-3" />
-                Guide
-              </Link>
-            </div>
+            <p className="text-sm text-aifm-charcoal/50">Dubbelt godkännande för säkra transaktioner</p>
           </div>
         </div>
       </div>
@@ -770,6 +766,6 @@ export default function ApprovalsPage() {
           </div>
         </div>
       )}
-    </DashboardLayout>
+    </>
   );
 }

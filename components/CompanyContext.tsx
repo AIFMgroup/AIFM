@@ -43,10 +43,28 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Default fallback company for SSR
+const defaultCompany: Company = {
+  id: 'default',
+  name: 'Läser in...',
+  shortName: 'Läser in',
+  orgNumber: '000000-0000',
+  type: 'OPERATING',
+  status: 'ACTIVE',
+  color: '#c0a280',
+};
+
 export function useCompany() {
   const context = useContext(CompanyContext);
-  if (context === undefined) {
-    throw new Error('useCompany must be used within a CompanyProvider');
+  // Return a safe default instead of throwing during SSR
+  if (!context) {
+    return {
+      selectedCompany: defaultCompany,
+      setSelectedCompany: () => {},
+      companies: [],
+      isLoading: true,
+      switchCompany: () => {},
+    };
   }
   return context;
 }

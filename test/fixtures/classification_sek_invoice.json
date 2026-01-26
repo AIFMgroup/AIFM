@@ -1,0 +1,26 @@
+{
+  "docType": "INVOICE",
+  "supplier": "Acme AB",
+  "invoiceNumber": "INV-1001",
+  "invoiceDate": "2025-11-15",
+  "dueDate": "2025-12-15",
+  "currency": "SEK",
+  "totalAmount": 1250,
+  "vatAmount": 250,
+  "lineItems": [
+    {
+      "id": "li-1",
+      "description": "IT-tjänster",
+      "netAmount": 1000,
+      "vatAmount": 250,
+      "suggestedAccount": "6540",
+      "suggestedCostCenter": "IT",
+      "confidence": 0.92,
+      "suggestionSource": "supplier_history",
+      "suggestionReasoning": "Tidigare bokningar för leverantören"
+    }
+  ],
+  "overallConfidence": 0.9
+}
+
+

@@ -1,0 +1,107 @@
+{
+  "name": "AIFM Portal",
+  "short_name": "AIFM",
+  "description": "AI-Powered Fund Management Portal - Hantera fonder, compliance och bokföring",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2d2a26",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "sv",
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "AIFM Dashboard"
+    },
+    {
+      "src": "/screenshots/mobile.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "AIFM Mobile"
+    }
+  ],
+  "categories": ["finance", "business", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Bokföring",
+      "short_name": "Bokföring",
+      "description": "Öppna bokföringsdashboard",
+      "url": "/accounting/dashboard",
+      "icons": [{ "src": "/icons/accounting.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "CRM",
+      "short_name": "CRM",
+      "description": "Öppna CRM",
+      "url": "/crm",
+      "icons": [{ "src": "/icons/crm.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Compliance",
+      "short_name": "Compliance",
+      "description": "Öppna Compliance Manager",
+      "url": "/compliance/chat",
+      "icons": [{ "src": "/icons/compliance.png", "sizes": "96x96" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
+
+
+

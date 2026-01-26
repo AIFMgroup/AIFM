@@ -1,359 +1,355 @@
 'use client';
 
-import { useState } from 'react';
-import { Button } from './Button';
-import {
-  ChevronLeft,
-  CheckCircle,
-  BarChart3,
-  Users,
-  Settings,
-  X,
-  ArrowRight,
-} from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { X, ChevronRight, ChevronLeft } from 'lucide-react';
 
-interface Step {
+// ============================================================================
+// Types
+// ============================================================================
+
+interface OnboardingStep {
+  id: string;
   title: string;
   description: string;
-  action: string;
+  target?: string; // CSS selector for highlighting
+  position: 'center' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  action?: {
+    label: string;
+    href?: string;
+  };
 }
-
-interface RoleGuide {
-  title: string;
-  icon: React.ReactNode;
-  description: string;
-  steps: Step[];
-}
-
-const guides: Record<string, RoleGuide> = {
-  coordinator: {
-    title: 'Quality Control Workflow',
-    icon: <CheckCircle className="w-6 h-6" />,
-    description: 'Review and approve pending quality checks',
-    steps: [
-      {
-        title: 'Login to Portal',
-        description: 'Access your account with your credentials',
-        action: 'Sign in on the home page',
-      },
-      {
-        title: 'Navigate to QC Inbox',
-        description: 'Find the QC Inbox in the top navigation menu',
-        action: 'Click "QC Inbox" to view pending tasks',
-      },
-      {
-        title: 'View Tasks & Issues',
-        description: 'See all tasks with identified errors and warnings',
-        action: 'Each task card shows issues that need attention',
-      },
-      {
-        title: 'Review Details',
-        description: 'Examine the flagged issues on each task carefully',
-        action: 'Read error and warning messages',
-      },
-      {
-        title: 'Approve or Reject',
-        description: 'Make your decision on each task',
-        action: 'Click Approve to mark task as complete',
-      },
-      {
-        title: 'Track Everything',
-        description: 'All your actions are automatically logged',
-        action: 'Audit trail maintained for compliance',
-      },
-    ],
-  },
-  specialist: {
-    title: 'Report Delivery Workflow',
-    icon: <BarChart3 className="w-6 h-6" />,
-    description: 'Manage reports through approval stages',
-    steps: [
-      {
-        title: 'Login to Portal',
-        description: 'Access your account with your credentials',
-        action: 'Sign in on the home page',
-      },
-      {
-        title: 'Open Delivery Board',
-        description: 'Navigate to your Kanban-style report board',
-        action: 'Click "Delivery Board" in the menu',
-      },
-      {
-        title: 'View Report Stages',
-        description: 'See reports organized by workflow stage',
-        action: 'Columns: Draft → QC → Approval → Published',
-      },
-      {
-        title: 'Edit Drafts',
-        description: 'Modify and improve draft reports',
-        action: 'Click any draft report to edit',
-      },
-      {
-        title: 'Submit for Review',
-        description: 'Move report to next stage for approval',
-        action: 'Click next button to advance',
-      },
-      {
-        title: 'Sign & Publish',
-        description: 'Finalize and publish approved reports',
-        action: 'Reports sent to clients automatically',
-      },
-    ],
-  },
-  client: {
-    title: 'Report Access Portal',
-    icon: <Users className="w-6 h-6" />,
-    description: 'View and download your reports',
-    steps: [
-      {
-        title: 'Login to Portal',
-        description: 'Access your client account',
-        action: 'Sign in on the home page',
-      },
-      {
-        title: 'View Dashboard',
-        description: 'See your organization dashboard',
-        action: 'Click "Dashboard" in the menu',
-      },
-      {
-        title: 'Browse Reports',
-        description: 'See all delivered reports for your organization',
-        action: 'Reports listed with dates and status',
-      },
-      {
-        title: 'Download Options',
-        description: 'Choose your preferred file format',
-        action: 'Available: PDF, Excel, JSON',
-      },
-      {
-        title: 'Review History',
-        description: 'Track all downloads and access',
-        action: 'View audit trail for compliance',
-      },
-      {
-        title: 'Secure Access',
-        description: 'All data encrypted and access controlled',
-        action: 'Full GDPR & compliance ready',
-      },
-    ],
-  },
-  admin: {
-    title: 'System Administration',
-    icon: <Settings className="w-6 h-6" />,
-    description: 'Monitor and manage the system',
-    steps: [
-      {
-        title: 'Login to Portal',
-        description: 'Access with admin credentials',
-        action: 'Sign in on the home page',
-      },
-      {
-        title: 'Admin Dashboard',
-        description: 'View system health and status',
-        action: 'Click "Admin" in the menu',
-      },
-      {
-        title: 'Monitor Health',
-        description: 'Check database, queues, and services',
-        action: 'See real-time system metrics',
-      },
-      {
-        title: 'Manage Users',
-        description: 'Create and configure user accounts',
-        action: 'Assign roles to coordinators, specialists, clients',
-      },
-      {
-        title: 'Configure Integrations',
-        description: 'Setup Fortnox, Nordigen, and other APIs',
-        action: 'Add credentials and API keys',
-      },
-      {
-        title: 'Audit & Compliance',
-        description: 'Review logs and ensure compliance',
-        action: 'Full audit trail and reporting available',
-      },
-    ],
-  },
-};
 
 interface OnboardingGuideProps {
   isOpen: boolean;
   onClose: () => void;
+  onComplete: () => void;
 }
 
-export const OnboardingGuide = ({ isOpen, onClose }: OnboardingGuideProps) => {
-  const [selectedRole, setSelectedRole] = useState<string>('coordinator');
-  const [currentStep, setCurrentStep] = useState(0);
+// ============================================================================
+// Onboarding Steps
+// ============================================================================
 
-  if (!isOpen) return null;
+const onboardingSteps: OnboardingStep[] = [
+  {
+    id: 'welcome',
+    title: 'Välkommen till AIFM Platform!',
+    description: 'Den här guiden hjälper dig att komma igång med plattformen. Vi går igenom de viktigaste funktionerna tillsammans.',
+    position: 'center',
+  },
+  {
+    id: 'dashboard',
+    title: 'Översikt & Dashboard',
+    description: 'Här ser du en sammanfattning av alla dina fonder, nyckeltal och senaste aktiviteter. Perfekt för att få en snabb överblick.',
+    position: 'center',
+    action: { label: 'Gå till Dashboard', href: '/overview' },
+  },
+  {
+    id: 'crm',
+    title: 'CRM & Kundhantering',
+    description: 'Hantera kontakter, företag och affärsmöjligheter. Följ upp leads i pipelinen och håll koll på alla kundinteraktioner.',
+    position: 'center',
+    action: { label: 'Utforska CRM', href: '/crm' },
+  },
+  {
+    id: 'accounting',
+    title: 'Bokföring & Fakturor',
+    description: 'Ladda upp fakturor, låt AI klassificera dem automatiskt, och skicka godkända transaktioner direkt till Fortnox.',
+    position: 'center',
+    action: { label: 'Till Bokföring', href: '/accounting/dashboard' },
+  },
+  {
+    id: 'compliance',
+    title: 'Compliance & Regelverk',
+    description: 'Använd AI-assistenten för att få svar på regelfrågor. Ladda upp dokument för att bygga din kunskapsbas.',
+    position: 'center',
+    action: { label: 'Öppna Compliance', href: '/compliance' },
+  },
+  {
+    id: 'dataroom',
+    title: 'Datarum & Dokument',
+    description: 'Säkra datarum för att dela dokument med investerare och externa parter. Spåra vem som laddat ner vad.',
+    position: 'center',
+    action: { label: 'Se Datarum', href: '/data-rooms' },
+  },
+  {
+    id: 'tasks',
+    title: 'Mina Uppgifter',
+    description: '"Vad ska jag göra idag?" - Se alla dina uppgifter, godkännanden och deadlines på ett ställe.',
+    position: 'center',
+    action: { label: 'Mina Uppgifter', href: '/my-tasks' },
+  },
+  {
+    id: 'search',
+    title: 'Global Sökning',
+    description: 'Använd sökfältet i headern för att snabbt hitta dokument, kontakter, transaktioner och mer.',
+    position: 'center',
+  },
+  {
+    id: 'notifications',
+    title: 'Notifikationer',
+    description: 'Klockikonen visar viktiga händelser - godkännanden som väntar, deadlines och systemmeddelanden.',
+    position: 'center',
+  },
+  {
+    id: 'favorites',
+    title: 'Favoriter',
+    description: 'Klicka på stjärnikonen bredvid menypunkter för att lägga till dem som favoriter. De visas överst i sidomenyn!',
+    position: 'center',
+  },
+  {
+    id: 'help',
+    title: 'Behöver du hjälp?',
+    description: 'Klicka på hjälpikonen (?) längst ner i sidomenyn för att starta guiden igen eller kontakta support.',
+    position: 'center',
+  },
+  {
+    id: 'complete',
+    title: 'Du är redo!',
+    description: 'Nu har du koll på grunderna. Utforska plattformen och tveka inte att kontakta oss om du har frågor.',
+    position: 'center',
+  },
+];
 
-  const guide = guides[selectedRole];
-  const step = guide.steps[currentStep];
-  const totalSteps = guide.steps.length;
-  const progress = ((currentStep + 1) / totalSteps) * 100;
+// ============================================================================
+// Progress Indicator
+// ============================================================================
 
-  const handleNext = () => {
-    if (currentStep < totalSteps - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      onClose();
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const handleRoleChange = (role: string) => {
-    setSelectedRole(role);
-    setCurrentStep(0);
-  };
-
+function ProgressIndicator({ 
+  currentStep, 
+  totalSteps 
+}: { 
+  currentStep: number; 
+  totalSteps: number; 
+}) {
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="bg-black text-white px-8 py-6 flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold">See How It Works</h2>
-            <p className="text-gray-400 text-sm mt-1">Step-by-step walkthrough for your role</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-800 rounded-lg transition"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
+    <div className="flex items-center gap-1.5">
+      {Array.from({ length: totalSteps }).map((_, index) => (
+        <div
+          key={index}
+          className={`h-1.5 rounded-full transition-all duration-300 ${
+            index === currentStep
+              ? 'w-6 bg-aifm-gold'
+              : index < currentStep
+              ? 'w-1.5 bg-aifm-gold/60'
+              : 'w-1.5 bg-white/20'
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
 
-        <div className="flex-1 overflow-y-auto">
-          {/* Role Selector */}
-          <div className="border-b border-gray-200 bg-gray-50 px-8 py-6">
-            <p className="text-xs font-semibold text-gray-600 uppercase mb-4 tracking-wide">Select Your Role</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {Object.entries(guides).map(([key, g]) => (
-                <button
-                  key={key}
-                  onClick={() => handleRoleChange(key)}
-                  className={`p-4 rounded-lg border-2 transition-all text-center ${
-                    selectedRole === key
-                      ? 'bg-black text-white border-black'
-                      : 'bg-white text-black border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="text-2xl mb-2">{g.icon}</div>
-                  <div className="text-sm font-semibold capitalize">{key}</div>
-                </button>
-              ))}
-            </div>
-          </div>
+// ============================================================================
+// Main Component
+// ============================================================================
 
-          {/* Content */}
-          <div className="px-8 py-8">
-            {/* Role Title & Description */}
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center text-white text-xl">
-                  {guide.icon}
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-black">{guide.title}</h3>
-                  <p className="text-gray-600">{guide.description}</p>
-                </div>
-              </div>
-            </div>
+export function OnboardingGuide({ isOpen, onClose, onComplete }: OnboardingGuideProps) {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-            {/* Current Step - Large & Clear */}
-            <div className="bg-white border-2 border-gray-200 rounded-xl p-8 mb-8">
-              <div className="mb-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center font-bold">
-                    {currentStep + 1}
-                  </div>
-                  <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                    Step {currentStep + 1} of {totalSteps}
-                  </div>
-                </div>
-                <h4 className="text-3xl font-bold text-black mb-3">{step.title}</h4>
-                <p className="text-lg text-gray-700 mb-4 leading-relaxed">{step.description}</p>
-                <div className="bg-gray-100 border-l-4 border-black p-4 rounded">
-                  <p className="text-sm font-semibold text-gray-900">What to do:</p>
-                  <p className="text-gray-700 mt-1">{step.action}</p>
-                </div>
-              </div>
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-              {/* Progress Bar */}
-              <div className="mb-4">
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-black h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-              </div>
+  const step = onboardingSteps[currentStep];
+  const isFirstStep = currentStep === 0;
+  const isLastStep = currentStep === onboardingSteps.length - 1;
 
-              {/* Step Dots */}
-              <div className="flex gap-2 flex-wrap">
-                {guide.steps.map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setCurrentStep(idx)}
-                    className={`w-10 h-10 rounded-full font-semibold text-xs transition-all flex items-center justify-center ${
-                      idx === currentStep
-                        ? 'bg-black text-white scale-110'
-                        : idx < currentStep
-                        ? 'bg-green-600 text-white'
-                        : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+  const handleNext = useCallback(() => {
+    if (isLastStep) {
+      onComplete();
+      onClose();
+      return;
+    }
+    
+    setIsAnimating(true);
+    setTimeout(() => {
+      setCurrentStep(prev => prev + 1);
+      setIsAnimating(false);
+    }, 150);
+  }, [isLastStep, onComplete, onClose]);
+
+  const handlePrev = useCallback(() => {
+    if (isFirstStep) return;
+    
+    setIsAnimating(true);
+    setTimeout(() => {
+      setCurrentStep(prev => prev - 1);
+      setIsAnimating(false);
+    }, 150);
+  }, [isFirstStep]);
+
+  const handleSkip = useCallback(() => {
+    onClose();
+  }, [onClose]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleSkip();
+      } else if (e.key === 'ArrowRight' || e.key === 'Enter') {
+        handleNext();
+      } else if (e.key === 'ArrowLeft') {
+        handlePrev();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, handleNext, handlePrev, handleSkip]);
+
+  if (!isOpen || !mounted) return null;
+
+  const content = (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
+        onClick={handleSkip}
+      />
+
+      {/* Modal */}
+      <div 
+        className={`relative w-full max-w-lg bg-gradient-to-br from-aifm-charcoal via-aifm-charcoal to-aifm-charcoal/95 
+                    rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 ${
+                      isAnimating ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
                     }`}
-                  >
-                    {idx < currentStep ? (
-                      <CheckCircle className="w-5 h-5" />
-                    ) : (
-                      idx + 1
-                    )}
-                  </button>
-                ))}
-              </div>
+      >
+        {/* Decorative gradient */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-aifm-gold via-amber-400 to-aifm-gold" />
+        
+        {/* Close button */}
+        <button
+          onClick={handleSkip}
+          className="absolute top-4 right-4 p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors z-10"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        {/* Content */}
+        <div className="p-8 pt-10">
+          {/* Title */}
+          <h2 className="text-2xl font-semibold mb-3" style={{ color: '#ffffff' }}>
+            {step.title}
+          </h2>
+
+          {/* Description */}
+          <p className="leading-relaxed mb-6" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+            {step.description}
+          </p>
+
+          {/* Action button (optional) */}
+          {step.action && (
+            <a
+              href={step.action.href}
+              onClick={(e) => {
+                e.preventDefault();
+                handleNext();
+                if (step.action?.href) {
+                  window.location.href = step.action.href;
+                }
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 
+                        text-sm rounded-lg transition-colors mb-6"
+              style={{ color: '#ffffff' }}
+            >
+              {step.action.label}
+              <ChevronRight className="w-4 h-4" />
+            </a>
+          )}
+
+          {/* Progress */}
+          <div className="flex items-center justify-between pt-6 border-t border-white/10">
+            <ProgressIndicator 
+              currentStep={currentStep} 
+              totalSteps={onboardingSteps.length} 
+            />
+
+            <div className="flex items-center gap-3">
+              {!isFirstStep && (
+                <button
+                  onClick={handlePrev}
+                  className="flex items-center gap-1 px-4 py-2 hover:bg-white/10 
+                            text-sm rounded-lg transition-colors"
+                  style={{ color: 'rgba(255, 255, 255, 0.7)' }}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Tillbaka
+                </button>
+              )}
+              
+              <button
+                onClick={handleNext}
+                className="flex items-center gap-2 px-5 py-2.5 bg-aifm-gold hover:bg-aifm-gold/90 
+                          text-sm font-medium rounded-xl transition-colors"
+                style={{ color: '#1a1a1a' }}
+              >
+                {isLastStep ? 'Kom igång!' : 'Nästa'}
+                {!isLastStep && <ChevronRight className="w-4 h-4" />}
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Footer - Navigation */}
-        <div className="border-t border-gray-200 bg-gray-50 px-8 py-6 flex items-center justify-between">
-          <Button
-            variant="outline"
-            onClick={handlePrev}
-            disabled={currentStep === 0}
-            className="gap-2 border-gray-300"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Previous
-          </Button>
-
-          <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-            {currentStep + 1} / {totalSteps}
-          </div>
-
-          <Button
-            onClick={handleNext}
-            className="gap-2 bg-black text-white hover:bg-gray-900"
-          >
-            {currentStep === totalSteps - 1 ? (
-              <>
-                Got it
-                <CheckCircle className="w-4 h-4" />
-              </>
-            ) : (
-              <>
-                Next
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </Button>
+        {/* Step counter */}
+        <div className="absolute bottom-4 left-8 text-xs" style={{ color: 'rgba(255, 255, 255, 0.4)' }}>
+          {currentStep + 1} / {onboardingSteps.length}
         </div>
       </div>
     </div>
   );
-};
+
+  return createPortal(content, document.body);
+}
+
+// ============================================================================
+// Hook for managing onboarding state
+// ============================================================================
+
+const ONBOARDING_KEY = 'aifm-onboarding-completed';
+
+export function useOnboarding() {
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [hasChecked, setHasChecked] = useState(false);
+
+  useEffect(() => {
+    const completed = localStorage.getItem(ONBOARDING_KEY);
+    if (!completed) {
+      // Small delay to let the page load
+      const timer = setTimeout(() => setShowOnboarding(true), 1000);
+      return () => clearTimeout(timer);
+    }
+    setHasChecked(true);
+  }, []);
+
+  const completeOnboarding = useCallback(() => {
+    localStorage.setItem(ONBOARDING_KEY, 'true');
+    setShowOnboarding(false);
+    setHasChecked(true);
+  }, []);
+
+  const resetOnboarding = useCallback(() => {
+    localStorage.removeItem(ONBOARDING_KEY);
+    setShowOnboarding(true);
+  }, []);
+
+  const closeOnboarding = useCallback(() => {
+    setShowOnboarding(false);
+    // Mark as completed even if skipped
+    localStorage.setItem(ONBOARDING_KEY, 'true');
+  }, []);
+
+  return {
+    showOnboarding,
+    hasChecked,
+    completeOnboarding,
+    resetOnboarding,
+    closeOnboarding,
+    startOnboarding: () => setShowOnboarding(true),
+  };
+}

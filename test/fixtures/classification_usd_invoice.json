@@ -1,0 +1,24 @@
+{
+  "docType": "INVOICE",
+  "supplier": "US Vendor Inc",
+  "invoiceNumber": "US-2025-0007",
+  "invoiceDate": "2025-11-18",
+  "dueDate": "2025-12-18",
+  "currency": "USD",
+  "totalAmount": 100,
+  "vatAmount": 0,
+  "lineItems": [
+    {
+      "id": "li-1",
+      "description": "SaaS subscription (reverse charge)",
+      "netAmount": 100,
+      "vatAmount": 0,
+      "suggestedAccount": "6540",
+      "suggestedCostCenter": "IT",
+      "confidence": 0.88
+    }
+  ],
+  "overallConfidence": 0.85
+}
+
+

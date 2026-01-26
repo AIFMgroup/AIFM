@@ -10,7 +10,7 @@ export type Session = {
 
 export const getSession = async (): Promise<Session | null> => {
   const cookieStore = await cookies();
-  const token = cookieStore.get("aifm_id_token")?.value;
+  const token = cookieStore.get("__Host-aifm_id_token")?.value;
 
   if (!token) {
     return null;

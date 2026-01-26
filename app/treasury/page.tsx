@@ -11,8 +11,9 @@ import {
   getFundByCompanyId, getBankAccountsByCompanyId, getTransactionsByAccount, getInvoicesByCompanyId,
   formatCurrency, formatDate, BankAccount
 } from '@/lib/fundData';
-import { DashboardLayout } from '@/components/DashboardLayout';
+
 import { useCompany } from '@/components/CompanyContext';
+import { PageHeader, SecondaryButton } from '@/components/shared/PageHeader';
 
 // Metric Card
 function MetricCard({ 
@@ -33,37 +34,38 @@ function MetricCard({
   const isPrimary = variant === 'primary';
 
   return (
+    <>
     <div className={`
-      group relative rounded-2xl p-6 transition-all duration-500 hover:-translate-y-0.5
+      group relative rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-500 hover:-translate-y-0.5
       ${isPrimary 
         ? 'bg-gradient-to-br from-aifm-charcoal via-aifm-charcoal to-aifm-charcoal/90 text-white shadow-xl shadow-aifm-charcoal/20' 
         : 'bg-white border border-gray-100/50 hover:shadow-xl hover:shadow-gray-200/50 hover:border-aifm-gold/20'
       }
     `}>
       {!isPrimary && (
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-aifm-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-br from-aifm-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       )}
       
       <div className="relative">
-        <div className="flex items-start justify-between mb-4">
-          <div className={`p-2.5 rounded-xl transition-colors duration-300 ${
+        <div className="flex items-start justify-between mb-2 sm:mb-4">
+          <div className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-colors duration-300 ${
             isPrimary ? 'bg-white/10' : 'bg-aifm-charcoal/5 group-hover:bg-aifm-gold/10'
           }`}>
-            <Icon className={`w-5 h-5 ${iconColor || (isPrimary ? 'text-white/60' : 'text-aifm-charcoal/50 group-hover:text-aifm-gold')} transition-colors duration-300`} />
+            <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${iconColor || (isPrimary ? 'text-white/60' : 'text-aifm-charcoal/50 group-hover:text-aifm-gold')} transition-colors duration-300`} />
           </div>
         </div>
-        <p className={`text-xs uppercase tracking-wider font-medium mb-2 ${isPrimary ? 'text-white/50' : 'text-aifm-charcoal/50'}`}>
+        <p className={`text-[10px] sm:text-xs uppercase tracking-wider font-medium mb-1 sm:mb-2 ${isPrimary ? 'text-white/50' : 'text-aifm-charcoal/50'}`}>
           {label}
         </p>
-        <p className={`text-2xl font-semibold tracking-tight ${isPrimary ? 'text-white' : 'text-aifm-charcoal'}`}>
+        <p className={`text-lg sm:text-2xl font-semibold tracking-tight ${isPrimary ? 'text-white' : 'text-aifm-charcoal'}`}>
           {value}
         </p>
         {subValue && (
-          <p className={`text-sm mt-2 ${isPrimary ? 'text-white/60' : 'text-aifm-charcoal/40'}`}>{subValue}</p>
+          <p className={`text-xs sm:text-sm mt-1 sm:mt-2 ${isPrimary ? 'text-white/60' : 'text-aifm-charcoal/40'}`}>{subValue}</p>
         )}
       </div>
     </div>
-  );
+    </>  );
 }
 
 // Bank Account Card
@@ -77,9 +79,10 @@ function BankAccountCard({
   onClick: () => void;
 }) {
   return (
+    <>
     <div 
       className={`
-        rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden
+        rounded-xl sm:rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden
         ${isSelected 
           ? 'bg-aifm-gold/5 border-2 border-aifm-gold/30 shadow-lg shadow-aifm-gold/10' 
           : 'bg-white border border-gray-100/50 hover:shadow-xl hover:shadow-gray-200/50 hover:border-aifm-gold/20'
@@ -87,29 +90,29 @@ function BankAccountCard({
       `}
       onClick={onClick}
     >
-      <div className="p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <div className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <div className={`
-              w-14 h-14 rounded-xl flex items-center justify-center transition-colors duration-300
+              w-10 h-10 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl flex items-center justify-center transition-colors duration-300 flex-shrink-0
               ${isSelected ? 'bg-aifm-gold/20' : 'bg-aifm-charcoal/5'}
             `}>
-              <Building2 className={`w-7 h-7 ${isSelected ? 'text-aifm-gold' : 'text-aifm-charcoal/50'}`} />
+              <Building2 className={`w-5 h-5 sm:w-7 sm:h-7 ${isSelected ? 'text-aifm-gold' : 'text-aifm-charcoal/50'}`} />
             </div>
-            <div>
-              <p className="font-semibold text-aifm-charcoal text-lg">{account.bankName}</p>
-              <p className="text-sm text-aifm-charcoal/40 font-mono">{account.iban}</p>
+            <div className="min-w-0">
+              <p className="font-semibold text-aifm-charcoal text-sm sm:text-lg truncate">{account.bankName}</p>
+              <p className="text-xs sm:text-sm text-aifm-charcoal/40 font-mono truncate">{account.iban}</p>
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-2xl font-semibold text-aifm-charcoal">{formatCurrency(account.balance, account.currency)}</p>
-            <div className="flex items-center gap-2 justify-end mt-2">
-              <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${
+          <div className="text-left sm:text-right pl-[52px] sm:pl-0">
+            <p className="text-lg sm:text-2xl font-semibold text-aifm-charcoal">{formatCurrency(account.balance, account.currency)}</p>
+            <div className="flex items-center gap-2 sm:justify-end mt-1 sm:mt-2">
+              <span className={`px-2 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium rounded-full ${
                 account.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-600'
               }`}>
                 {account.status === 'ACTIVE' ? 'Aktiv' : account.status}
               </span>
-              <span className="text-xs text-aifm-charcoal/40">{account.type}</span>
+              <span className="text-[10px] sm:text-xs text-aifm-charcoal/40">{account.type}</span>
             </div>
           </div>
         </div>
@@ -149,7 +152,7 @@ function BankAccountCard({
         </div>
       )}
     </div>
-  );
+    </>  );
 }
 
 // Tab Button
@@ -165,6 +168,7 @@ function TabButton({
   onClick: () => void;
 }) {
   return (
+    <>
     <button
       onClick={onClick}
       className={`
@@ -181,7 +185,8 @@ function TabButton({
         <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-aifm-gold rounded-full" />
       )}
     </button>
-  );
+    
+    </>  );
 }
 
 export default function TreasuryPage() {
@@ -207,61 +212,36 @@ export default function TreasuryPage() {
   };
 
   return (
-    <DashboardLayout>
-      {/* Page Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
-        <div>
-          <h1 className="text-3xl font-semibold text-aifm-charcoal tracking-tight">Likviditet</h1>
-          <p className="text-aifm-charcoal/40 mt-2">Bankkonton, transaktioner och betalningshantering</p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={handleRefresh}
-            className="p-3 text-aifm-charcoal/50 hover:text-aifm-gold hover:bg-aifm-gold/10 rounded-xl transition-all duration-300"
-          >
-            <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
-          </button>
-          <button className="flex items-center gap-2 px-5 py-3 text-sm font-medium text-white 
-                             bg-aifm-charcoal rounded-xl hover:bg-aifm-charcoal/90 
-                             shadow-lg shadow-aifm-charcoal/20 transition-all duration-300">
-            <Plus className="w-4 h-4" />
-            Ny betalning
-          </button>
-        </div>
-      </div>
-
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <MetricCard 
-          label="Totalt saldo" 
-          value={formatCurrency(totalBalance, currency)}
-          subValue={`${accounts.length} bankkonto${accounts.length !== 1 ? 'n' : ''}`}
-          icon={Wallet}
-          variant="primary"
-        />
-        <MetricCard 
-          label="Väntande betalningar" 
-          value={formatCurrency(pendingAmount, currency)}
-          subValue={`${pendingInvoices.length} faktura${pendingInvoices.length !== 1 ? 'or' : ''}`}
-          icon={Clock}
-          iconColor="text-amber-500"
-        />
-        <MetricCard 
-          label="Omatchade" 
-          value={unmatchedTransactions.length.toString()}
-          subValue="behöver granskas"
-          icon={AlertCircle}
-          iconColor="text-amber-500"
-        />
-        <MetricCard 
-          label="Senast synkat" 
-          value="2h sedan"
-          subValue="Alla konton synkade"
-          icon={CheckCircle2}
-          iconColor="text-emerald-500"
-        />
-      </div>
+    <>
+      <PageHeader
+        title="Likviditet"
+        description="Bankkonton, transaktioner och betalningshantering"
+        breadcrumbs={[
+          { label: 'Kapital' },
+          { label: 'Likviditet' }
+        ]}
+        stats={[
+          { label: 'Totalt saldo', value: formatCurrency(totalBalance, currency), subValue: `${accounts.length} bankkonto${accounts.length !== 1 ? 'n' : ''}`, icon: Wallet },
+          { label: 'Väntande betalningar', value: formatCurrency(pendingAmount, currency), subValue: `${pendingInvoices.length} faktura${pendingInvoices.length !== 1 ? 'or' : ''}`, icon: Clock },
+          { label: 'Omatchade', value: unmatchedTransactions.length.toString(), subValue: 'behöver granskas', icon: AlertCircle },
+          { label: 'Senast synkat', value: '2h sedan', subValue: 'Alla konton synkade', icon: CheckCircle2 },
+        ]}
+        actions={
+          <>
+            <button 
+              onClick={handleRefresh}
+              className="p-2.5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-all"
+            >
+              <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+            </button>
+            <button className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-aifm-charcoal 
+                               bg-white rounded-xl hover:bg-gray-100 shadow-lg transition-all">
+              <Plus className="w-4 h-4" />
+              Ny betalning
+            </button>
+          </>
+        }
+      />
 
       {/* Main Content */}
       <div className="bg-white rounded-2xl border border-gray-100/50 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-500">
@@ -493,6 +473,6 @@ export default function TreasuryPage() {
           )}
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

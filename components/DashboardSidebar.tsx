@@ -1,15 +1,19 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, Briefcase, CheckSquare,
   Settings, LogOut, ChevronDown,
-  ChevronLeft, ChevronRight, Banknote, FolderOpen, BookOpen, Bot, Calculator
+  ChevronLeft, ChevronRight, Banknote, FolderOpen, Bot, Calculator, Scale, Link2,
+  Users, Building2, Kanban, Calendar, ClipboardList, Shield, GitBranch, Key, FileSearch,
+  HelpCircle, Star, Download, TrendingUp, FileText, Send, Activity
 } from 'lucide-react';
 import { useSidebar } from './SidebarContext';
+import { FavoritesSidebarSection, FavoriteButton } from './FavoritesManager';
+import { SystemStatusCompact } from './SystemStatusIndicator';
 
 interface NavItem {
   id: string;
@@ -19,31 +23,46 @@ interface NavItem {
   children?: { id: string; label: string; href: string }[];
 }
 
-const navItems: NavItem[] = [
+const baseNavItems: NavItem[] = [
   { 
     id: 'overview', 
     label: 'Översikt', 
     icon: LayoutDashboard, 
     href: '/overview' 
   },
+  // Temporarily hidden - Fond och Kapital
+  // { 
+  //   id: 'fund', 
+  //   label: 'Fond', 
+  //   icon: Briefcase,
+  //   children: [
+  //     { id: 'portfolio', label: 'Portfölj', href: '/portfolio' },
+  //     { id: 'investors', label: 'Investerare', href: '/investors' },
+  //     { id: 'nav-calculation', label: 'NAV-beräkning', href: '/nav-calculation' },
+  //   ]
+  // },
+  // { 
+  //   id: 'capital', 
+  //   label: 'Kapital', 
+  //   icon: Banknote,
+  //   children: [
+  //     { id: 'capital-calls', label: 'Kapitalanrop', href: '/capital-calls' },
+  //     { id: 'distributions', label: 'Utdelningar', href: '/distributions' },
+  //     { id: 'treasury', label: 'Likviditet', href: '/treasury' },
+  //   ]
+  // },
   { 
-    id: 'fund', 
-    label: 'Fond', 
-    icon: Briefcase,
+    id: 'crm', 
+    label: 'CRM', 
+    icon: Users,
     children: [
-      { id: 'portfolio', label: 'Portfölj', href: '/portfolio' },
-      { id: 'investors', label: 'Investerare', href: '/investors' },
-      { id: 'nav-calculation', label: 'NAV-beräkning', href: '/nav-calculation' },
-    ]
-  },
-  { 
-    id: 'capital', 
-    label: 'Kapital', 
-    icon: Banknote,
-    children: [
-      { id: 'capital-calls', label: 'Kapitalanrop', href: '/capital-calls' },
-      { id: 'distributions', label: 'Utdelningar', href: '/distributions' },
-      { id: 'treasury', label: 'Likviditet', href: '/treasury' },
+      { id: 'crm-dashboard', label: 'Dashboard', href: '/crm' },
+      { id: 'crm-contacts', label: 'Kontakter', href: '/crm/contacts' },
+      { id: 'crm-companies', label: 'Företag', href: '/crm/companies' },
+      { id: 'crm-pipeline', label: 'Pipeline', href: '/crm/pipeline' },
+      { id: 'crm-calendar', label: 'Kalender', href: '/crm/calendar' },
+      { id: 'crm-tasks', label: 'Uppgifter', href: '/crm/tasks' },
+      { id: 'crm-activities', label: 'Aktiviteter', href: '/crm/activities' },
     ]
   },
   { 
@@ -55,25 +74,53 @@ const navItems: NavItem[] = [
     ]
   },
   { 
+    id: 'nav-admin', 
+    label: 'NAV-processer', 
+    icon: TrendingUp,
+    children: [
+      { id: 'nav-dashboard', label: 'Översikt', href: '/nav-admin' },
+      { id: 'nav-reports', label: 'NAV-rapporter', href: '/nav-admin/reports' },
+      { id: 'nav-flows', label: 'Notor & SubReds', href: '/nav-admin/flows' },
+      { id: 'nav-price-data', label: 'Prisdata-utskick', href: '/nav-admin/price-data' },
+      { id: 'nav-owner-data', label: 'Ägardata', href: '/nav-admin/owner-data' },
+    ]
+  },
+  { 
+    id: 'export', 
+    label: 'Exportera', 
+    icon: Download, 
+    href: '/export' 
+  },
+  { 
     id: 'accounting', 
     label: 'Bokföring', 
     icon: Calculator,
     children: [
-      { id: 'accounting-overview', label: 'Översikt', href: '/accounting' },
-      { id: 'accounting-upload', label: 'Ladda upp material', href: '/accounting/upload' },
+      { id: 'accounting-dashboard', label: 'Dashboard', href: '/accounting/dashboard' },
+      { id: 'accounting-inbox', label: 'Inkorg', href: '/accounting/inbox' },
+      { id: 'accounting-upload', label: 'Ladda upp', href: '/accounting/upload' },
+      { id: 'accounting-reports', label: 'Rapporter', href: '/accounting/reports' },
+      { id: 'accounting-settings', label: 'Fortnox-koppling', href: '/accounting/settings' },
+      { id: 'accounting-integrations', label: 'Integrationer', href: '/accounting/integrations' },
       { id: 'accounting-bookkeeping', label: 'Löpande bokföring', href: '/accounting/bookkeeping' },
+      { id: 'accounting-bank', label: 'Bankavstämning', href: '/accounting/bank-reconciliation' },
+      { id: 'accounting-assets', label: 'Anläggningsregister', href: '/accounting/assets' },
+      { id: 'accounting-periodizations', label: 'Periodiseringar', href: '/accounting/periodizations' },
       { id: 'accounting-closing', label: 'Bokslut', href: '/accounting/closing' },
       { id: 'accounting-annual', label: 'Årsredovisning', href: '/accounting/annual-report' },
+      { id: 'accounting-tax', label: 'Moms & Skatt', href: '/accounting/tax-declaration' },
       { id: 'accounting-payments', label: 'Betalningar', href: '/accounting/payments' },
     ]
   },
   { 
-    id: 'compliance-agent', 
-    label: 'Compliance Agent', 
-    icon: Bot,
+    id: 'compliance', 
+    label: 'Compliance', 
+    icon: Scale,
     children: [
+      { id: 'compliance-chat', label: 'Regelverksassistent', href: '/compliance' },
+      { id: 'compliance-archive', label: 'Regelverksarkiv', href: '/compliance/archive' },
       { id: 'compliance-docs', label: 'Ladda upp dokument', href: '/compliance/documents' },
-      { id: 'compliance-chat', label: 'Compliance Agent', href: '/compliance/chat' },
+      { id: 'compliance-settings', label: 'Inställningar', href: '/compliance/settings' },
     ]
   },
   { 
@@ -82,11 +129,61 @@ const navItems: NavItem[] = [
     icon: CheckSquare, 
     href: '/tasks' 
   },
+  { 
+    id: 'my-tasks', 
+    label: 'Mina uppgifter', 
+    icon: ClipboardList, 
+    href: '/my-tasks' 
+  },
 ];
 
 export function DashboardSidebar() {
   const { collapsed, toggle } = useSidebar();
   const pathname = usePathname();
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/auth/role', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = (await res.json()) as { role?: string };
+        if (!cancelled) setRole((data.role || '').toLowerCase() || null);
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const navItems = useMemo<NavItem[]>(() => {
+    if (role !== 'admin') return baseNavItems;
+    return [
+      ...baseNavItems,
+      {
+        id: 'admin',
+        label: 'Admin',
+        icon: Settings,
+        children: [
+          { id: 'admin-dashboard', label: 'Dashboard', href: '/admin/dashboard' },
+          { id: 'admin-users', label: 'Användare', href: '/admin/users' },
+          { id: 'admin-security', label: 'Säkerhet', href: '/admin/security' },
+          { id: 'admin-permissions', label: 'Behörigheter', href: '/admin/permissions' },
+          { id: 'admin-workflows', label: 'Arbetsflöden', href: '/admin/workflows' },
+          { id: 'admin-bulk', label: 'Bulk-operationer', href: '/admin/bulk-operations' },
+          { id: 'admin-audit', label: 'Granskningslogg', href: '/audit/logs' },
+          { id: 'admin-integrations', label: 'Integrationer', href: '/admin/integrations' },
+          { id: 'admin-documents', label: 'Dokument', href: '/admin/documents' },
+          { id: 'admin-policies', label: 'Policies', href: '/admin/policies' },
+          { id: 'admin-qa', label: 'Q&A', href: '/admin/qa' },
+        ],
+      },
+    ];
+  }, [role]);
+
   // Track which items are manually expanded (user clicked)
   const [manuallyExpanded, setManuallyExpanded] = useState<Set<string>>(new Set());
   // Track which items are manually collapsed (user clicked to close)
@@ -94,7 +191,11 @@ export function DashboardSidebar() {
 
   const isActive = useCallback((href: string) => {
     if (href === '/overview') return pathname === '/overview' || pathname === '/';
-    return pathname.startsWith(href);
+    // Exact match for routes that have children with similar paths
+    // This prevents /compliance from being active when on /compliance/documents
+    if (href === '/compliance') return pathname === '/compliance';
+    // For other routes, check if it starts with the href followed by / or is exact match
+    return pathname === href || pathname.startsWith(href + '/');
   }, [pathname]);
 
   const isParentActive = useCallback((item: NavItem) => {
@@ -151,22 +252,21 @@ export function DashboardSidebar() {
   };
 
   const handleLogout = () => {
-    document.cookie = 'password-gate-auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    window.location.href = '/password-gate';
+    window.location.href = '/auth/logout';
   };
 
   return (
     <aside 
-      className={`${collapsed ? 'w-[72px]' : 'w-56'} bg-aifm-charcoal flex flex-col transition-all duration-300 ease-in-out fixed left-0 top-0 bottom-0 z-40`}
+      className={`${collapsed ? 'w-[72px]' : 'w-64 sm:w-56'} bg-aifm-charcoal flex flex-col transition-all duration-300 ease-in-out fixed left-0 top-0 bottom-0 z-40`}
     >
       {/* Logo */}
-      <div className={`p-4 border-b border-white/5 flex items-center ${collapsed ? 'justify-center' : 'justify-start'}`}>
-        <Link href="/overview" className="flex items-center">
+      <div className="p-4 border-b border-white/5 flex items-center justify-center">
+        <Link href="/overview" className="flex items-center justify-center">
           <Image 
-            src="/frilagd_logo.png" 
+            src="/AIFM_logo.png" 
             alt="AIFM" 
-            width={collapsed ? 40 : 140} 
-            height={collapsed ? 40 : 50}
+            width={collapsed ? 32 : 80} 
+            height={collapsed ? 32 : 32}
             className="object-contain transition-all duration-300"
           />
         </Link>
@@ -174,6 +274,9 @@ export function DashboardSidebar() {
 
       {/* Main Navigation */}
       <nav className="flex-1 py-6 overflow-y-auto">
+        {/* Favorites Section */}
+        <FavoritesSidebarSection collapsed={collapsed} />
+
         <ul className={`space-y-1 ${collapsed ? 'px-2' : 'px-3'}`}>
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -245,14 +348,15 @@ export function DashboardSidebar() {
                           <li key={child.id}>
                             <Link
                               href={child.href}
-                              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200
+                              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200 group
                                 ${childActive 
                                   ? 'text-white bg-aifm-gold' 
                                   : 'text-white/70 hover:text-white hover:bg-white/5'
                                 }`}
                             >
                               <div className={`w-1.5 h-1.5 rounded-full ${childActive ? 'bg-white' : 'bg-white/30'}`} />
-                              {child.label}
+                              <span className="flex-1">{child.label}</span>
+                              <FavoriteButton href={child.href} label={child.label} />
                             </Link>
                           </li>
                         );
@@ -266,24 +370,34 @@ export function DashboardSidebar() {
         </ul>
       </nav>
 
+      {/* System Status - Compact */}
+      {!collapsed && (
+        <div className="px-3 pb-2">
+          <SystemStatusCompact />
+        </div>
+      )}
+
       {/* Bottom Navigation */}
       <div className={`border-t border-white/5 py-4 ${collapsed ? 'px-2' : 'px-3'}`}>
         <ul className="space-y-1">
           <li>
-            <Link 
-              href="/guide"
-              className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-white hover:bg-white/5 transition-all duration-200 group relative ${pathname === '/guide' ? 'bg-aifm-gold' : ''}`}
-              title={collapsed ? 'Användarguide' : undefined}
+            <button 
+              onClick={() => {
+                localStorage.removeItem('aifm-onboarding-completed');
+                window.location.reload();
+              }}
+              className={`w-full flex items-center ${collapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-white hover:bg-aifm-gold/20 hover:text-aifm-gold transition-all duration-200 group relative`}
+              title={collapsed ? 'Starta guide' : undefined}
             >
-              <BookOpen className="w-5 h-5 flex-shrink-0" />
-              {!collapsed && <span className="text-sm">Användarguide</span>}
+              <HelpCircle className="w-5 h-5 flex-shrink-0" />
+              {!collapsed && <span className="text-sm">Starta guide</span>}
               {collapsed && (
                 <div className="absolute left-full ml-2 px-2 py-1 bg-aifm-charcoal text-white text-xs rounded 
                                 opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-lg border border-white/10">
-                  Användarguide
+                  Starta guide
                 </div>
               )}
-            </Link>
+            </button>
           </li>
           <li>
             <Link 

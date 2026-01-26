@@ -150,6 +150,7 @@ cookieHeader: ${cookieHeader || "none"}</pre>
   const response = NextResponse.redirect(
     new URL(safeReturnTo, publicBaseUrl).toString()
   );
+  response.headers.set("Cache-Control", "no-store");
 
   const setCookie = (name: string, value: string, maxAge: number) => {
     response.cookies.set({
@@ -157,21 +158,26 @@ cookieHeader: ${cookieHeader || "none"}</pre>
       value,
       httpOnly: true,
       secure,
-      sameSite: "strict",
+      // Important: allow returning from external OAuth flows (e.g. Fortnox) without losing session cookies.
+      // Strict blocks cookies on cross-site top-level redirects. Lax is the recommended default here.
+      sameSite: "lax",
       path: "/",
       maxAge,
     });
   };
 
-  setCookie("aifm_id_token", tokens.id_token, tokens.expires_in);
-  setCookie("aifm_access_token", tokens.access_token, tokens.expires_in);
+  // Short-lived access/ID tokens; refresh rotates less often
+  const idAccessMaxAge = Math.min(tokens.expires_in, 15 * 60); // cap at 15m
+  setCookie("__Host-aifm_id_token", tokens.id_token, idAccessMaxAge);
+  setCookie("__Host-aifm_access_token", tokens.access_token, idAccessMaxAge);
 
   if (tokens.refresh_token) {
-    setCookie("aifm_refresh_token", tokens.refresh_token, 60 * 60 * 24 * 7);
+    setCookie("__Host-aifm_refresh_token", tokens.refresh_token, 60 * 60 * 24 * 7);
   }
 
   response.cookies.delete("aifm_pkce");
   response.cookies.delete("aifm_state");
+  response.cookies.delete("__Host-aifm_last_active");
 
   return response;
 }

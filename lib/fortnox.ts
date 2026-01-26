@@ -2,9 +2,10 @@
  * Fortnox API Integration
  * 
  * This module provides integration with Fortnox accounting software.
- * In production, this would connect to the real Fortnox API.
- * Currently using mock responses for demo purposes.
+ * Tokens are managed securely via fortnoxTokenService.
  */
+
+import { getFortnoxTokens, refreshFortnoxTokensIfNeeded } from './accounting/fortnoxTokenService';
 
 // ============================================================================
 // TYPES
@@ -206,13 +207,13 @@ export const VAT_CODES = {
 };
 
 // ============================================================================
-// FORTNOX API CLIENT (MOCK)
+// FORTNOX API CLIENT
 // ============================================================================
 
 class FortnoxClient {
   private config: FortnoxConfig | null = null;
-  // Base URL for production Fortnox API (currently using mock)
-  // private baseUrl = 'https://api.fortnox.se/3';
+  private baseUrl = 'https://api.fortnox.se/3';
+  private useMock = process.env.FORTNOX_USE_MOCK === 'true'; // Set to true for dev/testing
 
   /**
    * Initialize the Fortnox client with credentials
@@ -230,9 +231,89 @@ class FortnoxClient {
   }
 
   /**
+   * Get fresh access token (with auto-refresh if needed)
+   */
+  private async getAccessToken(companyId: string): Promise<string | null> {
+    if (this.useMock) {
+      return 'mock-token';
+    }
+
+    const tokens = await refreshFortnoxTokensIfNeeded(companyId, {
+      clientId: process.env.FORTNOX_CLIENT_ID!,
+      clientSecret: process.env.FORTNOX_CLIENT_SECRET!,
+      companyId,
+    });
+
+    if (!tokens) {
+      console.error('[Fortnox] No valid tokens available for company:', companyId);
+      return null;
+    }
+
+    return tokens.accessToken;
+  }
+
+  /**
+   * Make API request to Fortnox
+   */
+  private async request<T>(
+    companyId: string,
+    method: string,
+    endpoint: string,
+    body?: any
+  ): Promise<FortnoxAPIResponse<T>> {
+    if (this.useMock) {
+      // Return mock responses for development
+      console.log('[Fortnox] Mock request:', method, endpoint, body);
+      return { success: true, data: {} as T };
+    }
+
+    const accessToken = await this.getAccessToken(companyId);
+    if (!accessToken) {
+      return {
+        success: false,
+        error: 'Fortnox not connected or token expired',
+        errorCode: 'NO_TOKEN',
+      };
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Client-Secret': process.env.FORTNOX_CLIENT_SECRET!,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[Fortnox] API error:', response.status, errorText);
+        return {
+          success: false,
+          error: `Fortnox API error: ${response.status} ${errorText}`,
+          errorCode: `HTTP_${response.status}`,
+        };
+      }
+
+      const data = await response.json();
+      return { success: true, data };
+    } catch (error) {
+      console.error('[Fortnox] Request failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        errorCode: 'NETWORK_ERROR',
+      };
+    }
+  }
+
+  /**
    * Create a voucher (verifikation) in Fortnox
    */
-  async createVoucher(voucher: FortnoxVoucher): Promise<FortnoxAPIResponse<{ VoucherNumber: number }>> {
+  async createVoucher(voucher: FortnoxVoucher, companyId: string): Promise<FortnoxAPIResponse<{ VoucherNumber: number }>> {
     console.log('[Fortnox] Creating voucher:', voucher);
     
     // Validate voucher
@@ -247,47 +328,59 @@ class FortnoxClient {
       };
     }
 
-    // Mock successful response
-    return {
-      success: true,
-      data: {
-        VoucherNumber: Math.floor(Math.random() * 10000) + 1,
-      },
-    };
+    // Mock response in dev mode
+    if (this.useMock) {
+      return {
+        success: true,
+        data: {
+          VoucherNumber: Math.floor(Math.random() * 10000) + 1,
+        },
+      };
+    }
+
+    return this.request(companyId, 'POST', '/vouchers', { Voucher: voucher });
   }
 
   /**
    * Create a customer invoice in Fortnox
    */
-  async createInvoice(invoice: FortnoxInvoice): Promise<FortnoxAPIResponse<{ InvoiceNumber: string }>> {
+  async createInvoice(invoice: FortnoxInvoice, companyId: string): Promise<FortnoxAPIResponse<{ InvoiceNumber: string }>> {
     console.log('[Fortnox] Creating invoice:', invoice);
     
-    return {
-      success: true,
-      data: {
-        InvoiceNumber: `F${new Date().getFullYear()}${Math.floor(Math.random() * 10000)}`,
-      },
-    };
+    if (this.useMock) {
+      return {
+        success: true,
+        data: {
+          InvoiceNumber: `F${new Date().getFullYear()}${Math.floor(Math.random() * 10000)}`,
+        },
+      };
+    }
+
+    return this.request(companyId, 'POST', '/invoices', { Invoice: invoice });
   }
 
   /**
    * Register a supplier invoice in Fortnox
    */
-  async createSupplierInvoice(invoice: FortnoxSupplierInvoice): Promise<FortnoxAPIResponse<{ GivenNumber: number }>> {
+  async createSupplierInvoice(invoice: FortnoxSupplierInvoice, companyId: string): Promise<FortnoxAPIResponse<{ GivenNumber: number }>> {
     console.log('[Fortnox] Registering supplier invoice:', invoice);
     
-    return {
-      success: true,
-      data: {
-        GivenNumber: Math.floor(Math.random() * 10000) + 1,
-      },
-    };
+    if (this.useMock) {
+      return {
+        success: true,
+        data: {
+          GivenNumber: Math.floor(Math.random() * 10000) + 1,
+        },
+      };
+    }
+
+    return this.request(companyId, 'POST', '/supplierinvoices', { SupplierInvoice: invoice });
   }
 
   /**
    * Get account information
    */
-  async getAccount(accountNumber: number): Promise<FortnoxAPIResponse<FortnoxAccount>> {
+  async getAccount(accountNumber: number, companyId: string): Promise<FortnoxAPIResponse<FortnoxAccount>> {
     const mapping = BAS_ACCOUNT_MAPPING[accountNumber.toString() as keyof typeof BAS_ACCOUNT_MAPPING];
     
     if (!mapping) {
@@ -298,70 +391,87 @@ class FortnoxClient {
       };
     }
 
-    return {
-      success: true,
-      data: {
-        Number: mapping.number,
-        Description: mapping.name,
-        Active: true,
-      },
-    };
+    if (this.useMock) {
+      return {
+        success: true,
+        data: {
+          Number: mapping.number,
+          Description: mapping.name,
+          Active: true,
+        },
+      };
+    }
+
+    return this.request(companyId, 'GET', `/accounts/${accountNumber}`, undefined);
   }
 
   /**
    * Get or create a customer
    */
-  async getOrCreateCustomer(customer: Partial<FortnoxCustomer>): Promise<FortnoxAPIResponse<FortnoxCustomer>> {
+  async getOrCreateCustomer(customer: Partial<FortnoxCustomer>, companyId: string): Promise<FortnoxAPIResponse<FortnoxCustomer>> {
     console.log('[Fortnox] Getting/creating customer:', customer.Name);
     
-    return {
-      success: true,
-      data: {
-        CustomerNumber: `C${Math.floor(Math.random() * 10000)}`,
-        Name: customer.Name || 'Unknown',
-        OrganisationNumber: customer.OrganisationNumber,
-        Email: customer.Email,
-        Address1: customer.Address1,
-        City: customer.City,
-        ZipCode: customer.ZipCode,
-        Country: customer.Country || 'SE',
-      },
-    };
+    if (this.useMock) {
+      return {
+        success: true,
+        data: {
+          CustomerNumber: `C${Math.floor(Math.random() * 10000)}`,
+          Name: customer.Name || 'Unknown',
+          OrganisationNumber: customer.OrganisationNumber,
+          Email: customer.Email,
+          Address1: customer.Address1,
+          City: customer.City,
+          ZipCode: customer.ZipCode,
+          Country: customer.Country || 'SE',
+        },
+      };
+    }
+
+    return this.request(companyId, 'POST', '/customers', { Customer: customer });
   }
 
   /**
    * Get or create a supplier
    */
-  async getOrCreateSupplier(supplier: Partial<FortnoxSupplier>): Promise<FortnoxAPIResponse<FortnoxSupplier>> {
+  async getOrCreateSupplier(supplier: Partial<FortnoxSupplier>, companyId: string): Promise<FortnoxAPIResponse<FortnoxSupplier>> {
     console.log('[Fortnox] Getting/creating supplier:', supplier.Name);
     
-    return {
-      success: true,
-      data: {
-        SupplierNumber: `S${Math.floor(Math.random() * 10000)}`,
-        Name: supplier.Name || 'Unknown',
-        OrganisationNumber: supplier.OrganisationNumber,
-        Email: supplier.Email,
-        Address1: supplier.Address1,
-        City: supplier.City,
-        ZipCode: supplier.ZipCode,
-        Country: supplier.Country || 'SE',
-      },
-    };
+    if (this.useMock) {
+      return {
+        success: true,
+        data: {
+          SupplierNumber: `S${Math.floor(Math.random() * 10000)}`,
+          Name: supplier.Name || 'Unknown',
+          OrganisationNumber: supplier.OrganisationNumber,
+          Email: supplier.Email,
+          Address1: supplier.Address1,
+          City: supplier.City,
+          ZipCode: supplier.ZipCode,
+          Country: supplier.Country || 'SE',
+        },
+      };
+    }
+
+    return this.request(companyId, 'POST', '/suppliers', { Supplier: supplier });
   }
 
   /**
    * Sync bank transactions (reconciliation)
    */
-  async syncBankTransactions(accountNumber: number, fromDate: string, toDate: string): Promise<FortnoxAPIResponse<{ transactionCount: number }>> {
+  async syncBankTransactions(accountNumber: number, fromDate: string, toDate: string, companyId: string): Promise<FortnoxAPIResponse<{ transactionCount: number }>> {
     console.log(`[Fortnox] Syncing bank transactions for account ${accountNumber} from ${fromDate} to ${toDate}`);
     
-    return {
-      success: true,
-      data: {
-        transactionCount: Math.floor(Math.random() * 50) + 5,
-      },
-    };
+    if (this.useMock) {
+      return {
+        success: true,
+        data: {
+          transactionCount: Math.floor(Math.random() * 50) + 5,
+        },
+      };
+    }
+
+    // Fortnox doesn't have direct bank sync API - this would integrate with bank APIs separately
+    return { success: true, data: { transactionCount: 0 } };
   }
 }
 

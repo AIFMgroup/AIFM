@@ -34,7 +34,7 @@ export const getAuthConfig = (): AuthConfig => {
     domain: values.COGNITO_DOMAIN.replace(/\/$/, ""),
     redirectUri: values.COGNITO_REDIRECT_URI,
     logoutUri: values.COGNITO_LOGOUT_URI,
-    cookieName: "aifm_id_token",
+    cookieName: "__Host-aifm_id_token",
   };
 };
 

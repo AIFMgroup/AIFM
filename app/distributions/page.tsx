@@ -10,8 +10,9 @@ import {
   getFundByCompanyId, getDistributionsByCompanyId, getCommitmentsByFund,
   formatCurrency, formatDate, Distribution
 } from '@/lib/fundData';
-import { DashboardLayout } from '@/components/DashboardLayout';
+
 import { useCompany } from '@/components/CompanyContext';
+import { PageHeader, PrimaryButton } from '@/components/shared/PageHeader';
 
 type TabType = 'pending' | 'completed' | 'statistics';
 
@@ -181,29 +182,26 @@ export default function DistributionsPage() {
   };
 
   return (
-    <DashboardLayout>
-      {/* Page Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-semibold text-aifm-charcoal tracking-tight">Utdelningar</h1>
-          <p className="text-aifm-charcoal/40 mt-1 text-sm">Hantera fondutdelningar med 4-ögon godkännande</p>
-        </div>
-        <button 
-          onClick={() => setShowNewDistModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-aifm-charcoal rounded-xl hover:bg-aifm-charcoal/90 shadow-lg shadow-aifm-charcoal/20 transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          Ny utdelning
-        </button>
-      </div>
-
-      {/* Hero Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <HeroMetricCard label="Totalt utdelat" value={formatCurrency(totalDistributed, currency)} icon={ArrowDownRight} variant="primary" />
-        <HeroMetricCard label="DPI" value={`${(selectedFund?.dpi || 0).toFixed(2)}x`} subValue="Distributed to Paid-In" icon={TrendingUp} />
-        <HeroMetricCard label="Utdelningar" value={fundDists.length.toString()} subValue="totalt" icon={FileText} />
-        <HeroMetricCard label="Väntar" value={pendingDists.length.toString()} icon={Shield} />
-      </div>
+    <>
+      <PageHeader
+        title="Utdelningar"
+        description="Hantera fondutdelningar med 4-ögon godkännande"
+        breadcrumbs={[
+          { label: 'Kapital' },
+          { label: 'Utdelningar' }
+        ]}
+        stats={[
+          { label: 'Totalt utdelat', value: formatCurrency(totalDistributed, currency), icon: ArrowDownRight },
+          { label: 'DPI', value: `${(selectedFund?.dpi || 0).toFixed(2)}x`, subValue: 'Distributed to Paid-In', icon: TrendingUp },
+          { label: 'Utdelningar', value: fundDists.length.toString(), subValue: 'totalt', icon: FileText },
+          { label: 'Väntar', value: pendingDists.length.toString(), icon: Shield },
+        ]}
+        actions={
+          <PrimaryButton icon={Plus} onClick={() => setShowNewDistModal(true)}>
+            Ny utdelning
+          </PrimaryButton>
+        }
+      />
 
       {/* 4-Eyes Notice */}
       <div className="bg-gradient-to-r from-aifm-gold/10 via-aifm-gold/5 to-transparent border border-aifm-gold/20 rounded-2xl p-5 mb-8 flex items-center gap-4">
@@ -529,7 +527,7 @@ export default function DistributionsPage() {
           </div>
         </div>
       )}
-    </DashboardLayout>
+    </>
   );
 }
 

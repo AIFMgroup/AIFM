@@ -3,15 +3,16 @@
 import { useState } from 'react';
 import { 
   Calculator, TrendingUp, TrendingDown, Building2,
-  Users, Wallet, FileText, ChevronDown, Home,
+  Users, Wallet, FileText, ChevronDown,
   BarChart3, Minus, Plus, RefreshCw, Download,
   CheckCircle2, Clock
 } from 'lucide-react';
-import { DashboardLayout } from '@/components/DashboardLayout';
+
 import { useCompany } from '@/components/CompanyContext';
 import { 
   getFundByCompanyId, formatCurrency, formatPercentage
 } from '@/lib/fundData';
+import { PageHeader, SecondaryButton } from '@/components/shared/PageHeader';
 
 // NAV data per company
 const navDataByCompany: Record<string, {
@@ -203,8 +204,8 @@ const navDataByCompany: Record<string, {
   },
 };
 
-// Tab Button Component
-function TabButton({ 
+// Local Tab Button for this page's specific needs
+function LocalTabButton({ 
   label, 
   isActive, 
   onClick,
@@ -227,46 +228,6 @@ function TabButton({
       {Icon && <Icon className="w-4 h-4" />}
       {label}
     </button>
-  );
-}
-
-// Hero Metric Card
-function HeroMetric({ 
-  label, 
-  value, 
-  subValue,
-  icon: Icon,
-  trend,
-  trendValue
-}: { 
-  label: string; 
-  value: string; 
-  subValue?: string;
-  icon: React.ElementType;
-  trend?: 'up' | 'down';
-  trendValue?: string;
-}) {
-  return (
-    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-white/10 rounded-lg">
-            <Icon className="w-4 h-4 text-white/70" />
-          </div>
-          <p className="text-xs text-white/50 uppercase tracking-wider font-medium">{label}</p>
-        </div>
-        {trend && (
-          <div className={`flex items-center gap-1 text-xs font-medium ${
-            trend === 'up' ? 'text-emerald-400' : 'text-red-400'
-          }`}>
-            {trend === 'up' ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-            {trendValue}
-          </div>
-        )}
-      </div>
-      <p className="text-2xl font-semibold text-white">{value}</p>
-      {subValue && <p className="text-sm text-white/60 mt-1">{subValue}</p>}
-    </div>
   );
 }
 
@@ -687,86 +648,66 @@ export default function NAVCalculationPage() {
   const totalLiabilities = Object.values(navData.liabilities).reduce((a, b) => a + b, 0);
 
   return (
-    <DashboardLayout>
-      {/* Hero Section */}
-      <div className="bg-gradient-to-br from-aifm-charcoal via-aifm-charcoal to-aifm-charcoal/90 px-4 sm:px-6 pt-6 pb-6 mb-8 rounded-2xl">
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-white/40 mb-6">
-          <Home className="w-4 h-4" />
-          <span>/</span>
-          <span>Fond</span>
-          <span>/</span>
-          <span className="text-white">NAV-beräkning</span>
-        </div>
-
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 mb-8">
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-semibold text-white tracking-tight mb-2">
-              NAV-beräkning
-            </h1>
-            <p className="text-white/50 text-sm lg:text-base">
-              Nettotillgångsvärde för {selectedCompany.shortName}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white/70 
-                               bg-white/10 border border-white/10 rounded-xl hover:bg-white/20 transition-all">
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Exportera rapport</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Hero Metrics */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <HeroMetric 
-            label="Aktuellt NAV"
-            value={formatCurrency(calculatedNAV || navData.currentNAV, 'SEK')}
-            icon={Calculator}
-            trend={navChange >= 0 ? 'up' : 'down'}
-            trendValue={`${navChange >= 0 ? '+' : ''}${formatPercentage(navChangePct)}`}
-          />
-          <HeroMetric 
-            label="Totala tillgångar"
-            value={formatCurrency(totalAssets, 'SEK')}
-            icon={Wallet}
-          />
-          <HeroMetric 
-            label="Totala skulder"
-            value={formatCurrency(totalLiabilities, 'SEK')}
-            icon={FileText}
-          />
-          <HeroMetric 
-            label="Antal investerare"
-            value={navData.investorBreakdown.length.toString()}
-            subValue="Kapitalandelsägare"
-            icon={Users}
-          />
-        </div>
-
-        {/* Tabs */}
-        <div className="flex items-center gap-2 bg-white/5 rounded-xl p-1.5 w-fit">
-          <TabButton 
+    <>
+      <PageHeader
+        title="NAV-beräkning"
+        description={`Nettotillgångsvärde för ${selectedCompany.shortName}`}
+        breadcrumbs={[
+          { label: 'Fond' },
+          { label: 'NAV-beräkning' }
+        ]}
+        stats={[
+          { 
+            label: 'Aktuellt NAV', 
+            value: formatCurrency(calculatedNAV || navData.currentNAV, 'SEK'), 
+            icon: Calculator,
+            trend: { value: `${navChange >= 0 ? '+' : ''}${formatPercentage(navChangePct)}`, positive: navChange >= 0 }
+          },
+          { 
+            label: 'Totala tillgångar', 
+            value: formatCurrency(totalAssets, 'SEK'), 
+            icon: Wallet 
+          },
+          { 
+            label: 'Totala skulder', 
+            value: formatCurrency(totalLiabilities, 'SEK'), 
+            icon: FileText 
+          },
+          { 
+            label: 'Antal investerare', 
+            value: navData.investorBreakdown.length.toString(), 
+            subValue: 'Kapitalandelsägare',
+            icon: Users 
+          },
+        ]}
+        actions={
+          <SecondaryButton icon={Download}>
+            <span className="hidden sm:inline">Exportera rapport</span>
+          </SecondaryButton>
+        }
+      >
+        {/* Tabs inside PageHeader */}
+        <div className="flex items-center gap-2 bg-white/5 rounded-xl p-1.5 w-fit mt-6">
+          <LocalTabButton 
             label="Översikt" 
             isActive={activeTab === 'overview'} 
             onClick={() => setActiveTab('overview')}
             icon={BarChart3}
           />
-          <TabButton 
+          <LocalTabButton 
             label="Kalkylator" 
             isActive={activeTab === 'calculator'} 
             onClick={() => setActiveTab('calculator')}
             icon={Calculator}
           />
-          <TabButton 
+          <LocalTabButton 
             label="Investerare" 
             isActive={activeTab === 'investors'} 
             onClick={() => setActiveTab('investors')}
             icon={Users}
           />
         </div>
-      </div>
+      </PageHeader>
 
       {/* Tab Content */}
       {activeTab === 'overview' && (
@@ -831,7 +772,6 @@ export default function NAVCalculationPage() {
           <p className="text-xs text-aifm-charcoal/50 mt-1">Per M andelar</p>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
-

@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "companyId": "test-company",
+  "strict": true,
+  "accounts": {
+    "mode": "allow_list",
+    "list": ["6540", "6550"]
+  },
+  "costCenters": {
+    "mode": "allow_list",
+    "list": ["IT", "ADM"]
+  },
+  "supplierOverrides": [],
+  "approvalRules": []
+}
+
+

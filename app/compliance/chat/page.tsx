@@ -1,11 +1,14 @@
 'use client';
 
+// Force dynamic rendering to avoid SSR issues
+export const dynamic = 'force-dynamic';
+
 import { useState, useRef, useEffect } from 'react';
 import { 
   Send, User, FileText, Sparkles,
   ThumbsUp, ThumbsDown, Copy, CheckCircle2, MessageCircle
 } from 'lucide-react';
-import { DashboardLayout } from '@/components/DashboardLayout';
+
 import Image from 'next/image';
 
 interface Message {
@@ -252,6 +255,7 @@ Försök gärna omformulera din fråga eller välj ett av de föreslagna ämnena
       // Bold text
       if (line.startsWith('**') && line.endsWith('**')) {
         return (
+    
           <p key={i} className={`font-semibold mt-3 first:mt-0 ${isAssistant ? 'text-white' : 'text-aifm-charcoal'}`}>
             {line.replace(/\*\*/g, '')}
           </p>
@@ -261,6 +265,7 @@ Försök gärna omformulera din fråga eller välj ett av de föreslagna ämnena
       if (line.includes('**')) {
         const parts = line.split(/\*\*/);
         return (
+    
           <p key={i} className={isAssistant ? 'text-white/90' : 'text-aifm-charcoal/90'}>
             {parts.map((part, j) => 
               j % 2 === 1 ? <strong key={j} className="font-semibold">{part}</strong> : part
@@ -271,6 +276,7 @@ Försök gärna omformulera din fråga eller välj ett av de föreslagna ämnena
       // List items
       if (line.startsWith('- ')) {
         return (
+    
           <p key={i} className={`ml-3 ${isAssistant ? 'text-white/90' : 'text-aifm-charcoal/90'}`}>
             • {line.substring(2)}
           </p>
@@ -279,6 +285,7 @@ Försök gärna omformulera din fråga eller välj ett av de föreslagna ämnena
       // Numbered list
       if (line.match(/^\d+\./)) {
         return (
+    
           <p key={i} className={`ml-3 ${isAssistant ? 'text-white/90' : 'text-aifm-charcoal/90'}`}>
             {line}
           </p>
@@ -290,6 +297,7 @@ Försök gärna omformulera din fråga eller välj ett av de föreslagna ämnena
       }
       // Regular text
       return (
+    
         <p key={i} className={isAssistant ? 'text-white/90' : 'text-aifm-charcoal/90'}>
           {line}
         </p>
@@ -298,7 +306,7 @@ Försök gärna omformulera din fråga eller välj ett av de föreslagna ämnena
   };
 
   return (
-    <DashboardLayout>
+    
       <div className="flex flex-col h-[calc(100vh-140px)]">
         {/* Header */}
         <div className="mb-6">
@@ -498,6 +506,5 @@ Försök gärna omformulera din fråga eller välj ett av de föreslagna ämnena
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

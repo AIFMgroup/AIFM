@@ -108,7 +108,7 @@ export default function ClientDetailPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-4">
+        <div className="w-full px-6 lg:px-12 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link 
@@ -136,7 +136,7 @@ export default function ClientDetailPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 lg:px-12 py-8">
+      <main className="w-full px-6 lg:px-12 py-8">
         {/* Stats Row */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <div className="bg-white rounded-xl p-5 border border-gray-100">

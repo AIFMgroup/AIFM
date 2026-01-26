@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Add Next.js config options here if needed
+  output: 'standalone',
+  productionBrowserSourceMaps: false,
 };
 
 module.exports = nextConfig;

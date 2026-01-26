@@ -12,9 +12,9 @@ import {
   Calculator,
   Bot,
   CheckSquare,
-  BookOpen,
   Settings,
   LogOut,
+  Link2,
   ChevronDown,
   ChevronLeft,
 } from "lucide-react";
@@ -32,24 +32,25 @@ const navItems: NavItem[] = [
     href: "/overview",
     icon: <LayoutDashboard className="w-5 h-5 flex-shrink-0" />,
   },
-  {
-    label: "Fond",
-    icon: <Briefcase className="w-5 h-5 flex-shrink-0" />,
-    children: [
-      { label: "Portfölj", href: "/portfolio" },
-      { label: "Investerare", href: "/investors" },
-      { label: "NAV-beräkning", href: "/nav-calculation" },
-    ],
-  },
-  {
-    label: "Kapital",
-    icon: <Banknote className="w-5 h-5 flex-shrink-0" />,
-    children: [
-      { label: "Kapitalanrop", href: "/capital-calls" },
-      { label: "Utdelningar", href: "/distributions" },
-      { label: "Likviditet", href: "/treasury" },
-    ],
-  },
+  // Temporarily hidden - Fond och Kapital
+  // {
+  //   label: "Fond",
+  //   icon: <Briefcase className="w-5 h-5 flex-shrink-0" />,
+  //   children: [
+  //     { label: "Portfölj", href: "/portfolio" },
+  //     { label: "Investerare", href: "/investors" },
+  //     { label: "NAV-beräkning", href: "/nav-calculation" },
+  //   ],
+  // },
+  // {
+  //   label: "Kapital",
+  //   icon: <Banknote className="w-5 h-5 flex-shrink-0" />,
+  //   children: [
+  //     { label: "Kapitalanrop", href: "/capital-calls" },
+  //     { label: "Utdelningar", href: "/distributions" },
+  //     { label: "Likviditet", href: "/treasury" },
+  //   ],
+  // },
   {
     label: "Dokument",
     icon: <FolderOpen className="w-5 h-5 flex-shrink-0" />,
@@ -60,19 +61,27 @@ const navItems: NavItem[] = [
     icon: <Calculator className="w-5 h-5 flex-shrink-0" />,
     children: [
       { label: "Översikt", href: "/accounting" },
+      { label: "Inkorg", href: "/accounting/inbox" },
       { label: "Ladda upp material", href: "/accounting/upload" },
       { label: "Löpande bokföring", href: "/accounting/bookkeeping" },
+      { label: "Bankavstämning", href: "/accounting/bank-reconciliation" },
+      { label: "Anläggningsregister", href: "/accounting/assets" },
+      { label: "Periodiseringar", href: "/accounting/periodizations" },
       { label: "Bokslut", href: "/accounting/closing" },
       { label: "Årsredovisning", href: "/accounting/annual-report" },
+      { label: "Moms & Skatt", href: "/accounting/tax-declaration" },
       { label: "Betalningar", href: "/accounting/payments" },
+      { label: "Integrationer", href: "/accounting/integrations" },
     ],
   },
   {
     label: "Compliance Agent",
     icon: <Bot className="w-5 h-5 flex-shrink-0" />,
     children: [
-      { label: "Ladda upp dokument", href: "/compliance/documents" },
       { label: "Compliance Agent", href: "/compliance/chat" },
+      { label: "Regelverksarkiv", href: "/compliance/archive" },
+      { label: "Ladda upp dokument", href: "/compliance/documents" },
+      { label: "Inställningar", href: "/compliance/settings" },
     ],
   },
   {
@@ -83,11 +92,6 @@ const navItems: NavItem[] = [
 ];
 
 const bottomNavItems: NavItem[] = [
-  {
-    label: "Användarguide",
-    href: "/guide",
-    icon: <BookOpen className="w-5 h-5 flex-shrink-0" />,
-  },
   {
     label: "Inställningar",
     href: "/settings",
@@ -119,16 +123,14 @@ export function Sidebar() {
       } bg-aifm-charcoal flex flex-col transition-all duration-300 ease-in-out fixed left-0 top-0 bottom-0 z-40`}
     >
       {/* Logo */}
-      <div className="p-4 border-b border-white/5 flex items-center justify-start">
-        <Link className="flex items-center" href="/overview">
+      <div className="p-4 border-b border-white/5 flex items-center justify-center">
+        <Link className="flex items-center justify-center" href="/overview">
           <Image
             alt="AIFM"
-            width={140}
-            height={50}
-            className={`object-contain transition-all duration-300 ${
-              isCollapsed ? "w-8" : ""
-            }`}
-            src="/frilagd_logo.png"
+            width={isCollapsed ? 32 : 80}
+            height={32}
+            className="object-contain transition-all duration-300"
+            src="/AIFM_logo.png"
           />
         </Link>
       </div>
@@ -257,4 +259,8 @@ export function Sidebar() {
     </aside>
   );
 }
+
+
+
+
 

@@ -8,7 +8,7 @@ import {
   ArrowRight, Plus, MoreHorizontal, Bell,
   FileText, DollarSign, Users, Building2, Calculator
 } from 'lucide-react';
-import { DashboardLayout } from '@/components/DashboardLayout';
+
 import { useCompany } from '@/components/CompanyContext';
 
 type TaskStatus = 'todo' | 'in_progress' | 'done' | 'overdue';
@@ -131,6 +131,7 @@ function HeroMetricCard({
   const isPrimary = variant !== 'default';
 
   return (
+    <>
     <button 
       onClick={onClick}
       className={`group relative rounded-xl sm:rounded-2xl p-4 sm:p-5 transition-all duration-500 hover:-translate-y-0.5 w-full text-left ${styles[variant]}`}
@@ -145,7 +146,7 @@ function HeroMetricCard({
         <p className={`text-2xl sm:text-3xl font-semibold tracking-tight ${isPrimary ? 'text-white' : 'text-aifm-charcoal'}`}>{value}</p>
       </div>
     </button>
-  );
+    </>  );
 }
 
 // Task Row Component
@@ -181,6 +182,7 @@ function TaskRow({ task, isSelected, onClick }: { task: Task; isSelected: boolea
   const isOverdue = task.dueDate && task.dueDate < new Date() && task.status !== 'done';
 
   return (
+    <>
     <div 
       onClick={onClick}
       className={`p-4 sm:p-5 cursor-pointer transition-all duration-300 ${
@@ -253,7 +255,7 @@ function TaskRow({ task, isSelected, onClick }: { task: Task; isSelected: boolea
         </div>
       </div>
     </div>
-  );
+    </>  );
 }
 
 // Filter Tab
@@ -273,6 +275,7 @@ function FilterTab({
       : isActive ? 'bg-aifm-gold/20 text-aifm-gold' : 'bg-gray-100 text-aifm-charcoal/50';
 
   return (
+    <>
     <button
       onClick={onClick}
       className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-300 ${baseStyles}`}
@@ -282,7 +285,8 @@ function FilterTab({
         {count}
       </span>
     </button>
-  );
+    
+    </>  );
 }
 
 export default function TasksPage() {
@@ -321,7 +325,7 @@ export default function TasksPage() {
   };
 
   return (
-    <DashboardLayout>
+    <>
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div>
@@ -527,7 +531,6 @@ export default function TasksPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
-
