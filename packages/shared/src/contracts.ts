@@ -24,7 +24,7 @@ export const LedgerEntryZ = z.object({
   amount: z.number(),
   currency: z.string().length(3),
   description: z.string().optional(),
-  meta: z.record(z.any()).optional(),
+  meta: z.record(z.string(), z.any()).optional(),
 });
 
 export type LedgerEntry = z.infer<typeof LedgerEntryZ>;
@@ -63,7 +63,7 @@ export const ReconciliationDeltaZ = z.object({
   amount: z.number(),
   date: z.string().datetime(),
   description: z.string(),
-  context: z.record(z.any()).optional(),
+  context: z.record(z.string(), z.any()).optional(),
 });
 
 export type ReconciliationDelta = z.infer<typeof ReconciliationDeltaZ>;
@@ -137,7 +137,7 @@ export const QCCheckZ = z.object({
   name: z.string(),
   severity: z.enum(["error", "warning", "info"]),
   message: z.string(),
-  context: z.record(z.any()).optional(),
+  context: z.record(z.string(), z.any()).optional(),
   timestamp: z.string().datetime(),
 });
 
@@ -245,7 +245,7 @@ export const ETLJobPayloadZ = z.object({
     start: z.string().datetime(),
     end: z.string().datetime(),
   }),
-  configJson: z.record(z.any()).optional(),
+  configJson: z.record(z.string(), z.any()).optional(),
 });
 
 export type ETLJobPayload = z.infer<typeof ETLJobPayloadZ>;
@@ -271,7 +271,7 @@ export const AIJobPayloadZ = z.object({
       positionsCsv: z.string().optional(),
     })
     .optional(),
-  context: z.record(z.any()).optional(),
+  context: z.record(z.string(), z.any()).optional(),
 });
 
 export type AIJobPayload = z.infer<typeof AIJobPayloadZ>;
@@ -299,7 +299,7 @@ export const UpsertDataFeedReqZ = z.object({
     "SIGMA",
     "MANUAL",
   ]),
-  configJson: z.record(z.any()),
+  configJson: z.record(z.string(), z.any()),
 });
 
 export type UpsertDataFeedReq = z.infer<typeof UpsertDataFeedReqZ>;

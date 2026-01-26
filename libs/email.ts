@@ -19,14 +19,15 @@ function getSgMail(): SendgridMailType {
   if (!sgMail) {
     try {
       const sgMailModule = require('@sendgrid/mail');
-      sgMail = sgMailModule.default || sgMailModule;
-      sgMail.setApiKey(process.env.SENDGRID_API_KEY || '');
+      const mailInstance = sgMailModule.default || sgMailModule;
+      mailInstance.setApiKey(process.env.SENDGRID_API_KEY || '');
+      sgMail = mailInstance;
     } catch (error) {
       logError('SendGrid module not installed', error as Error);
       throw new Error('Email service not configured');
     }
   }
-  return sgMail;
+  return sgMail!;
 }
 
 // Email templates

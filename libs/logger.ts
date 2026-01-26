@@ -38,7 +38,7 @@ const format = winston.format.combine(
 );
 
 // Transports - where logs are written
-const transports = [
+const transports: winston.transport[] = [
   // Console output (all environments during development)
   new winston.transports.Console({
     format: winston.format.combine(
