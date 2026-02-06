@@ -23,20 +23,34 @@ export async function GET() {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const profile = (await getUserProfile(user.sub)) || (await upsertUserProfile(user.sub, {
-    email: user.email,
-    displayName: user.name,
-  }));
+  try {
+    const profile = (await getUserProfile(user.sub)) || (await upsertUserProfile(user.sub, {
+      email: user.email,
+      displayName: user.name,
+    }));
 
-  return NextResponse.json({
-    sub: profile.sub,
-    email: profile.email,
-    displayName: profile.displayName,
-    title: profile.title,
-    avatarKey: profile.avatarKey,
-    avatarUpdatedAt: profile.avatarUpdatedAt,
-    updatedAt: profile.updatedAt,
-  });
+    return NextResponse.json({
+      sub: profile.sub,
+      email: profile.email,
+      displayName: profile.displayName,
+      title: profile.title,
+      avatarKey: profile.avatarKey,
+      avatarUpdatedAt: profile.avatarUpdatedAt,
+      updatedAt: profile.updatedAt,
+    });
+  } catch (error) {
+    console.error('Profile fetch error:', error);
+    // Return basic profile from token if DynamoDB fails
+    return NextResponse.json({
+      sub: user.sub,
+      email: user.email,
+      displayName: user.name,
+      title: null,
+      avatarKey: null,
+      avatarUpdatedAt: null,
+      updatedAt: new Date().toISOString(),
+    });
+  }
 }
 
 export async function PUT(request: Request) {

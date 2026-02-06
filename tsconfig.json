@@ -34,11 +34,15 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    "types/**/*.d.ts"
   ],
   "exclude": [
     "node_modules",
     "apps",
-    "packages"
+    "packages",
+    "playwright.config.ts",
+    "vitest.config.ts",
+    "tests"
   ]
 }

@@ -3,8 +3,10 @@
  * 
  * Centraliserad export för alla bank-integrationer:
  * - Swedbank PDF-processor (Textract + Bedrock)
- * - SEB API-klient
+ * - SEB API-klient (Global Custody API)
  * - Reconciliation Engine
+ * 
+ * Documentation: See README.md in this directory
  */
 
 // ============================================================================
@@ -43,6 +45,7 @@ export type {
   SEBCustodyPosition,
   SEBTransaction,
   SEBCustodyReport,
+  FundAccountMapping,
 } from './seb-client';
 
 // ============================================================================
@@ -60,3 +63,44 @@ export type {
   CashComparison,
   ReconciliationResult,
 } from './reconciliation-engine';
+
+// ============================================================================
+// Storage Service
+// ============================================================================
+
+export {
+  BankStorageService,
+  getBankStorageService,
+  resetBankStorageService,
+} from './storage-service';
+
+export type {
+  DataCategory,
+  StoredDocument,
+  StorageListOptions,
+  StorageSaveOptions,
+} from './storage-service';
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+/** Supported bank integrations */
+export const SUPPORTED_BANKS = ['SEB', 'SWEDBANK'] as const;
+export type SupportedBank = typeof SUPPORTED_BANKS[number];
+
+/** API endpoint base paths */
+export const BANK_API_PATHS = {
+  SEB: {
+    positions: '/api/bank/seb/positions',
+    balances: '/api/bank/seb/balances',
+    transactions: '/api/bank/seb/transactions',
+    testConnection: '/api/bank/seb/test-connection',
+    custodySummary: '/api/bank/seb/custody-summary',
+  },
+  SWEDBANK: {
+    processPdf: '/api/bank/swedbank/process-pdf',
+    emailWebhook: '/api/bank/swedbank/email-webhook',
+  },
+  reconciliation: '/api/bank/reconciliation',
+} as const;

@@ -5,36 +5,17 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getNAVAutomationService } from '@/lib/integrations/secura';
+import { getFundRegistry } from '@/lib/fund-registry';
+import { getPriceDataProviderManager } from '@/lib/integrations/pricing';
 
 // Konfiguration för daglig automation
-// I produktion: hämta från databas eller konfigurationsfil
 const DEFAULT_CONFIG = {
-  navReports: {
-    fundIds: ['FUND001', 'FUND002', 'FUND003'], // Ersätt med faktiska fond-IDn
-    recipients: ['asset.manager@example.com'],
-    format: 'PDF' as const,
-  },
-  notor: {
-    fundIds: ['FUND001', 'FUND002', 'FUND003'],
-    recipients: ['operations@example.com'],
-    format: 'PDF' as const,
-  },
-  subReds: {
-    fundIds: ['FUND001', 'FUND002', 'FUND003'],
-    recipients: ['operations@example.com'],
-    includeAccountStatement: true,
-  },
   priceData: {
-    fundIds: ['FUND001', 'FUND002', 'FUND003'],
     recipients: ['institutions@example.com'],
     uploadToWebsite: true,
-    websiteEndpoint: process.env.WEBSITE_PRICE_DATA_ENDPOINT,
   },
-  ownerData: {
-    fundIds: ['FUND001', 'FUND002', 'FUND003'],
-    recipients: ['clearstream@example.com'],
-    includeClearstream: true,
+  navReports: {
+    recipients: ['asset.manager@example.com'],
   },
 };
 
@@ -45,7 +26,7 @@ const DEFAULT_CONFIG = {
  * 
  * Body:
  * {
- *   "type": "all" | "nav-reports" | "notor" | "subreds" | "price-data" | "owner-data",
+ *   "type": "all" | "nav-reports" | "price-data" | "status",
  *   "config": { ... } // Optional override config
  * }
  */
@@ -63,50 +44,78 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const { type = 'all', config: customConfig } = body;
+    const { type = 'status' } = body;
 
-    const service = getNAVAutomationService();
-    const config = { ...DEFAULT_CONFIG, ...customConfig };
-
-    let results;
+    const registry = getFundRegistry();
+    const priceManager = getPriceDataProviderManager();
 
     switch (type) {
-      case 'nav-reports':
-        results = await service.processNAVReports(config.navReports);
-        break;
-      
-      case 'notor':
-        results = await service.processNotor(config.notor);
-        break;
-      
-      case 'subreds':
-        results = await service.processSubReds(config.subReds);
-        break;
-      
-      case 'price-data':
-        results = await service.processPriceData(config.priceData);
-        break;
-      
-      case 'owner-data':
-        results = await service.processOwnerData(config.ownerData);
-        break;
-      
-      case 'all':
-      default:
-        const fullResults = await service.runDailyAutomation(config);
+      case 'price-data': {
+        // Get all price data from active provider
+        const provider = priceManager.getActiveProvider();
+        const priceData = await provider.getAllPriceData();
+        
         return NextResponse.json({
           success: true,
           timestamp: new Date().toISOString(),
-          ...fullResults,
+          type: 'price-data',
+          source: provider.source,
+          count: priceData.length,
+          data: priceData,
         });
-    }
+      }
+      
+      case 'nav-reports': {
+        // Get NAV data from fund registry
+        const funds = await registry.listFunds();
+        const navData = await registry.getPriceData();
+        
+        return NextResponse.json({
+          success: true,
+          timestamp: new Date().toISOString(),
+          type: 'nav-reports',
+          fundCount: funds.length,
+          navRecords: navData.length,
+          data: navData,
+        });
+      }
 
-    return NextResponse.json({
-      success: true,
-      timestamp: new Date().toISOString(),
-      type,
-      results,
-    });
+      case 'sync': {
+        // Sync operation placeholder
+        const funds = await registry.listFunds();
+        const shareClasses = await registry.listShareClasses();
+        
+        return NextResponse.json({
+          success: true,
+          timestamp: new Date().toISOString(),
+          type: 'sync',
+          synced: {
+            funds: funds.length,
+            shareClasses: shareClasses.length,
+          },
+        });
+      }
+      
+      case 'status':
+      default: {
+        const funds = await registry.listFunds();
+        const providerStatus = await priceManager.getAllStatuses();
+        
+        return NextResponse.json({
+          success: true,
+          timestamp: new Date().toISOString(),
+          type: 'status',
+          fundRegistry: {
+            status: 'active',
+            fundCount: funds.length,
+          },
+          priceProvider: {
+            active: priceManager.getActiveSource(),
+            statuses: providerStatus,
+          },
+        });
+      }
+    }
 
   } catch (error) {
     console.error('[NAV Automation API] Error:', error);
@@ -123,18 +132,30 @@ export async function POST(request: NextRequest) {
 /**
  * GET /api/nav-automation
  * 
- * Hämta status för senaste körning
+ * Hämta status för NAV-automation
  */
 export async function GET() {
   try {
-    // TODO: Hämta status från databas
+    const registry = getFundRegistry();
+    const priceManager = getPriceDataProviderManager();
+    
+    const funds = await registry.listFunds();
+    const shareClasses = await registry.listShareClasses();
+    const providerStatus = await priceManager.getAllStatuses();
+
     return NextResponse.json({
       status: 'ready',
-      lastRun: null,
-      nextScheduledRun: null,
+      fundRegistry: {
+        status: 'active',
+        fundCount: funds.length,
+        shareClassCount: shareClasses.length,
+      },
+      priceProvider: {
+        active: priceManager.getActiveSource(),
+        statuses: providerStatus,
+      },
       config: {
-        enabled: process.env.NAV_AUTOMATION_ENABLED === 'true',
-        securaConnected: !!process.env.SECURA_PASSWORD,
+        enabled: true,
       },
     });
   } catch (error) {

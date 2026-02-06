@@ -1,127 +1,779 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
-  ArrowLeft, Settings, Building2, Users, Mail, Clock,
-  Plus, Trash2, Save, CheckCircle2, AlertCircle, Globe,
-  Database, Bell, Shield, FileText, RefreshCw, Loader2
+  ArrowLeft, Settings, Building2, Users, Mail, Shield, Clock,
+  Plus, Trash2, Edit2, Check, X, Save, RefreshCw, Loader2,
+  DollarSign, Percent, Calendar, Globe, FileText, Bell,
+  ChevronRight, AlertCircle, CheckCircle2, Info
 } from 'lucide-react';
 
 // ============================================================================
 // Types
 // ============================================================================
 
-interface Fund {
+interface ShareClass {
   id: string;
   name: string;
   isin: string;
   currency: string;
-  enabled: boolean;
+  managementFee: number;
+  performanceFee: number;
+  minInvestment: number;
+  isActive: boolean;
 }
 
-interface Recipient {
+interface Fund {
+  id: string;
+  name: string;
+  legalName: string;
+  baseCurrency: string;
+  navFrequency: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+  navTime: string;
+  fiscalYearEnd: string;
+  launchDate: string;
+  shareClasses: ShareClass[];
+  isActive: boolean;
+}
+
+interface NAVRecipient {
   id: string;
   name: string;
   email: string;
-  fundIds: string[];
-  reportTypes: ('NAV' | 'NOTOR' | 'SUBRED' | 'PRICE_DATA' | 'OWNER_DATA')[];
+  type: 'INTERNAL' | 'EXTERNAL' | 'REGULATOR';
+  funds: string[];
+  receiveDaily: boolean;
+  receiveWeekly: boolean;
+  receiveMonthly: boolean;
 }
 
-interface ScheduleConfig {
-  dataFetch: string;
-  notor: string;
-  navReports: string;
-  priceData: string;
-  ownerData: string;
-  subRed: string;
-}
-
-interface SecuraConfig {
-  host: string;
-  port: string;
-  username: string;
-  connected: boolean;
-}
-
-interface SettingsOptions {
-  uploadToWebsite: boolean;
-  slackNotifications: boolean;
-  fourEyesPrinciple: boolean;
-}
-
-interface NAVSettings {
-  tenantId: string;
-  funds: Fund[];
-  recipients: Recipient[];
-  schedule: ScheduleConfig;
-  securaConfig: SecuraConfig;
-  options: SettingsOptions;
-  updatedAt: string;
-  updatedBy?: string;
+interface ApprovalRole {
+  id: string;
+  userId: string;
+  userName: string;
+  email: string;
+  role: 'FIRST_APPROVER' | 'SECOND_APPROVER' | 'ADMIN';
+  funds: string[];
 }
 
 // ============================================================================
-// Default Values
+// Mock Data
 // ============================================================================
 
-const DEFAULT_FUNDS: Fund[] = [
-  { id: 'f1', name: 'AUAG Essential Metals', isin: 'SE0019175563', currency: 'SEK', enabled: true },
-  { id: 'f2', name: 'AuAg Gold Rush', isin: 'SE0020677946', currency: 'SEK', enabled: true },
-  { id: 'f3', name: 'AuAg Precious Green', isin: 'SE0014808440', currency: 'SEK', enabled: true },
-  { id: 'f4', name: 'AuAg Silver Bullet', isin: 'SE0013358181', currency: 'SEK', enabled: true },
+const mockFunds: Fund[] = [
+  {
+    id: 'f1',
+    name: 'AUAG Essential Metals',
+    legalName: 'AUAG Essential Metals AB',
+    baseCurrency: 'SEK',
+    navFrequency: 'DAILY',
+    navTime: '15:00',
+    fiscalYearEnd: '12-31',
+    launchDate: '2021-03-15',
+    isActive: true,
+    shareClasses: [
+      { id: 'sc1a', name: 'A', isin: 'SE0019175563', currency: 'SEK', managementFee: 1.25, performanceFee: 0, minInvestment: 100, isActive: true },
+      { id: 'sc1b', name: 'B', isin: 'SE0019175571', currency: 'EUR', managementFee: 1.25, performanceFee: 0, minInvestment: 100, isActive: true },
+    ],
+  },
+  {
+    id: 'f2',
+    name: 'AuAg Gold Rush',
+    legalName: 'AuAg Gold Rush AB',
+    baseCurrency: 'SEK',
+    navFrequency: 'DAILY',
+    navTime: '15:00',
+    fiscalYearEnd: '12-31',
+    launchDate: '2022-06-01',
+    isActive: true,
+    shareClasses: [
+      { id: 'sc2a', name: 'A', isin: 'SE0020677946', currency: 'SEK', managementFee: 1.50, performanceFee: 20, minInvestment: 100, isActive: true },
+      { id: 'sc2h', name: 'H (NOK)', isin: 'SE0020678001', currency: 'NOK', managementFee: 1.50, performanceFee: 20, minInvestment: 1000, isActive: true },
+    ],
+  },
+  {
+    id: 'f3',
+    name: 'AuAg Precious Green',
+    legalName: 'AuAg Precious Green AB',
+    baseCurrency: 'SEK',
+    navFrequency: 'DAILY',
+    navTime: '15:00',
+    fiscalYearEnd: '12-31',
+    launchDate: '2020-11-20',
+    isActive: true,
+    shareClasses: [
+      { id: 'sc3a', name: 'A', isin: 'SE0014808440', currency: 'SEK', managementFee: 1.25, performanceFee: 0, minInvestment: 100, isActive: true },
+    ],
+  },
+  {
+    id: 'f4',
+    name: 'AuAg Silver Bullet',
+    legalName: 'AuAg Silver Bullet AB',
+    baseCurrency: 'SEK',
+    navFrequency: 'DAILY',
+    navTime: '15:00',
+    fiscalYearEnd: '12-31',
+    launchDate: '2019-09-01',
+    isActive: true,
+    shareClasses: [
+      { id: 'sc4a', name: 'A', isin: 'SE0013358181', currency: 'SEK', managementFee: 1.00, performanceFee: 0, minInvestment: 100, isActive: true },
+      { id: 'sc4b', name: 'B', isin: 'SE0013358199', currency: 'EUR', managementFee: 1.00, performanceFee: 0, minInvestment: 100, isActive: true },
+    ],
+  },
 ];
 
-const DEFAULT_SCHEDULE: ScheduleConfig = {
-  dataFetch: '06:00',
-  notor: '07:00',
-  navReports: '08:30',
-  priceData: '09:00',
-  ownerData: '09:15',
-  subRed: '15:00',
-};
+const mockRecipients: NAVRecipient[] = [
+  { id: 'r1', name: 'Christopher Genberg', email: 'christopher.genberg@aifm.se', type: 'INTERNAL', funds: ['f1', 'f2', 'f3', 'f4'], receiveDaily: true, receiveWeekly: true, receiveMonthly: true },
+  { id: 'r2', name: 'NAV Team', email: 'nav@aifm.se', type: 'INTERNAL', funds: ['f1', 'f2', 'f3', 'f4'], receiveDaily: true, receiveWeekly: false, receiveMonthly: true },
+  { id: 'r3', name: 'Finansinspektionen', email: 'rapporter@fi.se', type: 'REGULATOR', funds: ['f1', 'f2', 'f3', 'f4'], receiveDaily: false, receiveWeekly: false, receiveMonthly: true },
+];
 
-const DEFAULT_SECURA_CONFIG: SecuraConfig = {
-  host: '194.62.154.68',
-  port: '20023',
-  username: 'RESTAPI_AIFM',
-  connected: false,
-};
-
-const DEFAULT_OPTIONS: SettingsOptions = {
-  uploadToWebsite: true,
-  slackNotifications: true,
-  fourEyesPrinciple: true,
-};
+const mockApprovalRoles: ApprovalRole[] = [
+  { id: 'a1', userId: 'u1', userName: 'Christopher Genberg', email: 'christopher.genberg@aifm.se', role: 'ADMIN', funds: ['f1', 'f2', 'f3', 'f4'] },
+  { id: 'a2', userId: 'u2', userName: 'Anna Lindberg', email: 'anna.lindberg@aifm.se', role: 'FIRST_APPROVER', funds: ['f1', 'f2', 'f3', 'f4'] },
+  { id: 'a3', userId: 'u3', userName: 'Erik Svensson', email: 'erik.svensson@aifm.se', role: 'SECOND_APPROVER', funds: ['f1', 'f2', 'f3', 'f4'] },
+];
 
 // ============================================================================
-// Components
+// Tab Component
 // ============================================================================
 
-function SectionCard({ 
-  title, 
-  description, 
-  icon: Icon, 
-  children 
-}: { 
-  title: string; 
-  description: string; 
+interface Tab {
+  id: string;
+  label: string;
   icon: React.ElementType;
-  children: React.ReactNode;
-}) {
+}
+
+const tabs: Tab[] = [
+  { id: 'funds', label: 'Fonder', icon: Building2 },
+  { id: 'recipients', label: 'Mottagare', icon: Mail },
+  { id: 'approvals', label: 'Godkännare', icon: Shield },
+  { id: 'schedule', label: 'Schemaläggning', icon: Clock },
+  { id: 'integrations', label: 'Integrationer', icon: Globe },
+];
+
+// ============================================================================
+// Helper Components
+// ============================================================================
+
+function StatusBadge({ isActive }: { isActive: boolean }) {
   return (
-    <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-100 overflow-hidden">
-      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 flex items-center gap-3">
-        <div className="p-1.5 sm:p-2 bg-aifm-gold/10 rounded-lg flex-shrink-0">
-          <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-aifm-gold" />
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+      isActive 
+        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+        : 'bg-gray-50 text-gray-500 border border-gray-200'
+    }`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-gray-400'}`} />
+      {isActive ? 'Aktiv' : 'Inaktiv'}
+    </span>
+  );
+}
+
+function RoleBadge({ role }: { role: ApprovalRole['role'] }) {
+  const config = {
+    ADMIN: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200', label: 'Admin' },
+    FIRST_APPROVER: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', label: 'Första godkännare' },
+    SECOND_APPROVER: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', label: 'Andra godkännare' },
+  }[role];
+
+  return (
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text} border ${config.border}`}>
+      {config.label}
+    </span>
+  );
+}
+
+function TypeBadge({ type }: { type: NAVRecipient['type'] }) {
+  const config = {
+    INTERNAL: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', label: 'Intern' },
+    EXTERNAL: { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200', label: 'Extern' },
+    REGULATOR: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', label: 'Myndighet' },
+  }[type];
+
+  return (
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text} border ${config.border}`}>
+      {config.label}
+    </span>
+  );
+}
+
+function ToggleSwitch({ checked, onChange, disabled = false }: { checked: boolean; onChange: (checked: boolean) => void; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={() => !disabled && onChange(!checked)}
+      disabled={disabled}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+        checked ? 'bg-aifm-gold' : 'bg-gray-200'
+      } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+    >
+      <span
+        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+          checked ? 'translate-x-6' : 'translate-x-1'
+        }`}
+      />
+    </button>
+  );
+}
+
+// ============================================================================
+// Fund Configuration Tab
+// ============================================================================
+
+function FundsTab({ funds, setFunds }: { funds: Fund[]; setFunds: (funds: Fund[]) => void }) {
+  const [expandedFund, setExpandedFund] = useState<string | null>(null);
+  const [editingShareClass, setEditingShareClass] = useState<string | null>(null);
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-aifm-charcoal">Fondkonfiguration</h3>
+          <p className="text-sm text-gray-500 mt-1">Hantera fonder och andelsklasser</p>
         </div>
-        <div className="min-w-0">
-          <h2 className="font-semibold text-sm sm:text-base text-aifm-charcoal truncate">{title}</h2>
-          <p className="text-xs sm:text-sm text-aifm-charcoal/60 truncate">{description}</p>
+        <button className="flex items-center gap-2 px-4 py-2.5 bg-aifm-gold text-white rounded-xl hover:bg-aifm-gold/90 transition-colors">
+          <Plus className="w-4 h-4" />
+          <span className="text-sm font-medium">Lägg till fond</span>
+        </button>
+      </div>
+
+      {/* Funds List */}
+      <div className="space-y-3">
+        {funds.map((fund) => (
+          <div
+            key={fund.id}
+            className="bg-white border border-gray-100 rounded-xl overflow-hidden"
+          >
+            {/* Fund Header */}
+            <div
+              className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50/50 transition-colors"
+              onClick={() => setExpandedFund(expandedFund === fund.id ? null : fund.id)}
+            >
+              <div className="flex items-center gap-4">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  fund.isActive ? 'bg-gradient-to-br from-aifm-gold to-amber-500' : 'bg-gray-200'
+                }`}>
+                  <Building2 className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="font-semibold text-aifm-charcoal">{fund.name}</div>
+                  <div className="text-sm text-gray-500">{fund.shareClasses.length} andelsklasser • {fund.baseCurrency}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <StatusBadge isActive={fund.isActive} />
+                <ChevronRight className={`w-5 h-5 text-gray-400 transition-transform ${expandedFund === fund.id ? 'rotate-90' : ''}`} />
+              </div>
+            </div>
+
+            {/* Expanded Content */}
+            {expandedFund === fund.id && (
+              <div className="border-t border-gray-100 p-4 bg-gray-50/50">
+                {/* Fund Details */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Juridiskt namn</label>
+                    <div className="text-sm text-aifm-charcoal">{fund.legalName}</div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">NAV-frekvens</label>
+                    <div className="text-sm text-aifm-charcoal">
+                      {fund.navFrequency === 'DAILY' ? 'Daglig' : fund.navFrequency === 'WEEKLY' ? 'Veckovis' : 'Månadsvis'}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">NAV-tid</label>
+                    <div className="text-sm text-aifm-charcoal">{fund.navTime} CET</div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Räkenskapsår</label>
+                    <div className="text-sm text-aifm-charcoal">{fund.fiscalYearEnd}</div>
+                  </div>
+                </div>
+
+                {/* Share Classes */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-gray-700">Andelsklasser</h4>
+                    <button className="flex items-center gap-1.5 text-sm text-aifm-gold hover:text-aifm-gold/80">
+                      <Plus className="w-4 h-4" />
+                      Lägg till
+                    </button>
+                  </div>
+                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-gray-50 border-b border-gray-200">
+                          <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-600">Klass</th>
+                          <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-600">ISIN</th>
+                          <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-600">Valuta</th>
+                          <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-600">Mgmt Fee</th>
+                          <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-600">Perf Fee</th>
+                          <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-600">Status</th>
+                          <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-600">Åtgärd</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {fund.shareClasses.map((sc) => (
+                          <tr key={sc.id} className="hover:bg-gray-50/50">
+                            <td className="px-4 py-3 font-medium">{sc.name}</td>
+                            <td className="px-4 py-3 font-mono text-gray-600">{sc.isin}</td>
+                            <td className="px-4 py-3">{sc.currency}</td>
+                            <td className="px-4 py-3 text-right">{sc.managementFee.toFixed(2)}%</td>
+                            <td className="px-4 py-3 text-right">{sc.performanceFee > 0 ? `${sc.performanceFee}%` : '-'}</td>
+                            <td className="px-4 py-3 text-center">
+                              <StatusBadge isActive={sc.isActive} />
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <button className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
+                                <Edit2 className="w-4 h-4 text-gray-500" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Recipients Tab
+// ============================================================================
+
+function RecipientsTab({ recipients, setRecipients, funds }: { recipients: NAVRecipient[]; setRecipients: (r: NAVRecipient[]) => void; funds: Fund[] }) {
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-aifm-charcoal">NAV-mottagare</h3>
+          <p className="text-sm text-gray-500 mt-1">Hantera vem som får NAV-rapporter</p>
+        </div>
+        <button 
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-aifm-gold text-white rounded-xl hover:bg-aifm-gold/90 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          <span className="text-sm font-medium">Lägg till mottagare</span>
+        </button>
+      </div>
+
+      {/* Recipients List */}
+      <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-100">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Mottagare</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Typ</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Fonder</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Daglig</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Vecka</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Månad</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Åtgärd</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {recipients.map((recipient) => (
+              <tr key={recipient.id} className="hover:bg-gray-50/50">
+                <td className="px-4 py-3">
+                  <div className="font-medium text-aifm-charcoal">{recipient.name}</div>
+                  <div className="text-sm text-gray-500">{recipient.email}</div>
+                </td>
+                <td className="px-4 py-3">
+                  <TypeBadge type={recipient.type} />
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <span className="px-2 py-1 bg-gray-100 rounded-full text-xs font-medium">
+                    {recipient.funds.length === funds.length ? 'Alla' : recipient.funds.length}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <ToggleSwitch
+                    checked={recipient.receiveDaily}
+                    onChange={(checked) => {
+                      setRecipients(recipients.map(r => 
+                        r.id === recipient.id ? { ...r, receiveDaily: checked } : r
+                      ));
+                    }}
+                  />
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <ToggleSwitch
+                    checked={recipient.receiveWeekly}
+                    onChange={(checked) => {
+                      setRecipients(recipients.map(r => 
+                        r.id === recipient.id ? { ...r, receiveWeekly: checked } : r
+                      ));
+                    }}
+                  />
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <ToggleSwitch
+                    checked={recipient.receiveMonthly}
+                    onChange={(checked) => {
+                      setRecipients(recipients.map(r => 
+                        r.id === recipient.id ? { ...r, receiveMonthly: checked } : r
+                      ));
+                    }}
+                  />
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    <button className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
+                      <Edit2 className="w-4 h-4 text-gray-500" />
+                    </button>
+                    <button className="p-1.5 hover:bg-red-50 rounded-lg transition-colors">
+                      <Trash2 className="w-4 h-4 text-red-500" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Approvals Tab
+// ============================================================================
+
+function ApprovalsTab({ roles, setRoles, funds }: { roles: ApprovalRole[]; setRoles: (r: ApprovalRole[]) => void; funds: Fund[] }) {
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-aifm-charcoal">Godkännare</h3>
+          <p className="text-sm text-gray-500 mt-1">Hantera vem som kan godkänna NAV (4-ögonprincipen)</p>
+        </div>
+        <button className="flex items-center gap-2 px-4 py-2.5 bg-aifm-gold text-white rounded-xl hover:bg-aifm-gold/90 transition-colors">
+          <Plus className="w-4 h-4" />
+          <span className="text-sm font-medium">Lägg till godkännare</span>
+        </button>
+      </div>
+
+      {/* Info Box */}
+      <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
+        <Info className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+        <div>
+          <div className="font-medium text-blue-800">4-ögonprincipen</div>
+          <div className="text-sm text-blue-700 mt-1">
+            NAV måste godkännas av två separata personer innan den blir officiell. 
+            Första godkännaren verifierar beräkningen, andra godkännaren slutgodkänner.
+          </div>
         </div>
       </div>
-      <div className="p-4 sm:p-6">
-        {children}
+
+      {/* Approvers by Role */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* First Approvers */}
+        <div className="bg-white border border-gray-100 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+              <span className="text-blue-600 font-bold text-sm">1</span>
+            </div>
+            <div>
+              <h4 className="font-semibold text-aifm-charcoal">Första godkännare</h4>
+              <p className="text-xs text-gray-500">Verifierar beräkningen</p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {roles.filter(r => r.role === 'FIRST_APPROVER').map((role) => (
+              <div key={role.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div>
+                  <div className="font-medium text-sm">{role.userName}</div>
+                  <div className="text-xs text-gray-500">{role.email}</div>
+                </div>
+                <button className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors">
+                  <Trash2 className="w-4 h-4 text-gray-400" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Second Approvers */}
+        <div className="bg-white border border-gray-100 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+              <span className="text-amber-600 font-bold text-sm">2</span>
+            </div>
+            <div>
+              <h4 className="font-semibold text-aifm-charcoal">Andra godkännare</h4>
+              <p className="text-xs text-gray-500">Slutgodkänner NAV</p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {roles.filter(r => r.role === 'SECOND_APPROVER').map((role) => (
+              <div key={role.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div>
+                  <div className="font-medium text-sm">{role.userName}</div>
+                  <div className="text-xs text-gray-500">{role.email}</div>
+                </div>
+                <button className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors">
+                  <Trash2 className="w-4 h-4 text-gray-400" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Admins */}
+      <div className="bg-white border border-gray-100 rounded-xl p-4">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
+            <Shield className="w-4 h-4 text-purple-600" />
+          </div>
+          <div>
+            <h4 className="font-semibold text-aifm-charcoal">Administratörer</h4>
+            <p className="text-xs text-gray-500">Full behörighet till alla funktioner</p>
+          </div>
+        </div>
+        <div className="space-y-2">
+          {roles.filter(r => r.role === 'ADMIN').map((role) => (
+            <div key={role.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <div className="font-medium text-sm">{role.userName}</div>
+                <div className="text-xs text-gray-500">{role.email}</div>
+              </div>
+              <RoleBadge role={role.role} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Schedule Tab
+// ============================================================================
+
+function ScheduleTab() {
+  const [navTime, setNavTime] = useState('15:00');
+  const [timezone, setTimezone] = useState('Europe/Stockholm');
+  const [runOnWeekends, setRunOnWeekends] = useState(false);
+  const [autoApprove, setAutoApprove] = useState(false);
+  const [autoApproveThreshold, setAutoApproveThreshold] = useState(1.0);
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h3 className="text-lg font-semibold text-aifm-charcoal">Schemaläggning</h3>
+        <p className="text-sm text-gray-500 mt-1">Konfigurera automatisk NAV-beräkning</p>
+      </div>
+
+      {/* NAV Time */}
+      <div className="bg-white border border-gray-100 rounded-xl p-6">
+        <h4 className="font-semibold text-aifm-charcoal mb-4">NAV-tid</h4>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Beräkningstid</label>
+            <div className="flex gap-2">
+              {['14:00', '14:30', '15:00', '15:30', '16:00'].map((time) => (
+                <button
+                  key={time}
+                  onClick={() => setNavTime(time)}
+                  className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    navTime === time
+                      ? 'bg-aifm-gold text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {time}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tidszon</label>
+            <div className="flex gap-2">
+              {[
+                { id: 'Europe/Stockholm', label: 'CET' },
+                { id: 'UTC', label: 'UTC' },
+              ].map((tz) => (
+                <button
+                  key={tz.id}
+                  onClick={() => setTimezone(tz.id)}
+                  className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    timezone === tz.id
+                      ? 'bg-aifm-gold text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {tz.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Run Days */}
+      <div className="bg-white border border-gray-100 rounded-xl p-6">
+        <h4 className="font-semibold text-aifm-charcoal mb-4">Körningsdagar</h4>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium text-gray-900">Vardagar (mån-fre)</div>
+              <div className="text-sm text-gray-500">Kör NAV-beräkning på vardagar</div>
+            </div>
+            <ToggleSwitch checked={true} onChange={() => {}} disabled />
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium text-gray-900">Helger (lör-sön)</div>
+              <div className="text-sm text-gray-500">Kör NAV-beräkning på helger</div>
+            </div>
+            <ToggleSwitch checked={runOnWeekends} onChange={setRunOnWeekends} />
+          </div>
+        </div>
+      </div>
+
+      {/* Auto Approve */}
+      <div className="bg-white border border-gray-100 rounded-xl p-6">
+        <h4 className="font-semibold text-aifm-charcoal mb-4">Automatiskt godkännande</h4>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium text-gray-900">Auto-godkänn små förändringar</div>
+              <div className="text-sm text-gray-500">Hoppa över godkännande om NAV-förändringen är under tröskelvärdet</div>
+            </div>
+            <ToggleSwitch checked={autoApprove} onChange={setAutoApprove} />
+          </div>
+          {autoApprove && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Tröskelvärde</label>
+              <div className="flex gap-2">
+                {[0.5, 1.0, 2.0, 5.0].map((threshold) => (
+                  <button
+                    key={threshold}
+                    onClick={() => setAutoApproveThreshold(threshold)}
+                    className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      autoApproveThreshold === threshold
+                        ? 'bg-aifm-gold text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    ±{threshold}%
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Integrations Tab
+// ============================================================================
+
+function IntegrationsTab() {
+  const [securaConnected, setSecuraConnected] = useState(false);
+  const [ecbEnabled, setEcbEnabled] = useState(true);
+  const [sesEnabled, setSesEnabled] = useState(true);
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h3 className="text-lg font-semibold text-aifm-charcoal">Integrationer</h3>
+        <p className="text-sm text-gray-500 mt-1">Konfigurera externa system och datakällor</p>
+      </div>
+
+      {/* ISEC/SECURA */}
+      <div className="bg-white border border-gray-100 rounded-xl p-6">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+              <Globe className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-aifm-charcoal">ISEC / SECURA API</h4>
+              <p className="text-sm text-gray-500 mt-1">Hämta fonddata, positioner, och NAV-historik</p>
+              <div className="mt-3 flex items-center gap-2">
+                {securaConnected ? (
+                  <span className="flex items-center gap-1.5 text-sm text-emerald-600">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Ansluten
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5 text-sm text-amber-600">
+                    <AlertCircle className="w-4 h-4" />
+                    Väntar på API-nyckel
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          <button className="px-4 py-2 text-sm font-medium text-aifm-gold border border-aifm-gold rounded-lg hover:bg-aifm-gold/5 transition-colors">
+            Konfigurera
+          </button>
+        </div>
+      </div>
+
+      {/* ECB FX Rates */}
+      <div className="bg-white border border-gray-100 rounded-xl p-6">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
+              <DollarSign className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-aifm-charcoal">ECB Valutakurser</h4>
+              <p className="text-sm text-gray-500 mt-1">Automatiska växelkurser från Europeiska Centralbanken</p>
+              <div className="mt-3 flex items-center gap-2">
+                <span className="flex items-center gap-1.5 text-sm text-emerald-600">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Aktiv - Uppdateras kl 16:00 CET
+                </span>
+              </div>
+            </div>
+          </div>
+          <ToggleSwitch checked={ecbEnabled} onChange={setEcbEnabled} />
+        </div>
+      </div>
+
+      {/* AWS SES */}
+      <div className="bg-white border border-gray-100 rounded-xl p-6">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
+              <Mail className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-aifm-charcoal">AWS SES (E-post)</h4>
+              <p className="text-sm text-gray-500 mt-1">Skicka NAV-rapporter och notifikationer</p>
+              <div className="mt-3 flex items-center gap-2">
+                <span className="flex items-center gap-1.5 text-sm text-emerald-600">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Konfigurerad - nav@aifm.se
+                </span>
+              </div>
+            </div>
+          </div>
+          <ToggleSwitch checked={sesEnabled} onChange={setSesEnabled} />
+        </div>
       </div>
     </div>
   );
@@ -132,534 +784,80 @@ function SectionCard({
 // ============================================================================
 
 export default function NAVSettingsPage() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [funds, setFunds] = useState<Fund[]>(DEFAULT_FUNDS);
-  const [recipients, setRecipients] = useState<Recipient[]>([]);
-  const [schedule, setSchedule] = useState<ScheduleConfig>(DEFAULT_SCHEDULE);
-  const [securaConfig, setSecuraConfig] = useState<SecuraConfig>(DEFAULT_SECURA_CONFIG);
-  const [options, setOptions] = useState<SettingsOptions>(DEFAULT_OPTIONS);
+  const [activeTab, setActiveTab] = useState('funds');
+  const [funds, setFunds] = useState<Fund[]>(mockFunds);
+  const [recipients, setRecipients] = useState<NAVRecipient[]>(mockRecipients);
+  const [approvalRoles, setApprovalRoles] = useState<ApprovalRole[]>(mockApprovalRoles);
   const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [lastSaved, setLastSaved] = useState<string | null>(null);
-
-  const [newRecipient, setNewRecipient] = useState({ name: '', email: '' });
-  const [showAddRecipient, setShowAddRecipient] = useState(false);
-
-  // Load settings from API on mount
-  const loadSettings = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch('/api/nav-automation/settings');
-      const data = await response.json();
-      
-      if (data.success && data.settings) {
-        const settings: NAVSettings = data.settings;
-        setFunds(settings.funds || DEFAULT_FUNDS);
-        setRecipients(settings.recipients || []);
-        setSchedule(settings.schedule || DEFAULT_SCHEDULE);
-        setSecuraConfig(settings.securaConfig || DEFAULT_SECURA_CONFIG);
-        setOptions(settings.options || DEFAULT_OPTIONS);
-        if (settings.updatedAt) {
-          setLastSaved(settings.updatedAt);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load settings:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadSettings();
-  }, [loadSettings]);
 
   const handleSave = async () => {
     setIsSaving(true);
-    setSaveError(null);
-    
-    try {
-      const response = await fetch('/api/nav-automation/settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          funds,
-          recipients,
-          schedule,
-          securaConfig,
-          options,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setSaveSuccess(true);
-        setLastSaved(new Date().toISOString());
-        setTimeout(() => setSaveSuccess(false), 3000);
-      } else {
-        setSaveError(data.error || 'Ett fel uppstod vid sparande');
-      }
-    } catch (error) {
-      setSaveError('Kunde inte spara inställningar');
-      console.error('Save error:', error);
-    } finally {
-      setIsSaving(false);
-    }
+    // Simulate save
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setIsSaving(false);
   };
-
-  const toggleFund = (fundId: string) => {
-    setFunds(funds.map(f => 
-      f.id === fundId ? { ...f, enabled: !f.enabled } : f
-    ));
-  };
-
-  const addRecipient = () => {
-    if (newRecipient.name && newRecipient.email) {
-      setRecipients([...recipients, {
-        id: `r${Date.now()}`,
-        name: newRecipient.name,
-        email: newRecipient.email,
-        fundIds: [],
-        reportTypes: ['NAV'],
-      }]);
-      setNewRecipient({ name: '', email: '' });
-      setShowAddRecipient(false);
-    }
-  };
-
-  const removeRecipient = (id: string) => {
-    setRecipients(recipients.filter(r => r.id !== id));
-  };
-
-  const testSecuraConnection = async () => {
-    try {
-      const response = await fetch('/api/nav-automation/test-connection', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          host: securaConfig.host,
-          port: parseInt(securaConfig.port),
-          username: securaConfig.username,
-        }),
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        setSecuraConfig({ ...securaConfig, connected: true });
-        alert('✅ Anslutning lyckades!');
-      } else {
-        setSecuraConfig({ ...securaConfig, connected: false });
-        alert(`❌ Anslutning misslyckades: ${data.error || 'Okänt fel'}`);
-      }
-    } catch (error) {
-      setSecuraConfig({ ...securaConfig, connected: false });
-      alert('❌ Kunde inte testa anslutning. Kontrollera att IP är vitlistad.');
-    }
-  };
-
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-aifm-gold" />
-          <p className="text-aifm-charcoal/60">Laddar inställningar...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3 sm:gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
           <Link
             href="/nav-admin"
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-aifm-charcoal/60" />
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
           </Link>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-aifm-charcoal">NAV Inställningar</h1>
-            <p className="text-sm sm:text-base text-aifm-charcoal/60 mt-0.5 sm:mt-1">
+            <h1 className="text-2xl font-bold text-aifm-charcoal">NAV-inställningar</h1>
+            <p className="text-aifm-charcoal/60 mt-1">
               Konfigurera fonder, mottagare och schemaläggning
             </p>
           </div>
         </div>
         
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
-          {lastSaved && (
-            <span className="text-xs sm:text-sm text-aifm-charcoal/50 text-center sm:text-left">
-              Sparat: {new Date(lastSaved).toLocaleString('sv-SE')}
-            </span>
-          )}
-          {saveError && (
-            <span className="text-xs sm:text-sm text-red-600">{saveError}</span>
-          )}
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 bg-aifm-gold text-white rounded-xl hover:bg-aifm-gold/90 transition-colors disabled:opacity-50"
-          >
-            {isSaving ? (
-              <RefreshCw className="w-4 h-4 animate-spin" />
-            ) : saveSuccess ? (
-              <CheckCircle2 className="w-4 h-4" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            <span>{saveSuccess ? 'Sparat!' : 'Spara'}</span>
-          </button>
-        </div>
+        <button
+          onClick={handleSave}
+          disabled={isSaving}
+          className="flex items-center gap-2 px-6 py-2.5 bg-aifm-gold text-white rounded-xl hover:bg-aifm-gold/90 transition-colors disabled:opacity-50"
+        >
+          {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          <span className="font-medium">Spara ändringar</span>
+        </button>
       </div>
 
-      {/* Secura Connection */}
-      <SectionCard
-        title="Secura-anslutning"
-        description="Konfigurera anslutning till Secura Fund & Portfolio"
-        icon={Database}
-      >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <div className="space-y-3 sm:space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-aifm-charcoal mb-1">
-                Host
-              </label>
-              <input
-                type="text"
-                value={securaConfig.host}
-                onChange={(e) => setSecuraConfig({ ...securaConfig, host: e.target.value })}
-                className="w-full px-3 sm:px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:border-aifm-gold/50 text-sm sm:text-base"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-aifm-charcoal mb-1">
-                Port
-              </label>
-              <input
-                type="text"
-                value={securaConfig.port}
-                onChange={(e) => setSecuraConfig({ ...securaConfig, port: e.target.value })}
-                className="w-full px-3 sm:px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:border-aifm-gold/50 text-sm sm:text-base"
-              />
-            </div>
-          </div>
-          <div className="space-y-3 sm:space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-aifm-charcoal mb-1">
-                Användarnamn
-              </label>
-              <input
-                type="text"
-                value={securaConfig.username}
-                onChange={(e) => setSecuraConfig({ ...securaConfig, username: e.target.value })}
-                className="w-full px-3 sm:px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:border-aifm-gold/50 text-sm sm:text-base"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-aifm-charcoal mb-1">
-                Lösenord
-              </label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                className="w-full px-3 sm:px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:border-aifm-gold/50 text-sm sm:text-base"
-              />
-            </div>
-          </div>
+      {/* Tabs */}
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        {/* Tab Navigation */}
+        <div className="flex border-b border-gray-100 overflow-x-auto">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px ${
+                  activeTab === tab.id
+                    ? 'border-aifm-gold text-aifm-gold bg-aifm-gold/5'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
-        
-        <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-4 border-t border-gray-100">
-          <div className="flex items-center gap-2">
-            {securaConfig.connected ? (
-              <>
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-                <span className="text-sm text-emerald-600 font-medium">Ansluten</span>
-              </>
-            ) : (
-              <>
-                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-                <span className="text-xs sm:text-sm text-amber-600 font-medium">Väntar på vitlistning av IP: 16.170.89.155</span>
-              </>
-            )}
-          </div>
-          <button
-            onClick={testSecuraConnection}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Testa anslutning
-          </button>
-        </div>
-      </SectionCard>
 
-      {/* Funds */}
-      <SectionCard
-        title="Fonder"
-        description="Välj vilka fonder som ska ingå i NAV-automationen"
-        icon={Building2}
-      >
-        <div className="space-y-3">
-          {funds.map((fund) => (
-            <div 
-              key={fund.id}
-              className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${
-                fund.enabled ? 'bg-emerald-50/50 border-emerald-200' : 'bg-gray-50 border-gray-200'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={fund.enabled}
-                  onChange={() => toggleFund(fund.id)}
-                  className="w-5 h-5 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold/20"
-                />
-                <div>
-                  <p className="font-medium text-aifm-charcoal">{fund.name}</p>
-                  <p className="text-sm text-aifm-charcoal/50">{fund.isin} • {fund.currency}</p>
-                </div>
-              </div>
-              {fund.enabled && (
-                <span className="text-xs font-medium text-emerald-600 bg-emerald-100 px-2 py-1 rounded-full">
-                  Aktiv
-                </span>
-              )}
-            </div>
-          ))}
+        {/* Tab Content */}
+        <div className="p-6">
+          {activeTab === 'funds' && <FundsTab funds={funds} setFunds={setFunds} />}
+          {activeTab === 'recipients' && <RecipientsTab recipients={recipients} setRecipients={setRecipients} funds={funds} />}
+          {activeTab === 'approvals' && <ApprovalsTab roles={approvalRoles} setRoles={setApprovalRoles} funds={funds} />}
+          {activeTab === 'schedule' && <ScheduleTab />}
+          {activeTab === 'integrations' && <IntegrationsTab />}
         </div>
-      </SectionCard>
-
-      {/* Recipients */}
-      <SectionCard
-        title="Mottagare"
-        description="Konfigurera vem som får vilka rapporter"
-        icon={Users}
-      >
-        <div className="space-y-4">
-          {recipients.map((recipient) => (
-            <div 
-              key={recipient.id}
-              className="p-4 bg-gray-50 rounded-xl"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <p className="font-medium text-aifm-charcoal">{recipient.name}</p>
-                  <p className="text-sm text-aifm-charcoal/50">{recipient.email}</p>
-                </div>
-                <button
-                  onClick={() => removeRecipient(recipient.id)}
-                  className="p-2 hover:bg-red-100 rounded-lg transition-colors text-red-500"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-              
-              <div className="space-y-3">
-                <div>
-                  <p className="text-xs text-aifm-charcoal/50 mb-2">Fonder</p>
-                  <div className="flex flex-wrap gap-2">
-                    {funds.filter(f => f.enabled).map((fund) => (
-                      <label key={fund.id} className="flex items-center gap-1.5 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={recipient.fundIds.includes(fund.id)}
-                          onChange={(e) => {
-                            const newFundIds = e.target.checked
-                              ? [...recipient.fundIds, fund.id]
-                              : recipient.fundIds.filter(id => id !== fund.id);
-                            setRecipients(recipients.map(r =>
-                              r.id === recipient.id ? { ...r, fundIds: newFundIds } : r
-                            ));
-                          }}
-                          className="w-4 h-4 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold/20"
-                        />
-                        <span className="text-aifm-charcoal/70">{fund.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                
-                <div>
-                  <p className="text-xs text-aifm-charcoal/50 mb-2">Rapporttyper</p>
-                  <div className="flex flex-wrap gap-2">
-                    {(['NAV', 'NOTOR', 'SUBRED', 'PRICE_DATA', 'OWNER_DATA'] as const).map((type) => (
-                      <label key={type} className="flex items-center gap-1.5 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={recipient.reportTypes.includes(type)}
-                          onChange={(e) => {
-                            const newTypes = e.target.checked
-                              ? [...recipient.reportTypes, type]
-                              : recipient.reportTypes.filter(t => t !== type);
-                            setRecipients(recipients.map(r =>
-                              r.id === recipient.id ? { ...r, reportTypes: newTypes } : r
-                            ));
-                          }}
-                          className="w-4 h-4 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold/20"
-                        />
-                        <span className="text-aifm-charcoal/70">
-                          {type === 'NAV' ? 'NAV-rapporter' :
-                           type === 'NOTOR' ? 'Notor' :
-                           type === 'SUBRED' ? 'SubReds' :
-                           type === 'PRICE_DATA' ? 'Prisdata' : 'Ägardata'}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {showAddRecipient ? (
-            <div className="p-4 border-2 border-dashed border-aifm-gold/30 rounded-xl bg-aifm-gold/5">
-              <div className="grid md:grid-cols-2 gap-4 mb-4">
-                <input
-                  type="text"
-                  placeholder="Namn"
-                  value={newRecipient.name}
-                  onChange={(e) => setNewRecipient({ ...newRecipient, name: e.target.value })}
-                  className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-aifm-gold/50"
-                />
-                <input
-                  type="email"
-                  placeholder="E-post"
-                  value={newRecipient.email}
-                  onChange={(e) => setNewRecipient({ ...newRecipient, email: e.target.value })}
-                  className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-aifm-gold/50"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={addRecipient}
-                  className="px-4 py-2 bg-aifm-gold text-white rounded-lg hover:bg-aifm-gold/90 transition-colors text-sm font-medium"
-                >
-                  Lägg till
-                </button>
-                <button
-                  onClick={() => setShowAddRecipient(false)}
-                  className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm"
-                >
-                  Avbryt
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowAddRecipient(true)}
-              className="w-full p-4 border-2 border-dashed border-gray-200 rounded-xl hover:border-aifm-gold/30 hover:bg-aifm-gold/5 transition-colors flex items-center justify-center gap-2 text-aifm-charcoal/60"
-            >
-              <Plus className="w-5 h-5" />
-              <span>Lägg till mottagare</span>
-            </button>
-          )}
-        </div>
-      </SectionCard>
-
-      {/* Schedule */}
-      <SectionCard
-        title="Schemaläggning"
-        description="Ställ in tider för automatiska körningar (vardagar)"
-        icon={Clock}
-      >
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[
-            { key: 'dataFetch', label: 'Hämta NAV-data', icon: Database },
-            { key: 'notor', label: 'Notor utskick', icon: FileText },
-            { key: 'navReports', label: 'NAV-rapporter', icon: Mail },
-            { key: 'priceData', label: 'Prisdata', icon: Globe },
-            { key: 'ownerData', label: 'Ägardata', icon: Users },
-            { key: 'subRed', label: 'SubReds', icon: FileText },
-          ].map(({ key, label, icon: ItemIcon }) => (
-            <div key={key} className="p-4 bg-gray-50 rounded-xl">
-              <div className="flex items-center gap-2 mb-2">
-                <ItemIcon className="w-4 h-4 text-aifm-charcoal/40" />
-                <span className="text-sm font-medium text-aifm-charcoal">{label}</span>
-              </div>
-              <input
-                type="time"
-                value={schedule[key as keyof ScheduleConfig]}
-                onChange={(e) => setSchedule({ ...schedule, [key]: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-aifm-gold/50 text-lg font-mono"
-              />
-            </div>
-          ))}
-        </div>
-        
-        <div className="mt-4 p-4 bg-blue-50 rounded-xl flex items-start gap-3">
-          <Bell className="w-5 h-5 text-blue-600 mt-0.5" />
-          <div>
-            <p className="text-sm font-medium text-blue-900">4-ögon-principen</p>
-            <p className="text-sm text-blue-700 mt-1">
-              NAV-rapporter skickas automatiskt <strong>efter manuellt godkännande</strong> kl 08:00-08:30. 
-              En andra person måste godkänna innan distribution.
-            </p>
-          </div>
-        </div>
-      </SectionCard>
-
-      {/* Additional Settings */}
-      <SectionCard
-        title="Övriga inställningar"
-        description="Hemsida-integration och notifikationer"
-        icon={Settings}
-      >
-        <div className="space-y-4">
-          <label className="flex items-center justify-between p-4 bg-gray-50 rounded-xl cursor-pointer">
-            <div className="flex items-center gap-3">
-              <Globe className="w-5 h-5 text-aifm-charcoal/40" />
-              <div>
-                <p className="font-medium text-aifm-charcoal">Uppdatera hemsidan automatiskt</p>
-                <p className="text-sm text-aifm-charcoal/50">Ladda upp NAV-kurser till er webbplats</p>
-              </div>
-            </div>
-            <input
-              type="checkbox"
-              checked={options.uploadToWebsite}
-              onChange={(e) => setOptions({ ...options, uploadToWebsite: e.target.checked })}
-              className="w-5 h-5 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold/20"
-            />
-          </label>
-          
-          <label className="flex items-center justify-between p-4 bg-gray-50 rounded-xl cursor-pointer">
-            <div className="flex items-center gap-3">
-              <Bell className="w-5 h-5 text-aifm-charcoal/40" />
-              <div>
-                <p className="font-medium text-aifm-charcoal">Slack/Teams-notifikationer</p>
-                <p className="text-sm text-aifm-charcoal/50">Få meddelanden vid fel eller varningar</p>
-              </div>
-            </div>
-            <input
-              type="checkbox"
-              checked={options.slackNotifications}
-              onChange={(e) => setOptions({ ...options, slackNotifications: e.target.checked })}
-              className="w-5 h-5 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold/20"
-            />
-          </label>
-          
-          <label className="flex items-center justify-between p-4 bg-gray-50 rounded-xl cursor-pointer">
-            <div className="flex items-center gap-3">
-              <Shield className="w-5 h-5 text-aifm-charcoal/40" />
-              <div>
-                <p className="font-medium text-aifm-charcoal">Kräv 4-ögon-godkännande</p>
-                <p className="text-sm text-aifm-charcoal/50">Två olika personer måste godkänna NAV</p>
-              </div>
-            </div>
-            <input
-              type="checkbox"
-              checked={options.fourEyesPrinciple}
-              onChange={(e) => setOptions({ ...options, fourEyesPrinciple: e.target.checked })}
-              className="w-5 h-5 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold/20"
-            />
-          </label>
-        </div>
-      </SectionCard>
+      </div>
     </div>
   );
 }

@@ -1,14 +1,15 @@
 {
-  "name": "AIFM Portal",
+  "name": "AIFM Assistent",
   "short_name": "AIFM",
-  "description": "AI-Powered Fund Management Portal - Hantera fonder, compliance och bokföring",
-  "start_url": "/",
+  "description": "AI-assistent för fondförvaltning - Chatta med Claude direkt från din telefon",
+  "start_url": "/chat",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#f9fafb",
   "theme_color": "#2d2a26",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "scope": "/",
   "lang": "sv",
+  "id": "/chat",
   "icons": [
     {
       "src": "/icons/icon-72x72.png",
@@ -72,24 +73,24 @@
       "sizes": "750x1334",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "AIFM Mobile"
+      "label": "AIFM Mobile Chat"
     }
   ],
   "categories": ["finance", "business", "productivity"],
   "shortcuts": [
     {
-      "name": "Bokföring",
-      "short_name": "Bokföring",
-      "description": "Öppna bokföringsdashboard",
-      "url": "/accounting/dashboard",
-      "icons": [{ "src": "/icons/accounting.png", "sizes": "96x96" }]
+      "name": "Ny chatt",
+      "short_name": "Chatt",
+      "description": "Starta en ny chatt med AI-assistenten",
+      "url": "/chat",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
     },
     {
-      "name": "CRM",
-      "short_name": "CRM",
-      "description": "Öppna CRM",
-      "url": "/crm",
-      "icons": [{ "src": "/icons/crm.png", "sizes": "96x96" }]
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Öppna dashboard",
+      "url": "/overview",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
     },
     {
       "name": "Compliance",
@@ -102,6 +103,3 @@
   "related_applications": [],
   "prefer_related_applications": false
 }
-
-
-

@@ -412,4 +412,4 @@ export async function generateReportPDFNode(report: {
   });
 }
 
-export { PDFOptions };
+export type { PDFOptions };

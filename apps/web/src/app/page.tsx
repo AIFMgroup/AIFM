@@ -7,8 +7,8 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect directly to password gate / login
-    router.replace('/password-gate');
+    // Always redirect to dashboard - middleware handles auth
+    router.replace('/dashboard');
   }, [router]);
 
   return (

@@ -151,8 +151,8 @@ export function DashboardSidebar() {
   };
 
   const handleLogout = () => {
-    document.cookie = 'password-gate-auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    window.location.href = '/password-gate';
+    // Clear all auth cookies and redirect to Cognito logout
+    window.location.href = '/auth/logout';
   };
 
   return (

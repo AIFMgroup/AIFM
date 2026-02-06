@@ -1,14 +1,14 @@
 /**
  * Reconciliation Engine
  * 
- * Jämför NAV-data från Secura med bankdata (SEB/Swedbank) för att:
+ * Jämför NAV-data från FundRegistry med bankdata (SEB/Swedbank) för att:
  * - Identifiera avvikelser i positioner
  * - Validera kassasaldon
  * - Flagga misstänkta fel
  * - Generera avstämningsrapporter
  */
 
-import { SecuraClient, getSecuraClient, SecuraNAVData, SecuraPosition } from '../secura/client';
+import { getFundRegistry, type Position as FundPosition, type CashBalance as FundCashBalance } from '@/lib/fund-registry';
 import { SEBClient, getSEBClient, SEBCustodyPosition, SEBAccountBalance } from './seb-client';
 import { SwedBankCustodyReport, SwedBankPosition } from './swedbank-pdf-processor';
 
@@ -33,8 +33,8 @@ export interface PositionComparison {
   isin: string;
   instrumentName: string;
   
-  // Secura-data
-  secura: {
+  // Internal data (from FundRegistry)
+  internal: {
     quantity: number;
     price: number;
     value: number;
@@ -59,13 +59,13 @@ export interface PositionComparison {
   };
   
   // Status
-  status: 'MATCH' | 'MINOR_DIFF' | 'MAJOR_DIFF' | 'MISSING_SECURA' | 'MISSING_BANK';
+  status: 'MATCH' | 'MINOR_DIFF' | 'MAJOR_DIFF' | 'MISSING_INTERNAL' | 'MISSING_BANK';
   flags: string[];
 }
 
 export interface CashComparison {
   currency: string;
-  securaBalance: number;
+  internalBalance: number;
   bankBalance: number;
   difference: number;
   differencePercent: number;
@@ -85,10 +85,10 @@ export interface ReconciliationResult {
     matchingPositions: number;
     minorDifferences: number;
     majorDifferences: number;
-    missingInSecura: number;
+    missingInternal: number;
     missingInBank: number;
     
-    securaTotalValue: number;
+    internalTotalValue: number;
     bankTotalValue: number;
     totalValueDifference: number;
     totalValueDifferencePercent: number;
@@ -111,7 +111,7 @@ export interface ReconciliationResult {
   
   // Datakällor
   sources: {
-    secura: { timestamp: string; dataPoints: number };
+    internal: { timestamp: string; dataPoints: number };
     bank: { source: 'SEB' | 'SWEDBANK'; timestamp: string; dataPoints: number };
   };
 }
@@ -133,12 +133,10 @@ const DEFAULT_CONFIG: ReconciliationConfig = {
 // ============================================================================
 
 export class ReconciliationEngine {
-  private securaClient: SecuraClient;
   private sebClient: SEBClient;
   private config: ReconciliationConfig;
 
   constructor(config?: Partial<ReconciliationConfig>) {
-    this.securaClient = getSecuraClient();
     this.sebClient = getSEBClient();
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
@@ -148,7 +146,7 @@ export class ReconciliationEngine {
   // ==========================================================================
 
   /**
-   * Utför fullständig avstämning mellan Secura och SEB
+   * Utför fullständig avstämning mellan FundRegistry och SEB
    */
   async reconcileWithSEB(
     fundId: string,
@@ -159,35 +157,35 @@ export class ReconciliationEngine {
     console.log(`[Reconciliation] Starting SEB reconciliation for fund ${fundId} on ${reconciliationDate}`);
 
     // 1. Hämta data från båda källor parallellt
-    const [securaData, sebData, sebBalances] = await Promise.all([
-      this.getSecuraData(fundId, reconciliationDate),
+    const [internalData, sebData, sebBalances] = await Promise.all([
+      this.getInternalData(fundId, reconciliationDate),
       this.sebClient.getCustodyPositions(sebAccountId),
       this.sebClient.getAccountBalances([sebAccountId]),
     ]);
 
     // 2. Jämför positioner
     const positions = this.comparePositions(
-      securaData.holdings,
+      internalData.positions,
       sebData,
       'SEB'
     );
 
     // 3. Jämför kassa
     const cashComparison = this.compareCash(
-      securaData.cashBalance,
+      internalData.cashBalance,
       sebBalances[0]?.availableBalance || 0,
-      securaData.currency
+      internalData.currency
     );
 
     // 4. Generera sammanfattning
-    const summary = this.generateSummary(positions, cashComparison, securaData, sebData);
+    const summary = this.generateSummary(positions, cashComparison, internalData, sebData);
 
     // 5. Generera flaggor
     const flags = this.generateFlags(positions, cashComparison, summary);
 
     return {
       fundId,
-      fundName: securaData.fundName,
+      fundName: internalData.fundName,
       reconciliationDate,
       generatedAt: new Date().toISOString(),
       summary,
@@ -195,9 +193,9 @@ export class ReconciliationEngine {
       positions,
       flags,
       sources: {
-        secura: {
+        internal: {
           timestamp: new Date().toISOString(),
-          dataPoints: securaData.holdings.length + 1,
+          dataPoints: internalData.positions.length + 1,
         },
         bank: {
           source: 'SEB',
@@ -209,7 +207,7 @@ export class ReconciliationEngine {
   }
 
   /**
-   * Utför avstämning mellan Secura och Swedbank PDF-data
+   * Utför avstämning mellan FundRegistry och Swedbank PDF-data
    */
   async reconcileWithSwedbank(
     fundId: string,
@@ -218,8 +216,8 @@ export class ReconciliationEngine {
     const reconciliationDate = swedbankReport.reportDate;
     console.log(`[Reconciliation] Starting Swedbank reconciliation for fund ${fundId} on ${reconciliationDate}`);
 
-    // 1. Hämta Secura-data
-    const securaData = await this.getSecuraData(fundId, reconciliationDate);
+    // 1. Hämta intern data
+    const internalData = await this.getInternalData(fundId, reconciliationDate);
 
     // 2. Konvertera Swedbank-data till jämförbart format
     const swedbankPositions: SEBCustodyPosition[] = swedbankReport.positions.map(p => ({
@@ -237,27 +235,27 @@ export class ReconciliationEngine {
 
     // 3. Jämför positioner
     const positions = this.comparePositions(
-      securaData.holdings,
+      internalData.positions,
       swedbankPositions,
       'SWEDBANK'
     );
 
     // 4. Jämför kassa
     const cashComparison = this.compareCash(
-      securaData.cashBalance,
+      internalData.cashBalance,
       swedbankReport.cashBalance,
-      securaData.currency
+      internalData.currency
     );
 
     // 5. Generera sammanfattning
-    const summary = this.generateSummary(positions, cashComparison, securaData, swedbankPositions);
+    const summary = this.generateSummary(positions, cashComparison, internalData, swedbankPositions);
 
     // 6. Generera flaggor
     const flags = this.generateFlags(positions, cashComparison, summary);
 
     return {
       fundId,
-      fundName: securaData.fundName,
+      fundName: internalData.fundName,
       reconciliationDate,
       generatedAt: new Date().toISOString(),
       summary,
@@ -265,9 +263,9 @@ export class ReconciliationEngine {
       positions,
       flags,
       sources: {
-        secura: {
+        internal: {
           timestamp: new Date().toISOString(),
-          dataPoints: securaData.holdings.length + 1,
+          dataPoints: internalData.positions.length + 1,
         },
         bank: {
           source: 'SWEDBANK',
@@ -282,36 +280,69 @@ export class ReconciliationEngine {
   // Data Fetching
   // ==========================================================================
 
-  private async getSecuraData(fundId: string, date: string): Promise<{
+  private async getInternalData(fundId: string, date: string): Promise<{
     fundName: string;
-    holdings: SecuraPosition[];
+    positions: Array<{
+      isin: string;
+      instrumentName: string;
+      quantity: number;
+      marketPrice: number;
+      marketValue: number;
+    }>;
     cashBalance: number;
     currency: string;
   }> {
     try {
-      const [navData, holdings] = await Promise.all([
-        this.securaClient.getNAV(fundId, date),
-        this.securaClient.getPositions(fundId),
-      ]);
+      const registry = getFundRegistry();
+      const fundOverview = await registry.getFundOverview(fundId, date);
+      
+      if (!fundOverview) {
+        // Try to find by ISIN
+        const fund = await registry.getFundByISIN(fundId);
+        if (fund) {
+          const overview = await registry.getFundOverview(fund.id, date);
+          if (overview) {
+            return this.formatInternalData(overview);
+          }
+        }
+        throw new Error(`Fund not found: ${fundId}`);
+      }
 
-      // Fund name mapping (in production, this should come from a fund registry)
-      const fundNames: Record<string, string> = {
-        'FUND001': 'AUAG Essential Metals',
-        'FUND002': 'AuAg Gold Rush',
-        'FUND003': 'AuAg Precious Green',
-        'FUND004': 'AuAg Silver Bullet',
-      };
-
-      return {
-        fundName: fundNames[fundId] || `Fund ${fundId}`,
-        holdings,
-        cashBalance: navData.aum * 0.02, // Approximation - should come from actual cash position
-        currency: navData.currency,
-      };
+      return this.formatInternalData(fundOverview);
     } catch (error) {
-      console.error('[Reconciliation] Failed to fetch Secura data:', error);
-      throw new Error(`Failed to fetch Secura data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('[Reconciliation] Failed to fetch internal data:', error);
+      throw new Error(`Failed to fetch internal data: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  }
+
+  private formatInternalData(overview: NonNullable<Awaited<ReturnType<ReturnType<typeof getFundRegistry>['getFundOverview']>>>): {
+    fundName: string;
+    positions: Array<{
+      isin: string;
+      instrumentName: string;
+      quantity: number;
+      marketPrice: number;
+      marketValue: number;
+    }>;
+    cashBalance: number;
+    currency: string;
+  } {
+    const positions = overview.positions.map(p => ({
+      isin: p.isin || p.instrumentId,
+      instrumentName: p.instrumentName,
+      quantity: p.quantity,
+      marketPrice: p.marketPrice,
+      marketValue: p.marketValue,
+    }));
+
+    const cashBalance = overview.cashBalances.reduce((sum, c) => sum + c.balanceBase, 0);
+
+    return {
+      fundName: overview.fund.name,
+      positions,
+      cashBalance,
+      currency: overview.fund.currency,
+    };
   }
 
   // ==========================================================================
@@ -319,23 +350,23 @@ export class ReconciliationEngine {
   // ==========================================================================
 
   private comparePositions(
-    securaHoldings: SecuraPosition[],
+    internalPositions: Array<{ isin: string; instrumentName: string; quantity: number; marketPrice: number; marketValue: number }>,
     bankPositions: SEBCustodyPosition[],
     bankSource: 'SEB' | 'SWEDBANK'
   ): PositionComparison[] {
     const comparisons: PositionComparison[] = [];
     const processedISINs = new Set<string>();
 
-    // 1. Jämför Secura-positioner mot bank
-    for (const securaPos of securaHoldings) {
-      processedISINs.add(securaPos.isin);
+    // 1. Jämför interna positioner mot bank
+    for (const internalPos of internalPositions) {
+      processedISINs.add(internalPos.isin);
       
-      const bankPos = bankPositions.find(b => b.isin === securaPos.isin);
+      const bankPos = bankPositions.find(b => b.isin === internalPos.isin);
       
       if (bankPos) {
         // Position finns i båda
         const comparison = this.createPositionComparison(
-          securaPos,
+          internalPos,
           bankPos,
           bankSource
         );
@@ -343,23 +374,23 @@ export class ReconciliationEngine {
       } else {
         // Saknas i bank
         comparisons.push({
-          isin: securaPos.isin,
-          instrumentName: securaPos.instrumentName,
-          secura: {
-            quantity: securaPos.quantity,
-            price: securaPos.marketPrice,
-            value: securaPos.marketValue,
+          isin: internalPos.isin,
+          instrumentName: internalPos.instrumentName,
+          internal: {
+            quantity: internalPos.quantity,
+            price: internalPos.marketPrice,
+            value: internalPos.marketValue,
           },
           bank: null,
           differences: {
-            quantityDiff: securaPos.quantity,
+            quantityDiff: internalPos.quantity,
             quantityDiffPercent: 100,
-            priceDiff: securaPos.marketPrice,
+            priceDiff: internalPos.marketPrice,
             priceDiffPercent: 100,
-            valueDiff: securaPos.marketValue,
+            valueDiff: internalPos.marketValue,
             valueDiffPercent: 100,
           },
-          status: securaPos.marketValue >= this.config.thresholds.missingPositionValue
+          status: internalPos.marketValue >= this.config.thresholds.missingPositionValue
             ? 'MAJOR_DIFF'
             : 'MINOR_DIFF',
           flags: [`Position saknas i ${bankSource}`],
@@ -373,7 +404,7 @@ export class ReconciliationEngine {
         comparisons.push({
           isin: bankPos.isin,
           instrumentName: bankPos.instrumentName,
-          secura: null,
+          internal: null,
           bank: {
             quantity: bankPos.quantity,
             price: bankPos.marketPrice,
@@ -390,8 +421,8 @@ export class ReconciliationEngine {
           },
           status: bankPos.marketValue >= this.config.thresholds.missingPositionValue
             ? 'MAJOR_DIFF'
-            : 'MISSING_SECURA',
-          flags: ['Position saknas i Secura'],
+            : 'MISSING_INTERNAL',
+          flags: ['Position saknas internt'],
         });
       }
     }
@@ -402,21 +433,21 @@ export class ReconciliationEngine {
   }
 
   private createPositionComparison(
-    securaPos: SecuraPosition,
+    internalPos: { isin: string; instrumentName: string; quantity: number; marketPrice: number; marketValue: number },
     bankPos: SEBCustodyPosition,
     bankSource: 'SEB' | 'SWEDBANK'
   ): PositionComparison {
-    const quantityDiff = securaPos.quantity - bankPos.quantity;
+    const quantityDiff = internalPos.quantity - bankPos.quantity;
     const quantityDiffPercent = bankPos.quantity !== 0 
       ? (quantityDiff / bankPos.quantity) * 100 
       : 0;
     
-    const priceDiff = securaPos.marketPrice - bankPos.marketPrice;
+    const priceDiff = internalPos.marketPrice - bankPos.marketPrice;
     const priceDiffPercent = bankPos.marketPrice !== 0 
       ? (priceDiff / bankPos.marketPrice) * 100 
       : 0;
     
-    const valueDiff = securaPos.marketValue - bankPos.marketValue;
+    const valueDiff = internalPos.marketValue - bankPos.marketValue;
     const valueDiffPercent = bankPos.marketValue !== 0 
       ? (valueDiff / bankPos.marketValue) * 100 
       : 0;
@@ -439,12 +470,12 @@ export class ReconciliationEngine {
     }
 
     return {
-      isin: securaPos.isin,
-      instrumentName: securaPos.instrumentName,
-      secura: {
-        quantity: securaPos.quantity,
-        price: securaPos.marketPrice,
-        value: securaPos.marketValue,
+      isin: internalPos.isin,
+      instrumentName: internalPos.instrumentName,
+      internal: {
+        quantity: internalPos.quantity,
+        price: internalPos.marketPrice,
+        value: internalPos.marketValue,
       },
       bank: {
         quantity: bankPos.quantity,
@@ -466,11 +497,11 @@ export class ReconciliationEngine {
   }
 
   private compareCash(
-    securaBalance: number,
+    internalBalance: number,
     bankBalance: number,
     currency: string
   ): CashComparison {
-    const difference = securaBalance - bankBalance;
+    const difference = internalBalance - bankBalance;
     const differencePercent = bankBalance !== 0 
       ? (difference / bankBalance) * 100 
       : 0;
@@ -486,7 +517,7 @@ export class ReconciliationEngine {
 
     return {
       currency,
-      securaBalance,
+      internalBalance,
       bankBalance,
       difference,
       differencePercent,
@@ -502,18 +533,18 @@ export class ReconciliationEngine {
   private generateSummary(
     positions: PositionComparison[],
     cashComparison: CashComparison,
-    securaData: { holdings: SecuraPosition[] },
+    internalData: { positions: Array<{ marketValue: number }> },
     bankData: SEBCustodyPosition[]
   ): ReconciliationResult['summary'] {
     const matchingPositions = positions.filter(p => p.status === 'MATCH').length;
     const minorDifferences = positions.filter(p => p.status === 'MINOR_DIFF').length;
     const majorDifferences = positions.filter(p => p.status === 'MAJOR_DIFF').length;
-    const missingInSecura = positions.filter(p => p.status === 'MISSING_SECURA').length;
+    const missingInternal = positions.filter(p => p.status === 'MISSING_INTERNAL').length;
     const missingInBank = positions.filter(p => p.bank === null).length;
 
-    const securaTotalValue = securaData.holdings.reduce((sum, h) => sum + h.marketValue, 0);
+    const internalTotalValue = internalData.positions.reduce((sum, h) => sum + h.marketValue, 0);
     const bankTotalValue = bankData.reduce((sum, p) => sum + p.marketValue, 0);
-    const totalValueDifference = securaTotalValue - bankTotalValue;
+    const totalValueDifference = internalTotalValue - bankTotalValue;
     const totalValueDifferencePercent = bankTotalValue !== 0 
       ? (totalValueDifference / bankTotalValue) * 100 
       : 0;
@@ -535,9 +566,9 @@ export class ReconciliationEngine {
       matchingPositions,
       minorDifferences,
       majorDifferences,
-      missingInSecura,
+      missingInternal,
       missingInBank,
-      securaTotalValue,
+      internalTotalValue,
       bankTotalValue,
       totalValueDifference,
       totalValueDifferencePercent,
@@ -566,7 +597,7 @@ export class ReconciliationEngine {
       flags.push({
         level: cashComparison.status === 'MAJOR_DIFF' ? 'ERROR' : 'WARNING',
         message: `Kassadifferens: ${cashComparison.difference.toLocaleString('sv-SE')} ${cashComparison.currency}`,
-        details: `Secura: ${cashComparison.securaBalance.toLocaleString('sv-SE')}, Bank: ${cashComparison.bankBalance.toLocaleString('sv-SE')}`,
+        details: `Internt: ${cashComparison.internalBalance.toLocaleString('sv-SE')}, Bank: ${cashComparison.bankBalance.toLocaleString('sv-SE')}`,
       });
     }
 
@@ -588,10 +619,10 @@ export class ReconciliationEngine {
       });
     }
 
-    if (summary.missingInSecura > 0) {
+    if (summary.missingInternal > 0) {
       flags.push({
         level: 'WARNING',
-        message: `${summary.missingInSecura} positioner saknas i Secura`,
+        message: `${summary.missingInternal} positioner saknas internt`,
       });
     }
 

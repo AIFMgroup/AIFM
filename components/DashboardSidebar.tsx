@@ -273,7 +273,7 @@ export function DashboardSidebar() {
       </div>
 
       {/* Main Navigation */}
-      <nav className="flex-1 py-6 overflow-y-auto">
+      <nav className="flex-1 py-6 overflow-y-auto scrollbar-none">
         {/* Favorites Section */}
         <FavoritesSidebarSection collapsed={collapsed} />
 

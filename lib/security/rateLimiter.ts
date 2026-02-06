@@ -41,6 +41,11 @@ export const RATE_LIMITS: Record<string, RateLimitConfig> = {
     maxRequests: 20,
     blockDurationMs: 2 * 60 * 1000,
   },
+  'ai-chat': {
+    windowMs: 60 * 1000,
+    maxRequests: 30,
+    blockDurationMs: 2 * 60 * 1000,
+  },
   // Standard API limits
   'api-read': {
     windowMs: 60 * 1000,

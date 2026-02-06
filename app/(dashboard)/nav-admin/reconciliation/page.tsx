@@ -19,7 +19,15 @@ import {
   Download,
   Filter,
   Calendar,
-  Loader2
+  Loader2,
+  FileText,
+  Database,
+  FolderOpen,
+  BarChart3,
+  PieChart,
+  History,
+  Search,
+  ExternalLink
 } from 'lucide-react';
 
 // ============================================================================
@@ -78,8 +86,21 @@ interface ReconciliationResult {
   };
 }
 
+interface StoredDocument {
+  key: string;
+  category: string;
+  subCategory: string;
+  fileName: string;
+  date: string;
+  fundId?: string;
+  accountId?: string;
+  size: number;
+  lastModified: string;
+  contentType: string;
+}
+
 // ============================================================================
-// Mock Data (ersätts med API-anrop)
+// Mock Data
 // ============================================================================
 
 const MOCK_RECONCILIATION: ReconciliationResult = {
@@ -137,6 +158,15 @@ const MOCK_RECONCILIATION: ReconciliationResult = {
       status: 'MAJOR_DIFF',
       flags: ['Antal avviker 1.52%', 'Kurs avviker 4.59%'],
     },
+    {
+      isin: 'CA6091251046',
+      instrumentName: 'MAG Silver Corp',
+      secura: { quantity: 35000, price: 125.80, value: 4403000 },
+      bank: { quantity: 35000, price: 125.80, value: 4403000, source: 'SEB' },
+      differences: { quantityDiff: 0, quantityDiffPercent: 0, priceDiff: 0, priceDiffPercent: 0, valueDiff: 0, valueDiffPercent: 0 },
+      status: 'MATCH',
+      flags: [],
+    },
   ],
   flags: [
     { level: 'WARNING', message: '1 position har stora avvikelser', details: 'SilverCrest Metals Inc' },
@@ -148,9 +178,55 @@ const MOCK_RECONCILIATION: ReconciliationResult = {
   },
 };
 
+const MOCK_DOCUMENTS: StoredDocument[] = [
+  { key: 'reconciliation/reports/2026/01/26/FUND001-report.json', category: 'reconciliation', subCategory: 'reports', fileName: 'FUND001-report.json', date: '2026-01-26', fundId: 'FUND001', size: 4523, lastModified: new Date().toISOString(), contentType: 'application/json' },
+  { key: 'reconciliation/reports/2026/01/25/FUND001-report.json', category: 'reconciliation', subCategory: 'reports', fileName: 'FUND001-report.json', date: '2026-01-25', fundId: 'FUND001', size: 4412, lastModified: new Date(Date.now() - 86400000).toISOString(), contentType: 'application/json' },
+  { key: 'seb/positions/2026/01/26/SEB-001-positions.json', category: 'seb', subCategory: 'positions', fileName: 'SEB-001-positions.json', date: '2026-01-26', accountId: 'SEB-001', size: 8234, lastModified: new Date().toISOString(), contentType: 'application/json' },
+  { key: 'swedbank/processed/2026/01/26/custody-report.json', category: 'swedbank', subCategory: 'processed', fileName: 'custody-report.json', date: '2026-01-26', size: 6123, lastModified: new Date().toISOString(), contentType: 'application/json' },
+  { key: 'swedbank/pdfs/2026/01/26/custody-report.pdf', category: 'swedbank', subCategory: 'pdfs', fileName: 'custody-report.pdf', date: '2026-01-26', size: 245000, lastModified: new Date().toISOString(), contentType: 'application/pdf' },
+];
+
 // ============================================================================
 // Components
 // ============================================================================
+
+function TabButton({ 
+  active, 
+  onClick, 
+  icon: Icon, 
+  label,
+  count 
+}: { 
+  active: boolean; 
+  onClick: () => void; 
+  icon: React.ElementType; 
+  label: string;
+  count?: number;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`
+        flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all
+        ${active 
+          ? 'bg-aifm-charcoal text-white' 
+          : 'text-aifm-charcoal/70 hover:bg-gray-100'
+        }
+      `}
+    >
+      <Icon className="w-4 h-4" />
+      {label}
+      {count !== undefined && (
+        <span className={`
+          ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full
+          ${active ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'}
+        `}>
+          {count}
+        </span>
+      )}
+    </button>
+  );
+}
 
 function StatusBadge({ status }: { status: string }) {
   const config = {
@@ -202,6 +278,180 @@ function SummaryCard({
       <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">{label}</p>
       <p className={`text-xl font-semibold ${highlight ? 'text-aifm-gold' : 'text-aifm-charcoal'}`}>{value}</p>
       {subValue && <p className="text-xs text-gray-400 mt-1">{subValue}</p>}
+    </div>
+  );
+}
+
+function MatchChart({ matching, minor, major }: { matching: number; minor: number; major: number }) {
+  const total = matching + minor + major;
+  const matchPercent = (matching / total) * 100;
+  const minorPercent = (minor / total) * 100;
+  const majorPercent = (major / total) * 100;
+  
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 p-6">
+      <h3 className="font-semibold text-aifm-charcoal mb-4 flex items-center gap-2">
+        <PieChart className="w-5 h-5 text-gray-400" />
+        Positionsfördelning
+      </h3>
+      
+      {/* Simple bar chart */}
+      <div className="h-8 rounded-full overflow-hidden flex mb-4">
+        <div 
+          className="bg-emerald-500 transition-all duration-500" 
+          style={{ width: `${matchPercent}%` }}
+          title={`Matchar: ${matching}`}
+        />
+        <div 
+          className="bg-amber-500 transition-all duration-500" 
+          style={{ width: `${minorPercent}%` }}
+          title={`Mindre avvikelser: ${minor}`}
+        />
+        <div 
+          className="bg-red-500 transition-all duration-500" 
+          style={{ width: `${majorPercent}%` }}
+          title={`Stora avvikelser: ${major}`}
+        />
+      </div>
+      
+      <div className="grid grid-cols-3 gap-4 text-center">
+        <div>
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <div className="w-3 h-3 rounded-full bg-emerald-500" />
+            <span className="text-sm text-gray-600">Matchar</span>
+          </div>
+          <p className="text-2xl font-bold text-emerald-600">{matching}</p>
+        </div>
+        <div>
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <div className="w-3 h-3 rounded-full bg-amber-500" />
+            <span className="text-sm text-gray-600">Mindre</span>
+          </div>
+          <p className="text-2xl font-bold text-amber-600">{minor}</p>
+        </div>
+        <div>
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <div className="w-3 h-3 rounded-full bg-red-500" />
+            <span className="text-sm text-gray-600">Stora</span>
+          </div>
+          <p className="text-2xl font-bold text-red-600">{major}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DocumentBrowser({ documents }: { documents: StoredDocument[] }) {
+  const [filter, setFilter] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  const filteredDocs = documents.filter(doc => {
+    if (filter !== 'all' && doc.category !== filter) return false;
+    if (searchTerm && !doc.fileName.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    return true;
+  });
+  
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'swedbank': return Building2;
+      case 'seb': return Database;
+      case 'reconciliation': return FileSpreadsheet;
+      case 'secura': return BarChart3;
+      default: return FileText;
+    }
+  };
+  
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'swedbank': return 'bg-orange-100 text-orange-600';
+      case 'seb': return 'bg-blue-100 text-blue-600';
+      case 'reconciliation': return 'bg-emerald-100 text-emerald-600';
+      case 'secura': return 'bg-purple-100 text-purple-600';
+      default: return 'bg-gray-100 text-gray-600';
+    }
+  };
+  
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+  
+  return (
+    <div className="bg-white rounded-xl border border-gray-100">
+      <div className="px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-aifm-charcoal flex items-center gap-2">
+            <FolderOpen className="w-5 h-5 text-gray-400" />
+            Sparade dokument
+          </h3>
+          <span className="text-sm text-gray-500">{filteredDocs.length} dokument</span>
+        </div>
+        
+        {/* Filters */}
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Sök dokument..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold"
+            />
+          </div>
+          
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold"
+          >
+            <option value="all">Alla kategorier</option>
+            <option value="reconciliation">Avstämningar</option>
+            <option value="seb">SEB</option>
+            <option value="swedbank">Swedbank</option>
+            <option value="secura">Secura</option>
+          </select>
+        </div>
+      </div>
+      
+      <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
+        {filteredDocs.length === 0 ? (
+          <div className="p-8 text-center text-gray-500">
+            <Database className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+            <p>Inga dokument hittades</p>
+          </div>
+        ) : (
+          filteredDocs.map((doc, i) => {
+            const Icon = getCategoryIcon(doc.category);
+            const colorClass = getCategoryColor(doc.category);
+            
+            return (
+              <div key={i} className="px-6 py-3 flex items-center gap-4 hover:bg-gray-50 transition-colors">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClass}`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-aifm-charcoal truncate">{doc.fileName}</p>
+                  <p className="text-xs text-gray-500">
+                    {doc.date} • {formatFileSize(doc.size)} • {doc.category}/{doc.subCategory}
+                  </p>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Visa">
+                    <Eye className="w-4 h-4 text-gray-400" />
+                  </button>
+                  <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Ladda ner">
+                    <Download className="w-4 h-4 text-gray-400" />
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 }
@@ -324,8 +574,10 @@ function formatCurrency(value: number): string {
 // ============================================================================
 
 export default function ReconciliationPage() {
+  const [activeTab, setActiveTab] = useState<'reconciliation' | 'documents' | 'history'>('reconciliation');
   const [isLoading, setIsLoading] = useState(false);
   const [reconciliation, setReconciliation] = useState<ReconciliationResult | null>(MOCK_RECONCILIATION);
+  const [documents, setDocuments] = useState<StoredDocument[]>(MOCK_DOCUMENTS);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [expandedPositions, setExpandedPositions] = useState(false);
   const [selectedFund, setSelectedFund] = useState('FUND001');
@@ -334,11 +586,6 @@ export default function ReconciliationPage() {
     setIsLoading(true);
     try {
       // TODO: Anropa API
-      // const response = await fetch(`/api/bank/reconciliation?fundId=${selectedFund}&date=${selectedDate}`);
-      // const data = await response.json();
-      // setReconciliation(data);
-      
-      // Simulera API-anrop
       await new Promise(resolve => setTimeout(resolve, 2000));
       setReconciliation(MOCK_RECONCILIATION);
     } catch (error) {
@@ -354,7 +601,7 @@ export default function ReconciliationPage() {
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-aifm-charcoal">Bankavstämning</h1>
+            <h1 className="text-2xl font-bold text-aifm-charcoal">NAV-avstämning</h1>
             <p className="text-aifm-charcoal/60 mt-1">Jämför NAV-data från Secura med bankdata</p>
           </div>
           
@@ -363,13 +610,13 @@ export default function ReconciliationPage() {
               href="/nav-admin/bank-reconciliation"
               className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 text-aifm-charcoal rounded-xl hover:bg-gray-50 transition-colors"
             >
-              <FileSpreadsheet className="w-4 h-4" />
-              <span className="text-sm font-medium">Ladda upp PDF</span>
+              <Building2 className="w-4 h-4" />
+              <span className="text-sm font-medium">Hämta bankdata</span>
             </Link>
             <button
               onClick={runReconciliation}
               disabled={isLoading}
-              className="flex items-center gap-2 px-4 py-2.5 bg-aifm-charcoal text-white rounded-xl hover:bg-aifm-charcoal/90 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2.5 bg-aifm-gold text-white rounded-xl hover:bg-aifm-gold/90 transition-colors disabled:opacity-50"
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -379,6 +626,29 @@ export default function ReconciliationPage() {
               <span className="text-sm font-medium">Kör avstämning</span>
             </button>
           </div>
+        </div>
+        
+        {/* Tabs */}
+        <div className="flex items-center gap-2 mb-6">
+          <TabButton
+            active={activeTab === 'reconciliation'}
+            onClick={() => setActiveTab('reconciliation')}
+            icon={FileSpreadsheet}
+            label="Avstämning"
+          />
+          <TabButton
+            active={activeTab === 'documents'}
+            onClick={() => setActiveTab('documents')}
+            icon={FolderOpen}
+            label="Dokument"
+            count={documents.length}
+          />
+          <TabButton
+            active={activeTab === 'history'}
+            onClick={() => setActiveTab('history')}
+            icon={History}
+            label="Historik"
+          />
         </div>
         
         {/* Filters */}
@@ -392,7 +662,8 @@ export default function ReconciliationPage() {
             >
               <option value="FUND001">AUAG Essential Metals</option>
               <option value="FUND002">AuAg Gold Rush</option>
-              <option value="FUND003">AuAg Silver Bullet</option>
+              <option value="FUND003">AuAg Precious Green</option>
+              <option value="FUND004">AuAg Silver Bullet</option>
             </select>
           </div>
           
@@ -417,7 +688,8 @@ export default function ReconciliationPage() {
         </div>
       </div>
       
-      {reconciliation ? (
+      {/* Reconciliation Tab */}
+      {activeTab === 'reconciliation' && reconciliation && (
         <>
           {/* Overall Status */}
           <div className={`p-6 rounded-2xl mb-6 ${
@@ -457,32 +729,40 @@ export default function ReconciliationPage() {
             </div>
           </div>
           
-          {/* Summary Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <SummaryCard
-              label="Secura totalt"
-              value={formatCurrency(reconciliation.summary.securaTotalValue)}
-              icon={FileSpreadsheet}
-              highlight
-            />
-            <SummaryCard
-              label="Bank totalt"
-              value={formatCurrency(reconciliation.summary.bankTotalValue)}
-              subValue={reconciliation.sources.bank.source}
-              icon={Building2}
-            />
-            <SummaryCard
-              label="Matchande"
-              value={`${reconciliation.summary.matchingPositions}/${reconciliation.summary.totalPositions}`}
-              subValue={`${((reconciliation.summary.matchingPositions / reconciliation.summary.totalPositions) * 100).toFixed(0)}% matchar`}
-              icon={CheckCircle2}
-            />
-            <SummaryCard
-              label="Avvikelser"
-              value={(reconciliation.summary.minorDifferences + reconciliation.summary.majorDifferences).toString()}
-              subValue={`${reconciliation.summary.majorDifferences} allvarliga`}
-              icon={AlertTriangle}
-              trend={reconciliation.summary.majorDifferences > 0 ? 'down' : 'neutral'}
+          {/* Summary Cards + Chart */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4">
+              <SummaryCard
+                label="Secura totalt"
+                value={formatCurrency(reconciliation.summary.securaTotalValue)}
+                icon={FileSpreadsheet}
+                highlight
+              />
+              <SummaryCard
+                label="Bank totalt"
+                value={formatCurrency(reconciliation.summary.bankTotalValue)}
+                subValue={reconciliation.sources.bank.source}
+                icon={Building2}
+              />
+              <SummaryCard
+                label="Matchande"
+                value={`${reconciliation.summary.matchingPositions}/${reconciliation.summary.totalPositions}`}
+                subValue={`${((reconciliation.summary.matchingPositions / reconciliation.summary.totalPositions) * 100).toFixed(0)}% matchar`}
+                icon={CheckCircle2}
+              />
+              <SummaryCard
+                label="Avvikelser"
+                value={(reconciliation.summary.minorDifferences + reconciliation.summary.majorDifferences).toString()}
+                subValue={`${reconciliation.summary.majorDifferences} allvarliga`}
+                icon={AlertTriangle}
+                trend={reconciliation.summary.majorDifferences > 0 ? 'down' : 'neutral'}
+              />
+            </div>
+            
+            <MatchChart
+              matching={reconciliation.summary.matchingPositions}
+              minor={reconciliation.summary.minorDifferences}
+              major={reconciliation.summary.majorDifferences}
             />
           </div>
           
@@ -543,10 +823,20 @@ export default function ReconciliationPage() {
             </button>
           </div>
         </>
-      ) : (
-        <div className="text-center py-12">
-          <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">Välj fond och datum, sedan klicka "Kör avstämning"</p>
+      )}
+      
+      {/* Documents Tab */}
+      {activeTab === 'documents' && (
+        <DocumentBrowser documents={documents} />
+      )}
+      
+      {/* History Tab */}
+      {activeTab === 'history' && (
+        <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
+          <History className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <h3 className="font-semibold text-aifm-charcoal mb-2">Avstämningshistorik</h3>
+          <p className="text-gray-500 mb-4">Se tidigare avstämningar och trender över tid</p>
+          <p className="text-sm text-gray-400">Historik fylls på automatiskt när avstämningar körs</p>
         </div>
       )}
     </div>

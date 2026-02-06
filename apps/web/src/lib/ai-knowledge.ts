@@ -1,5 +1,14 @@
 import { prisma } from '@/lib/prisma';
-import { TaskKind } from '@prisma/client';
+
+// Define TaskKind locally to avoid Prisma dependency
+type TaskKind = 
+  | 'QC_CHECK'
+  | 'KYC_REVIEW'
+  | 'REPORT_DRAFT'
+  | 'BANK_RECON'
+  | 'RISK_CALC'
+  | 'COMPLIANCE_CHECK'
+  | 'INVESTOR_ONBOARD';
 
 /**
  * Get active AI model for a specific task kind

@@ -24,6 +24,9 @@ const securityHeaders = [
 const nextConfig = {
   reactStrictMode: true,
 
+  // Standalone output for Docker
+  output: 'standalone',
+
   // Monorepo support
   transpilePackages: ['@aifm/shared'],
 

@@ -1,42 +1,52 @@
-import { auth } from '@/auth';
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from "next/server";
 
-const GATE_COOKIE_NAME = 'aifm_gate_access';
-const GATE_COOKIE_VALUE = 'granted';
+// Public paths that don't require authentication
+const PUBLIC_PATHS = [
+  "/auth/login",
+  "/auth/logout", 
+  "/auth/callback",
+  "/api/auth",
+  "/sign-in",
+  "/password-gate",
+  "/api/password-gate",
+  "/favicon.ico",
+];
+
+// Static file extensions that should be public
+const STATIC_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.webp', '.woff', '.woff2', '.ttf', '.eot', '.css', '.js'];
+
+const isPublicPath = (pathname: string) =>
+  PUBLIC_PATHS.some((path) => pathname.startsWith(path)) ||
+  pathname.startsWith("/_next") ||
+  STATIC_EXTENSIONS.some((ext) => pathname.endsWith(ext));
 
 export async function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
+  const { pathname } = request.nextUrl;
 
-  // Skip password gate check for password-gate page itself and API routes
-  if (pathname.startsWith('/password-gate') || pathname.startsWith('/api/password-gate')) {
+  // Allow public paths
+  if (isPublicPath(pathname)) {
     return NextResponse.next();
   }
 
-  // Check if user has passed password gate
-  const gateAccess = request.cookies.get(GATE_COOKIE_NAME)?.value;
+  // Check for Cognito session token
+  const token = request.cookies.get("__Host-aifm_id_token")?.value;
 
-  if (gateAccess !== GATE_COOKIE_VALUE) {
-    // Redirect to password gate
-    const gateUrl = new URL('/password-gate', request.url);
-    gateUrl.searchParams.set('callbackUrl', pathname);
-    return NextResponse.redirect(gateUrl);
+  if (!token) {
+    // Redirect to Cognito login
+    return redirectToLogin(request);
   }
 
-  // Existing auth check for protected routes
-  const session = await auth();
-  const protectedRoutes = ['/admin', '/coordinator', '/specialist'];
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
-
-  if (isProtectedRoute && !session) {
-    const signInUrl = new URL('/sign-in', request.url);
-    signInUrl.searchParams.set('callbackUrl', pathname);
-    return NextResponse.redirect(signInUrl);
-  }
-
+  // Token exists - allow request (full verification happens in API routes)
   return NextResponse.next();
 }
 
+const redirectToLogin = (request: NextRequest) => {
+  const url = request.nextUrl.clone();
+  url.pathname = "/auth/login";
+  url.searchParams.set("returnTo", request.nextUrl.pathname);
+  return NextResponse.redirect(url);
+};
+
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)).*)'],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)).*)"],
 };

@@ -1,0 +1,39 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:-latest}
+  
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - docker build -t $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG .
+      - docker tag $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPO:latest
+  
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker images...
+      - docker push $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+      - docker push $ECR_REGISTRY/$ECR_REPO:latest
+      - echo Updating ECS service...
+      - aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --force-new-deployment --region $AWS_DEFAULT_REGION
+      - echo Deployment initiated!
+
+env:
+  variables:
+    ECR_REGISTRY: "798076332693.dkr.ecr.eu-north-1.amazonaws.com"
+    ECR_REPO: "aifm-frontend"
+    ECS_CLUSTER: "aifm-prod"
+    ECS_SERVICE: "AIFM_WEB-service"
+    AWS_DEFAULT_REGION: "eu-north-1"
+
+cache:
+  paths:
+    - 'node_modules/**/*'
+    - '.next/cache/**/*'

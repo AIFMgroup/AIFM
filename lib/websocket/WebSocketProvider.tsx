@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 
 // ============ Types ============
-export type WebSocketStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
+export type WebSocketStatus = 'connecting' | 'connected' | 'disconnected' | 'error' | 'disabled';
 
 export interface WebSocketMessage {
   type: 'notification' | 'document_update' | 'approval_request' | 'sync_status' | 'chat_message' | 'system';
@@ -21,6 +21,9 @@ interface WebSocketContextValue {
 }
 
 const WebSocketContext = createContext<WebSocketContextValue | null>(null);
+
+// Check if WebSocket is enabled (disabled by default until we have a proper backend)
+const WEBSOCKET_ENABLED = process.env.NEXT_PUBLIC_WEBSOCKET_ENABLED === 'true';
 
 // ============ Hook ============
 export function useWebSocket() {
@@ -66,7 +69,7 @@ interface WebSocketProviderProps {
 }
 
 export function WebSocketProvider({ children, url }: WebSocketProviderProps) {
-  const [status, setStatus] = useState<WebSocketStatus>('disconnected');
+  const [status, setStatus] = useState<WebSocketStatus>(WEBSOCKET_ENABLED ? 'disconnected' : 'disabled');
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
   
   const wsRef = useRef<WebSocket | null>(null);
@@ -74,8 +77,8 @@ export function WebSocketProvider({ children, url }: WebSocketProviderProps) {
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
   
-  const MAX_RECONNECT_ATTEMPTS = 5;
-  const RECONNECT_DELAY_BASE = 1000;
+  const MAX_RECONNECT_ATTEMPTS = 3;
+  const RECONNECT_DELAY_BASE = 2000;
 
   const getWebSocketUrl = useCallback(() => {
     if (url) return url;
@@ -89,6 +92,12 @@ export function WebSocketProvider({ children, url }: WebSocketProviderProps) {
   }, [url]);
 
   const connect = useCallback(() => {
+    // Don't connect if WebSocket is disabled
+    if (!WEBSOCKET_ENABLED) {
+      setStatus('disabled');
+      return;
+    }
+
     const wsUrl = getWebSocketUrl();
     if (!wsUrl) return;
 
@@ -142,26 +151,41 @@ export function WebSocketProvider({ children, url }: WebSocketProviderProps) {
       };
 
       ws.onclose = (event) => {
-        setStatus('disconnected');
-        console.log('[WebSocket] Disconnected:', event.code, event.reason);
+        // Check if we ever successfully connected (reconnectAttempts reset to 0 on successful connect)
+        const wasConnected = reconnectAttemptsRef.current === 0 && event.code !== 1006;
         
-        // Attempt to reconnect if not a clean close
+        if (wasConnected || event.code === 1000) {
+          setStatus('disconnected');
+          // Only log if we were actually connected (clean close or normal disconnect)
+          if (event.code === 1000) {
+            console.log('[WebSocket] Disconnected cleanly');
+          }
+        }
+        
+        // Attempt to reconnect if not a clean close and under max attempts
         if (event.code !== 1000 && reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
           const delay = RECONNECT_DELAY_BASE * Math.pow(2, reconnectAttemptsRef.current);
           reconnectAttemptsRef.current++;
-          
-          console.log(`[WebSocket] Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current})`);
           reconnectTimeoutRef.current = setTimeout(connect, delay);
+        } else if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
+          // Stop trying after max attempts - WebSocket not available
+          setStatus('disabled');
         }
       };
 
-      ws.onerror = (error) => {
-        setStatus('error');
-        console.error('[WebSocket] Error:', error);
+      ws.onerror = () => {
+        // Silently disable on first connection failure - no backend WebSocket endpoint
+        // This prevents console errors when WebSocket is not configured
+        if (reconnectAttemptsRef.current === 0) {
+          setStatus('disabled');
+          wsRef.current = null;
+        } else {
+          setStatus('error');
+        }
       };
-    } catch (error) {
-      setStatus('error');
-      console.error('[WebSocket] Failed to connect:', error);
+    } catch {
+      // Connection failed - WebSocket likely not supported or available
+      setStatus('disabled');
     }
   }, [getWebSocketUrl]);
 
@@ -200,19 +224,24 @@ export function WebSocketProvider({ children, url }: WebSocketProviderProps) {
   }, []);
 
   const reconnect = useCallback(() => {
+    if (!WEBSOCKET_ENABLED) return;
     disconnect();
     reconnectAttemptsRef.current = 0;
     connect();
   }, [connect, disconnect]);
 
-  // Connect on mount
+  // Connect on mount (only if enabled)
   useEffect(() => {
-    connect();
+    if (WEBSOCKET_ENABLED) {
+      connect();
+    }
     return () => disconnect();
   }, [connect, disconnect]);
 
   // Handle visibility change (reconnect when tab becomes visible)
   useEffect(() => {
+    if (!WEBSOCKET_ENABLED) return;
+    
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && status === 'disconnected') {
         reconnect();
@@ -242,14 +271,20 @@ export function WebSocketProvider({ children, url }: WebSocketProviderProps) {
 export function WebSocketStatusIndicator() {
   const { status, reconnect } = useWebSocket();
   
-  const statusConfig = {
-    connecting: { color: 'bg-amber-500', text: 'Ansluter...', pulse: true },
-    connected: { color: 'bg-emerald-500', text: 'Ansluten', pulse: false },
-    disconnected: { color: 'bg-gray-400', text: 'Frånkopplad', pulse: false },
-    error: { color: 'bg-red-500', text: 'Fel', pulse: false },
+  const statusConfig: Record<WebSocketStatus, { color: string; text: string; pulse: boolean; show: boolean }> = {
+    connecting: { color: 'bg-amber-500', text: 'Ansluter...', pulse: true, show: true },
+    connected: { color: 'bg-emerald-500', text: 'Ansluten', pulse: false, show: true },
+    disconnected: { color: 'bg-gray-400', text: 'Frånkopplad', pulse: false, show: true },
+    error: { color: 'bg-red-500', text: 'Fel', pulse: false, show: true },
+    disabled: { color: 'bg-gray-300', text: '', pulse: false, show: false },
   };
   
   const config = statusConfig[status];
+  
+  // Don't render anything if WebSocket is disabled
+  if (!config.show) {
+    return null;
+  }
   
   return (
     <button

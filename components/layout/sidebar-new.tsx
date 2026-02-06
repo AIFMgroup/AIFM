@@ -136,7 +136,7 @@ export function Sidebar() {
       </div>
 
       {/* Main Navigation */}
-      <nav className="flex-1 py-6 overflow-y-auto">
+      <nav className="flex-1 py-6 overflow-y-auto scrollbar-none">
         <ul className="space-y-1 px-3">
           {navItems.map((item) => (
             <li key={item.label}>

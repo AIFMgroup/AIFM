@@ -1,18 +1,17 @@
 /**
  * Data Quality AI Worker
  * Validates ledger entries, detects duplicates, missing fields, and creates QC tasks
+ * NOTE: Database operations are mocked - results are logged but not persisted
  */
-import { prisma } from "@prisma/client";
-import { logger } from "../../../libs/logger";
-import { Queue, Worker } from "bullmq";
-import { Redis } from "ioredis";
+import { Worker, Job } from "bullmq";
+import pino from "pino";
 import { AIJobPayload, DataQualityResultZ, QCCheck } from "@aifm/shared";
 import { redisConnection } from "../lib/queue";
 
-// Use TaskStatus from Prisma enums
-type TaskStatus = "QUEUED" | "IN_PROGRESS" | "BLOCKED" | "NEEDS_REVIEW" | "DONE";
+const logger = pino();
 
-const prisma = new prisma();
+// Use TaskStatus type
+type TaskStatus = "QUEUED" | "IN_PROGRESS" | "BLOCKED" | "NEEDS_REVIEW" | "DONE";
 
 // ============================================================================
 // DATA QUALITY WORKER
@@ -20,7 +19,7 @@ const prisma = new prisma();
 
 export const dataQualityWorker = new Worker(
   "ai",
-  async (job: Worker.Job<AIJobPayload>) => {
+  async (job: Job<AIJobPayload>) => {
     logger.info(
       { jobId: job.id, clientId: job.data.clientId },
       "Starting data quality check"
@@ -29,18 +28,10 @@ export const dataQualityWorker = new Worker(
     const { clientId, period } = job.data;
 
     try {
-      // Fetch ledger entries for the period
-      const entries = await prisma.ledgerEntry.findMany({
-        where: {
-          clientId,
-          bookingDate: {
-            gte: period.start,
-            lte: period.end,
-          },
-        },
-      });
-
-      logger.info({ entriesCount: entries.length }, "Fetched ledger entries");
+      // Mock: In production, fetch ledger entries from DynamoDB
+      const entries: any[] = [];
+      
+      logger.info({ entriesCount: entries.length }, "Fetched ledger entries (mock)");
 
       // Run validation checks
       const checks: QCCheck[] = [];
@@ -66,47 +57,6 @@ export const dataQualityWorker = new Worker(
       const errorCount = checks.filter((c) => c.severity === "error").length;
       const warningCount = checks.filter((c) => c.severity === "warning").length;
 
-      // Create or update QC task
-      const task = await prisma.task.upsert({
-        where: {
-          id: `qc-check-${clientId}-${period.start.toISOString().split("T")[0]}`,
-        },
-        update: {
-          status: errorCount > 0 ? "NEEDS_REVIEW" : "DONE",
-          payload: {
-            checks,
-            errorCount,
-            warningCount,
-          },
-        },
-        create: {
-          id: `qc-check-${clientId}-${period.start.toISOString().split("T")[0]}`,
-          clientId,
-          kind: "QC_CHECK",
-          status: errorCount > 0 ? "NEEDS_REVIEW" : "DONE",
-          payload: {
-            checks,
-            errorCount,
-            warningCount,
-          },
-        },
-      });
-
-      // Create flags for each check issue
-      for (const check of checks) {
-        if (check.severity === "error" || check.severity === "warning") {
-          await prisma.flag.create({
-            data: {
-              taskId: task.id,
-              severity: check.severity,
-              message: check.message,
-              code: check.code,
-              context: check.context,
-            },
-          });
-        }
-      }
-
       logger.info(
         {
           clientId,
@@ -114,7 +64,7 @@ export const dataQualityWorker = new Worker(
           errorCount,
           warningCount,
         },
-        "Data quality check completed"
+        "Data quality check completed - results would be persisted to DynamoDB"
       );
 
       return {
@@ -122,7 +72,7 @@ export const dataQualityWorker = new Worker(
         checksCount: checks.length,
         errorCount,
         warningCount,
-        taskId: task.id,
+        taskId: `qc-check-${clientId}-${period.start.toISOString().split("T")[0]}`,
       };
     } catch (error) {
       logger.error(
@@ -141,17 +91,6 @@ export const dataQualityWorker = new Worker(
 // ============================================================================
 // VALIDATION FUNCTIONS
 // ============================================================================
-
-interface LedgerEntryWithId extends ReturnType<typeof prisma.ledgerEntry.findUnique> {
-  id: string;
-  clientId: string;
-  source: string;
-  bookingDate: Date;
-  account: string;
-  amount: number;
-  currency: string;
-  description?: string | null;
-}
 
 function detectDuplicates(entries: any[], clientId: string): QCCheck[] {
   const checks: QCCheck[] = [];
@@ -228,7 +167,6 @@ function validateAmounts(entries: any[], clientId: string): QCCheck[] {
   const checks: QCCheck[] = [];
 
   for (const entry of entries) {
-    // Check for zero amount
     if (entry.amount === 0) {
       checks.push({
         id: `zero-${entry.id}`,
@@ -241,7 +179,6 @@ function validateAmounts(entries: any[], clientId: string): QCCheck[] {
       });
     }
 
-    // Check for NaN or Infinity
     if (isNaN(entry.amount) || !isFinite(entry.amount)) {
       checks.push({
         id: `invalid-${entry.id}`,
@@ -263,7 +200,6 @@ function validateCurrencies(entries: any[], clientId: string): QCCheck[] {
   const currencies = new Set(entries.map((e) => e.currency));
 
   if (currencies.size > 1 && !entries.some((e) => e.source === "BANK")) {
-    // Allow mixed currencies if Bank source (multi-account)
     checks.push({
       id: `multi-currency-${clientId}`,
       code: "MULTIPLE_CURRENCIES",
@@ -278,7 +214,6 @@ function validateCurrencies(entries: any[], clientId: string): QCCheck[] {
   }
 
   for (const entry of entries) {
-    // Validate currency code (ISO 4217)
     if (!/^[A-Z]{3}$/.test(entry.currency)) {
       checks.push({
         id: `invalid-curr-${entry.id}`,
@@ -299,7 +234,6 @@ function validateAccountCodes(entries: any[], clientId: string): QCCheck[] {
   const checks: QCCheck[] = [];
 
   for (const entry of entries) {
-    // Basic account code validation (Fortnox typically 4-6 digits)
     if (entry.source === "FORTNOX" && !/^\d{4,6}$/.test(entry.account)) {
       checks.push({
         id: `invalid-acct-${entry.id}`,
@@ -319,16 +253,6 @@ function validateAccountCodes(entries: any[], clientId: string): QCCheck[] {
 function validateLedgerBalance(entries: any[], clientId: string): QCCheck[] {
   const checks: QCCheck[] = [];
 
-  // Group by account and validate sums
-  const byAccount = new Map<string, number[]>();
-  for (const entry of entries) {
-    if (!byAccount.has(entry.account)) {
-      byAccount.set(entry.account, []);
-    }
-    byAccount.get(entry.account)!.push(entry.amount);
-  }
-
-  // Calculate total debit/credit
   let totalDebit = 0;
   let totalCredit = 0;
 
@@ -340,10 +264,8 @@ function validateLedgerBalance(entries: any[], clientId: string): QCCheck[] {
     }
   }
 
-  // Check if balanced (debit ≈ credit in absolute value)
   const difference = Math.abs(totalDebit + totalCredit);
   if (difference > 0.01) {
-    // Allow 1 cent tolerance
     checks.push({
       id: `unbalanced-${clientId}`,
       code: "LEDGER_UNBALANCED",

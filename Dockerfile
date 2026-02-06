@@ -2,26 +2,27 @@
 FROM node:20-bullseye AS builder
 WORKDIR /app
 
-# Install dependencies
+# Copy package files
 COPY package*.json ./
-RUN npm ci
+
+# Install dependencies
+RUN npm install
 
 # Copy source
 COPY . .
 
-# Build Next.js app
-RUN npm run build
+# Build the root Next.js app (the new design)
+RUN npx next build
 
 # Production image
-FROM node:20-bullseye AS runner
+FROM node:20-bullseye-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Copy only what is needed to run (standalone output)
-COPY --from=builder /app/public ./public
+# Copy standalone output from root app
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 
 EXPOSE 3000
 CMD ["node", "server.js"]
-

@@ -1,27 +1,39 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft, Send, Download, CheckCircle2, Clock, Building2,
   Globe, Upload, RefreshCw, ExternalLink, FileSpreadsheet,
-  Calendar, AlertCircle, Settings, Eye
+  Calendar, AlertCircle, Settings, Eye, Database, Cloud,
+  FileText, Edit3, X, Plus, Loader2, Check, AlertTriangle
 } from 'lucide-react';
 
 // ============================================================================
 // Types
 // ============================================================================
 
+type PriceDataSource = 'mock' | 'csv' | 'manual' | 'fund_registry' | 'lseg';
+
 interface PriceDataRecord {
-  isin: string;
+  fundId: string;
   fundName: string;
-  currency: string;
-  navKurs: number;
-  totalAUM: number;
-  classAUM: number;
-  sharesOutstanding: number;
+  isin: string;
   date: string;
-  change: number;
+  nav: number;
+  navChange?: number;
+  aum: number;
+  outstandingShares: number;
+  currency: string;
+  source: PriceDataSource;
+  lastUpdated: string;
+}
+
+interface ProviderStatus {
+  available: boolean;
+  lastCheck: string;
+  message?: string;
+  details?: Record<string, unknown>;
 }
 
 interface Institution {
@@ -35,19 +47,8 @@ interface Institution {
 }
 
 // ============================================================================
-// Mock Data
+// Mock Data for Institutions
 // ============================================================================
-
-const mockPriceData: PriceDataRecord[] = [
-  { isin: 'SE0019175563', fundName: 'AUAG Essential Metals A', currency: 'SEK', navKurs: 142.42, totalAUM: 395584099.11, classAUM: 349892028.52, sharesOutstanding: 2456766.31, date: '2025-01-17', change: 1.23 },
-  { isin: 'SE0019175571', fundName: 'AUAG Essential Metals B', currency: 'EUR', navKurs: 14.65, totalAUM: 395584099.11, classAUM: 43120778.87, sharesOutstanding: 269451.12, date: '2025-01-17', change: 1.18 },
-  { isin: 'SE0019175589', fundName: 'AUAG Essential Metals C', currency: 'SEK', navKurs: 128.56, totalAUM: 395584099.11, classAUM: 2571291.72, sharesOutstanding: 20000.00, date: '2025-01-17', change: 1.21 },
-  { isin: 'SE0020677946', fundName: 'AuAg Gold Rush A', currency: 'SEK', navKurs: 208.71, totalAUM: 613070568.95, classAUM: 505494096.59, sharesOutstanding: 2422025.74, date: '2025-01-17', change: 2.45 },
-  { isin: 'SE0020677953', fundName: 'AuAg Gold Rush B', currency: 'EUR', navKurs: 22.63, totalAUM: 613070568.95, classAUM: 98912.81, sharesOutstanding: 400.00, date: '2025-01-17', change: 2.38 },
-  { isin: 'SE0014808440', fundName: 'AuAg Precious Green A', currency: 'SEK', navKurs: 198.87, totalAUM: 347295087.92, classAUM: 328924859.33, sharesOutstanding: 1653996.37, date: '2025-01-17', change: 0.87 },
-  { isin: 'SE0013358181', fundName: 'AuAg Silver Bullet A', currency: 'SEK', navKurs: 378.33, totalAUM: 4344439682.78, classAUM: 3400248947.80, sharesOutstanding: 8987586.35, date: '2025-01-17', change: 3.12 },
-  { isin: 'SE0013358199', fundName: 'AuAg Silver Bullet B', currency: 'EUR', navKurs: 37.23, totalAUM: 4344439682.78, classAUM: 921562837.38, sharesOutstanding: 2265711.61, date: '2025-01-17', change: 3.05 },
-];
 
 const mockInstitutions: Institution[] = [
   { id: '1', name: 'Nordea Markets', type: 'bank', format: 'excel', lastSent: '2025-01-17 09:15', status: 'sent', autoSend: true },
@@ -56,7 +57,6 @@ const mockInstitutions: Institution[] = [
   { id: '4', name: 'Morningstar', type: 'data_provider', format: 'csv', lastSent: '2025-01-17 09:30', status: 'sent', autoSend: true },
   { id: '5', name: 'Bloomberg', type: 'data_provider', format: 'api', status: 'pending', autoSend: false },
   { id: '6', name: 'Fondbolagens Förening', type: 'data_provider', format: 'excel', lastSent: '2025-01-17 09:20', status: 'sent', autoSend: true },
-  { id: '7', name: 'AuAg Hemsida', type: 'website', format: 'manual', lastSent: '2025-01-17 09:45', status: 'sent', autoSend: false },
 ];
 
 // ============================================================================
@@ -84,6 +84,25 @@ function formatLargeCurrency(value: number): string {
 // Components
 // ============================================================================
 
+function SourceBadge({ source }: { source: PriceDataSource }) {
+  const config: Record<PriceDataSource, { label: string; color: string; icon: React.ElementType }> = {
+    mock: { label: 'Test', color: 'bg-gray-100 text-gray-600', icon: Database },
+    csv: { label: 'CSV', color: 'bg-blue-50 text-blue-600', icon: FileSpreadsheet },
+    manual: { label: 'Manuell', color: 'bg-amber-50 text-amber-600', icon: Edit3 },
+    fund_registry: { label: 'Fondregister', color: 'bg-emerald-50 text-emerald-600', icon: Database },
+    lseg: { label: 'LSEG', color: 'bg-purple-50 text-purple-600', icon: Globe },
+  };
+
+  const { label, color, icon: Icon } = config[source];
+
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${color}`}>
+      <Icon className="w-3 h-3" />
+      {label}
+    </span>
+  );
+}
+
 function StatusBadge({ status }: { status: Institution['status'] }) {
   const config = {
     sent: { label: 'Skickad', color: 'bg-emerald-50 text-emerald-600', icon: CheckCircle2 },
@@ -101,52 +120,442 @@ function StatusBadge({ status }: { status: Institution['status'] }) {
   );
 }
 
-function InstitutionTypeBadge({ type }: { type: Institution['type'] }) {
-  const config = {
-    bank: { label: 'Bank', color: 'bg-blue-50 text-blue-600', icon: Building2 },
-    exchange: { label: 'Börs', color: 'bg-purple-50 text-purple-600', icon: Building2 },
-    data_provider: { label: 'Dataleverantör', color: 'bg-emerald-50 text-emerald-600', icon: Globe },
-    website: { label: 'Hemsida', color: 'bg-amber-50 text-amber-600', icon: Globe },
+function ProviderCard({ 
+  source, 
+  status, 
+  isActive, 
+  onSelect 
+}: { 
+  source: PriceDataSource; 
+  status: ProviderStatus; 
+  isActive: boolean;
+  onSelect: () => void;
+}) {
+  const config: Record<PriceDataSource, { name: string; description: string; icon: React.ElementType; color: string }> = {
+    mock: { 
+      name: 'Test/Mock', 
+      description: 'Använd testdata för utveckling',
+      icon: Database, 
+      color: 'from-gray-500 to-gray-600' 
+    },
+    csv: { 
+      name: 'CSV Import', 
+      description: 'Ladda upp prisdata från Excel/CSV',
+      icon: FileSpreadsheet, 
+      color: 'from-blue-500 to-blue-600' 
+    },
+    manual: { 
+      name: 'Manuell inmatning', 
+      description: 'Mata in priser direkt i systemet',
+      icon: Edit3, 
+      color: 'from-amber-500 to-amber-600' 
+    },
+    fund_registry: { 
+      name: 'Fondregister', 
+      description: 'Internt fondregister med NAV-data',
+      icon: Database, 
+      color: 'from-emerald-500 to-emerald-600' 
+    },
+    lseg: { 
+      name: 'LSEG/Refinitiv', 
+      description: 'Realtidspriser från LSEG (kräver licens)',
+      icon: Globe, 
+      color: 'from-purple-500 to-purple-600' 
+    },
   };
 
-  const { label, color, icon: Icon } = config[type];
+  const { name, description, icon: Icon, color } = config[source];
 
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${color}`}>
-      <Icon className="w-3 h-3" />
-      {label}
-    </span>
+    <button
+      onClick={onSelect}
+      className={`relative text-left p-4 rounded-xl border-2 transition-all ${
+        isActive 
+          ? 'border-aifm-gold bg-aifm-gold/5 shadow-md' 
+          : 'border-gray-200 hover:border-gray-300 bg-white'
+      }`}
+    >
+      {isActive && (
+        <div className="absolute top-2 right-2">
+          <Check className="w-5 h-5 text-aifm-gold" />
+        </div>
+      )}
+      
+      <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${color} flex items-center justify-center mb-3`}>
+        <Icon className="w-5 h-5 text-white" />
+      </div>
+      
+      <h4 className="font-semibold text-aifm-charcoal">{name}</h4>
+      <p className="text-xs text-aifm-charcoal/60 mt-1">{description}</p>
+      
+      <div className="mt-3 flex items-center gap-2">
+        {status.available ? (
+          <span className="text-xs text-emerald-600 flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3" />
+            Tillgänglig
+          </span>
+        ) : (
+          <span className="text-xs text-amber-600 flex items-center gap-1">
+            <AlertTriangle className="w-3 h-3" />
+            Ej konfigurerad
+          </span>
+        )}
+      </div>
+    </button>
   );
 }
 
-function InstitutionCard({ institution }: { institution: Institution }) {
+function CSVUploadModal({ 
+  isOpen, 
+  onClose, 
+  onUpload 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void;
+  onUpload: (data: any[]) => void;
+}) {
+  const [csvText, setCsvText] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const parseCSV = useCallback((text: string) => {
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) {
+      setError('CSV måste ha minst en rubrikrad och en datarad');
+      return null;
+    }
+
+    const headers = lines[0].split(/[,;\t]/).map(h => h.trim().toLowerCase());
+    const requiredHeaders = ['isin', 'nav'];
+    
+    for (const req of requiredHeaders) {
+      if (!headers.some(h => h.includes(req))) {
+        setError(`CSV saknar obligatorisk kolumn: ${req}`);
+        return null;
+      }
+    }
+
+    const data = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(/[,;\t]/).map(v => v.trim());
+      if (values.length < headers.length) continue;
+
+      const row: Record<string, any> = {};
+      headers.forEach((h, idx) => {
+        if (h.includes('isin')) row.isin = values[idx];
+        else if (h.includes('nav') || h.includes('kurs')) row.nav = parseFloat(values[idx].replace(',', '.'));
+        else if (h.includes('namn') || h.includes('name')) row.fundName = values[idx];
+        else if (h.includes('datum') || h.includes('date')) row.date = values[idx];
+        else if (h.includes('aum') || h.includes('tillgång')) row.aum = parseFloat(values[idx].replace(',', '.'));
+        else if (h.includes('andel') || h.includes('share')) row.outstandingShares = parseFloat(values[idx].replace(',', '.'));
+        else if (h.includes('valuta') || h.includes('currency')) row.currency = values[idx];
+      });
+
+      if (row.isin && row.nav) {
+        data.push(row);
+      }
+    }
+
+    return data;
+  }, []);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      setCsvText(text);
+      setError(null);
+    };
+    reader.readAsText(file);
+  };
+
+  const handleSubmit = () => {
+    const data = parseCSV(csvText);
+    if (data && data.length > 0) {
+      onUpload(data);
+      onClose();
+      setCsvText('');
+    }
+  };
+
+  if (!isOpen) return null;
+
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-4 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between mb-3">
-        <div>
-          <h4 className="font-medium text-aifm-charcoal">{institution.name}</h4>
-          <div className="flex items-center gap-2 mt-1">
-            <InstitutionTypeBadge type={institution.type} />
-            <span className="text-xs text-aifm-charcoal/50 uppercase">{institution.format}</span>
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h3 className="font-semibold text-lg text-aifm-charcoal">Importera CSV</h3>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X className="w-5 h-5 text-aifm-charcoal/60" />
+          </button>
+        </div>
+        
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-aifm-charcoal mb-2">
+              Välj CSV-fil eller klistra in data
+            </label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,.txt"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-aifm-gold transition-colors text-center"
+            >
+              <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+              <p className="text-sm text-aifm-charcoal/70">Klicka för att välja fil eller dra och släpp</p>
+              <p className="text-xs text-aifm-charcoal/50 mt-1">CSV, TXT (semikolon eller komma-separerad)</p>
+            </button>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-aifm-charcoal mb-2">
+              CSV-innehåll
+            </label>
+            <textarea
+              value={csvText}
+              onChange={(e) => { setCsvText(e.target.value); setError(null); }}
+              placeholder="ISIN;Fondnamn;NAV;Datum;Valuta&#10;SE0019175563;AUAG Essential Metals A;142.42;2025-01-17;SEK"
+              className="w-full h-40 px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:border-aifm-gold resize-none"
+            />
+          </div>
+
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
+              {error}
+            </div>
+          )}
+
+          <div className="bg-gray-50 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-aifm-charcoal mb-2">Obligatoriska kolumner:</h4>
+            <ul className="text-xs text-aifm-charcoal/70 space-y-1">
+              <li>• <code className="bg-white px-1 rounded">ISIN</code> - Fondens ISIN-kod</li>
+              <li>• <code className="bg-white px-1 rounded">NAV</code> - NAV-kurs (decimal)</li>
+            </ul>
+            <h4 className="text-sm font-medium text-aifm-charcoal mt-3 mb-2">Valfria kolumner:</h4>
+            <ul className="text-xs text-aifm-charcoal/70 space-y-1">
+              <li>• <code className="bg-white px-1 rounded">Fondnamn/Name</code> - Fondens namn</li>
+              <li>• <code className="bg-white px-1 rounded">Datum/Date</code> - Prisdatum (YYYY-MM-DD)</li>
+              <li>• <code className="bg-white px-1 rounded">AUM</code> - Assets under management</li>
+              <li>• <code className="bg-white px-1 rounded">Valuta/Currency</code> - Valutakod</li>
+            </ul>
           </div>
         </div>
-        <StatusBadge status={institution.status} />
-      </div>
-      
-      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-        <div>
-          {institution.lastSent ? (
-            <p className="text-xs text-aifm-charcoal/50">Senast: {institution.lastSent}</p>
-          ) : (
-            <p className="text-xs text-aifm-charcoal/50">Ej skickad</p>
-          )}
-          {institution.autoSend && (
-            <p className="text-xs text-emerald-600 mt-0.5">✓ Auto-utskick</p>
-          )}
+
+        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm text-aifm-charcoal hover:bg-gray-100 rounded-lg"
+          >
+            Avbryt
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={!csvText.trim()}
+            className="px-4 py-2 text-sm bg-aifm-gold text-white rounded-lg hover:bg-aifm-gold/90 disabled:opacity-50"
+          >
+            Importera
+          </button>
         </div>
-        <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Skicka nu">
-          <Send className="w-4 h-4 text-aifm-gold" />
-        </button>
+      </div>
+    </div>
+  );
+}
+
+function ManualPriceModal({ 
+  isOpen, 
+  onClose, 
+  onSave,
+  existingFunds 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void;
+  onSave: (data: any) => void;
+  existingFunds: PriceDataRecord[];
+}) {
+  const [formData, setFormData] = useState({
+    fundId: '',
+    fundName: '',
+    isin: '',
+    date: new Date().toISOString().split('T')[0],
+    nav: '',
+    aum: '',
+    outstandingShares: '',
+    currency: 'SEK',
+  });
+
+  const handleFundSelect = (fundId: string) => {
+    const fund = existingFunds.find(f => f.fundId === fundId);
+    if (fund) {
+      setFormData(prev => ({
+        ...prev,
+        fundId: fund.fundId,
+        fundName: fund.fundName,
+        isin: fund.isin,
+        currency: fund.currency,
+        aum: fund.aum.toString(),
+        outstandingShares: fund.outstandingShares.toString(),
+      }));
+    }
+  };
+
+  const handleSubmit = () => {
+    if (!formData.isin || !formData.nav) return;
+    
+    onSave({
+      fundId: formData.fundId || formData.isin,
+      fundName: formData.fundName || `Fund ${formData.isin}`,
+      isin: formData.isin,
+      date: formData.date,
+      nav: parseFloat(formData.nav),
+      aum: formData.aum ? parseFloat(formData.aum) : undefined,
+      outstandingShares: formData.outstandingShares ? parseFloat(formData.outstandingShares) : undefined,
+      currency: formData.currency,
+    });
+    
+    onClose();
+    setFormData({
+      fundId: '',
+      fundName: '',
+      isin: '',
+      date: new Date().toISOString().split('T')[0],
+      nav: '',
+      aum: '',
+      outstandingShares: '',
+      currency: 'SEK',
+    });
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl w-full max-w-lg">
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h3 className="font-semibold text-lg text-aifm-charcoal">Mata in pris manuellt</h3>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X className="w-5 h-5 text-aifm-charcoal/60" />
+          </button>
+        </div>
+        
+        <div className="p-6 space-y-4">
+          {existingFunds.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-aifm-charcoal mb-2">
+                Välj befintlig fond
+              </label>
+              <select
+                value={formData.fundId}
+                onChange={(e) => handleFundSelect(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold"
+              >
+                <option value="">-- Välj fond --</option>
+                {existingFunds.map(f => (
+                  <option key={f.fundId} value={f.fundId}>
+                    {f.fundName} ({f.isin})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-aifm-charcoal mb-1">ISIN *</label>
+              <input
+                type="text"
+                value={formData.isin}
+                onChange={(e) => setFormData(prev => ({ ...prev, isin: e.target.value }))}
+                placeholder="SE0019175563"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold"
+              />
+            </div>
+            
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-aifm-charcoal mb-1">Fondnamn</label>
+              <input
+                type="text"
+                value={formData.fundName}
+                onChange={(e) => setFormData(prev => ({ ...prev, fundName: e.target.value }))}
+                placeholder="AUAG Essential Metals A"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-aifm-charcoal mb-1">NAV-kurs *</label>
+              <input
+                type="number"
+                step="0.01"
+                value={formData.nav}
+                onChange={(e) => setFormData(prev => ({ ...prev, nav: e.target.value }))}
+                placeholder="142.42"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-aifm-charcoal mb-1">Datum</label>
+              <input
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-aifm-charcoal mb-1">Valuta</label>
+              <select
+                value={formData.currency}
+                onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold"
+              >
+                <option value="SEK">SEK</option>
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+                <option value="NOK">NOK</option>
+                <option value="CHF">CHF</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-aifm-charcoal mb-1">AUM</label>
+              <input
+                type="number"
+                step="0.01"
+                value={formData.aum}
+                onChange={(e) => setFormData(prev => ({ ...prev, aum: e.target.value }))}
+                placeholder="395584099.11"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm text-aifm-charcoal hover:bg-gray-100 rounded-lg"
+          >
+            Avbryt
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={!formData.isin || !formData.nav}
+            className="px-4 py-2 text-sm bg-aifm-gold text-white rounded-lg hover:bg-aifm-gold/90 disabled:opacity-50"
+          >
+            Spara
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -157,8 +566,121 @@ function InstitutionCard({ institution }: { institution: Institution }) {
 // ============================================================================
 
 export default function PriceDataPage() {
-  const [selectedDate, setSelectedDate] = useState('2025-01-17');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedRecords, setSelectedRecords] = useState<string[]>([]);
+  const [priceData, setPriceData] = useState<PriceDataRecord[]>([]);
+  const [activeSource, setActiveSource] = useState<PriceDataSource>('mock');
+  const [providerStatuses, setProviderStatuses] = useState<Record<PriceDataSource, ProviderStatus>>({} as any);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isCSVModalOpen, setIsCSVModalOpen] = useState(false);
+  const [isManualModalOpen, setIsManualModalOpen] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // Fetch data on mount and when source changes
+  useEffect(() => {
+    fetchProviderStatus();
+    fetchPriceData();
+  }, [activeSource, selectedDate]);
+
+  const fetchProviderStatus = async () => {
+    try {
+      const response = await fetch('/api/nav/price-data?action=status');
+      if (response.ok) {
+        const data = await response.json();
+        setActiveSource(data.activeSource);
+        setProviderStatuses(data.statuses);
+      }
+    } catch (error) {
+      console.error('Failed to fetch provider status:', error);
+    }
+  };
+
+  const fetchPriceData = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/nav/price-data?date=${selectedDate}`);
+      if (response.ok) {
+        const data = await response.json();
+        setPriceData(data.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch price data:', error);
+      setPriceData([]);
+    }
+    setIsLoading(false);
+  };
+
+  const handleSourceChange = async (source: PriceDataSource) => {
+    try {
+      const response = await fetch('/api/nav/price-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set-source', source }),
+      });
+      
+      if (response.ok) {
+        setActiveSource(source);
+        setNotification({ type: 'success', message: `Bytte till ${source} som priskälla` });
+        fetchPriceData();
+      }
+    } catch (error) {
+      setNotification({ type: 'error', message: 'Kunde inte byta priskälla' });
+    }
+  };
+
+  const handleCSVImport = async (data: any[]) => {
+    try {
+      const response = await fetch('/api/nav/price-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'import-csv', data }),
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        setNotification({ 
+          type: 'success', 
+          message: `Importerade ${result.imported} priser` + (result.errors.length > 0 ? ` (${result.errors.length} fel)` : '')
+        });
+        
+        // Switch to CSV source and refresh
+        await handleSourceChange('csv');
+      }
+    } catch (error) {
+      setNotification({ type: 'error', message: 'Kunde inte importera CSV' });
+    }
+  };
+
+  const handleManualPrice = async (data: any) => {
+    try {
+      const response = await fetch('/api/nav/price-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set-manual', ...data }),
+      });
+      
+      if (response.ok) {
+        setNotification({ type: 'success', message: `Sparade pris för ${data.fundName || data.isin}` });
+        
+        // Switch to manual source and refresh
+        if (activeSource !== 'manual') {
+          await handleSourceChange('manual');
+        } else {
+          fetchPriceData();
+        }
+      }
+    } catch (error) {
+      setNotification({ type: 'error', message: 'Kunde inte spara pris' });
+    }
+  };
+
+  // Clear notification after 5 seconds
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   const toggleSelection = (isin: string) => {
     setSelectedRecords(prev =>
@@ -167,31 +689,91 @@ export default function PriceDataPage() {
   };
 
   const selectAll = () => {
-    setSelectedRecords(mockPriceData.map(r => r.isin));
+    setSelectedRecords(priceData.map(r => r.isin));
   };
 
   return (
     <div className="space-y-6">
+      {/* Notification */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 ${
+          notification.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
+        }`}>
+          {notification.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+          {notification.message}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link
-          href="/nav-admin"
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
+        <Link href="/nav-admin" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
           <ArrowLeft className="w-5 h-5 text-aifm-charcoal/60" />
         </Link>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-aifm-charcoal">Prisdata-utskick</h1>
+          <h1 className="text-2xl font-bold text-aifm-charcoal">Prisdata-hantering</h1>
           <p className="text-aifm-charcoal/60 mt-1">
-            Exportera och skicka NAV-data till institut och hemsida
+            Hantera priskällor, importera data och skicka till institut
           </p>
         </div>
+      </div>
+
+      {/* Price Source Selection */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="font-semibold text-aifm-charcoal">Priskälla</h2>
+            <p className="text-sm text-aifm-charcoal/60">Välj var prisdata ska hämtas från</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsCSVModalOpen(true)}
+              className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg hover:border-gray-300 text-sm"
+            >
+              <Upload className="w-4 h-4" />
+              Importera CSV
+            </button>
+            <button
+              onClick={() => setIsManualModalOpen(true)}
+              className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg hover:border-gray-300 text-sm"
+            >
+              <Plus className="w-4 h-4" />
+              Lägg till pris
+            </button>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {(['fund_registry', 'csv', 'manual', 'mock', 'lseg'] as PriceDataSource[]).map(source => (
+            <ProviderCard
+              key={source}
+              source={source}
+              status={providerStatuses[source] || { available: false, lastCheck: '', message: 'Loading...' }}
+              isActive={activeSource === source}
+              onSelect={() => handleSourceChange(source)}
+            />
+          ))}
+        </div>
+        
+        {activeSource === 'lseg' && !providerStatuses.lseg?.available && (
+          <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
+              <div>
+                <h4 className="font-medium text-amber-800">LSEG-licens krävs</h4>
+                <p className="text-sm text-amber-700 mt-1">
+                  För att använda LSEG som priskälla behöver du konfigurera API-nycklar. 
+                  Kontakta din LSEG-representant för credentials, eller använd CSV/Manuell import i mellantiden.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-4 gap-4">
         <div className="bg-white rounded-xl border border-gray-100 p-4">
-          <p className="text-2xl font-bold text-aifm-charcoal">{mockPriceData.length}</p>
+          <p className="text-2xl font-bold text-aifm-charcoal">{priceData.length}</p>
           <p className="text-sm text-aifm-charcoal/60">Andelsklasser</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-100 p-4">
@@ -203,8 +785,10 @@ export default function PriceDataPage() {
           <p className="text-sm text-aifm-charcoal/60">Mottagare</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-100 p-4">
-          <p className="text-2xl font-bold text-aifm-gold">~30 min</p>
-          <p className="text-sm text-aifm-charcoal/60">Tid sparad/dag</p>
+          <div className="flex items-center gap-2">
+            <SourceBadge source={activeSource} />
+          </div>
+          <p className="text-sm text-aifm-charcoal/60 mt-1">Aktiv källa</p>
         </div>
       </div>
 
@@ -220,9 +804,12 @@ export default function PriceDataPage() {
               className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold/50"
             />
           </div>
-          <button className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
-            <RefreshCw className="w-4 h-4 text-aifm-charcoal/60" />
-            <span className="text-sm">Uppdatera från källa</span>
+          <button 
+            onClick={fetchPriceData}
+            className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
+          >
+            <RefreshCw className={`w-4 h-4 text-aifm-charcoal/60 ${isLoading ? 'animate-spin' : ''}`} />
+            <span className="text-sm">Uppdatera</span>
           </button>
         </div>
         
@@ -230,10 +817,6 @@ export default function PriceDataPage() {
           <button className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
             <FileSpreadsheet className="w-4 h-4 text-aifm-charcoal/60" />
             <span className="text-sm">Exportera Excel</span>
-          </button>
-          <button className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
-            <Upload className="w-4 h-4 text-aifm-charcoal/60" />
-            <span className="text-sm">Ladda upp till hemsida</span>
           </button>
           <button className="flex items-center gap-2 px-4 py-2 bg-aifm-gold text-white rounded-lg hover:bg-aifm-gold/90 transition-colors">
             <Send className="w-4 h-4" />
@@ -245,141 +828,155 @@ export default function PriceDataPage() {
       {/* Price Data Table */}
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="font-semibold text-aifm-charcoal">NAV-data för {selectedDate}</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="font-semibold text-aifm-charcoal">NAV-data för {selectedDate}</h2>
+            <SourceBadge source={activeSource} />
+          </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={selectAll}
-              className="text-sm text-aifm-gold hover:underline"
-            >
+            <button onClick={selectAll} className="text-sm text-aifm-gold hover:underline">
               Välj alla
             </button>
             {selectedRecords.length > 0 && (
-              <span className="text-sm text-aifm-charcoal/50">
-                ({selectedRecords.length} valda)
-              </span>
+              <span className="text-sm text-aifm-charcoal/50">({selectedRecords.length} valda)</span>
             )}
           </div>
         </div>
         
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-gray-50/50">
-                <th className="px-4 py-3 w-10">
-                  <input
-                    type="checkbox"
-                    checked={selectedRecords.length === mockPriceData.length}
-                    onChange={() => selectedRecords.length === mockPriceData.length ? setSelectedRecords([]) : selectAll()}
-                    className="w-4 h-4 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold/20"
-                  />
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/70 uppercase">ISIN</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/70 uppercase">Fond</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-aifm-charcoal/70 uppercase">Valuta</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase">NAV kurs</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase">Förändring</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase">Totalt AUM</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase">Utst. andelar</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {mockPriceData.map((record) => (
-                <tr key={record.isin} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-4 py-3">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 text-aifm-gold animate-spin" />
+          </div>
+        ) : priceData.length === 0 ? (
+          <div className="text-center py-12">
+            <Database className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            <p className="text-aifm-charcoal/60">Ingen prisdata tillgänglig</p>
+            <p className="text-sm text-aifm-charcoal/40 mt-1">
+              {activeSource === 'csv' ? 'Importera en CSV-fil för att komma igång' : 
+               activeSource === 'manual' ? 'Lägg till priser manuellt' :
+               'Prisdata kunde inte hämtas från vald källa'}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50/50">
+                  <th className="px-4 py-3 w-10">
                     <input
                       type="checkbox"
-                      checked={selectedRecords.includes(record.isin)}
-                      onChange={() => toggleSelection(record.isin)}
+                      checked={selectedRecords.length === priceData.length && priceData.length > 0}
+                      onChange={() => selectedRecords.length === priceData.length ? setSelectedRecords([]) : selectAll()}
                       className="w-4 h-4 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold/20"
                     />
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="font-mono text-sm text-aifm-charcoal/70">{record.isin}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="font-medium text-aifm-charcoal">{record.fundName}</span>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium text-aifm-charcoal/70">
-                      {record.currency}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right font-semibold text-aifm-charcoal">
-                    {formatCurrency(record.navKurs)}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <span className={`font-medium ${record.change >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                      {record.change >= 0 ? '+' : ''}{record.change.toFixed(2)}%
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm text-aifm-charcoal/70">
-                    {formatLargeCurrency(record.totalAUM)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm text-aifm-charcoal/70">
-                    {formatCurrency(record.sharesOutstanding)}
-                  </td>
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/70 uppercase">ISIN</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/70 uppercase">Fond</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-aifm-charcoal/70 uppercase">Valuta</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase">NAV kurs</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase">Förändring</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase">Totalt AUM</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-aifm-charcoal/70 uppercase">Källa</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {priceData.map((record) => (
+                  <tr key={record.isin} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedRecords.includes(record.isin)}
+                        onChange={() => toggleSelection(record.isin)}
+                        className="w-4 h-4 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold/20"
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="font-mono text-sm text-aifm-charcoal/70">{record.isin}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="font-medium text-aifm-charcoal">{record.fundName}</span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium text-aifm-charcoal/70">
+                        {record.currency}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold text-aifm-charcoal">
+                      {formatCurrency(record.nav)}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {record.navChange !== undefined && (
+                        <span className={`font-medium ${record.navChange >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                          {record.navChange >= 0 ? '+' : ''}{record.navChange.toFixed(2)}%
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm text-aifm-charcoal/70">
+                      {formatLargeCurrency(record.aum)}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <SourceBadge source={record.source} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Institutions Grid */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-aifm-charcoal">Mottagare & Institut</h2>
-          <Link
-            href="/nav-admin/settings"
-            className="flex items-center gap-2 text-sm text-aifm-gold hover:underline"
-          >
+          <Link href="/nav-admin/settings" className="flex items-center gap-2 text-sm text-aifm-gold hover:underline">
             <Settings className="w-4 h-4" />
             Hantera mottagare
           </Link>
         </div>
         
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {mockInstitutions.map((institution) => (
-            <InstitutionCard key={institution.id} institution={institution} />
+            <div key={institution.id} className="bg-white rounded-xl border border-gray-100 p-4 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <h4 className="font-medium text-aifm-charcoal">{institution.name}</h4>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs text-aifm-charcoal/50 uppercase">{institution.format}</span>
+                  </div>
+                </div>
+                <StatusBadge status={institution.status} />
+              </div>
+              
+              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                <div>
+                  {institution.lastSent ? (
+                    <p className="text-xs text-aifm-charcoal/50">Senast: {institution.lastSent}</p>
+                  ) : (
+                    <p className="text-xs text-aifm-charcoal/50">Ej skickad</p>
+                  )}
+                </div>
+                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Skicka nu">
+                  <Send className="w-4 h-4 text-aifm-gold" />
+                </button>
+              </div>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* Website Upload Section */}
-      <div className="bg-gradient-to-r from-amber-50 to-amber-100/50 rounded-2xl p-6 border border-amber-200/50">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-4">
-            <div className="p-3 bg-amber-500 rounded-xl">
-              <Globe className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-amber-900">Uppdatera hemsidan</h3>
-              <p className="text-sm text-amber-700 mt-1">
-                Senast uppdaterad: 2025-01-17 09:45. Generera och ladda upp ny prisdata till AuAg hemsida.
-              </p>
-              <div className="flex items-center gap-3 mt-3">
-                <button className="flex items-center gap-2 px-4 py-2 bg-white text-amber-700 rounded-lg hover:bg-amber-50 transition-colors text-sm font-medium border border-amber-200">
-                  <Eye className="w-4 h-4" />
-                  Förhandsgranska
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium">
-                  <Upload className="w-4 h-4" />
-                  Ladda upp nu
-                </button>
-              </div>
-            </div>
-          </div>
-          <a
-            href="https://auag.se"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-sm text-amber-600 hover:underline"
-          >
-            Öppna hemsida
-            <ExternalLink className="w-3 h-3" />
-          </a>
-        </div>
-      </div>
+      {/* Modals */}
+      <CSVUploadModal
+        isOpen={isCSVModalOpen}
+        onClose={() => setIsCSVModalOpen(false)}
+        onUpload={handleCSVImport}
+      />
+      
+      <ManualPriceModal
+        isOpen={isManualModalOpen}
+        onClose={() => setIsManualModalOpen(false)}
+        onSave={handleManualPrice}
+        existingFunds={priceData}
+      />
     </div>
   );
 }

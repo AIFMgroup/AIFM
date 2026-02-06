@@ -248,24 +248,135 @@ Försök gärna omformulera din fråga eller välj ett av de föreslagna ämnena
     }).format(date);
   };
 
+  // Helper functions for table parsing
+  const isTableRow = (line: string): boolean => {
+    return line.trim().startsWith('|') && line.trim().endsWith('|');
+  };
+
+  const isTableSeparator = (line: string): boolean => {
+    return /^\|[\s\-:]+\|/.test(line.trim()) && line.includes('-');
+  };
+
+  const parseTableCells = (row: string): string[] => {
+    return row
+      .split('|')
+      .slice(1, -1)
+      .map(cell => cell.trim());
+  };
+
+  const renderInlineBold = (text: string, isAssistant: boolean) => {
+    if (text.includes('**')) {
+      const parts = text.split(/\*\*/);
+      return parts.map((part, j) => 
+        j % 2 === 1 ? <strong key={j} className="font-semibold">{part}</strong> : part
+      );
+    }
+    return text;
+  };
+
+  const renderTable = (tableLines: string[], startIndex: number, isAssistant: boolean) => {
+    const rows: string[][] = [];
+    let hasHeader = false;
+    let headerEndIndex = -1;
+    
+    tableLines.forEach((line, idx) => {
+      if (isTableSeparator(line)) {
+        hasHeader = true;
+        headerEndIndex = idx;
+      } else if (isTableRow(line)) {
+        rows.push(parseTableCells(line));
+      }
+    });
+    
+    if (rows.length === 0) return null;
+    
+    const headerRows = hasHeader ? rows.slice(0, headerEndIndex) : [];
+    const bodyRows = hasHeader ? rows.slice(headerEndIndex) : rows;
+    
+    return (
+      <div key={`table-${startIndex}`} className="my-3 overflow-x-auto">
+        <table className={`min-w-full border-collapse text-sm ${isAssistant ? 'text-white' : 'text-aifm-charcoal'}`}>
+          {headerRows.length > 0 && (
+            <thead>
+              {headerRows.map((row, rowIdx) => (
+                <tr key={`thead-${rowIdx}`} className={isAssistant ? 'bg-white/10 border-b border-white/20' : 'bg-aifm-cream border-b border-aifm-charcoal/20'}>
+                  {row.map((cell, cellIdx) => (
+                    <th 
+                      key={`th-${rowIdx}-${cellIdx}`}
+                      className={`px-3 py-2 text-left font-semibold border ${isAssistant ? 'border-white/20' : 'border-aifm-charcoal/20'}`}
+                    >
+                      {renderInlineBold(cell, isAssistant)}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+          )}
+          <tbody>
+            {bodyRows.map((row, rowIdx) => (
+              <tr 
+                key={`tbody-${rowIdx}`} 
+                className={isAssistant 
+                  ? (rowIdx % 2 === 0 ? 'bg-white/5' : 'bg-transparent') 
+                  : (rowIdx % 2 === 0 ? 'bg-white' : 'bg-aifm-cream/50')
+                }
+              >
+                {row.map((cell, cellIdx) => (
+                  <td 
+                    key={`td-${rowIdx}-${cellIdx}`}
+                    className={`px-3 py-2 border ${isAssistant ? 'border-white/20' : 'border-aifm-charcoal/20'}`}
+                  >
+                    {renderInlineBold(cell, isAssistant)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
   // Parse message content with markdown-like formatting
   const renderMessageContent = (content: string, isAssistant: boolean) => {
     const lines = content.split('\n');
-    return lines.map((line, i) => {
+    const elements: React.ReactNode[] = [];
+    let i = 0;
+    
+    while (i < lines.length) {
+      const line = lines[i];
+      
+      // Check if this is the start of a table
+      if (isTableRow(line)) {
+        const tableLines: string[] = [];
+        const tableStartIndex = i;
+        
+        // Collect all consecutive table lines
+        while (i < lines.length && (isTableRow(lines[i]) || isTableSeparator(lines[i]))) {
+          tableLines.push(lines[i]);
+          i++;
+        }
+        
+        // Render the table
+        const table = renderTable(tableLines, tableStartIndex, isAssistant);
+        if (table) {
+          elements.push(table);
+        }
+        continue;
+      }
+      
       // Bold text
       if (line.startsWith('**') && line.endsWith('**')) {
-        return (
-    
+        elements.push(
           <p key={i} className={`font-semibold mt-3 first:mt-0 ${isAssistant ? 'text-white' : 'text-aifm-charcoal'}`}>
             {line.replace(/\*\*/g, '')}
           </p>
         );
       }
       // Inline bold
-      if (line.includes('**')) {
+      else if (line.includes('**')) {
         const parts = line.split(/\*\*/);
-        return (
-    
+        elements.push(
           <p key={i} className={isAssistant ? 'text-white/90' : 'text-aifm-charcoal/90'}>
             {parts.map((part, j) => 
               j % 2 === 1 ? <strong key={j} className="font-semibold">{part}</strong> : part
@@ -274,35 +385,38 @@ Försök gärna omformulera din fråga eller välj ett av de föreslagna ämnena
         );
       }
       // List items
-      if (line.startsWith('- ')) {
-        return (
-    
+      else if (line.startsWith('- ')) {
+        elements.push(
           <p key={i} className={`ml-3 ${isAssistant ? 'text-white/90' : 'text-aifm-charcoal/90'}`}>
             • {line.substring(2)}
           </p>
         );
       }
       // Numbered list
-      if (line.match(/^\d+\./)) {
-        return (
-    
+      else if (line.match(/^\d+\./)) {
+        elements.push(
           <p key={i} className={`ml-3 ${isAssistant ? 'text-white/90' : 'text-aifm-charcoal/90'}`}>
             {line}
           </p>
         );
       }
       // Empty line
-      if (!line) {
-        return <div key={i} className="h-2" />;
+      else if (!line) {
+        elements.push(<div key={i} className="h-2" />);
       }
       // Regular text
-      return (
+      else {
+        elements.push(
+          <p key={i} className={isAssistant ? 'text-white/90' : 'text-aifm-charcoal/90'}>
+            {line}
+          </p>
+        );
+      }
+      
+      i++;
+    }
     
-        <p key={i} className={isAssistant ? 'text-white/90' : 'text-aifm-charcoal/90'}>
-          {line}
-        </p>
-      );
-    });
+    return elements;
   };
 
   return (

@@ -93,8 +93,8 @@ export async function GET(_request: NextRequest) {
       });
 
       // Calculate compliance score
-      const totalChecks = complianceChecks.reduce((sum, c) => sum + c._count, 0);
-      const compliantChecks = complianceChecks.find(c => c.status === 'COMPLIANT')?._count || 0;
+      const totalChecks = complianceChecks.reduce((sum: number, c: { status: string; _count: number }) => sum + c._count, 0);
+      const compliantChecks = complianceChecks.find((c: { status: string; _count: number }) => c.status === 'COMPLIANT')?._count || 0;
       const complianceScore = totalChecks > 0 ? compliantChecks / totalChecks : 0;
 
       // If database is empty, use mock data instead
@@ -128,26 +128,26 @@ export async function GET(_request: NextRequest) {
         documents,
         policies,
         regulations,
-        taskStats: taskStats.reduce((acc, stat) => {
+        taskStats: taskStats.reduce((acc: Record<string, number>, stat: { status: string; _count: number }) => {
           acc[stat.status] = stat._count;
           return acc;
         }, {} as Record<string, number>),
-        reportStats: reportStats.reduce((acc, stat) => {
+        reportStats: reportStats.reduce((acc: Record<string, number>, stat: { status: string; _count: number }) => {
           acc[stat.status] = stat._count;
           return acc;
         }, {} as Record<string, number>),
-        documentStats: documentStats.reduce((acc, stat) => {
+        documentStats: documentStats.reduce((acc: Record<string, number>, stat: { status: string; _count: number }) => {
           acc[stat.status] = stat._count;
           return acc;
         }, {} as Record<string, number>),
         complianceStats: {
           total: totalChecks,
           compliant: compliantChecks,
-          nonCompliant: complianceChecks.find(c => c.status === 'NON_COMPLIANT')?._count || 0,
-          needsReview: complianceChecks.find(c => c.status === 'NEEDS_REVIEW')?._count || 0,
+          nonCompliant: complianceChecks.find((c: { status: string; _count: number }) => c.status === 'NON_COMPLIANT')?._count || 0,
+          needsReview: complianceChecks.find((c: { status: string; _count: number }) => c.status === 'NEEDS_REVIEW')?._count || 0,
           score: complianceScore,
         },
-        recentDocuments: recentDocuments.map(doc => ({
+        recentDocuments: recentDocuments.map((doc: { id: string; fileName: string; title: string | null; status: string; uploadedAt: Date; client: { id: string; name: string } | null }) => ({
           id: doc.id,
           fileName: doc.fileName,
           title: doc.title,

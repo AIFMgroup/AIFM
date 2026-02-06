@@ -1,8 +1,15 @@
-import { Role } from '@aifm/shared/types';
+// Local Role enum (matches @aifm/shared/types)
+export enum Role {
+  COORDINATOR = 'coordinator',
+  SPECIALIST = 'specialist',
+  CLIENT = 'client',
+  ADMIN = 'admin',
+  SUPER_ADMIN = 'super_admin',
+}
 
 // Define permissions for each role
 export const ROLE_PERMISSIONS: Record<Role, Set<string>> = {
-  COORDINATOR: new Set([
+  [Role.COORDINATOR]: new Set([
     'task:view',
     'task:approve',
     'task:reject',
@@ -12,7 +19,7 @@ export const ROLE_PERMISSIONS: Record<Role, Set<string>> = {
     'audit:view',
     'client:view',
   ]),
-  SPECIALIST: new Set([
+  [Role.SPECIALIST]: new Set([
     'report:create',
     'report:edit',
     'report:view',
@@ -20,13 +27,13 @@ export const ROLE_PERMISSIONS: Record<Role, Set<string>> = {
     'task:view',
     'audit:view:own',
   ]),
-  CLIENT: new Set([
+  [Role.CLIENT]: new Set([
     'report:view:own',
     'report:download',
     'audit:view:own',
     'dashboard:view',
   ]),
-  ADMIN: new Set([
+  [Role.ADMIN]: new Set([
     'client:create',
     'client:edit',
     'client:delete',
@@ -43,6 +50,25 @@ export const ROLE_PERMISSIONS: Record<Role, Set<string>> = {
     'audit:view:all',
     'report:view:all',
     'task:view:all',
+  ]),
+  [Role.SUPER_ADMIN]: new Set([
+    'client:create',
+    'client:edit',
+    'client:delete',
+    'user:create',
+    'user:edit',
+    'user:delete',
+    'datafeed:create',
+    'datafeed:edit',
+    'datafeed:delete',
+    'datafeed:sync',
+    'system:config',
+    'system:logs',
+    'system:health',
+    'audit:view:all',
+    'report:view:all',
+    'task:view:all',
+    'admin:all',
   ]),
 };
 

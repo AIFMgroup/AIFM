@@ -1372,8 +1372,8 @@ function DashboardLayoutInner({
       {/* Loading Overlay */}
       <LoadingOverlay />
       
-      {/* Onboarding Checklist Widget */}
-      <OnboardingChecklistWidget />
+      {/* Onboarding Checklist Widget - Disabled */}
+      {/* <OnboardingChecklistWidget /> */}
       
       {/* Chat Widget removed - replaced by FeedbackChat on accounting pages */}
       {/* <ChatWidget /> */}

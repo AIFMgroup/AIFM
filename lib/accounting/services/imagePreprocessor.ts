@@ -6,7 +6,6 @@
  */
 
 import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
-import { createRequire } from 'module';
 
 const REGION = process.env.AWS_REGION || 'eu-north-1';
 const s3Client = new S3Client({ region: REGION });
@@ -65,8 +64,9 @@ export async function preprocessImage(
     // 2. Analysera bilden (använd sharp dynamiskt om installerat)
     let sharp;
     try {
-      sharp = (await import('sharp')).default;
-    } catch (e) {
+      // Use webpackIgnore to prevent bundling - sharp is an optional runtime dependency
+      sharp = (await import(/* webpackIgnore: true */ 'sharp')).default;
+    } catch {
       // Sharp inte installerat - returnera originalbilden
       console.warn('[ImagePreprocessor] sharp not installed, skipping preprocessing');
       return {
@@ -206,13 +206,10 @@ export async function extractPdfPages(
     // Försök använda pdf-to-img (valfritt paket) - poppler krävs på servern
     let pdfToImages: ((buffer: Buffer, options?: { scale?: number }) => AsyncIterable<Buffer>) | undefined;
     try {
-      // Avoid build-time resolution errors: load dynamically at runtime only if installed.
-      const req = createRequire(import.meta.url);
-      // Important: avoid a static string literal so bundlers don't try to resolve at build time.
-      const modName = ['pdf', 'to', 'img'].join('-');
-      const pdfModule = req(modName) as any;
-      pdfToImages = pdfModule?.pdf;
-    } catch (e) {
+      // Use webpackIgnore to prevent bundling - pdf-to-img is an optional runtime dependency
+      const pdfModule = await import(/* webpackIgnore: true */ 'pdf-to-img');
+      pdfToImages = (pdfModule as any)?.pdf;
+    } catch {
       console.warn('[ImagePreprocessor] pdf-to-img not available');
       // Fallback: returnera original-PDF:en som enda "sida"
       return {
@@ -273,7 +270,7 @@ export async function analyzeImageQuality(
   let score = 100;
 
   try {
-    const sharp = (await import('sharp')).default;
+    const sharp = (await import(/* webpackIgnore: true */ 'sharp')).default;
     const image = sharp(buffer);
     const metadata = await image.metadata();
     const stats = await image.stats();
@@ -346,7 +343,7 @@ export async function detectAndCorrectOrientation(
   buffer: Buffer
 ): Promise<{ corrected: Buffer; rotationApplied: number }> {
   try {
-    const sharp = (await import('sharp')).default;
+    const sharp = (await import(/* webpackIgnore: true */ 'sharp')).default;
     const image = sharp(buffer);
     const metadata = await image.metadata();
 
@@ -386,7 +383,7 @@ async function streamToBuffer(stream: any): Promise<Buffer> {
  */
 export async function optimizeForOCR(buffer: Buffer): Promise<Buffer> {
   try {
-    const sharp = (await import('sharp')).default;
+    const sharp = (await import(/* webpackIgnore: true */ 'sharp')).default;
     
     return await sharp(buffer)
       .grayscale()

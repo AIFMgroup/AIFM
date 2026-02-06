@@ -1,16 +1,15 @@
 /**
  * Bank ETL Worker (PSD2)
  * Fetches account statements from Nordigen and normalizes to BankAccount + LedgerEntry
+ * NOTE: Database operations are mocked - data is logged but not persisted
  */
 import { Worker, Job } from "bullmq";
-import { PrismaClient } from "@prisma/client";
 import axios from "axios";
 import pino from "pino";
 import { ETLJobPayload, BankTransactionZ } from "@aifm/shared";
 import { redisConnection } from "../lib/queue";
 
 const logger = pino();
-const prisma = new PrismaClient();
 
 const NORDIGEN_BASE_URL = "https://api.nordigen.com/api/v2";
 
@@ -25,23 +24,12 @@ export const bankWorker = new Worker(
 
     const { clientId, period } = job.data;
 
-    // Get DataFeed config
-    const dataFeed = await prisma.dataFeed.findFirst({
-      where: {
-        clientId,
-        source: "BANK",
-      },
-    });
-
-    if (!dataFeed) {
-      logger.warn({ clientId }, "No Bank DataFeed configured");
-      return { success: true, skipped: true };
-    }
-
-    const config = dataFeed.configJson as any;
-    const requisitionId = config.requisitionId; // Nordigen requisition linking accounts
+    // Mock: Check for Bank DataFeed config (in production, fetch from DynamoDB)
+    const requisitionId = process.env.NORDIGEN_REQUISITION_ID;
+    
     if (!requisitionId) {
-      throw new Error("Bank requisition not configured");
+      logger.warn({ clientId }, "No Bank requisition configured - skipping");
+      return { success: true, skipped: true };
     }
 
     try {
@@ -62,68 +50,17 @@ export const bankWorker = new Worker(
         const balance = await getNordigeBalance(token, account.id);
 
         logger.info(
-          { accountId: account.id, txCount: transactions.length },
-          "Fetched transactions"
+          { accountId: account.id, txCount: transactions.length, balance: balance.balanceAmount.amount },
+          "Fetched transactions - would persist to DynamoDB"
         );
 
-        // Upsert BankAccount
-        const bankAccount = await prisma.bankAccount.upsert({
-          where: {
-            id: `${clientId}-${account.iban}`,
-          },
-          update: {
-            balance: balance.balanceAmount.amount,
-            syncedAt: new Date(),
-          },
-          create: {
-            clientId,
-            iban: account.iban,
-            currency: account.currency || "EUR",
-            balance: balance.balanceAmount.amount,
-            syncedAt: new Date(),
-            id: `${clientId}-${account.iban}`,
-          },
-        });
-
-        // Insert transactions as LedgerEntry (bank source)
+        // Validate transactions
         for (const tx of transactions) {
-          const entry = BankTransactionZ.parse(tx);
-
-          await prisma.ledgerEntry.upsert({
-            where: {
-              id: `${clientId}-bank-${entry.date}-${entry.iban}-${entry.amount}`,
-            },
-            update: { ...entry, clientId, source: "BANK" },
-            create: {
-              id: `${clientId}-bank-${entry.date}-${entry.iban}-${entry.amount}`,
-              clientId,
-              source: "BANK",
-              bookingDate: entry.date,
-              account: entry.iban,
-              amount: entry.amount,
-              currency: entry.currency,
-              description: entry.description,
-              meta: {
-                reference: entry.reference,
-                counterpartyIban: entry.counterpartyIban,
-                counterpartyName: entry.counterpartyName,
-              },
-            },
-          });
+          BankTransactionZ.parse(tx);
         }
       }
 
-      // Update DataFeed
-      await prisma.dataFeed.update({
-        where: { id: dataFeed.id },
-        data: {
-          lastSyncAt: new Date(),
-          status: "ACTIVE",
-          lastError: null,
-        },
-      });
-
-      logger.info({ clientId }, "Bank sync completed successfully");
+      logger.info({ clientId, accountsCount: accounts.length }, "Bank sync completed successfully");
 
       return {
         success: true,
@@ -135,15 +72,6 @@ export const bankWorker = new Worker(
         { clientId, error: (error as Error).message },
         "Bank sync failed"
       );
-
-      await prisma.dataFeed.update({
-        where: { id: dataFeed.id },
-        data: {
-          status: "ERROR",
-          lastError: (error as Error).message,
-        },
-      });
-
       throw error;
     }
   },
@@ -198,10 +126,8 @@ async function getNordigeAccounts(
       }
     );
 
-    // Get accounts from requisition
     const accountIds = response.data.accounts || [];
 
-    // Fetch account details
     const accounts = await Promise.all(
       accountIds.map((id: string) =>
         axios
@@ -265,7 +191,7 @@ async function getNordigeTransactions(
       { accountId, error: (error as any).message },
       "Failed to get transactions"
     );
-    return []; // Graceful degrade
+    return [];
   }
 }
 

@@ -5,55 +5,93 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { navApprovalService, NAVApprovalVote } from '@/lib/integrations/secura/nav-approval';
+import { getFundRegistry } from '@/lib/fund-registry';
 
-// Default config - should be loaded from database per tenant
-const DEFAULT_CONFIG = {
-  tenantId: 'default',
-  companyId: 'default',
-  requireFourEyes: true,
-  autoApproveThreshold: undefined,
-  approverRoles: ['fund_accountant', 'manager', 'admin'],
-  autoDistributeOnApproval: true,
-  distributionDelay: 0,
-};
+// In-memory storage for approvals (in production, use database)
+interface NAVApproval {
+  id: string;
+  tenantId: string;
+  companyId: string;
+  navDate: string;
+  status: 'PENDING_FIRST' | 'PENDING_SECOND' | 'APPROVED' | 'REJECTED';
+  funds: Array<{
+    fundId: string;
+    fundName: string;
+    nav: number;
+    aum: number;
+    currency: string;
+  }>;
+  votes: Array<{
+    userId: string;
+    userName: string;
+    action: 'APPROVE' | 'REJECT';
+    timestamp: string;
+    comment?: string;
+  }>;
+  createdAt: string;
+  createdBy: string;
+  updatedAt: string;
+}
+
+const approvalStore: Map<string, NAVApproval> = new Map();
+
+// Initialize with demo data
+function initDemoApprovals() {
+  const today = new Date().toISOString().split('T')[0];
+  const demoApproval: NAVApproval = {
+    id: `nav_${Date.now()}`,
+    tenantId: 'default',
+    companyId: 'auag',
+    navDate: today,
+    status: 'PENDING_FIRST',
+    funds: [
+      { fundId: 'SE0013358181', fundName: 'AuAg Silver Bullet A', nav: 378.33, aum: 3400248947.80, currency: 'SEK' },
+      { fundId: 'SE0020677946', fundName: 'AuAg Gold Rush A', nav: 208.71, aum: 505494096.59, currency: 'SEK' },
+    ],
+    votes: [],
+    createdAt: new Date().toISOString(),
+    createdBy: 'system',
+    updatedAt: new Date().toISOString(),
+  };
+  approvalStore.set(demoApproval.id, demoApproval);
+}
+initDemoApprovals();
 
 /**
  * GET /api/nav-automation/approvals
- * 
- * Hämta väntande godkännanden eller historik
- * 
- * Query params:
- * - type: 'pending' | 'history' | 'today'
- * - companyId: string
- * - limit: number
  */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') || 'pending';
-    const companyId = searchParams.get('companyId') || undefined;
-    const limit = parseInt(searchParams.get('limit') || '30');
     const tenantId = request.headers.get('x-tenant-id') || 'default';
+
+    const approvals = Array.from(approvalStore.values())
+      .filter(a => a.tenantId === tenantId);
 
     switch (type) {
       case 'pending':
-        const pending = await navApprovalService.getPendingApprovals(tenantId, companyId);
+        const pending = approvals.filter(a => 
+          a.status === 'PENDING_FIRST' || a.status === 'PENDING_SECOND'
+        );
         return NextResponse.json({ approvals: pending });
 
       case 'history':
-        const history = await navApprovalService.getApprovalHistory(tenantId, companyId, limit);
+        const history = approvals
+          .filter(a => a.status === 'APPROVED' || a.status === 'REJECTED')
+          .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
         return NextResponse.json({ approvals: history });
 
-      case 'today':
-        if (!companyId) {
-          return NextResponse.json(
-            { error: 'companyId required for today status' },
-            { status: 400 }
-          );
-        }
-        const status = await navApprovalService.getTodayStatus(tenantId, companyId);
-        return NextResponse.json(status);
+      case 'today': {
+        const today = new Date().toISOString().split('T')[0];
+        const todayApprovals = approvals.filter(a => a.navDate === today);
+        return NextResponse.json({
+          date: today,
+          hasApprovalRequest: todayApprovals.length > 0,
+          status: todayApprovals[0]?.status || 'NO_REQUEST',
+          approvals: todayApprovals,
+        });
+      }
 
       default:
         return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
@@ -69,42 +107,51 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/nav-automation/approvals
- * 
- * Skapa nytt godkännande-request eller rösta
- * 
- * Body:
- * {
- *   "action": "create" | "vote" | "distribute",
- *   ...
- * }
  */
 export async function POST(request: NextRequest) {
   try {
     const tenantId = request.headers.get('x-tenant-id') || 'default';
-    const userId = request.headers.get('x-user-id') || 'system';
-    const userName = request.headers.get('x-user-name') || 'System';
+    const userId = request.headers.get('x-user-id') || 'user_1';
+    const userName = request.headers.get('x-user-name') || 'Test User';
     
     const body = await request.json();
     const { action } = body;
 
     switch (action) {
       case 'create': {
-        const { companyId, navDate, funds } = body;
+        const { companyId, navDate } = body;
         
-        if (!companyId || !navDate || !funds) {
+        if (!companyId || !navDate) {
           return NextResponse.json(
-            { error: 'Missing required fields: companyId, navDate, funds' },
+            { error: 'Missing required fields: companyId, navDate' },
             { status: 400 }
           );
         }
 
-        const approval = await navApprovalService.createApprovalRequest(
+        // Get funds from registry
+        const registry = getFundRegistry();
+        const priceData = await registry.getPriceData(navDate);
+
+        const approval: NAVApproval = {
+          id: `nav_${Date.now()}`,
           tenantId,
           companyId,
           navDate,
-          funds,
-          userId
-        );
+          status: 'PENDING_FIRST',
+          funds: priceData.map(p => ({
+            fundId: p.fundId,
+            fundName: p.fundName,
+            nav: p.nav,
+            aum: p.aum,
+            currency: p.currency,
+          })),
+          votes: [],
+          createdAt: new Date().toISOString(),
+          createdBy: userId,
+          updatedAt: new Date().toISOString(),
+        };
+
+        approvalStore.set(approval.id, approval);
 
         return NextResponse.json({
           success: true,
@@ -114,7 +161,7 @@ export async function POST(request: NextRequest) {
       }
 
       case 'vote': {
-        const { requestId, voteAction, comment, reason } = body;
+        const { requestId, voteAction, comment } = body;
         
         if (!requestId || !voteAction) {
           return NextResponse.json(
@@ -123,58 +170,57 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const vote: NAVApprovalVote = {
-          requestId,
+        const approval = approvalStore.get(requestId);
+        if (!approval) {
+          return NextResponse.json(
+            { error: 'Approval request not found' },
+            { status: 404 }
+          );
+        }
+
+        // Check if user already voted
+        if (approval.votes.some(v => v.userId === userId)) {
+          return NextResponse.json(
+            { error: 'Du har redan röstat på denna förfrågan' },
+            { status: 400 }
+          );
+        }
+
+        // Add vote
+        approval.votes.push({
           userId,
           userName,
           action: voteAction,
+          timestamp: new Date().toISOString(),
           comment,
-          reason,
-        };
+        });
 
-        const approval = await navApprovalService.vote(tenantId, vote, DEFAULT_CONFIG);
-
-        // If approved and auto-distribute is enabled, trigger distribution
-        if (approval.status === 'APPROVED' && DEFAULT_CONFIG.autoDistributeOnApproval) {
-          // Start distribution (async)
-          navApprovalService.startDistribution(tenantId, requestId).catch(err => {
-            console.error('[NAV Approvals] Distribution start failed:', err);
-          });
+        // Update status based on votes
+        if (voteAction === 'REJECT') {
+          approval.status = 'REJECTED';
+        } else if (approval.votes.filter(v => v.action === 'APPROVE').length >= 2) {
+          approval.status = 'APPROVED';
+        } else if (approval.status === 'PENDING_FIRST') {
+          approval.status = 'PENDING_SECOND';
         }
+
+        approval.updatedAt = new Date().toISOString();
+        approvalStore.set(requestId, approval);
 
         return NextResponse.json({
           success: true,
           approval,
           message: voteAction === 'APPROVE' 
             ? (approval.status === 'APPROVED' 
-              ? 'NAV godkänt - distribution startar' 
+              ? 'NAV godkänt - distribution kan starta' 
               : 'Första godkännandet registrerat - väntar på andra godkännare')
             : 'NAV avvisat',
         });
       }
 
-      case 'distribute': {
-        const { requestId } = body;
-        
-        if (!requestId) {
-          return NextResponse.json(
-            { error: 'Missing required field: requestId' },
-            { status: 400 }
-          );
-        }
-
-        const approval = await navApprovalService.startDistribution(tenantId, requestId);
-
-        return NextResponse.json({
-          success: true,
-          approval,
-          message: 'Distribution startad',
-        });
-      }
-
       default:
         return NextResponse.json(
-          { error: 'Invalid action. Use: create, vote, or distribute' },
+          { error: 'Invalid action. Use: create or vote' },
           { status: 400 }
         );
     }

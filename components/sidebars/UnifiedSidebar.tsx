@@ -27,7 +27,8 @@ import {
   Search,
   Check,
   Plus,
-  AlertTriangle
+  AlertTriangle,
+  Sparkles
 } from 'lucide-react';
 import { useSidebar } from '../SidebarContext';
 import { FavoritesSidebarSection, FavoriteButton } from '../FavoritesManager';
@@ -128,11 +129,25 @@ const mainNavItems: NavItem[] = [
     ]
   },
   { 
+    id: 'securities', 
+    label: 'Värdepapper', 
+    icon: LineChart,
+    children: [
+      { id: 'securities-list', label: 'Godkännanden', href: '/securities' },
+      { id: 'securities-new', label: 'Ny ansökan', href: '/securities/new-approval' },
+    ]
+  },
+  { 
+    id: 'aifm-agent', 
+    label: 'AIFM Agent', 
+    icon: Sparkles,
+    href: '/aifm-agent'
+  },
+  { 
     id: 'compliance', 
     label: 'Compliance', 
     icon: Scale,
     children: [
-      { id: 'compliance-chat', label: 'Regelverksassistent', href: '/?view=compliance' },
       { id: 'compliance-archive', label: 'Regelverksarkiv', href: '/compliance/archive' },
       { id: 'compliance-docs', label: 'Ladda upp dokument', href: '/compliance/documents' },
     ]
@@ -172,12 +187,14 @@ const adminNavItem: NavItem = {
   children: [
     { id: 'admin-dashboard', label: 'Dashboard', href: '/admin/dashboard' },
     { id: 'admin-users', label: 'Användare', href: '/admin/users' },
+    { id: 'admin-integrations', label: 'Integrationer (AI)', href: '/admin/integrations' },
+    { id: 'admin-knowledge-base', label: 'Kunskapsbas', href: '/admin/knowledge-base' },
+    { id: 'admin-dropbox', label: 'Dropbox-synk', href: '/admin/dropbox' },
     { id: 'admin-security', label: 'Säkerhet', href: '/admin/security' },
     { id: 'admin-permissions', label: 'Behörigheter', href: '/admin/permissions' },
     { id: 'admin-workflows', label: 'Arbetsflöden', href: '/admin/workflows' },
     { id: 'admin-bulk', label: 'Bulk-operationer', href: '/admin/bulk-operations' },
     { id: 'admin-audit', label: 'Granskningslogg', href: '/audit/logs' },
-    { id: 'admin-integrations', label: 'Integrationer', href: '/admin/integrations' },
     { id: 'admin-documents', label: 'Dokument', href: '/admin/documents' },
     { id: 'admin-policies', label: 'Policies', href: '/admin/policies' },
   ],
@@ -478,7 +495,7 @@ function UnifiedSidebarContent() {
       </button>
 
       {/* Main Navigation */}
-      <nav className="flex-1 py-4 overflow-y-auto scrollbar-thin">
+      <nav className="flex-1 py-4 overflow-y-auto scrollbar-none">
         {/* Favorites Section */}
         <FavoritesSidebarSection collapsed={collapsed} />
 

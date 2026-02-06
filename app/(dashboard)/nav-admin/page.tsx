@@ -1,15 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   TrendingUp, FileText, Send, Users, Clock, CheckCircle2,
   AlertCircle, ArrowRight, Calendar, BarChart3, Download,
   Mail, RefreshCw, Zap, Target, Timer, Activity, Shield, Settings,
-  Building2, GitCompare
+  Building2, GitCompare, Database, Wifi, WifiOff, Loader2, History,
+  Calculator, ClipboardList, Sparkles
 } from 'lucide-react';
 import { ProcessMonitor } from '@/components/nav/ProcessMonitor';
 import { NAVApprovalCard } from '@/components/nav/NAVApprovalCard';
+import { PriceDataModal } from '@/components/nav/PriceDataModal';
 
 // ============================================================================
 // Types
@@ -18,12 +20,33 @@ import { NAVApprovalCard } from '@/components/nav/NAVApprovalCard';
 interface FundNAV {
   isin: string;
   fundName: string;
+  shareClassName: string;
   currency: string;
-  navKurs: number;
-  date: string;
-  totalNetAssetsSEK: number;
-  classNetAssetsSEK: number;
+  navPerShare: number;
+  previousNav?: number;
+  navChange: number;
+  navChangePercent: number;
+  navDate: string;
+  netAssetValue: number;
+  grossAssets: number;
+  totalLiabilities: number;
   sharesOutstanding: number;
+  status: string;
+}
+
+interface SystemStatus {
+  secura: {
+    configured: boolean;
+    connected: boolean;
+    host: string;
+    error: string | null;
+  };
+  database: {
+    connected: boolean;
+  };
+  readiness: {
+    fullyOperational: boolean;
+  };
 }
 
 interface ProcessStatus {
@@ -35,33 +58,12 @@ interface ProcessStatus {
   savedTime?: string;
 }
 
-// ============================================================================
-// Mock Data
-// ============================================================================
-
-const mockFundNAVs: FundNAV[] = [
-  { isin: 'SE0019175563', fundName: 'AUAG Essential Metals A', currency: 'SEK', navKurs: 142.42, date: '2025-12-16', totalNetAssetsSEK: 395584099.11, classNetAssetsSEK: 349892028.52, sharesOutstanding: 2456766.31 },
-  { isin: 'SE0019175571', fundName: 'AUAG Essential Metals B', currency: 'EUR', navKurs: 14.65, date: '2025-12-16', totalNetAssetsSEK: 395584099.11, classNetAssetsSEK: 43120778.87, sharesOutstanding: 269451.12 },
-  { isin: 'SE0019175589', fundName: 'AUAG Essential Metals C', currency: 'SEK', navKurs: 128.56, date: '2025-12-16', totalNetAssetsSEK: 395584099.11, classNetAssetsSEK: 2571291.72, sharesOutstanding: 20000.00 },
-  { isin: 'SE0020677946', fundName: 'AuAg Gold Rush A', currency: 'SEK', navKurs: 208.71, date: '2025-12-16', totalNetAssetsSEK: 613070568.95, classNetAssetsSEK: 505494096.59, sharesOutstanding: 2422025.74 },
-  { isin: 'SE0020677953', fundName: 'AuAg Gold Rush B', currency: 'EUR', navKurs: 22.63, date: '2025-12-16', totalNetAssetsSEK: 613070568.95, classNetAssetsSEK: 98912.81, sharesOutstanding: 400.00 },
-  { isin: 'SE0020677961', fundName: 'AuAg Gold Rush C', currency: 'SEK', navKurs: 170.52, date: '2025-12-16', totalNetAssetsSEK: 613070568.95, classNetAssetsSEK: 12710988.85, sharesOutstanding: 74543.90 },
-  { isin: 'SE0020678001', fundName: 'AuAg Gold Rush H', currency: 'NOK', navKurs: 197.23, date: '2025-12-16', totalNetAssetsSEK: 613070568.95, classNetAssetsSEK: 87854781.97, sharesOutstanding: 488103.97 },
-  { isin: 'SE0020678050', fundName: 'AuAg Gold Rush L', currency: 'USD', navKurs: 11.96, date: '2025-12-16', totalNetAssetsSEK: 613070568.95, classNetAssetsSEK: 3336387.66, sharesOutstanding: 30000.00 },
-  { isin: 'SE0020678076', fundName: 'AuAg Gold Rush N', currency: 'CHF', navKurs: 15.48, date: '2025-12-16', totalNetAssetsSEK: 613070568.95, classNetAssetsSEK: 3575401.07, sharesOutstanding: 19766.01 },
-  { isin: 'SE0014808440', fundName: 'AuAg Precious Green A', currency: 'SEK', navKurs: 198.87, date: '2025-12-16', totalNetAssetsSEK: 347295087.92, classNetAssetsSEK: 328924859.33, sharesOutstanding: 1653996.37 },
-  { isin: 'SE0014808457', fundName: 'AuAg Precious Green B', currency: 'EUR', navKurs: 18.88, date: '2025-12-16', totalNetAssetsSEK: 347295087.92, classNetAssetsSEK: 12524335.34, sharesOutstanding: 60729.92 },
-  { isin: 'SE0015948641', fundName: 'AuAg Precious Green C', currency: 'SEK', navKurs: 140.36, date: '2025-12-16', totalNetAssetsSEK: 347295087.92, classNetAssetsSEK: 5845893.25, sharesOutstanding: 41648.44 },
-  { isin: 'SE0013358181', fundName: 'AuAg Silver Bullet A', currency: 'SEK', navKurs: 378.33, date: '2025-12-16', totalNetAssetsSEK: 4344439682.78, classNetAssetsSEK: 3400248947.80, sharesOutstanding: 8987586.35 },
-  { isin: 'SE0013358199', fundName: 'AuAg Silver Bullet B', currency: 'EUR', navKurs: 37.23, date: '2025-12-16', totalNetAssetsSEK: 4344439682.78, classNetAssetsSEK: 921562837.38, sharesOutstanding: 2265711.61 },
-];
-
 const mockProcesses: ProcessStatus[] = [
-  { id: 'nav-reports', name: 'NAV-rapporter utskick', status: 'completed', lastRun: '2025-01-17 08:30', nextRun: '2025-01-20 08:30', savedTime: '45 min' },
-  { id: 'notor', name: 'Notor (gårdagens flöden)', status: 'completed', lastRun: '2025-01-17 07:00', nextRun: '2025-01-20 07:00', savedTime: '20 min' },
-  { id: 'subred', name: 'SubRed (dagens flöden)', status: 'pending', nextRun: '2025-01-17 15:00', savedTime: '25 min' },
-  { id: 'price-data', name: 'Prisdata till institut', status: 'completed', lastRun: '2025-01-17 09:00', nextRun: '2025-01-20 09:00', savedTime: '15 min' },
-  { id: 'owner-data', name: 'Ägardata (Clearstream)', status: 'completed', lastRun: '2025-01-17 09:15', nextRun: '2025-01-20 09:15', savedTime: '15 min' },
+  { id: 'nav-reports', name: 'NAV-rapporter utskick', status: 'completed', lastRun: '2026-01-29 08:30', nextRun: '2026-01-30 08:30', savedTime: '45 min' },
+  { id: 'notor', name: 'Notor (gårdagens flöden)', status: 'completed', lastRun: '2026-01-29 07:00', nextRun: '2026-01-30 07:00', savedTime: '20 min' },
+  { id: 'subred', name: 'SubRed (dagens flöden)', status: 'pending', nextRun: '2026-01-29 15:00', savedTime: '25 min' },
+  { id: 'price-data', name: 'Prisdata till institut', status: 'completed', lastRun: '2026-01-29 09:00', nextRun: '2026-01-30 09:00', savedTime: '15 min' },
+  { id: 'owner-data', name: 'Ägardata (Clearstream)', status: 'completed', lastRun: '2026-01-29 09:15', nextRun: '2026-01-30 09:15', savedTime: '15 min' },
 ];
 
 // ============================================================================
@@ -180,21 +182,29 @@ function QuickActionCard({
   description, 
   icon: Icon, 
   href, 
-  color 
+  onClick,
+  color,
+  badge
 }: { 
   title: string; 
   description: string; 
   icon: React.ElementType; 
-  href: string;
+  href?: string;
+  onClick?: () => void;
   color: string;
+  badge?: string;
 }) {
-  return (
-    <Link
-      href={href}
-      className="group p-5 bg-white rounded-2xl border border-gray-100 hover:border-aifm-gold/30 hover:shadow-lg transition-all"
-    >
-      <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-        <Icon className="w-6 h-6 text-white" />
+  const content = (
+    <>
+      <div className="flex items-start justify-between mb-4">
+        <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+          <Icon className="w-6 h-6 text-white" />
+        </div>
+        {badge && (
+          <span className="px-2 py-1 bg-aifm-gold/10 text-aifm-gold text-xs font-medium rounded-full">
+            {badge}
+          </span>
+        )}
       </div>
       <h3 className="font-semibold text-aifm-charcoal mb-1">{title}</h3>
       <p className="text-sm text-aifm-charcoal/60">{description}</p>
@@ -202,6 +212,26 @@ function QuickActionCard({
         <span>Öppna</span>
         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
       </div>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        onClick={onClick}
+        className="group p-5 bg-white rounded-2xl border border-gray-100 hover:border-aifm-gold/30 hover:shadow-lg transition-all text-left"
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <Link
+      href={href || '#'}
+      className="group p-5 bg-white rounded-2xl border border-gray-100 hover:border-aifm-gold/30 hover:shadow-lg transition-all"
+    >
+      {content}
     </Link>
   );
 }
@@ -211,22 +241,114 @@ function QuickActionCard({
 // ============================================================================
 
 export default function NAVAdminPage() {
-  const [selectedDate, setSelectedDate] = useState('2025-01-17');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isPriceDataModalOpen, setIsPriceDataModalOpen] = useState(false);
   
-  // Calculate totals
-  const totalAUM = mockFundNAVs.reduce((sum, fund) => {
-    // Only count unique funds (by total net assets)
-    return sum;
-  }, 0);
-  
-  // Get unique fund totals
-  const uniqueFunds = new Map<number, FundNAV>();
-  mockFundNAVs.forEach(fund => {
-    if (!uniqueFunds.has(fund.totalNetAssetsSEK)) {
-      uniqueFunds.set(fund.totalNetAssetsSEK, fund);
+  // API data state
+  const [fundNAVs, setFundNAVs] = useState<FundNAV[]>([]);
+  const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
+  const [dataSource, setDataSource] = useState<string>('loading');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch NAV data from API
+  const fetchNAVData = useCallback(async (showRefresh = false) => {
+    if (showRefresh) setIsRefreshing(true);
+    else setIsLoading(true);
+    
+    try {
+      // Fetch NAV data
+      const navResponse = await fetch(`/api/nav/funds?date=${selectedDate}`);
+      if (navResponse.ok) {
+        const navData = await navResponse.json();
+        if (navData.success) {
+          setFundNAVs(navData.data.funds);
+          setDataSource(navData.meta?.source || 'unknown');
+        }
+      }
+
+      // Fetch system status
+      const statusResponse = await fetch('/api/nav/status');
+      if (statusResponse.ok) {
+        const statusData = await statusResponse.json();
+        if (statusData.success) {
+          setSystemStatus(statusData.status);
+        }
+      }
+
+      setError(null);
+    } catch (err) {
+      setError('Kunde inte hämta NAV-data');
+      console.error('Error fetching NAV data:', err);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
     }
-  });
-  const totalAUMValue = Array.from(uniqueFunds.values()).reduce((sum, fund) => sum + fund.totalNetAssetsSEK, 0);
+  }, [selectedDate]);
+
+  // Fetch data on mount and when date changes
+  useEffect(() => {
+    fetchNAVData();
+  }, [fetchNAVData]);
+
+  // Handle NAV approval
+  const handleApprove = async (requestId: string, comment?: string) => {
+    try {
+      const response = await fetch('/api/nav/approvals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'approve_first', // or 'approve_second' based on state
+          approvalId: requestId,
+          userId: 'current-user', // TODO: Get from auth
+          userName: 'Användare', // TODO: Get from auth
+          comment,
+        }),
+      });
+      
+      if (response.ok) {
+        alert('NAV godkänt!');
+        fetchNAVData(true);
+      } else {
+        throw new Error('Approval failed');
+      }
+    } catch (err) {
+      alert('Kunde inte godkänna NAV');
+      console.error('Approval error:', err);
+    }
+  };
+
+  // Handle NAV rejection
+  const handleReject = async (requestId: string, reason: string) => {
+    try {
+      const response = await fetch('/api/nav/approvals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'reject',
+          approvalId: requestId,
+          userId: 'current-user',
+          userName: 'Användare',
+          reason,
+        }),
+      });
+      
+      if (response.ok) {
+        alert('NAV avvisat');
+        fetchNAVData(true);
+      } else {
+        throw new Error('Rejection failed');
+      }
+    } catch (err) {
+      alert('Kunde inte avvisa NAV');
+      console.error('Rejection error:', err);
+    }
+  };
+  
+  // Calculate totals from API data
+  const totalAUMValue = fundNAVs.reduce((sum, fund) => sum + fund.netAssetValue, 0);
+  const uniqueFundIds = new Set(fundNAVs.map(f => f.fundName.split(' ').slice(0, -1).join(' ')));
   
   const totalTimeSaved = mockProcesses.reduce((sum, p) => {
     if (p.savedTime) {
@@ -238,6 +360,56 @@ export default function NAVAdminPage() {
 
   return (
     <div className="space-y-8">
+      {/* Connection Status Banner */}
+      {systemStatus && (
+        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl ${
+          systemStatus.secura.connected 
+            ? 'bg-emerald-50 border border-emerald-200' 
+            : systemStatus.secura.configured
+              ? 'bg-amber-50 border border-amber-200'
+              : 'bg-blue-50 border border-blue-200'
+        }`}>
+          {systemStatus.secura.connected ? (
+            <>
+              <Wifi className="w-5 h-5 text-emerald-600" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-emerald-800">SECURA ansluten</p>
+                <p className="text-xs text-emerald-600">Live-data från {systemStatus.secura.host}</p>
+              </div>
+            </>
+          ) : systemStatus.secura.configured ? (
+            <>
+              <WifiOff className="w-5 h-5 text-amber-600" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-amber-800">SECURA ej tillgänglig</p>
+                <p className="text-xs text-amber-600">{systemStatus.secura.error || 'Anslutningen misslyckades'}</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <Database className="w-5 h-5 text-blue-600" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-blue-800">Demo-läge</p>
+                <p className="text-xs text-blue-600">Konfigurera SECURA API-nyckel för live-data</p>
+              </div>
+              <Link
+                href="/nav-admin/settings"
+                className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Konfigurera
+              </Link>
+            </>
+          )}
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            dataSource === 'secura' ? 'bg-emerald-100 text-emerald-700' :
+            dataSource === 'database' ? 'bg-purple-100 text-purple-700' :
+            'bg-gray-100 text-gray-700'
+          }`}>
+            {dataSource === 'secura' ? 'SECURA' : dataSource === 'database' ? 'Databas' : 'Mock'}
+          </span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
@@ -260,8 +432,16 @@ export default function NAVAdminPage() {
             <Settings className="w-4 h-4" />
             <span className="text-sm font-medium hidden sm:inline">Inställningar</span>
           </Link>
-          <button className="flex items-center gap-2 px-3 sm:px-4 py-2.5 bg-aifm-charcoal text-white rounded-xl hover:bg-aifm-charcoal/90 transition-colors">
-            <RefreshCw className="w-4 h-4" />
+          <button 
+            onClick={() => fetchNAVData(true)}
+            disabled={isRefreshing}
+            className="flex items-center gap-2 px-3 sm:px-4 py-2.5 bg-aifm-charcoal text-white rounded-xl hover:bg-aifm-charcoal/90 transition-colors disabled:opacity-50"
+          >
+            {isRefreshing ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4" />
+            )}
             <span className="text-sm font-medium hidden sm:inline">Uppdatera data</span>
           </button>
         </div>
@@ -269,35 +449,49 @@ export default function NAVAdminPage() {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Totalt AUM"
-          value={formatLargeCurrency(totalAUMValue)}
-          subtitle="Alla fonder"
-          icon={TrendingUp}
-          color="gold"
-        />
-        <StatCard
-          title="Fonder"
-          value={uniqueFunds.size.toString()}
-          subtitle={`${mockFundNAVs.length} andelsklasser`}
-          icon={BarChart3}
-          color="blue"
-        />
-        <StatCard
-          title="Automatiserade processer"
-          value={mockProcesses.filter(p => p.status === 'completed').length.toString()}
-          subtitle={`av ${mockProcesses.length} totalt`}
-          icon={Zap}
-          color="green"
-        />
-        <StatCard
-          title="Tid sparad idag"
-          value={`~${totalTimeSaved} min`}
-          subtitle="Uppskattad besparing"
-          icon={Timer}
-          color="purple"
-          trend="+45 min/dag"
-        />
+        {isLoading ? (
+          <>
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 animate-pulse">
+                <div className="w-10 h-10 bg-gray-200 rounded-xl mb-3" />
+                <div className="h-7 bg-gray-200 rounded w-24 mb-2" />
+                <div className="h-4 bg-gray-100 rounded w-16" />
+              </div>
+            ))}
+          </>
+        ) : (
+          <>
+            <StatCard
+              title="Totalt AUM"
+              value={formatLargeCurrency(totalAUMValue)}
+              subtitle="Alla fonder"
+              icon={TrendingUp}
+              color="gold"
+            />
+            <StatCard
+              title="Fonder"
+              value={uniqueFundIds.size.toString()}
+              subtitle={`${fundNAVs.length} andelsklasser`}
+              icon={BarChart3}
+              color="blue"
+            />
+            <StatCard
+              title="Automatiserade processer"
+              value={mockProcesses.filter(p => p.status === 'completed').length.toString()}
+              subtitle={`av ${mockProcesses.length} totalt`}
+              icon={Zap}
+              color="green"
+            />
+            <StatCard
+              title="Tid sparad idag"
+              value={`~${totalTimeSaved} min`}
+              subtitle="Uppskattad besparing"
+              icon={Timer}
+              color="purple"
+              trend="+45 min/dag"
+            />
+          </>
+        )}
       </div>
 
       {/* NAV Approval Section */}
@@ -307,16 +501,8 @@ export default function NAVAdminPage() {
           <h2 className="text-lg font-semibold text-aifm-charcoal">Dagens NAV-godkännande</h2>
         </div>
         <NAVApprovalCard
-          onApprove={async (requestId, comment) => {
-            console.log('Approving NAV:', requestId, comment);
-            // TODO: Call API
-            alert('NAV godkänt! (Demo)');
-          }}
-          onReject={async (requestId, reason) => {
-            console.log('Rejecting NAV:', requestId, reason);
-            // TODO: Call API
-            alert('NAV avvisat! (Demo)');
-          }}
+          onApprove={handleApprove}
+          onReject={handleReject}
           onViewDetails={(requestId) => {
             console.log('View details:', requestId);
           }}
@@ -326,7 +512,15 @@ export default function NAVAdminPage() {
       {/* Quick Actions */}
       <div>
         <h2 className="text-lg font-semibold text-aifm-charcoal mb-4">Snabbåtgärder</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+          <QuickActionCard
+            title="NAV-historik"
+            description="Bläddra och exportera historiska NAV"
+            icon={History}
+            href="/nav-admin/history"
+            color="bg-gradient-to-br from-indigo-500 to-indigo-600"
+            badge="Nytt"
+          />
           <QuickActionCard
             title="NAV-rapporter"
             description="Skicka ut NAV-rapporter till förvaltare"
@@ -342,10 +536,10 @@ export default function NAVAdminPage() {
             color="bg-gradient-to-br from-emerald-500 to-emerald-600"
           />
           <QuickActionCard
-            title="Prisdata"
-            description="Uppdatera och skicka prisdata till institut"
-            icon={Send}
-            href="/nav-admin/price-data"
+            title="Prisdata & NAV"
+            description="Hantera priskällor, import och rapporter"
+            icon={Database}
+            onClick={() => setIsPriceDataModalOpen(true)}
             color="bg-gradient-to-br from-purple-500 to-purple-600"
           />
           <QuickActionCard
@@ -357,6 +551,54 @@ export default function NAVAdminPage() {
           />
         </div>
         
+        {/* Tools & Analysis Section */}
+        <h2 className="text-lg font-semibold text-aifm-charcoal mb-4 mt-8">Verktyg & Analys</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          <QuickActionCard
+            title="NAV-simulator"
+            description="What-if analys för marknadsförändringar"
+            icon={Calculator}
+            href="/nav-admin/simulator"
+            color="bg-gradient-to-br from-pink-500 to-pink-600"
+            badge="Nytt"
+          />
+          <QuickActionCard
+            title="Ändringslogg"
+            description="Audit trail och spårbarhet"
+            icon={ClipboardList}
+            href="/nav-admin/audit"
+            color="bg-gradient-to-br from-slate-500 to-slate-600"
+            badge="Nytt"
+          />
+          <QuickActionCard
+            title="E-postmallar"
+            description="Anpassa NAV-rapporter och notiser"
+            icon={Mail}
+            href="/nav-admin/email-templates"
+            color="bg-gradient-to-br from-sky-500 to-sky-600"
+            badge="Nytt"
+          />
+        </div>
+
+        {/* Investor Management Section */}
+        <h2 className="text-lg font-semibold text-aifm-charcoal mb-4 mt-8">Investerarhantering</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          <QuickActionCard
+            title="Andelsägare"
+            description="Visa och hantera fondernas andelsägare"
+            icon={Users}
+            href="/nav-admin/shareholders"
+            color="bg-gradient-to-br from-violet-500 to-violet-600"
+          />
+          <QuickActionCard
+            title="Ägardata export"
+            description="Exportera ägardata för Clearstream"
+            icon={Download}
+            href="/nav-admin/owner-data"
+            color="bg-gradient-to-br from-aifm-gold to-amber-600"
+          />
+        </div>
+
         {/* Bank Integration Section */}
         <h2 className="text-lg font-semibold text-aifm-charcoal mb-4 mt-8">Bankintegration</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -422,50 +664,87 @@ export default function NAVAdminPage() {
           </div>
         </div>
         
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[800px]">
-            <thead>
-              <tr className="bg-gray-50/50">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">ISIN</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">Fond</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">Valuta</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">NAV kurs</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">Totalt AUM (SEK)</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">Klass AUM (SEK)</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">Utst. andelar</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {mockFundNAVs.map((fund, index) => (
-                <tr key={fund.isin} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-4 py-3">
-                    <span className="font-mono text-sm text-aifm-charcoal/70">{fund.isin}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="font-medium text-aifm-charcoal">{fund.fundName}</span>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="px-2 py-1 bg-gray-100 rounded text-xs font-medium text-aifm-charcoal/70">
-                      {fund.currency}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right font-semibold text-aifm-charcoal">
-                    {formatCurrency(fund.navKurs)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm text-aifm-charcoal/70">
-                    {formatCurrency(fund.totalNetAssetsSEK)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm text-aifm-charcoal/70">
-                    {formatCurrency(fund.classNetAssetsSEK)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm text-aifm-charcoal/70">
-                    {formatCurrency(fund.sharesOutstanding)}
-                  </td>
+        {isLoading ? (
+          <div className="p-8 text-center">
+            <Loader2 className="w-8 h-8 animate-spin text-aifm-gold mx-auto mb-3" />
+            <p className="text-sm text-aifm-charcoal/60">Laddar NAV-data...</p>
+          </div>
+        ) : error ? (
+          <div className="p-8 text-center">
+            <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-3" />
+            <p className="text-sm text-red-600">{error}</p>
+            <button 
+              onClick={() => fetchNAVData(true)}
+              className="mt-3 px-4 py-2 text-sm bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+            >
+              Försök igen
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[900px]">
+              <thead>
+                <tr className="bg-gray-50/50">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">ISIN</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">Fond</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">Valuta</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">NAV kurs</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">Förändring</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">AUM</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">Utst. andelar</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {fundNAVs.map((fund) => (
+                  <tr key={fund.isin} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-4 py-3">
+                      <span className="font-mono text-sm text-aifm-charcoal/70">{fund.isin}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div>
+                        <span className="font-medium text-aifm-charcoal">{fund.fundName}</span>
+                        <span className="ml-1 text-xs text-aifm-charcoal/50">{fund.shareClassName}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="px-2 py-1 bg-gray-100 rounded text-xs font-medium text-aifm-charcoal/70">
+                        {fund.currency}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold text-aifm-charcoal">
+                      {formatCurrency(fund.navPerShare)}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className={`text-sm font-medium ${
+                        fund.navChangePercent > 0 ? 'text-emerald-600' : 
+                        fund.navChangePercent < 0 ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {fund.navChangePercent > 0 ? '+' : ''}{fund.navChangePercent.toFixed(2)}%
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm text-aifm-charcoal/70">
+                      {formatLargeCurrency(fund.netAssetValue)}
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm text-aifm-charcoal/70">
+                      {formatCurrency(fund.sharesOutstanding)}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        fund.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' :
+                        fund.status === 'PUBLISHED' ? 'bg-blue-100 text-blue-700' :
+                        'bg-amber-100 text-amber-700'
+                      }`}>
+                        {fund.status === 'APPROVED' ? 'Godkänd' :
+                         fund.status === 'PUBLISHED' ? 'Publicerad' : 'Preliminär'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Efficiency Summary */}
@@ -494,6 +773,12 @@ export default function NAVAdminPage() {
           <Target className="w-10 h-10 sm:w-16 sm:h-16 text-aifm-gold/30 hidden sm:block" />
         </div>
       </div>
+
+      {/* Price Data Modal */}
+      <PriceDataModal
+        isOpen={isPriceDataModalOpen}
+        onClose={() => setIsPriceDataModalOpen(false)}
+      />
     </div>
   );
 }

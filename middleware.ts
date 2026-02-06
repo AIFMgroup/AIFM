@@ -128,6 +128,17 @@ export async function middleware(request: NextRequest) {
 }
 
 const redirectToLogin = (request: NextRequest) => {
+  const { pathname } = request.nextUrl;
+  
+  // For API routes, return 401 JSON instead of redirecting
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.json(
+      { error: 'Unauthorized', message: 'Authentication required' },
+      { status: 401 }
+    );
+  }
+  
+  // For page routes, redirect to login
   const url = request.nextUrl.clone();
   url.pathname = "/auth/login";
   url.searchParams.set("returnTo", request.nextUrl.pathname);

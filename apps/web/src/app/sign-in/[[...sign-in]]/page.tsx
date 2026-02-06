@@ -1,16 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/Button';
 
 export default function SignInPage() {
   const router = useRouter();
+  const preferCognito = process.env.NEXT_PUBLIC_AUTH_PROVIDER === 'cognito';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!preferCognito) return;
+    signIn('cognito', { callbackUrl: '/dashboard' });
+  }, [preferCognito]);
+
+  const handleAwsLogin = async () => {
+    await signIn('cognito', { callbackUrl: '/dashboard' });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +51,14 @@ export default function SignInPage() {
       <div className="w-full max-w-md bg-white border-2 border-gray-300 rounded-3xl shadow-2xl p-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2 text-center">AIFM Portal</h1>
         <p className="text-gray-600 text-center mb-8">Logga in på ditt konto</p>
+
+        <div className="space-y-4">
+          <Button type="button" onClick={handleAwsLogin} className="w-full">
+            Logga in med AWS
+          </Button>
+        </div>
+
+        <div className="my-6 text-center text-sm text-gray-500">eller</div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (

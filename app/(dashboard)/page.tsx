@@ -20,8 +20,8 @@ function RootPageContent() {
     );
   }
 
-  // Otherwise redirect to overview
-  redirect('/overview');
+  // Redirect to fullscreen chat as default landing page
+  redirect('/chat');
 }
 
 export default function RootPage() {

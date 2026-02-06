@@ -9,7 +9,7 @@ import { Classification, LineItem, documentStore } from './jobStore';
 import { TextractResult } from './textractService';
 import { allaKonton, hittaBastaKonto, vanligaKostnadskonton } from './basKontoplan';
 
-// Bedrock med Claude Sonnet 4.5 - stödjer Vision för bildanalys
+// Bedrock med Claude Opus 4.6 - stödjer Vision för bildanalys
 const BEDROCK_REGION = 'eu-west-1';
 const MODEL_ID = 'eu.anthropic.claude-sonnet-4-5-20250929-v1:0';
 

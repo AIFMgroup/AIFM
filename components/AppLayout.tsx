@@ -105,8 +105,8 @@ function AppLayoutWithParams({ children }: AppLayoutProps) {
         onComplete={completeOnboarding} 
       />
 
-      {/* Onboarding Checklist (persistent floating widget) */}
-      <OnboardingChecklistWidget />
+      {/* Onboarding Checklist (persistent floating widget) - Disabled */}
+      {/* <OnboardingChecklistWidget /> */}
     </div>
   );
 }

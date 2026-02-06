@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, createContext, useContext, ReactNode 
 import { useRouter } from 'next/navigation';
 import { 
   Command, Search, Home, Users, Shield, Calculator, 
-  FolderOpen, Settings, Bell, HelpCircle, X, Keyboard
+  FolderOpen, Settings, Bell, HelpCircle, X, Keyboard, Sparkles
 } from 'lucide-react';
 
 // ============================================================================
@@ -103,6 +103,13 @@ export function KeyboardShortcutsProvider({ children }: KeyboardShortcutsProvide
         // Dispatch event for other components to handle
         window.dispatchEvent(new CustomEvent('escapePressed'));
       },
+    },
+    {
+      key: 'j',
+      modifiers: ['meta'],
+      description: 'Öppna AIFM Assistent (helskärm)',
+      category: 'global',
+      action: () => router.push('/chat'),
     },
     
     // Navigation

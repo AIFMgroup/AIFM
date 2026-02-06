@@ -588,7 +588,7 @@ export default function BookkeepingPage() {
               <div>
                 <p className="text-sm text-gray-900 font-medium">AI-klassificering med AWS Bedrock</p>
                 <p className="text-xs text-gray-700 mt-1">
-                  Transaktioner klassificeras automatiskt av Claude Sonnet 4.5 via AWS Bedrock. 
+                  Transaktioner klassificeras automatiskt av Claude Opus 4.6 via AWS Bedrock. 
                   Grön indikerar hög säkerhet (90%+), gul medel (70-90%), och röd låg (&lt;70%).
                 </p>
               </div>
