@@ -52,7 +52,7 @@ export default function ClientsPage() {
     <>
       {/* Page Header */}
       <div className="mb-8">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <h1 className="text-2xl font-medium text-aifm-charcoal uppercase tracking-wider">Bokföring & Administration</h1>
@@ -74,14 +74,14 @@ export default function ClientsPage() {
 
       {/* Tabs */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-8">
-        <div className="flex border-b border-gray-100">
+        <div className="flex overflow-x-auto border-b border-gray-100">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium uppercase tracking-wider border-b-2 transition-all ${
+                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'text-aifm-gold border-aifm-gold'
                     : 'text-aifm-charcoal/50 border-transparent hover:text-aifm-charcoal'
@@ -343,8 +343,8 @@ export default function ClientsPage() {
               </div>
 
               <h3 className="text-sm font-medium text-aifm-charcoal uppercase tracking-wider mb-4">Senaste konteringar</h3>
-              <div className="bg-gray-50 rounded-2xl overflow-hidden">
-                <table className="w-full">
+              <div className="bg-gray-50 rounded-2xl overflow-hidden overflow-x-auto">
+                <table className="w-full min-w-[600px]">
                   <thead className="bg-gray-100">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-aifm-charcoal/60 uppercase tracking-wider">Datum</th>

@@ -1,14 +1,17 @@
 // AIFM Service Worker - Offline Support & Caching
-const CACHE_NAME = 'aifm-cache-v1';
+const CACHE_NAME = 'aifm-cache-v2';
 const OFFLINE_URL = '/offline';
 
 // Assets to cache immediately on install
 const PRECACHE_ASSETS = [
   '/',
+  '/chat',
   '/offline',
   '/aifm-logo.svg',
   '/aifm-logo-white.svg',
   '/manifest.json',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png',
 ];
 
 // Cache strategies
@@ -166,8 +169,8 @@ self.addEventListener('push', (event) => {
     
     const options = {
       body: data.body || 'Ny notifikation från AIFM',
-      icon: '/aifm-logo.svg',
-      badge: '/aifm-badge.svg',
+      icon: '/icons/icon-192x192.png',
+      badge: '/icons/icon-96x96.png',
       vibrate: [100, 50, 100],
       data: {
         url: data.url || '/',

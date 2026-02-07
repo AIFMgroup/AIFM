@@ -59,7 +59,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
     const { action } = body;
 
     // === CREATE SHARE LINK ===
@@ -79,21 +84,27 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Session hittades inte' }, { status: 404 });
       }
 
-      // Check if share already exists for this session
-      const existingShares = await docClient.send(new QueryCommand({
-        TableName: SHARE_TABLE,
-        IndexName: 'sessionId-index',
-        KeyConditionExpression: 'sessionId = :sid',
-        ExpressionAttributeValues: { ':sid': sessionId },
-      }));
+      // Check if share already exists for this session (optional: requires GSI sessionId-index)
+      let existingShare: { shareCode: string; participants?: unknown[] } | null = null;
+      try {
+        const existingShares = await docClient.send(new QueryCommand({
+          TableName: SHARE_TABLE,
+          IndexName: 'sessionId-index',
+          KeyConditionExpression: 'sessionId = :sid',
+          ExpressionAttributeValues: { ':sid': sessionId },
+        }));
+        if (existingShares.Items && existingShares.Items.length > 0) {
+          existingShare = existingShares.Items[0] as { shareCode: string; participants?: unknown[] };
+        }
+      } catch {
+        // Table or GSI may not exist; continue to create new share
+      }
 
-      if (existingShares.Items && existingShares.Items.length > 0) {
-        // Return existing share
-        const existing = existingShares.Items[0];
+      if (existingShare) {
         return NextResponse.json({
-          shareCode: existing.shareCode,
-          shareUrl: `${request.headers.get('origin') || ''}/chat?share=${existing.shareCode}`,
-          participants: existing.participants,
+          shareCode: existingShare.shareCode,
+          shareUrl: `${request.headers.get('origin') || ''}/chat?share=${existingShare.shareCode}`,
+          participants: existingShare.participants,
         });
       }
 
@@ -288,20 +299,24 @@ export async function GET(request: NextRequest) {
 
     // Check if a session has shares
     if (sessionId) {
-      const sharesResult = await docClient.send(new QueryCommand({
-        TableName: SHARE_TABLE,
-        IndexName: 'sessionId-index',
-        KeyConditionExpression: 'sessionId = :sid',
-        ExpressionAttributeValues: { ':sid': sessionId },
-      }));
+      try {
+        const sharesResult = await docClient.send(new QueryCommand({
+          TableName: SHARE_TABLE,
+          IndexName: 'sessionId-index',
+          KeyConditionExpression: 'sessionId = :sid',
+          ExpressionAttributeValues: { ':sid': sessionId },
+        }));
 
-      if (sharesResult.Items && sharesResult.Items.length > 0) {
-        const share = sharesResult.Items[0];
-        return NextResponse.json({
-          isShared: true,
-          shareCode: share.shareCode,
-          participants: share.participants,
-        });
+        if (sharesResult.Items && sharesResult.Items.length > 0) {
+          const share = sharesResult.Items[0];
+          return NextResponse.json({
+            isShared: true,
+            shareCode: share.shareCode,
+            participants: share.participants,
+          });
+        }
+      } catch {
+        // GSI or table may not exist; treat as not shared
       }
 
       return NextResponse.json({ isShared: false });

@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Bell,
   Search,
+  MessageSquare,
 } from 'lucide-react';
 import { useCompany } from '@/components/CompanyContext';
 
@@ -262,22 +263,32 @@ export function MobileBottomNav() {
 
   const items = [
     { label: 'Hem', href: '/overview', icon: <Home className="w-5 h-5" /> },
+    { label: 'Chatt', href: '/chat', icon: <MessageSquare className="w-5 h-5" /> },
     { label: 'CRM', href: '/crm', icon: <Users className="w-5 h-5" /> },
     { label: 'Compliance', href: '/?view=compliance', icon: <Shield className="w-5 h-5" /> },
     { label: 'Data Rooms', href: '/data-rooms', icon: <Briefcase className="w-5 h-5" /> },
   ];
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 z-40 safe-bottom">
-      <div className="h-full grid grid-cols-4">
+    <nav
+      className="lg:hidden fixed bottom-0 left-0 right-0 h-16 z-40 bg-white border-t border-gray-200 dark:bg-gray-900 dark:border-gray-700"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+    >
+      <div className="h-full grid grid-cols-5">
         {items.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href.split('?')[0] + '/');
+          const pathBase = item.href.split('?')[0];
+          const isActive =
+            pathname === item.href ||
+            (pathBase !== '/' && pathname.startsWith(pathBase)) ||
+            (item.href === '/chat' && pathname === '/chat');
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center justify-center gap-1 ${
-                isActive ? 'text-[#2d2a26]' : 'text-gray-400'
+              className={`flex flex-col items-center justify-center gap-1 touch-manipulation ${
+                isActive
+                  ? 'text-[#2d2a26] dark:text-[#d4b896]'
+                  : 'text-gray-400 dark:text-gray-500'
               }`}
             >
               {item.icon}

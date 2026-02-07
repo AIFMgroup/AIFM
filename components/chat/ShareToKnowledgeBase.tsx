@@ -51,6 +51,7 @@ interface ShareToKnowledgeBaseProps {
   messageId?: string;
   sessionId?: string;
   onSuccess?: () => void;
+  isDarkMode?: boolean;
 }
 
 // Helper function to get category icon safely - uses inline check
@@ -73,15 +74,22 @@ function getCategoryIcon(categoryId: string): React.ReactElement {
   return <IconComponent className="w-5 h-5" />;
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
+const CATEGORY_COLORS_LIGHT: Record<string, string> = {
   clients: 'bg-blue-50 border-blue-200 hover:bg-blue-100 data-[selected=true]:bg-blue-100 data-[selected=true]:border-blue-400',
   negotiations: 'bg-green-50 border-green-200 hover:bg-green-100 data-[selected=true]:bg-green-100 data-[selected=true]:border-green-400',
   compliance: 'bg-purple-50 border-purple-200 hover:bg-purple-100 data-[selected=true]:bg-purple-100 data-[selected=true]:border-purple-400',
   internal: 'bg-orange-50 border-orange-200 hover:bg-orange-100 data-[selected=true]:bg-orange-100 data-[selected=true]:border-orange-400',
 };
 
-// Default fallback color
-const DEFAULT_CATEGORY_COLOR = 'bg-gray-50 border-gray-200 hover:bg-gray-100 data-[selected=true]:bg-gray-100 data-[selected=true]:border-gray-400';
+const CATEGORY_COLORS_DARK: Record<string, string> = {
+  clients: 'bg-blue-900/30 border-blue-700 hover:bg-blue-900/50 data-[selected=true]:bg-blue-900/50 data-[selected=true]:border-blue-500',
+  negotiations: 'bg-green-900/30 border-green-700 hover:bg-green-900/50 data-[selected=true]:bg-green-900/50 data-[selected=true]:border-green-500',
+  compliance: 'bg-purple-900/30 border-purple-700 hover:bg-purple-900/50 data-[selected=true]:bg-purple-900/50 data-[selected=true]:border-purple-500',
+  internal: 'bg-orange-900/30 border-orange-700 hover:bg-orange-900/50 data-[selected=true]:bg-orange-900/50 data-[selected=true]:border-orange-500',
+};
+
+const DEFAULT_CATEGORY_LIGHT = 'bg-gray-50 border-gray-200 hover:bg-gray-100 data-[selected=true]:bg-gray-100 data-[selected=true]:border-gray-400';
+const DEFAULT_CATEGORY_DARK = 'bg-gray-800 border-gray-600 hover:bg-gray-700 data-[selected=true]:bg-gray-700 data-[selected=true]:border-[#c0a280]';
 
 export function ShareToKnowledgeBase({
   isOpen,
@@ -90,6 +98,7 @@ export function ShareToKnowledgeBase({
   messageId,
   sessionId,
   onSuccess,
+  isDarkMode = false,
 }: ShareToKnowledgeBaseProps) {
   const toast = useToast();
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -225,11 +234,18 @@ export function ShareToKnowledgeBase({
     }
   };
 
+  const CATEGORY_COLORS = isDarkMode ? CATEGORY_COLORS_DARK : CATEGORY_COLORS_LIGHT;
+  const DEFAULT_CATEGORY_COLOR = isDarkMode ? DEFAULT_CATEGORY_DARK : DEFAULT_CATEGORY_LIGHT;
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="share-kb-dialog-title"
+        className={`rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
         {/* Header */}
         <div className="bg-gradient-to-r from-[#2d2a26] to-[#4a4540] p-5 text-white flex-shrink-0">
           <div className="flex items-center justify-between">
@@ -238,13 +254,14 @@ export function ShareToKnowledgeBase({
                 <BookOpen className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold">Dela till kunskapsbasen</h2>
+                <h2 id="share-kb-dialog-title" className="text-lg font-semibold">Dela till kunskapsbasen</h2>
                 <p className="text-sm text-white/70">Gör denna insikt tillgänglig för hela teamet</p>
               </div>
             </div>
             <button 
               onClick={onClose}
               className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              aria-label="Stäng"
             >
               <X className="w-5 h-5" />
             </button>
@@ -256,11 +273,11 @@ export function ShareToKnowledgeBase({
           {/* Category Selection */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Välj kategori *
               </label>
               {isAutoCategorizing && (
-                <span className="flex items-center gap-1.5 text-xs text-violet-600">
+                <span className="flex items-center gap-1.5 text-xs text-violet-400">
                   <Sparkles className="w-3 h-3 animate-pulse" />
                   AI föreslår...
                 </span>
@@ -279,10 +296,10 @@ export function ShareToKnowledgeBase({
                     {getCategoryIcon(category.id)}
                     <span className="font-medium">{category.name}</span>
                     {selectedCategory === category.id && (
-                      <Check className="w-4 h-4 ml-auto text-green-600" />
+                      <Check className={`w-4 h-4 ml-auto ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} />
                     )}
                   </div>
-                  <p className="text-xs text-gray-600 line-clamp-2">{category.description}</p>
+                  <p className={`text-xs line-clamp-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{category.description}</p>
                 </button>
               ))}
             </div>
@@ -290,7 +307,7 @@ export function ShareToKnowledgeBase({
 
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
               Titel *
             </label>
             <input
@@ -298,43 +315,44 @@ export function ShareToKnowledgeBase({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Kort beskrivande titel..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c0a280]/50 focus:border-[#c0a280]"
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#c0a280]/50 focus:border-[#c0a280] ${isDarkMode ? 'bg-gray-800 border-gray-600 text-gray-100 placeholder-gray-500' : 'border-gray-300'}`}
             />
           </div>
 
           {/* Content */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
               Innehåll *
             </label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={6}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c0a280]/50 focus:border-[#c0a280] text-sm"
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#c0a280]/50 focus:border-[#c0a280] text-sm ${isDarkMode ? 'bg-gray-800 border-gray-600 text-gray-100' : 'border-gray-300'}`}
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
               Du kan redigera innehållet innan du delar
             </p>
           </div>
 
           {/* Tags */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
               Taggar (valfritt)
             </label>
             <div className="flex flex-wrap gap-2 mb-2">
               {tags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
+                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-700'}`}
                 >
                   <Tag className="w-3 h-3" />
                   {tag}
                   <button
                     type="button"
                     onClick={() => handleRemoveTag(tag)}
-                    className="hover:text-red-600"
+                    className={isDarkMode ? 'hover:text-red-400' : 'hover:text-red-600'}
+                    aria-label={`Ta bort tagg ${tag}`}
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -348,13 +366,13 @@ export function ShareToKnowledgeBase({
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Lägg till tagg..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c0a280]/50 focus:border-[#c0a280] text-sm"
+                className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#c0a280]/50 focus:border-[#c0a280] text-sm ${isDarkMode ? 'bg-gray-800 border-gray-600 text-gray-100 placeholder-gray-500' : 'border-gray-300'}`}
               />
               <button
                 type="button"
                 onClick={handleAddTag}
                 disabled={!tagInput.trim()}
-                className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg disabled:opacity-50 transition-colors"
+                className={`px-3 py-2 text-sm rounded-lg disabled:opacity-50 transition-colors ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200'}`}
               >
                 Lägg till
               </button>
@@ -363,7 +381,7 @@ export function ShareToKnowledgeBase({
 
           {/* Error */}
           {error && (
-            <div className="flex items-center gap-2 text-red-600 bg-red-50 px-4 py-2 rounded-lg">
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-lg ${isDarkMode ? 'text-red-400 bg-red-900/30' : 'text-red-600 bg-red-50'}`}>
               <AlertCircle className="w-4 h-4" />
               <span className="text-sm">{error}</span>
             </div>
@@ -371,7 +389,7 @@ export function ShareToKnowledgeBase({
 
           {/* Success */}
           {success && (
-            <div className="flex items-center gap-2 text-green-600 bg-green-50 px-4 py-2 rounded-lg">
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-lg ${isDarkMode ? 'text-green-400 bg-green-900/30' : 'text-green-600 bg-green-50'}`}>
               <Check className="w-4 h-4" />
               <span className="text-sm">Delat till kunskapsbasen!</span>
             </div>
@@ -379,11 +397,11 @@ export function ShareToKnowledgeBase({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-4 bg-gray-50 border-t flex justify-end gap-3 flex-shrink-0">
+        <div className={`px-5 py-4 border-t flex justify-end gap-3 flex-shrink-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
           <button
             onClick={onClose}
             disabled={isSubmitting}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+            className={`px-4 py-2 transition-colors ${isDarkMode ? 'text-gray-300 hover:text-gray-100' : 'text-gray-600 hover:text-gray-800'}`}
           >
             Avbryt
           </button>

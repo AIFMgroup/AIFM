@@ -259,9 +259,9 @@ function ShareholderRow({
       {isExpanded && (
         <tr>
           <td colSpan={7} className="px-4 py-0">
-            <div className="ml-12 mb-4 bg-gray-50 rounded-lg p-4">
+            <div className="ml-12 mb-4 bg-gray-50 rounded-lg p-4 overflow-x-auto">
               <h4 className="text-sm font-semibold text-gray-700 mb-3">Innehav</h4>
-              <table className="w-full text-sm">
+              <table className="w-full text-sm min-w-[500px]">
                 <thead>
                   <tr className="text-xs text-gray-500 uppercase">
                     <th className="text-left py-2">Fond</th>

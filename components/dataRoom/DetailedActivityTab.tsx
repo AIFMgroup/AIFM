@@ -325,8 +325,8 @@ export default function DetailedActivityTab({ roomId }: Props) {
           {summary.mostViewedDocuments.length > 0 && (
             <div>
               <h4 className="text-sm font-semibold text-aifm-charcoal mb-3">Mest visade dokument</h4>
-              <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
-                <table className="w-full">
+              <div className="bg-white border border-gray-100 rounded-xl overflow-hidden overflow-x-auto">
+                <table className="w-full min-w-[400px]">
                   <thead className="bg-gray-50/50">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/50 uppercase">Dokument</th>
@@ -352,8 +352,8 @@ export default function DetailedActivityTab({ roomId }: Props) {
           {summary.activeUsers.length > 0 && (
             <div>
               <h4 className="text-sm font-semibold text-aifm-charcoal mb-3">Aktiva användare</h4>
-              <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
-                <table className="w-full">
+              <div className="bg-white border border-gray-100 rounded-xl overflow-hidden overflow-x-auto">
+                <table className="w-full min-w-[500px]">
                   <thead className="bg-gray-50/50">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/50 uppercase">Användare</th>

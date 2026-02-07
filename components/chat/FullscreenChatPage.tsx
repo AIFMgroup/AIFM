@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback, useMemo, Suspense } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo, memo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { 
@@ -55,10 +55,46 @@ import {
   Quote,
   ListChecks,
   GitBranch,
+  Pencil,
 } from 'lucide-react';
 import { ShareToKnowledgeBase } from '@/components/chat/ShareToKnowledgeBase';
+import { useVoiceInput } from '@/hooks/useVoiceInput';
+import { usePrefersDarkMode, useIsStandalone, useIsMobile } from '@/hooks/useMediaQuery';
+import { MobileBottomNav } from '@/components/MobileNav';
 import { TemplateSelector, type TemplateId } from '@/components/chat/TemplateSelector';
 import { MermaidDiagram } from '@/components/chat/MermaidDiagram';
+
+// ============================================================================
+// Focus trap hook for modal dialogs
+// ============================================================================
+function useFocusTrap(active: boolean) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!active || !ref.current) return;
+    const el = ref.current;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const focusable = el.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusable.length) focusable[0].focus();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab' || !focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
+    el.addEventListener('keydown', handleKeyDown);
+    return () => {
+      el.removeEventListener('keydown', handleKeyDown);
+      previouslyFocused?.focus();
+    };
+  }, [active]);
+  return ref;
+}
 
 // ============================================================================
 // Types
@@ -149,6 +185,102 @@ const SUPPORTED_FILE_TYPES = [
   'image/webp',
 ];
 
+/** Process a single file into an attachment: validates, creates preview, parses via API. Throws on failure. */
+async function processFileAttachment(file: File): Promise<{ name: string; type: string; size: number; content: string; preview?: string }> {
+  // Create base64 preview for images
+  let previewDataUrl: string | undefined;
+  if (file.type.startsWith('image/')) {
+    previewDataUrl = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch('/api/ai/parse-file', { method: 'POST', body: formData });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.details || 'Kunde inte läsa filen');
+  }
+
+  const data = await response.json();
+
+  // For images the vision API analyses the image, so short OCR text is fine
+  const isImage = file.type.startsWith('image/');
+  if (!isImage && (!data.content || data.content.length < 10)) {
+    throw new Error(`Filen "${file.name}" kunde inte läsas. Innehållet verkar vara tomt.`);
+  }
+
+  return {
+    name: file.name,
+    type: file.type,
+    size: file.size,
+    content: data.content || '[Bild för visuell analys]',
+    preview: previewDataUrl,
+  };
+}
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
+function isFileTypeSupported(file: File): boolean {
+  return SUPPORTED_FILE_TYPES.includes(file.type) ||
+    file.name.endsWith('.txt') ||
+    file.name.endsWith('.xlsx') ||
+    file.name.endsWith('.xls') ||
+    file.name.endsWith('.csv') ||
+    file.name.endsWith('.pdf') ||
+    file.name.endsWith('.docx') ||
+    file.name.endsWith('.png') ||
+    file.name.endsWith('.jpg') ||
+    file.name.endsWith('.jpeg') ||
+    file.name.endsWith('.webp');
+}
+
+/** Shared SSE stream reader for /api/ai/chat. Calls onChunk for each text update; returns final content and metadata. */
+async function streamAssistantResponse(
+  response: Response,
+  onChunk: (params: { fullContent: string; citations: Citation[]; internalSources: InternalKnowledgeSource[] }) => void
+): Promise<{ fullContent: string; citations: Citation[]; internalSources: InternalKnowledgeSource[] }> {
+  const reader = response.body?.getReader();
+  const decoder = new TextDecoder();
+  let fullContent = '';
+  let citations: Citation[] = [];
+  let internalSources: InternalKnowledgeSource[] = [];
+  if (!reader) return { fullContent, citations, internalSources };
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const chunk = decoder.decode(value, { stream: true });
+    for (const line of chunk.split('\n')) {
+      if (line.startsWith('data: ')) {
+        const data = line.slice(6);
+        if (data === '[DONE]') break;
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.meta) {
+            if (parsed.citations) citations = parsed.citations;
+            if (parsed.internalSources) internalSources = parsed.internalSources;
+          }
+          if (parsed.done && parsed.citations) citations = parsed.citations;
+          const textChunk = parsed.text ?? parsed.content;
+          if (textChunk) {
+            fullContent += textChunk;
+            onChunk({ fullContent, citations, internalSources });
+          }
+          if (parsed.error) throw new Error(parsed.error);
+        } catch (e) {
+          if (e instanceof Error && e.message !== 'Unexpected') throw e;
+        }
+      }
+    }
+  }
+  return { fullContent, citations, internalSources };
+}
+
 // ============================================================================
 // Code Block with Copy Button
 // ============================================================================
@@ -172,6 +304,7 @@ function CodeBlockWithCopy({ code }: { code: string }) {
         className="ml-1 p-0.5 rounded text-gray-300 hover:text-[#c0a280] hover:bg-gray-100 
                    opacity-0 group-hover:opacity-100 transition-all"
         title="Kopiera kod"
+        aria-label="Kopiera kod"
       >
         {copied ? (
           <Check className="w-3 h-3 text-green-500" />
@@ -518,6 +651,7 @@ function ActionDropdown({ onRegenerate, onReformulate, onExportPDF, onExportExce
               : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
         }`}
         title="Fler åtgärder"
+        aria-label="Fler åtgärder"
       >
         <MoreHorizontal className="w-4 h-4" />
       </button>
@@ -665,20 +799,30 @@ interface MessageBubbleProps {
   onReformulate?: (messageId: string, type: 'simplify' | 'expand' | 'formal') => void;
   onQuote?: (message: Message) => void;
   onStartBranch?: (messageId: string) => void;
+  onStartEdit?: (messageId: string) => void;
+  onEditMessage?: (messageId: string, newContent: string) => void;
+  onCancelEdit?: () => void;
+  editingMessageId?: string | null;
   isLastAssistantMessage?: boolean;
   isDarkMode?: boolean;
   isSharedSession?: boolean;
   showBranchAction?: boolean;
 }
 
-function MessageBubble({ message, onRegenerate, onFeedback, onShare, onFollowUp, onReformulate, onQuote, onStartBranch, isLastAssistantMessage, isDarkMode = false, isSharedSession = false, showBranchAction = false }: MessageBubbleProps) {
+const MessageBubble = memo(function MessageBubble({ message, onRegenerate, onFeedback, onShare, onFollowUp, onReformulate, onQuote, onStartBranch, onStartEdit, onEditMessage, onCancelEdit, editingMessageId = null, isLastAssistantMessage, isDarkMode = false, isSharedSession = false, showBranchAction = false }: MessageBubbleProps) {
   const [copied, setCopied] = useState(false);
   const [exporting, setExporting] = useState<'pdf' | 'excel' | null>(null);
   const [localFeedback, setLocalFeedback] = useState<'positive' | 'negative' | null>(message.feedback || null);
   const [showActions, setShowActions] = useState(false);
   const [showSources, setShowSources] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [editDraft, setEditDraft] = useState(message.content);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+
+  const isEditing = editingMessageId === message.id;
+  useEffect(() => {
+    if (isEditing) setEditDraft(message.content);
+  }, [isEditing, message.content]);
 
   // Clean up speech on unmount
   useEffect(() => {
@@ -861,6 +1005,7 @@ function MessageBubble({ message, onRegenerate, onFeedback, onShare, onFollowUp,
       }
     } catch (error) {
       console.error('PDF export error:', error);
+      showToast('Kunde inte exportera till PDF');
     }
     setExporting(null);
   };
@@ -903,28 +1048,80 @@ function MessageBubble({ message, onRegenerate, onFeedback, onShare, onFollowUp,
       }
     } catch (error) {
       console.error('Excel export error:', error);
+      showToast('Kunde inte exportera till Excel');
     }
     setExporting(null);
   };
   
   if (message.role === 'user') {
+    if (isEditing && onEditMessage && onCancelEdit) {
+      return (
+        <div className="flex flex-col items-end gap-2 animate-fade-in">
+          <div className={`max-w-[85%] sm:max-w-[80%] rounded-2xl rounded-tr-md px-3 sm:px-4 py-2.5 sm:py-3 shadow-lg ${
+            isDarkMode ? 'bg-[#c0a280] text-[#1a1918]' : 'bg-[#2d2a26] text-white'
+          }`}>
+            <textarea
+              value={editDraft}
+              onChange={e => setEditDraft(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  onEditMessage(message.id, editDraft);
+                }
+                if (e.key === 'Escape') onCancelEdit();
+              }}
+              className="w-full min-h-[60px] text-sm leading-relaxed bg-transparent border-none resize-none focus:outline-none focus:ring-0"
+              rows={3}
+              autoFocus
+              aria-label="Redigera meddelande"
+            />
+            <div className="flex justify-end gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => onCancelEdit()}
+                className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'hover:bg-black/20' : 'hover:bg-white/20'}`}
+              >
+                Avbryt
+              </button>
+              <button
+                type="button"
+                onClick={() => onEditMessage(message.id, editDraft)}
+                disabled={!editDraft.trim()}
+                className="text-xs px-2 py-1 rounded bg-white/20 disabled:opacity-50"
+              >
+                Skicka
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
     return (
-      <div className="flex flex-col items-end gap-0.5 animate-fade-in">
+      <div className="flex flex-col items-end gap-0.5 animate-fade-in group/user">
         {/* Sender name for shared sessions */}
         {isSharedSession && message.senderName && (
-          <span className={`text-[10px] font-medium mr-9 ${
-            isDarkMode ? 'text-gray-500' : 'text-gray-400'
-          }`}>
+          <span className={`text-[10px] font-medium mr-9 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
             {message.senderName}
           </span>
         )}
         <div className="flex justify-end gap-2 sm:gap-3">
-          <div className={`max-w-[85%] sm:max-w-[80%] rounded-2xl rounded-tr-md px-3 sm:px-4 py-2.5 sm:py-3 shadow-lg ${
-            isDarkMode 
-              ? 'bg-[#c0a280] text-[#1a1918]' 
-              : 'bg-[#2d2a26] text-white'
+          <div className={`max-w-[85%] sm:max-w-[80%] rounded-2xl rounded-tr-md px-3 sm:px-4 py-2.5 sm:py-3 shadow-lg relative ${
+            isDarkMode ? 'bg-[#c0a280] text-[#1a1918]' : 'bg-[#2d2a26] text-white'
           }`}>
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+            <p className="text-sm leading-relaxed whitespace-pre-wrap pr-8">{message.content}</p>
+            {onStartEdit && (
+              <button
+                type="button"
+                onClick={() => onStartEdit(message.id)}
+                className={`absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover/user:opacity-100 transition-opacity ${
+                  isDarkMode ? 'hover:bg-black/20' : 'hover:bg-white/20'
+                }`}
+                title="Redigera"
+                aria-label="Redigera meddelande"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
           <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-br from-[#c0a280] to-[#8a7355] flex items-center justify-center flex-shrink-0 shadow-md">
             <User className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" />
@@ -1077,6 +1274,7 @@ function MessageBubble({ message, onRegenerate, onFeedback, onShare, onFollowUp,
                         : 'text-gray-400 hover:text-green-600 hover:bg-white'
                   }`}
                   title="Bra svar"
+                aria-label="Bra svar"
                 >
                   <ThumbsUp className="w-3.5 h-3.5" />
                 </button>
@@ -1092,6 +1290,7 @@ function MessageBubble({ message, onRegenerate, onFeedback, onShare, onFollowUp,
                         : 'text-gray-400 hover:text-red-600 hover:bg-white'
                   }`}
                   title="Dåligt svar"
+                aria-label="Dåligt svar"
                 >
                   <ThumbsDown className="w-3.5 h-3.5" />
                 </button>
@@ -1124,6 +1323,7 @@ function MessageBubble({ message, onRegenerate, onFeedback, onShare, onFollowUp,
                       : 'text-gray-400 hover:text-[#c0a280] hover:bg-gray-50'
                   }`}
                   title="Citera detta svar i nästa meddelande"
+                aria-label="Citera svar"
                 >
                   <Quote className="w-3.5 h-3.5" />
                 </button>
@@ -1139,6 +1339,7 @@ function MessageBubble({ message, onRegenerate, onFeedback, onShare, onFollowUp,
                       : 'text-gray-400 hover:text-[#c0a280] hover:bg-gray-50'
                   }`}
                   title="Starta gren – fortsätt från detta svar i en ny tråd"
+                aria-label="Starta gren"
                 >
                   <GitBranch className="w-3.5 h-3.5" />
                 </button>
@@ -1171,6 +1372,7 @@ function MessageBubble({ message, onRegenerate, onFeedback, onShare, onFollowUp,
                       : 'text-[#8a7355] border-[#c0a280]/30 hover:bg-[#c0a280]/10 hover:border-[#c0a280]/50'
                   }`}
                   title="Dela till kunskapsbasen – gör tillgänglig för hela teamet"
+                aria-label="Dela till kunskapsbasen"
                 >
                   <BookMarked className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Kunskapsbas</span>
@@ -1197,7 +1399,7 @@ function MessageBubble({ message, onRegenerate, onFeedback, onShare, onFollowUp,
       </div>
     </div>
   );
-}
+});
 
 // ============================================================================
 // Loading Animation
@@ -1274,6 +1476,9 @@ interface HistoryDrawerProps {
   onNewChat: () => void;
   onTogglePin?: (sessionId: string) => void;
   isDarkMode?: boolean;
+  hasMoreSessions?: boolean;
+  onLoadMoreSessions?: () => void;
+  isLoadingSessions?: boolean;
 }
 
 function HistoryDrawer({ 
@@ -1287,6 +1492,9 @@ function HistoryDrawer({
   onNewChat,
   onTogglePin,
   isDarkMode = false,
+  hasMoreSessions = false,
+  onLoadMoreSessions,
+  isLoadingSessions = false,
 }: HistoryDrawerProps) {
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -1337,18 +1545,18 @@ function HistoryDrawer({
       
       {/* Drawer */}
       <div 
-        className={`fixed top-0 left-0 bottom-0 w-[85%] max-w-sm bg-white z-50 transform transition-transform duration-300 ease-out lg:hidden shadow-2xl ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed top-0 left-0 bottom-0 w-[85%] max-w-sm z-50 transform transition-transform duration-300 ease-out lg:hidden shadow-2xl ${
+          isDarkMode ? 'bg-gray-900' : 'bg-white'
+        } ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
         style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h2 className="font-semibold text-[#2d2a26]">Chatthistorik</h2>
+          <div className={`flex items-center justify-between p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+            <h2 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-[#2d2a26]'}`}>Chatthistorik</h2>
             <button
               onClick={onClose}
-              className="p-2 -mr-2 text-gray-400 hover:text-gray-600 rounded-lg touch-manipulation"
+              className={`p-2 -mr-2 rounded-lg touch-manipulation ${isDarkMode ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
             >
               <X className="w-5 h-5" />
             </button>
@@ -1357,19 +1565,20 @@ function HistoryDrawer({
           {/* Search Input */}
           <div className="px-3 pt-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Sök i chatthistorik..."
-                className="w-full pl-10 pr-8 py-2.5 text-sm border border-gray-200 rounded-xl 
-                         focus:ring-2 focus:ring-[#c0a280]/50 focus:border-[#c0a280] transition-colors"
+                className={`w-full pl-10 pr-8 py-2.5 text-sm border rounded-xl focus:ring-2 focus:ring-[#c0a280]/50 focus:border-[#c0a280] transition-colors ${
+                  isDarkMode ? 'border-gray-600 bg-gray-800 text-gray-100 placeholder-gray-500' : 'border-gray-200 bg-white text-[#2d2a26] placeholder-gray-400'
+                }`}
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-400 hover:text-gray-600'}`}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1378,7 +1587,7 @@ function HistoryDrawer({
           </div>
           
           {/* New Chat Button */}
-          <div className="p-3 border-b border-gray-100">
+          <div className={`p-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
             <button
               onClick={() => { onNewChat(); onClose(); }}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#2d2a26] text-white 
@@ -1393,27 +1602,27 @@ function HistoryDrawer({
           <div className="flex-1 overflow-y-auto p-2">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+                <Loader2 className={`w-6 h-6 animate-spin ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
               </div>
             ) : sortedSessions.length === 0 ? (
               <div className="text-center py-12 px-4">
-                <MessageSquare className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                <MessageSquare className={`w-10 h-10 mx-auto mb-3 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
                 {searchQuery ? (
                   <>
-                    <p className="text-sm text-gray-500">Inga resultat för "{searchQuery}"</p>
-                    <p className="text-xs text-gray-400 mt-1">Prova ett annat sökord</p>
+                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Inga resultat för "{searchQuery}"</p>
+                    <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Prova ett annat sökord</p>
                   </>
                 ) : (
                   <>
-                    <p className="text-sm text-gray-500">Inga tidigare chattar</p>
-                    <p className="text-xs text-gray-400 mt-1">Dina konversationer sparas här</p>
+                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Inga tidigare chattar</p>
+                    <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Dina konversationer sparas här</p>
                   </>
                 )}
               </div>
             ) : (
               <div className="space-y-1">
                 {searchQuery && (
-                  <p className="text-xs text-gray-500 px-2 py-1">
+                  <p className={`text-xs px-2 py-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
                     {sortedSessions.length} träff{sortedSessions.length !== 1 ? 'ar' : ''}
                   </p>
                 )}
@@ -1421,10 +1630,12 @@ function HistoryDrawer({
                   <button
                     key={session.sessionId}
                     onClick={() => { onLoadSession(session.sessionId); onClose(); }}
-                    className={`w-full text-left p-3 rounded-xl transition-all group relative touch-manipulation ${
+                    className={`w-full text-left p-3 rounded-xl transition-all group relative touch-manipulation border ${
                       currentSessionId === session.sessionId
-                        ? 'bg-[#c0a280]/15 border border-[#c0a280]/30'
-                        : 'hover:bg-gray-50 active:bg-gray-100 border border-transparent'
+                        ? 'bg-[#c0a280]/15 border-[#c0a280]/30'
+                        : isDarkMode
+                          ? 'hover:bg-gray-800 active:bg-gray-700 border-transparent'
+                          : 'hover:bg-gray-50 active:bg-gray-100 border-transparent'
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -1432,10 +1643,10 @@ function HistoryDrawer({
                         {session.pinned ? <Pin className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                       </div>
                       <div className="flex-1 min-w-0 pr-16">
-                        <p className="text-sm font-medium text-[#2d2a26] truncate">
+                        <p className={`text-sm font-medium truncate ${isDarkMode ? 'text-gray-100' : 'text-[#2d2a26]'}`}>
                           {session.title}
                         </p>
-                        <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                        <p className={`text-xs flex items-center gap-1 mt-0.5 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
                           <Clock className="w-3 h-3" />
                           {formatTimeAgo(session.updatedAt)}
                         </p>
@@ -1446,7 +1657,7 @@ function HistoryDrawer({
                       <button
                         onClick={(e) => { e.stopPropagation(); onTogglePin(session.sessionId); }}
                         className={`absolute right-12 top-1/2 -translate-y-1/2 p-2 rounded-lg touch-manipulation ${
-                          session.pinned ? 'text-[#8b7355] bg-[#c0a280]/15' : 'text-gray-300 hover:text-[#8b7355] hover:bg-[#c0a280]/10'
+                          session.pinned ? 'text-[#8b7355] bg-[#c0a280]/15' : isDarkMode ? 'text-gray-500 hover:text-[#8b7355] hover:bg-[#c0a280]/10' : 'text-gray-300 hover:text-[#8b7355] hover:bg-[#c0a280]/10'
                         }`}
                         title={session.pinned ? 'Avfäst' : 'Fäst överst'}
                       >
@@ -1455,9 +1666,11 @@ function HistoryDrawer({
                     )}
                     <button
                       onClick={(e) => { e.stopPropagation(); onDeleteSession(session.sessionId); }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg
-                                 text-gray-300 hover:text-red-500 hover:bg-red-50 touch-manipulation"
+                      className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg touch-manipulation ${
+                        isDarkMode ? 'text-gray-500 hover:text-red-400 hover:bg-red-900/30' : 'text-gray-300 hover:text-red-500 hover:bg-red-50'
+                      }`}
                       title="Ta bort"
+                      aria-label="Ta bort chatt"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -1465,11 +1678,23 @@ function HistoryDrawer({
                 ))}
               </div>
             )}
+            
+            {hasMoreSessions && onLoadMoreSessions && (
+              <button
+                type="button"
+                onClick={onLoadMoreSessions}
+                disabled={isLoadingSessions}
+                className="w-full mt-2 py-2.5 text-sm rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 bg-[#c0a280]/10 text-[#8b7355] hover:bg-[#c0a280]/20 touch-manipulation"
+              >
+                {isLoadingSessions ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                Ladda fler
+              </button>
+            )}
           </div>
           
           {/* Footer */}
-          <div className="p-4 border-t border-gray-200 bg-gray-50">
-            <p className="text-xs text-gray-400 text-center">
+          <div className={`p-4 border-t ${isDarkMode ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50'}`}>
+            <p className={`text-xs text-center ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
               Chattar sparas säkert i ditt konto
             </p>
           </div>
@@ -1499,9 +1724,17 @@ function ChatPageContent() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [showAllSessions, setShowAllSessions] = useState(false);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+  const [hasMoreSessions, setHasMoreSessions] = useState(false);
+  const [sessionsStartKey, setSessionsStartKey] = useState<string | null>(null);
   const [historySearch, setHistorySearch] = useState('');
   const [addingTagSessionId, setAddingTagSessionId] = useState<string | null>(null);
   const [newTagInput, setNewTagInput] = useState('');
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [editingSessionTitle, setEditingSessionTitle] = useState('');
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [showMessageSearch, setShowMessageSearch] = useState(false);
+  const [messageSearchQuery, setMessageSearchQuery] = useState('');
+  const [messageSearchIndex, setMessageSearchIndex] = useState(0);
   const [showInputPreview, setShowInputPreview] = useState(false);
   const [quotedMessage, setQuotedMessage] = useState<Message | null>(null);
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
@@ -1529,10 +1762,29 @@ function ChatPageContent() {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [messageToShare, setMessageToShare] = useState<Message | null>(null);
   
-  // Voice input state
-  const [isListening, setIsListening] = useState(false);
-  const [voiceSupported, setVoiceSupported] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  // Share-with-colleague panel state
+  const [showSharePanel, setShowSharePanel] = useState(false);
+  const [colleagues, setColleagues] = useState<{ username: string; name: string; email: string }[]>([]);
+  const [colleagueSearch, setColleagueSearch] = useState('');
+  const [loadingColleagues, setLoadingColleagues] = useState(false);
+  const sharePanelRef = useRef<HTMLDivElement>(null);
+  
+  // Delete session confirmation
+  const [sessionToDeleteId, setSessionToDeleteId] = useState<string | null>(null);
+  const deleteDialogRef = useFocusTrap(!!sessionToDeleteId);
+  const summaryDialogRef = useFocusTrap(summaryModalOpen);
+  const isStandalone = useIsStandalone();
+  const isMobile = useIsMobile();
+  const showBottomNav = isStandalone && isMobile;
+  
+  // Voice input via hook
+  const voiceInput = useVoiceInput({
+    language: 'sv-SE',
+    continuous: true,
+    onResult: (transcript) => setInput(prev => prev + transcript + ' '),
+    onError: (errorMsg) => showToast(errorMsg),
+  });
+  const { isListening, isSupported: voiceSupported, toggleListening: toggleVoiceInput } = voiceInput;
   
   // Dark mode state
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -1546,6 +1798,14 @@ function ChatPageContent() {
   const isUserScrollingRef = useRef(false);
   const lastScrollTopRef = useRef(0);
   const streamingStartTimeRef = useRef<number | null>(null);
+
+  // Stable handler refs – keep latest handler in ref, expose stable wrapper
+  const handleRegenerateRef = useRef<(messageId: string) => void>(() => {});
+  const handleEditMessageRef = useRef<(messageId: string, newContent: string) => void>(() => {});
+  const handleReformulateRef = useRef<(messageId: string, type: 'simplify' | 'expand' | 'formal') => void>(() => {});
+  const stableHandleRegenerate = useCallback((id: string) => handleRegenerateRef.current(id), []);
+  const stableHandleEditMessage = useCallback((id: string, c: string) => handleEditMessageRef.current(id, c), []);
+  const stableHandleReformulate = useCallback((id: string, t: 'simplify' | 'expand' | 'formal') => handleReformulateRef.current(id, t), []);
 
   // Load chat sessions on mount and auto-open the latest session
   useEffect(() => {
@@ -1573,14 +1833,16 @@ function ChatPageContent() {
     };
   }, []);
 
-  // Initialize dark mode from localStorage
+  // Initialize dark mode from localStorage, falling back to system preference
+  const prefersSystemDark = usePrefersDarkMode();
   useEffect(() => {
-    const savedDarkMode = localStorage.getItem('aifm-dark-mode');
-    if (savedDarkMode === 'true') {
+    const saved = localStorage.getItem('aifm-dark-mode');
+    const shouldBeDark = saved !== null ? saved === 'true' : prefersSystemDark;
+    if (shouldBeDark) {
       setIsDarkMode(true);
       document.documentElement.classList.add('dark');
     }
-  }, []);
+  }, [prefersSystemDark]);
 
   // Get current user name from cookie for shared sessions
   useEffect(() => {
@@ -1622,65 +1884,38 @@ function ChatPageContent() {
     localStorage.removeItem('aifm-chat-draft');
   }, []);
 
-  // Initialize voice recognition
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        setVoiceSupported(true);
-        const recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = 'sv-SE';
-        
-        recognition.onresult = (event: SpeechRecognitionEvent) => {
-          let finalTranscript = '';
-          let interimTranscript = '';
-          
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript;
-            if (event.results[i].isFinal) {
-              finalTranscript += transcript;
-            } else {
-              interimTranscript += transcript;
-            }
-          }
-          
-          if (finalTranscript) {
-            setInput(prev => prev + finalTranscript + ' ');
-          }
-        };
-        
-        recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-          console.error('Speech recognition error:', event.error);
-          setIsListening(false);
-        };
-        
-        recognition.onend = () => {
-          setIsListening(false);
-        };
-        
-        recognitionRef.current = recognition;
-      }
-    }
-  }, []);
+  // Voice recognition is now handled by the useVoiceInput hook above
 
-  // Toggle voice recognition
-  const toggleVoiceInput = useCallback(() => {
-    if (!recognitionRef.current) return;
-    
-    if (isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-    } else {
-      try {
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch (error) {
-        console.error('Failed to start speech recognition:', error);
+  // Share panel: close on click outside or Escape; fetch colleagues when opened
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (sharePanelRef.current && !sharePanelRef.current.contains(e.target as Node)) {
+        setShowSharePanel(false);
       }
+    };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowSharePanel(false);
+    };
+    if (showSharePanel) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleEscape);
     }
-  }, [isListening]);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [showSharePanel]);
+
+  useEffect(() => {
+    if (!showSharePanel) return;
+    if (colleagues.length > 0) return;
+    setLoadingColleagues(true);
+    fetch('/api/chat/colleagues')
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error('Failed to load'))))
+      .then((data) => setColleagues(data.colleagues || []))
+      .catch(() => setColleagues([]))
+      .finally(() => setLoadingColleagues(false));
+  }, [showSharePanel, colleagues.length]);
 
   // Toggle dark mode
   const toggleDarkMode = useCallback(() => {
@@ -1699,6 +1934,20 @@ function ChatPageContent() {
   // Keyboard shortcuts (desktop only)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Escape: Close message search first
+      if (e.key === 'Escape' && showMessageSearch) {
+        e.preventDefault();
+        setShowMessageSearch(false);
+        setMessageSearchQuery('');
+        return;
+      }
+      // Cmd/Ctrl+F: Toggle in-conversation search
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+        e.preventDefault();
+        setShowMessageSearch((prev) => !prev);
+        if (!showMessageSearch) setMessageSearchIndex(0);
+        return;
+      }
       // Cmd/Ctrl+K: New chat
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
@@ -1709,19 +1958,16 @@ function ChatPageContent() {
         clearDraft();
         setTimeout(() => inputRef.current?.focus(), 100);
       }
-      
       // Cmd/Ctrl+Enter: Send message (handled by form)
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
         e.preventDefault();
       }
-      
       // Escape: Clear input (only when input is focused)
       if (e.key === 'Escape' && document.activeElement === inputRef.current) {
         e.preventDefault();
         setInput('');
         clearDraft();
       }
-      
       // Cmd/Ctrl+D: Toggle dark mode
       if ((e.metaKey || e.ctrlKey) && e.key === 'd') {
         e.preventDefault();
@@ -1731,7 +1977,25 @@ function ChatPageContent() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [clearDraft, toggleDarkMode]);
+  }, [clearDraft, toggleDarkMode, showMessageSearch]);
+
+  // When virtual keyboard opens (visualViewport shrinks), keep input in view on mobile
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.visualViewport) return;
+    const vv = window.visualViewport;
+    let lastHeight = vv.height;
+
+    const handleViewportResize = () => {
+      const newHeight = vv.height;
+      if (newHeight < lastHeight && inputRef.current) {
+        inputRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }
+      lastHeight = newHeight;
+    };
+
+    vv.addEventListener('resize', handleViewportResize);
+    return () => vv.removeEventListener('resize', handleViewportResize);
+  }, []);
 
   // Track user scrolling
   useEffect(() => {
@@ -1772,8 +2036,8 @@ function ChatPageContent() {
         const data = await response.json();
         const sessions = data.sessions || [];
         setChatSessions(sessions);
-        
-        // Auto-load the most recent session if requested and no session is active
+        setHasMoreSessions(!!data.hasMore);
+        setSessionsStartKey(data.lastEvaluatedKey ?? null);
         if (autoLoadLatest && sessions.length > 0 && !currentSessionId && messages.length === 0) {
           const latestSession = sessions[0];
           loadSession(latestSession.sessionId);
@@ -1781,17 +2045,39 @@ function ChatPageContent() {
       }
     } catch (error) {
       console.error('Failed to load chat sessions:', error);
+      showToast('Kunde inte ladda chattar');
+    }
+    setIsLoadingSessions(false);
+  };
+
+  const loadMoreSessions = async () => {
+    if (!sessionsStartKey || isLoadingSessions) return;
+    setIsLoadingSessions(true);
+    try {
+      const response = await fetch(`/api/chat/sessions?limit=20&startKey=${sessionsStartKey}`);
+      if (response.ok) {
+        const data = await response.json();
+        const nextSessions = data.sessions || [];
+        setChatSessions(prev => [...prev, ...nextSessions]);
+        setHasMoreSessions(!!data.hasMore);
+        setSessionsStartKey(data.lastEvaluatedKey ?? null);
+      }
+    } catch (error) {
+      console.error('Failed to load more sessions:', error);
+      showToast('Kunde inte ladda fler chattar');
     }
     setIsLoadingSessions(false);
   };
 
   const saveSession = async (newMessages?: Message[], branches?: ChatBranch[]) => {
-    if (!currentSessionId) return;
+    // Allow creating new session when currentSessionId is null (first message)
     if (newMessages && newMessages.length === 0 && !branches) return;
+    if (!currentSessionId && !(newMessages && newMessages.length > 0)) return;
     
     try {
       const body: Record<string, unknown> = {
-        sessionId: currentSessionId,
+        // Omit sessionId when creating new session (first message)
+        ...(currentSessionId ? { sessionId: currentSessionId } : {}),
         // For shared sessions, write to the owner's session
         ...(isSharedSession && sharedOwnerUserId && shareCode ? {
           ownerUserId: sharedOwnerUserId,
@@ -1826,6 +2112,7 @@ function ChatPageContent() {
       }
     } catch (error) {
       console.error('Failed to save session:', error);
+      showToast('Kunde inte spara chatt');
     }
   };
 
@@ -1906,6 +2193,7 @@ function ChatPageContent() {
       }
     } catch (error) {
       console.error('Failed to load session:', error);
+      showToast('Kunde inte ladda chatten');
     }
   };
 
@@ -1921,6 +2209,9 @@ function ChatPageContent() {
       if (response.ok) {
         const data = await response.json();
         setMessages(data.messages || []);
+        setMainThreadMessages(data.messages || []);
+        setSessionBranches([]);
+        setCurrentBranchId(null);
         setMode(data.mode || 'claude');
         setCurrentSessionId(data.sessionId);
         setShareCode(code);
@@ -1932,10 +2223,12 @@ function ChatPageContent() {
         // Start polling for updates
         startSharedPolling(code);
       } else {
-        alert('Delningslänken är ogiltig eller har löpt ut.');
+        const errData = await response.json().catch(() => ({}));
+        showToast(errData.error || 'Delningslänken är ogiltig eller har löpt ut.');
       }
     } catch (error) {
       console.error('Failed to join shared session:', error);
+      showToast('Kunde inte gå med i delad session.');
     }
   };
 
@@ -1973,6 +2266,7 @@ function ChatPageContent() {
         }
       } catch (error) {
         console.error('Polling error:', error);
+        showToast('Kunde inte uppdatera delad chatt');
       }
     }, 5000);
   };
@@ -2008,7 +2302,12 @@ function ChatPageContent() {
       }
     } catch (error) {
       console.error('Failed to delete session:', error);
+      showToast('Kunde inte ta bort chatten');
     }
+  };
+
+  const confirmDeleteSession = (sessionId: string) => {
+    setSessionToDeleteId(sessionId);
   };
 
   const handleRegenerate = async (messageId: string) => {
@@ -2071,63 +2370,24 @@ function ChatPageContent() {
       if (!response.ok) throw new Error('Failed to get response');
       
       if (useStreaming && response.headers.get('content-type')?.includes('text/event-stream')) {
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
-        let fullContent = '';
-        
-        if (reader) {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split('\n');
-            
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const data = line.slice(6);
-                if (data === '[DONE]') break;
-                
-                try {
-                  const parsed = JSON.parse(data);
-                  if (parsed.text) {
-                    fullContent += parsed.text;
-                    setMessages(prev => prev.map(m => 
-                      m.id === newAssistantMessageId 
-                        ? { ...m, content: fullContent }
-                        : m
-                    ));
-                  }
-                } catch {
-                  // Ignore parse errors
-                }
-              }
-            }
-          }
-        }
-        
+        const { fullContent } = await streamAssistantResponse(response, ({ fullContent: content }) => {
+          setMessages(prev => prev.map(m => m.id === newAssistantMessageId ? { ...m, content } : m));
+        });
         const finalMessages = [...messagesWithoutResponse, { ...newAssistantMessage, content: fullContent }];
         setMessages(finalMessages);
         persistMessages(finalMessages);
       } else {
         const data = await response.json();
         const finalContent = data.answer || data.response || data.content || 'Inget svar mottogs.';
-        
-        setMessages(prev => prev.map(m => 
-          m.id === newAssistantMessageId 
-            ? { ...m, content: finalContent, citations: data.citations, confidence: data.confidence }
-            : m
-        ));
-        
         const finalMessages = [...messagesWithoutResponse, { 
           ...newAssistantMessage, 
           content: finalContent,
           citations: data.citations,
           confidence: data.confidence,
         }];
+        setMessages(finalMessages);
         persistMessages(finalMessages);
       }
-      
     } catch (error) {
       console.error('Regenerate error:', error);
       setMessages(prev => prev.map(m => 
@@ -2135,15 +2395,84 @@ function ChatPageContent() {
           ? { ...m, content: 'Kunde inte generera nytt svar. Försök igen.' }
           : m
       ));
+      showToast('Kunde inte generera nytt svar. Försök igen.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleFeedback = async (messageId: string, feedback: 'positive' | 'negative') => {
-    setMessages(prev => prev.map(m => 
-      m.id === messageId ? { ...m, feedback } : m
-    ));
+  const handleEditMessage = async (messageId: string, newContent: string) => {
+    const messageIndex = messages.findIndex(m => m.id === messageId);
+    if (messageIndex === -1 || messages[messageIndex].role !== 'user') return;
+    const trimmed = newContent.trim();
+    if (!trimmed) return;
+
+    setEditingMessageId(null);
+    const messagesUpToEdited = messages.slice(0, messageIndex + 1).map((m, i) =>
+      i === messageIndex ? { ...m, content: trimmed } : m
+    );
+    setMessages(messagesUpToEdited);
+    isUserScrollingRef.current = false;
+    setIsLoading(true);
+
+    const newAssistantMessageId = `assistant-${Date.now()}`;
+    const newAssistantMessage: Message = {
+      id: newAssistantMessageId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date().toISOString(),
+      mode,
+    };
+    setMessages(prev => [...prev, newAssistantMessage]);
+
+    try {
+      const messageWithContext = trimmed.includes('📎 Bifogade filer:')
+        ? trimmed.split('📎 Bifogade filer:')[0].trim()
+        : trimmed;
+      const response = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: messageWithContext,
+          message: messageWithContext,
+          history: messagesUpToEdited.slice(-10).map(m => ({ role: m.role, content: m.content })),
+          mode,
+          stream: true,
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to get response');
+
+      if (response.headers.get('content-type')?.includes('text/event-stream')) {
+        const { fullContent } = await streamAssistantResponse(response, ({ fullContent: content }) => {
+          setMessages(prev => prev.map(m => (m.id === newAssistantMessageId ? { ...m, content } : m)));
+        });
+        const finalMessages = [...messagesUpToEdited, { ...newAssistantMessage, content: fullContent }];
+        setMessages(finalMessages);
+        persistMessages(finalMessages);
+      } else {
+        const data = await response.json();
+        const finalContent = data.answer || data.response || data.content || 'Inget svar mottogs.';
+        const finalMessages = [...messagesUpToEdited, { ...newAssistantMessage, content: finalContent, citations: data.citations, confidence: data.confidence }];
+        setMessages(finalMessages);
+        persistMessages(finalMessages);
+      }
+    } catch (error) {
+      console.error('Edit message error:', error);
+      setMessages(prev => prev.map(m => (m.id === newAssistantMessageId ? { ...m, content: 'Kunde inte skicka. Försök igen.' } : m)));
+      showToast('Kunde inte skicka redigerat meddelande.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFeedback = useCallback(async (messageId: string, feedback: 'positive' | 'negative') => {
+    setMessages(prev => {
+      const updatedMessages = prev.map(m => 
+        m.id === messageId ? { ...m, feedback } : m
+      );
+      persistMessages(updatedMessages);
+      return updatedMessages;
+    });
     
     try {
       await fetch('/api/ai/feedback', {
@@ -2158,14 +2487,22 @@ function ChatPageContent() {
       });
     } catch (error) {
       console.error('Failed to save feedback:', error);
+      showToast('Kunde inte spara feedback');
     }
-  };
+  }, [currentSessionId, persistMessages]);
 
   // Handle follow-up question - just set the input and optionally auto-send
   const handleFollowUp = useCallback((question: string) => {
     setInput(question);
     inputRef.current?.focus();
   }, []);
+
+  const handleOpenShareModal = useCallback((msg: Message) => {
+    setMessageToShare(msg);
+    setShareModalOpen(true);
+  }, []);
+
+  const handleCancelEdit = useCallback(() => setEditingMessageId(null), []);
 
   // Handle reformulate request
   const handleReformulate = async (messageId: string, type: 'simplify' | 'expand' | 'formal') => {
@@ -2207,38 +2544,14 @@ function ChatPageContent() {
         }),
       });
 
-      if (response.body) {
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let fullContent = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const text = decoder.decode(value);
-          const lines = text.split('\n');
-
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') continue;
-
-              try {
-                const parsed = JSON.parse(data);
-                if (parsed.text) {
-                  fullContent += parsed.text;
-                  setMessages(prev => prev.map(m =>
-                    m.id === newAssistantMessageId
-                      ? { ...m, content: fullContent }
-                      : m
-                  ));
-                }
-              } catch {
-                // Skip invalid JSON
-              }
-            }
-          }
+      if (response.body && response.headers.get('content-type')?.includes('text/event-stream')) {
+        const { fullContent } = await streamAssistantResponse(response, ({ fullContent: content }) => {
+          setMessages(prev => prev.map(m => m.id === newAssistantMessageId ? { ...m, content } : m));
+        });
+        if (fullContent) {
+          const finalMessages = [...messages, { ...newAssistantMessage, content: fullContent }];
+          setMessages(finalMessages);
+          persistMessages(finalMessages);
         }
       }
     } catch (error) {
@@ -2248,10 +2561,16 @@ function ChatPageContent() {
           ? { ...m, content: 'Kunde inte omformulera svaret. Försök igen.' }
           : m
       ));
+      showToast('Kunde inte omformulera svaret. Försök igen.');
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Keep stable refs pointing at latest handler versions
+  handleRegenerateRef.current = handleRegenerate;
+  handleEditMessageRef.current = handleEditMessage;
+  handleReformulateRef.current = handleReformulate;
 
   const filteredSessions = chatSessions.filter(session => {
     if (!historySearch.trim()) return true;
@@ -2270,6 +2589,34 @@ function ChatPageContent() {
     });
   }, [filteredSessions]);
 
+  const filteredColleagues = useMemo(() => {
+    if (!colleagueSearch.trim()) return colleagues;
+    const q = colleagueSearch.toLowerCase().trim();
+    return colleagues.filter(
+      (c) =>
+        (c.name && c.name.toLowerCase().includes(q)) ||
+        (c.email && c.email.toLowerCase().includes(q))
+    );
+  }, [colleagues, colleagueSearch]);
+
+  const messageSearchMatches = useMemo(() => {
+    if (!messageSearchQuery.trim()) return [];
+    const q = messageSearchQuery.toLowerCase().trim();
+    return messages
+      .map((m, i) => (m.content && m.content.toLowerCase().includes(q) ? i : -1))
+      .filter((i) => i >= 0);
+  }, [messages, messageSearchQuery]);
+
+  const currentMessageSearchMatch = messageSearchMatches.length > 0
+    ? messageSearchMatches[Math.min(messageSearchIndex, messageSearchMatches.length - 1)]
+    : null;
+
+  useEffect(() => {
+    if (currentMessageSearchMatch == null || !chatContainerRef.current) return;
+    const el = chatContainerRef.current.querySelector(`[data-message-index="${currentMessageSearchMatch}"]`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [currentMessageSearchMatch, messageSearchIndex]);
+
   const togglePin = async (sessionId: string) => {
     const session = chatSessions.find(s => s.sessionId === sessionId);
     if (!session) return;
@@ -2287,6 +2634,7 @@ function ChatPageContent() {
       }
     } catch (e) {
       console.error('Failed to toggle pin:', e);
+      showToast('Kunde inte uppdatera pin');
     }
   };
 
@@ -2304,6 +2652,31 @@ function ChatPageContent() {
       }
     } catch (e) {
       console.error('Failed to update tags:', e);
+      showToast('Kunde inte uppdatera taggar');
+    }
+  };
+
+  const renameSession = async (sessionId: string, title: string) => {
+    const trimmed = title.trim();
+    if (!trimmed) return;
+    try {
+      const response = await fetch('/api/chat/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, title: trimmed }),
+      });
+      if (response.ok) {
+        setChatSessions(prev => prev.map(s =>
+          s.sessionId === sessionId ? { ...s, title: trimmed } : s
+        ));
+        setEditingSessionId(null);
+        setEditingSessionTitle('');
+      } else {
+        showToast('Kunde inte byta namn');
+      }
+    } catch (e) {
+      console.error('Failed to rename session:', e);
+      showToast('Kunde inte byta namn');
     }
   };
 
@@ -2346,71 +2719,20 @@ function ChatPageContent() {
     setIsProcessingFile(true);
     
     for (const file of Array.from(files)) {
-      if (!SUPPORTED_FILE_TYPES.includes(file.type) && !file.name.endsWith('.txt')) {
-        alert(`Filtypen ${file.type || file.name.split('.').pop()} stöds inte ännu.`);
+      if (!isFileTypeSupported(file)) {
+        showToast(`Filtypen ${file.type || file.name.split('.').pop()} stöds inte.`);
         continue;
       }
-
-      if (file.size > 10 * 1024 * 1024) {
-        alert('Filen är för stor. Max 10MB.');
+      if (file.size > MAX_FILE_SIZE) {
+        showToast('Filen är för stor. Max 10MB.');
         continue;
       }
-
       try {
-        // Create base64 preview for images (needed for vision API)
-        let previewDataUrl: string | undefined;
-        if (file.type.startsWith('image/')) {
-          previewDataUrl = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.readAsDataURL(file);
-          });
-          console.log('[File] Created base64 preview for image:', file.name);
-        }
-
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const response = await fetch('/api/ai/parse-file', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          console.error('[File] Parse API error:', response.status, errorData);
-          throw new Error(errorData.details || 'Kunde inte läsa filen');
-        }
-
-        const data = await response.json();
-        
-        console.log('[File] Parse response:', {
-          fileName: data.fileName,
-          parseMethod: data.parseMethod,
-          contentLength: data.content?.length || 0,
-          hasPreview: !!previewDataUrl,
-        });
-
-        // For images, we don't require much OCR text - the vision API will analyze the image
-        const isImage = file.type.startsWith('image/');
-        if (!isImage && (!data.content || data.content.length < 10)) {
-          console.warn('[File] Empty or very short content received');
-          alert(`Filen "${file.name}" kunde inte läsas ordentligt. Innehållet verkar vara tomt.`);
-          continue;
-        }
-
-        setAttachedFiles(prev => [...prev, {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          content: data.content || '[Bild för visuell analys]',
-          preview: previewDataUrl, // Include base64 for images
-        }]);
-        
-        console.log('[File] File attached successfully:', file.name, 'Content length:', data.content?.length || 0, 'Has preview:', !!previewDataUrl);
+        const attachment = await processFileAttachment(file);
+        setAttachedFiles(prev => [...prev, attachment]);
       } catch (error) {
         console.error('[File] Processing error:', error);
-        alert(`Kunde inte bearbeta filen: ${file.name}. ${error instanceof Error ? error.message : ''}`);
+        showToast(error instanceof Error ? error.message : `Kunde inte bearbeta filen: ${file.name}`);
       }
     }
 
@@ -2455,79 +2777,20 @@ function ChatPageContent() {
     setIsProcessingFile(true);
     
     for (const file of Array.from(files)) {
-      const isSupported = SUPPORTED_FILE_TYPES.includes(file.type) || 
-        file.name.endsWith('.txt') || 
-        file.name.endsWith('.xlsx') || 
-        file.name.endsWith('.xls') ||
-        file.name.endsWith('.csv') ||
-        file.name.endsWith('.pdf') ||
-        file.name.endsWith('.docx');
-
-      if (!isSupported) {
-        alert(`Filtypen ${file.type || file.name.split('.').pop()} stöds inte ännu.`);
+      if (!isFileTypeSupported(file)) {
+        showToast(`Filtypen ${file.type || file.name.split('.').pop()} stöds inte.`);
         continue;
       }
-
-      if (file.size > 10 * 1024 * 1024) {
-        alert('Filen är för stor. Max 10MB.');
+      if (file.size > MAX_FILE_SIZE) {
+        showToast('Filen är för stor. Max 10MB.');
         continue;
       }
-
       try {
-        // Create base64 preview for images (needed for vision API)
-        let previewDataUrl: string | undefined;
-        if (file.type.startsWith('image/')) {
-          previewDataUrl = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.readAsDataURL(file);
-          });
-          console.log('[File/Drop] Created base64 preview for image:', file.name);
-        }
-
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const response = await fetch('/api/ai/parse-file', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          console.error('[File/Drop] Parse API error:', response.status, errorData);
-          throw new Error(errorData.details || 'Kunde inte läsa filen');
-        }
-
-        const data = await response.json();
-        
-        console.log('[File/Drop] Parse response:', {
-          fileName: data.fileName,
-          parseMethod: data.parseMethod,
-          contentLength: data.content?.length || 0,
-          hasPreview: !!previewDataUrl,
-        });
-
-        // For images, we don't require much OCR text - the vision API will analyze the image
-        const isImage = file.type.startsWith('image/');
-        if (!isImage && (!data.content || data.content.length < 10)) {
-          console.warn('[File/Drop] Empty or very short content received');
-          alert(`Filen "${file.name}" kunde inte läsas ordentligt. Innehållet verkar vara tomt.`);
-          continue;
-        }
-
-        setAttachedFiles(prev => [...prev, {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          content: data.content || '[Bild för visuell analys]',
-          preview: previewDataUrl, // Include base64 for images
-        }]);
-        
-        console.log('[File/Drop] File attached successfully:', file.name, 'Content length:', data.content?.length || 0, 'Has preview:', !!previewDataUrl);
+        const attachment = await processFileAttachment(file);
+        setAttachedFiles(prev => [...prev, attachment]);
       } catch (error) {
         console.error('[File/Drop] Processing error:', error);
-        alert(`Kunde inte bearbeta filen: ${file.name}. ${error instanceof Error ? error.message : ''}`);
+        showToast(error instanceof Error ? error.message : `Kunde inte bearbeta filen: ${file.name}`);
       }
     }
 
@@ -2546,65 +2809,20 @@ function ChatPageContent() {
       setIsProcessingFile(true);
 
       for (const file of Array.from(files)) {
-        // Check if file type is supported
-        const isSupported = SUPPORTED_FILE_TYPES.includes(file.type) || 
-          file.name.endsWith('.txt') || 
-          file.name.endsWith('.xlsx') || 
-          file.name.endsWith('.xls') ||
-          file.name.endsWith('.csv') ||
-          file.name.endsWith('.pdf') ||
-          file.name.endsWith('.docx') ||
-          file.name.endsWith('.png') ||
-          file.name.endsWith('.jpg') ||
-          file.name.endsWith('.jpeg') ||
-          file.name.endsWith('.webp');
-
-        if (!isSupported) {
-          alert(`Filtypen ${file.type || file.name.split('.').pop()} stöds inte ännu.`);
+        if (!isFileTypeSupported(file)) {
+          showToast(`Filtypen ${file.type || file.name.split('.').pop()} stöds inte.`);
           continue;
         }
-
-        // Check file size (max 10MB)
-        if (file.size > 10 * 1024 * 1024) {
-          alert('Filen är för stor. Max 10MB.');
+        if (file.size > MAX_FILE_SIZE) {
+          showToast('Filen är för stor. Max 10MB.');
           continue;
         }
-
         try {
-          // Create base64 preview for images
-          let previewDataUrl: string | undefined;
-          if (file.type.startsWith('image/')) {
-            previewDataUrl = await new Promise<string>((resolve) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result as string);
-              reader.readAsDataURL(file);
-            });
-          }
-
-          const formData = new FormData();
-          formData.append('file', file);
-
-          const response = await fetch('/api/ai/parse-file', {
-            method: 'POST',
-            body: formData,
-          });
-
-          if (!response.ok) {
-            throw new Error('Kunde inte bearbeta filen');
-          }
-
-          const data = await response.json();
-
-          setAttachedFiles(prev => [...prev, {
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            content: data.content,
-            preview: previewDataUrl,
-          }]);
+          const attachment = await processFileAttachment(file);
+          setAttachedFiles(prev => [...prev, attachment]);
         } catch (error) {
           console.error('Paste file error:', error);
-          alert(`Kunde inte klistra in filen: ${file.name}`);
+          showToast(`Kunde inte klistra in filen: ${file.name}`);
         }
       }
 
@@ -2634,9 +2852,8 @@ function ChatPageContent() {
       const file = item.getAsFile();
       if (!file) continue;
 
-      // Check file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        alert('Bilden är för stor. Max 10MB.');
+      if (file.size > MAX_FILE_SIZE) {
+        showToast('Bilden är för stor. Max 10MB.');
         continue;
       }
 
@@ -2645,41 +2862,13 @@ function ChatPageContent() {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const extension = file.type.split('/')[1] || 'png';
         const fileName = `screenshot-${timestamp}.${extension}`;
-
-        // Create base64 preview
-        const previewDataUrl = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        });
-
-        // Create a new file with the generated name
         const namedFile = new File([file], fileName, { type: file.type });
 
-        const formData = new FormData();
-        formData.append('file', namedFile);
-
-        const response = await fetch('/api/ai/parse-file', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          throw new Error('Kunde inte bearbeta bilden');
-        }
-
-        const data = await response.json();
-
-        setAttachedFiles(prev => [...prev, {
-          name: fileName,
-          type: file.type,
-          size: file.size,
-          content: data.content,
-          preview: previewDataUrl,
-        }]);
+        const attachment = await processFileAttachment(namedFile);
+        setAttachedFiles(prev => [...prev, attachment]);
       } catch (error) {
         console.error('Paste image error:', error);
-        alert('Kunde inte klistra in bilden');
+        showToast('Kunde inte klistra in bilden');
       }
     }
 
@@ -2796,59 +2985,11 @@ function ChatPageContent() {
       if (!response.ok) throw new Error('Failed to get response');
       
       if (useStreaming && response.headers.get('content-type')?.includes('text/event-stream')) {
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
-        let fullContent = '';
-        let streamCitations: Citation[] = [];
-        let streamInternalSources: InternalKnowledgeSource[] = [];
-        
-        if (reader) {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split('\n');
-            
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const data = line.slice(6);
-                
-                if (data === '[DONE]') {
-                  break;
-                }
-                
-                try {
-                  const parsed = JSON.parse(data);
-                  // Capture metadata (sent first)
-                  if (parsed.meta) {
-                    if (parsed.citations) streamCitations = parsed.citations;
-                    if (parsed.internalSources) streamInternalSources = parsed.internalSources;
-                  }
-                  // Capture final citations (sent at end)
-                  if (parsed.done && parsed.citations) {
-                    streamCitations = parsed.citations;
-                  }
-                  if (parsed.text) {
-                    fullContent += parsed.text;
-                    
-                    setMessages(prev => prev.map(m => 
-                      m.id === assistantMessageId 
-                        ? { ...m, content: fullContent, citations: streamCitations, internalSources: streamInternalSources }
-                        : m
-                    ));
-                  }
-                  if (parsed.error) {
-                    throw new Error(parsed.error);
-                  }
-                } catch {
-                  // Ignore parse errors
-                }
-              }
-            }
-          }
-        }
-        
+        const { fullContent, citations: streamCitations, internalSources: streamInternalSources } = await streamAssistantResponse(response, ({ fullContent: content, citations: c, internalSources: s }) => {
+          setMessages(prev => prev.map(m => 
+            m.id === assistantMessageId ? { ...m, content, citations: c, internalSources: s } : m
+          ));
+        });
         const finalMessages = [...updatedMessages, { 
           ...assistantMessage, 
           content: fullContent, 
@@ -2857,7 +2998,6 @@ function ChatPageContent() {
         }];
         setMessages(finalMessages);
         persistMessages(finalMessages);
-        
       } else {
         const data = await response.json();
         
@@ -2885,12 +3025,12 @@ function ChatPageContent() {
       
     } catch (error) {
       console.error('Chat error:', error);
-      
       setMessages(prev => prev.map(m => 
         m.id === assistantMessageId 
           ? { ...m, content: 'Kunde inte svara just nu. Försök igen.' }
           : m
       ));
+      showToast('Kunde inte svara just nu. Försök igen.');
     } finally {
       setIsLoading(false);
       streamingStartTimeRef.current = null;
@@ -2949,7 +3089,7 @@ function ChatPageContent() {
       }
     } catch (error) {
       console.error('Export error:', error);
-      alert('Kunde inte exportera konversationen');
+      showToast('Kunde inte exportera konversationen');
     }
   };
 
@@ -2984,7 +3124,7 @@ function ChatPageContent() {
       }
     } catch (error) {
       console.error('Word export error:', error);
-      alert('Kunde inte exportera konversationen till Word');
+      showToast('Kunde inte exportera konversationen till Word');
     }
   };
 
@@ -3021,8 +3161,8 @@ function ChatPageContent() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Share conversation - create collaborative share link
-  const shareConversation = async () => {
+  // Share conversation - create collaborative share link (optionally with selected colleague name for toast)
+  const shareConversation = async (colleague?: { name: string; email: string }) => {
     if (!currentSessionId) {
       showToast('Skicka ett meddelande först för att kunna dela');
       return;
@@ -3038,21 +3178,27 @@ function ChatPageContent() {
         }),
       });
 
+      const data = await response.json().catch(() => ({}));
       if (response.ok) {
-        const data = await response.json();
         const shareUrl = `${window.location.origin}/chat?share=${data.shareCode}`;
         
         setShareCode(data.shareCode);
         setSharedParticipants(data.participants || []);
         setIsSharedSession(true);
+        setShowSharePanel(false);
 
         // Start polling for this newly shared session
         startSharedPolling(data.shareCode);
 
         await navigator.clipboard.writeText(shareUrl);
-        showToast('Delningslänk kopierad! Skicka till en kollega.');
+        const displayName = colleague?.name || colleague?.email;
+        showToast(displayName ? `Delad med ${displayName}! Länk kopierad.` : 'Delningslänk kopierad! Skicka till en kollega.');
+      } else {
+        const msg = data.error || (response.status === 401 ? 'Logga in för att dela' : response.status === 404 ? 'Konversationen hittades inte – vänta några sekunder och försök igen' : `Kunde inte dela (${response.status})`);
+        showToast(msg);
       }
-    } catch {
+    } catch (e) {
+      console.error('Share error:', e);
       showToast('Kunde inte skapa delningslänk');
     }
   };
@@ -3122,45 +3268,24 @@ function ChatPageContent() {
       });
       
       if (!response.ok) throw new Error('Translation failed');
-      
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('No reader');
-      
-      const decoder = new TextDecoder();
-      let fullContent = '';
-      
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n').filter(l => l.trim());
-        
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
-            
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.content) {
-                fullContent += parsed.content;
-                setMessages(prev => prev.map(m => 
-                  m.id === newAssistantMessageId ? { ...m, content: fullContent } : m
-                ));
-              }
-            } catch {}
-          }
+
+      if (response.headers.get('content-type')?.includes('text/event-stream')) {
+        const { fullContent } = await streamAssistantResponse(response, ({ fullContent: content }) => {
+          setMessages(prev => prev.map(m => m.id === newAssistantMessageId ? { ...m, content } : m));
+        });
+        if (fullContent) {
+          const finalMessages = [...messages, { ...newAssistantMessage, content: fullContent }];
+          setMessages(finalMessages);
+          persistMessages(finalMessages);
+        } else {
+          setMessages(prev => prev.filter(m => m.id !== newAssistantMessageId));
+          showToast('Kunde inte översätta svaret.');
         }
       }
-      
-      const finalMessages = [...messages, { ...newAssistantMessage, content: fullContent }];
-      setMessages(finalMessages);
-      persistMessages(finalMessages);
-      
     } catch (error) {
       console.error('Translation error:', error);
       setMessages(prev => prev.filter(m => m.id !== newAssistantMessageId));
+      showToast('Kunde inte översätta svaret. Försök igen.');
     } finally {
       setIsLoading(false);
     }
@@ -3187,10 +3312,10 @@ function ChatPageContent() {
     <div 
       className={`h-[100dvh] flex flex-col transition-colors duration-200 ${
         isDarkMode ? 'bg-gray-900' : 'bg-gray-50'
-      }`}
+      } ${showBottomNav ? 'pb-16' : ''}`}
       style={{ 
         paddingTop: 'env(safe-area-inset-top)', 
-        paddingBottom: 'env(safe-area-inset-bottom)',
+        paddingBottom: showBottomNav ? undefined : 'env(safe-area-inset-bottom)',
         paddingLeft: 'env(safe-area-inset-left)',
         paddingRight: 'env(safe-area-inset-right)',
       }}
@@ -3226,7 +3351,51 @@ function ChatPageContent() {
         onSuccess={() => {
           // Could show a toast notification here
         }}
+        isDarkMode={isDarkMode}
       />
+
+      {/* Delete session confirmation */}
+      {sessionToDeleteId && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 z-50"
+            onClick={() => setSessionToDeleteId(null)}
+            aria-hidden
+          />
+          <div
+            ref={deleteDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Bekräfta borttagning"
+            className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[90%] max-w-sm rounded-xl shadow-xl p-5 ${
+              isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+            }`}
+          >
+            <p className={`text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+              Ta bort denna chatt? Det går inte att ångra.
+            </p>
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                type="button"
+                onClick={() => setSessionToDeleteId(null)}
+                className={`px-3 py-2 text-sm rounded-lg ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'}`}
+              >
+                Avbryt
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  deleteSession(sessionToDeleteId);
+                  setSessionToDeleteId(null);
+                }}
+                className="px-3 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700"
+              >
+                Ta bort
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Summary Modal */}
       {summaryModalOpen && (
@@ -3236,11 +3405,16 @@ function ChatPageContent() {
             onClick={() => setSummaryModalOpen(false)}
             aria-hidden
           />
-          <div className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[90%] max-w-lg rounded-2xl shadow-xl max-h-[80vh] flex flex-col ${
+          <div
+            ref={summaryDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="summary-dialog-title"
+            className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[90%] max-w-lg rounded-2xl shadow-xl max-h-[80vh] flex flex-col ${
               isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
             }`}>
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-              <h2 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-[#2d2a26]'}`}>
+              <h2 id="summary-dialog-title" className={`font-semibold ${isDarkMode ? 'text-white' : 'text-[#2d2a26]'}`}>
                 Sammanfattning av konversationen
               </h2>
               <button
@@ -3275,10 +3449,13 @@ function ChatPageContent() {
         currentSessionId={currentSessionId}
         isLoading={isLoadingSessions}
         onLoadSession={loadSession}
-        onDeleteSession={deleteSession}
+        onDeleteSession={confirmDeleteSession}
         onNewChat={startNewChat}
         onTogglePin={togglePin}
         isDarkMode={isDarkMode}
+        hasMoreSessions={hasMoreSessions}
+        onLoadMoreSessions={loadMoreSessions}
+        isLoadingSessions={isLoadingSessions}
       />
 
       {/* Compact Mobile Header */}
@@ -3323,6 +3500,7 @@ function ChatPageContent() {
                   : 'text-[#c0a280] hover:text-[#8a7355] hover:bg-[#c0a280]/10 border-[#c0a280]/30'
               }`}
               title="Starta ny chatt"
+              aria-label="Starta ny chatt"
             >
               <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
               <span className="hidden sm:inline">Ny chatt</span>
@@ -3339,6 +3517,7 @@ function ChatPageContent() {
                     : 'text-gray-500 hover:text-[#2d2a26] hover:bg-gray-100'
                 }`}
                 title="Sammanfatta konversationen"
+                aria-label="Sammanfatta konversationen"
               >
                 {summaryLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -3357,6 +3536,7 @@ function ChatPageContent() {
                     : 'text-gray-500 hover:text-[#2d2a26] hover:bg-gray-100'
                 }`}
                 title="Exportera som PDF"
+                aria-label="Exportera som PDF"
               >
                 <Download className="w-4 h-4" />
               </button>
@@ -3371,6 +3551,7 @@ function ChatPageContent() {
                     : 'text-gray-500 hover:text-[#2d2a26] hover:bg-gray-100'
                 }`}
                 title="Exportera som Word"
+                aria-label="Exportera som Word"
               >
                 <FileText className="w-4 h-4" />
               </button>
@@ -3378,17 +3559,19 @@ function ChatPageContent() {
             
             {/* Share conversation */}
             {currentSessionId && (
-              <div className="flex items-center gap-1">
+              <div className="relative flex items-center gap-1" ref={sharePanelRef}>
                 <button
-                  onClick={shareConversation}
+                  onClick={() => setShowSharePanel((prev) => !prev)}
                   className={`p-2 rounded-lg transition-colors touch-manipulation ${
-                    isSharedSession
-                      ? isDarkMode
-                        ? 'text-green-400 hover:text-green-300 hover:bg-green-900/30'
-                        : 'text-green-600 hover:text-green-700 hover:bg-green-50'
-                      : isDarkMode
-                        ? 'text-gray-400 hover:text-white hover:bg-gray-700'
-                        : 'text-gray-500 hover:text-[#2d2a26] hover:bg-gray-100'
+                    showSharePanel
+                      ? 'text-[#c0a280] bg-[#c0a280]/10'
+                      : isSharedSession
+                        ? isDarkMode
+                          ? 'text-green-400 hover:text-green-300 hover:bg-green-900/30'
+                          : 'text-green-600 hover:text-green-700 hover:bg-green-50'
+                        : isDarkMode
+                          ? 'text-gray-400 hover:text-white hover:bg-gray-700'
+                          : 'text-gray-500 hover:text-[#2d2a26] hover:bg-gray-100'
                   }`}
                   title={isSharedSession ? 'Delad – klicka för att kopiera länk igen' : 'Dela konversation med kollega'}
                 >
@@ -3425,6 +3608,86 @@ function ChatPageContent() {
                     )}
                   </div>
                 )}
+                {/* Share colleague picker dropdown */}
+                {showSharePanel && (
+                  <div
+                    className={`absolute right-0 top-full mt-2 w-[280px] max-h-[320px] rounded-xl shadow-xl border flex flex-col overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 ${
+                      isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+                    }`}
+                  >
+                    <div className={`p-2 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                      <div className={`relative flex items-center rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                        <Search className={`absolute left-2.5 w-4 h-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`} />
+                        <input
+                          type="text"
+                          value={colleagueSearch}
+                          onChange={(e) => setColleagueSearch(e.target.value)}
+                          placeholder="Sök kollega..."
+                          className={`w-full pl-8 pr-3 py-2 text-sm rounded-lg bg-transparent focus:outline-none ${
+                            isDarkMode ? 'text-gray-100 placeholder-gray-500' : 'text-[#2d2a26] placeholder-gray-400'
+                          }`}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto min-h-0 py-1">
+                      {loadingColleagues ? (
+                        <div className={`flex items-center justify-center py-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          <Loader2 className="w-6 h-6 animate-spin" />
+                        </div>
+                      ) : filteredColleagues.length === 0 ? (
+                        <p className={`px-4 py-3 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          {colleagueSearch.trim() ? 'Inga kollegor matchar sökningen' : 'Inga kollegor att visa'}
+                        </p>
+                      ) : (
+                        filteredColleagues.map((c, i) => {
+                          const initial = (c.name || c.email || '?').charAt(0).toUpperCase();
+                          const colors = ['bg-violet-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500'];
+                          const bg = colors[i % colors.length];
+                          return (
+                            <button
+                              key={c.username}
+                              type="button"
+                              onClick={() => shareConversation({ name: c.name, email: c.email })}
+                              className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
+                                isDarkMode
+                                  ? 'text-gray-200 hover:bg-gray-700'
+                                  : 'text-[#2d2a26] hover:bg-gray-50'
+                              }`}
+                            >
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white flex-shrink-0 ${bg}`}>
+                                {initial}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className={`font-medium truncate ${isDarkMode ? 'text-gray-100' : 'text-[#2d2a26]'}`}>
+                                  {c.name || c.email || 'Okänd'}
+                                </div>
+                                {c.email && c.name && (
+                                  <div className={`text-xs truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    {c.email}
+                                  </div>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                    <div className={`p-2 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                      <button
+                        type="button"
+                        onClick={() => shareConversation()}
+                        className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
+                          isDarkMode
+                            ? 'text-gray-300 hover:bg-gray-700'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Link2 className="w-4 h-4" />
+                        Kopiera länk
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             
@@ -3438,6 +3701,7 @@ function ChatPageContent() {
                     : 'text-gray-500 hover:text-[#2d2a26] hover:bg-gray-100'
                 }`}
                 title="Översätt till engelska"
+                aria-label="Översätt till engelska"
               >
                 <Globe className="w-4 h-4" />
               </button>
@@ -3452,6 +3716,7 @@ function ChatPageContent() {
                   : 'text-gray-600 hover:text-[#2d2a26] hover:bg-gray-100'
               }`}
               title="Kunskapsbas"
+              aria-label="Kunskapsbas"
             >
               <BookOpen className="w-4 h-4" />
               <span className="hidden xs:inline">Kunskap</span>
@@ -3477,6 +3742,7 @@ function ChatPageContent() {
                   : 'text-gray-600 hover:text-[#2d2a26] hover:bg-gray-100'
               }`}
               title="Statistik"
+              aria-label="Statistik"
             >
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Stats</span>
@@ -3568,6 +3834,7 @@ function ChatPageContent() {
                       : 'hover:bg-violet-100 text-violet-600'
                   }`}
                   title="Kopiera delningslänk"
+                  aria-label="Kopiera delningslänk"
                 >
                   Kopiera länk
                 </button>
@@ -3579,6 +3846,7 @@ function ChatPageContent() {
                       : 'hover:bg-red-50 text-red-500'
                   }`}
                   title="Sluta dela konversationen"
+                  aria-label="Sluta dela"
                 >
                   Sluta dela
                 </button>
@@ -3590,6 +3858,8 @@ function ChatPageContent() {
           <div 
             ref={chatContainerRef}
             className="flex-1 overflow-y-auto px-3 sm:px-4"
+            aria-live="polite"
+            aria-relevant="additions"
           >
             <div className="max-w-3xl mx-auto py-3 sm:py-4">
               {messages.length === 0 ? (
@@ -3641,6 +3911,53 @@ function ChatPageContent() {
                 </div>
               ) : (
                 <div className="space-y-3 sm:space-y-4">
+                  {showMessageSearch && (
+                    <div className={`sticky top-0 z-10 flex items-center gap-2 p-2 rounded-xl border mb-2 ${
+                      isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+                    }`}>
+                      <Search className={`w-4 h-4 flex-shrink-0 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                      <input
+                        type="text"
+                        value={messageSearchQuery}
+                        onChange={(e) => {
+                          setMessageSearchQuery(e.target.value);
+                          setMessageSearchIndex(0);
+                        }}
+                        onKeyDown={(e) => {
+                          if (messageSearchMatches.length === 0) return;
+                          if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            setMessageSearchIndex((prev) => (prev + 1) % messageSearchMatches.length);
+                          }
+                          if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            setMessageSearchIndex((prev) => (prev - 1 + messageSearchMatches.length) % messageSearchMatches.length);
+                          }
+                        }}
+                        placeholder="Sök i konversationen..."
+                        className={`flex-1 min-w-0 px-2 py-1.5 text-sm rounded-lg bg-transparent focus:outline-none ${
+                          isDarkMode ? 'text-gray-100 placeholder-gray-500' : 'text-[#2d2a26] placeholder-gray-400'
+                        }`}
+                        autoFocus
+                        aria-label="Sök i konversationen"
+                      />
+                      <span className={`text-xs flex-shrink-0 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {messageSearchQuery.trim()
+                          ? messageSearchMatches.length > 0
+                            ? `${messageSearchIndex + 1} / ${messageSearchMatches.length}`
+                            : '0 träffar'
+                          : ''}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => { setShowMessageSearch(false); setMessageSearchQuery(''); }}
+                        className={`p-1.5 rounded-lg ${isDarkMode ? 'text-gray-400 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-100'}`}
+                        aria-label="Stäng sök"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
                   {currentBranchId && (
                     <div className={`flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs ${
                       isDarkMode ? 'bg-gray-800 border border-gray-700 text-gray-300' : 'bg-gray-100 border border-gray-200 text-gray-600'
@@ -3664,26 +3981,33 @@ function ChatPageContent() {
                     const isLastAssistantMessage = message.role === 'assistant' && 
                       index === messages.length - 1 && 
                       !isLoading;
+                    const isSearchHighlight = showMessageSearch && currentMessageSearchMatch === index;
                     
                     return (
-                      <MessageBubble 
-                        key={message.id} 
+                      <div
+                        key={message.id}
+                        data-message-index={index}
+                        className={isSearchHighlight ? 'ring-2 ring-[#c0a280] rounded-2xl ring-offset-2 ring-offset-transparent' : ''}
+                      >
+                        <MessageBubble 
                         message={message}
-                        onRegenerate={handleRegenerate}
+                        onRegenerate={stableHandleRegenerate}
                         onFeedback={handleFeedback}
-                        onShare={message.role === 'assistant' ? (msg) => {
-                          setMessageToShare(msg);
-                          setShareModalOpen(true);
-                        } : undefined}
+                        onShare={message.role === 'assistant' ? handleOpenShareModal : undefined}
                         onFollowUp={message.role === 'assistant' ? handleFollowUp : undefined}
-                        onReformulate={message.role === 'assistant' ? handleReformulate : undefined}
+                        onReformulate={message.role === 'assistant' ? stableHandleReformulate : undefined}
                         onQuote={message.role === 'assistant' ? setQuotedMessage : undefined}
                         onStartBranch={message.role === 'assistant' ? startBranch : undefined}
+                        onStartEdit={message.role === 'user' ? setEditingMessageId : undefined}
+                        onEditMessage={message.role === 'user' ? stableHandleEditMessage : undefined}
+                        onCancelEdit={message.role === 'user' ? handleCancelEdit : undefined}
+                        editingMessageId={editingMessageId}
                         showBranchAction={!currentBranchId && !isSharedSession && !!currentSessionId}
                         isDarkMode={isDarkMode}
                         isLastAssistantMessage={isLastAssistantMessage}
                         isSharedSession={isSharedSession}
                       />
+                      </div>
                     );
                   })}
                   
@@ -3807,6 +4131,7 @@ function ChatPageContent() {
                         onClick={() => setQuotedMessage(null)}
                         className={`p-1 rounded ${isDarkMode ? 'text-gray-400 hover:bg-gray-600' : 'text-gray-500 hover:bg-gray-200'}`}
                         title="Ta bort citat"
+                        aria-label="Ta bort citat"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -3840,6 +4165,7 @@ function ChatPageContent() {
                         : 'text-gray-400 hover:text-[#c0a280] hover:bg-gray-100'
                     }`}
                     title="Bifoga fil"
+                    aria-label="Bifoga fil"
                   >
                     {isProcessingFile ? (
                       <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
@@ -3955,6 +4281,7 @@ function ChatPageContent() {
                     : 'text-[#c0a280] hover:bg-[#c0a280]/10'
                 }`}
                 title="Ny chatt (⌘K)"
+                aria-label="Ny chatt"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Ny chatt
@@ -4032,11 +4359,52 @@ function ChatPageContent() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-xs font-medium truncate ${
-                          isDarkMode ? 'text-white' : 'text-[#2d2a26]'
-                        }`}>
-                          {session.title}
-                        </p>
+                        {editingSessionId === session.sessionId ? (
+                          <input
+                            type="text"
+                            value={editingSessionTitle}
+                            onChange={e => setEditingSessionTitle(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                renameSession(session.sessionId, editingSessionTitle);
+                              }
+                              if (e.key === 'Escape') {
+                                setEditingSessionId(null);
+                                setEditingSessionTitle('');
+                              }
+                            }}
+                            onBlur={() => {
+                              if (editingSessionTitle.trim()) renameSession(session.sessionId, editingSessionTitle);
+                              else { setEditingSessionId(null); setEditingSessionTitle(''); }
+                            }}
+                            onClick={e => e.stopPropagation()}
+                            className={`w-full text-xs font-medium px-1 py-0.5 rounded border min-w-0 ${
+                              isDarkMode ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-[#2d2a26]'
+                            }`}
+                            autoFocus
+                            aria-label="Byt namn på konversation"
+                          />
+                        ) : (
+                          <div className="flex items-center gap-1.5 group/title">
+                            <p className={`text-xs font-medium truncate flex-1 min-w-0 ${
+                              isDarkMode ? 'text-white' : 'text-[#2d2a26]'
+                            }`}>
+                              {session.title}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); setEditingSessionId(session.sessionId); setEditingSessionTitle(session.title || ''); }}
+                              className={`p-0.5 rounded flex-shrink-0 opacity-0 group-hover/title:opacity-100 transition-opacity ${
+                                isDarkMode ? 'text-gray-500 hover:bg-gray-700' : 'text-gray-400 hover:bg-gray-100'
+                              }`}
+                              title="Byt namn"
+                              aria-label="Byt namn på konversation"
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
                         <p className={`text-[10px] flex items-center gap-1 mt-0.5 ${
                           isDarkMode ? 'text-gray-500' : 'text-gray-400'
                         }`}>
@@ -4096,6 +4464,7 @@ function ChatPageContent() {
                                   onClick={() => { setAddingTagSessionId(session.sessionId); setNewTagInput(''); }}
                                   className={`p-0.5 rounded ${isDarkMode ? 'text-gray-500 hover:bg-gray-700' : 'text-gray-400 hover:bg-gray-200'}`}
                                   title="Lägg till tagg"
+                                  aria-label="Lägg till tagg"
                                 >
                                   <Plus className="w-3 h-3" />
                                 </button>
@@ -4104,6 +4473,7 @@ function ChatPageContent() {
                                   onClick={() => suggestTags(session.sessionId)}
                                   className={`text-[10px] ${isDarkMode ? 'text-gray-500 hover:text-violet-400' : 'text-gray-400 hover:text-violet-600'}`}
                                   title="Föreslå taggar"
+                                  aria-label="Föreslå taggar"
                                 >
                                   Föreslå
                                 </button>
@@ -4117,6 +4487,7 @@ function ChatPageContent() {
                               onClick={() => { setAddingTagSessionId(session.sessionId); setNewTagInput(''); }}
                               className={`p-0.5 rounded text-[10px] ${isDarkMode ? 'text-gray-500 hover:bg-gray-700' : 'text-gray-400 hover:bg-gray-200'}`}
                               title="Lägg till tagg"
+                              aria-label="Lägg till tagg"
                             >
                               + Tagg
                             </button>
@@ -4125,6 +4496,7 @@ function ChatPageContent() {
                               onClick={() => suggestTags(session.sessionId)}
                               className={`text-[10px] ${isDarkMode ? 'text-gray-500 hover:text-violet-400' : 'text-gray-400 hover:text-violet-600'}`}
                               title="Föreslå taggar"
+                              aria-label="Föreslå taggar"
                             >
                               Föreslå taggar
                             </button>
@@ -4148,7 +4520,7 @@ function ChatPageContent() {
                       {session.pinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); deleteSession(session.sessionId); }}
+                      onClick={(e) => { e.stopPropagation(); confirmDeleteSession(session.sessionId); }}
                       className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg
                                  opacity-0 group-hover:opacity-100 transition-all ${
                         isDarkMode
@@ -4156,12 +4528,29 @@ function ChatPageContent() {
                           : 'text-gray-300 hover:text-red-500 hover:bg-red-50'
                       }`}
                       title="Ta bort"
+                      aria-label="Ta bort chatt"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </button>
                 ))}
               </div>
+            )}
+            
+            {hasMoreSessions && (
+              <button
+                type="button"
+                onClick={loadMoreSessions}
+                disabled={isLoadingSessions}
+                className={`w-full mt-2 py-2 text-xs rounded-lg transition-colors flex items-center justify-center gap-1 disabled:opacity-50 ${
+                  isDarkMode
+                    ? 'text-[#d4b896] hover:bg-[#c0a280]/20'
+                    : 'text-[#c0a280] hover:bg-[#c0a280]/10'
+                }`}
+              >
+                {isLoadingSessions ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                Ladda fler
+              </button>
             )}
             
             {sortedFilteredSessions.length > 5 && (
@@ -4192,6 +4581,8 @@ function ChatPageContent() {
           </div>
         </div>
       </div>
+
+      {showBottomNav && <MobileBottomNav />}
     </div>
   );
 }

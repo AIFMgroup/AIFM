@@ -404,7 +404,8 @@ export default function VATReportPage() {
                   {/* Output VAT Details */}
                   <div>
                     <h3 className="font-medium text-gray-700 mb-4">Utgaende moms (forsaljning)</h3>
-                    <table className="w-full text-sm">
+                    <div className="overflow-x-auto">
+                    <table className="w-full text-sm min-w-[400px]">
                       <thead>
                         <tr className="border-b">
                           <th className="text-left py-2 font-medium text-gray-500">Momssats</th>
@@ -440,12 +441,14 @@ export default function VATReportPage() {
                         </tr>
                       </tbody>
                     </table>
+                    </div>
                   </div>
 
                   {/* Input VAT Details */}
                   <div>
                     <h3 className="font-medium text-gray-700 mb-4">Ingaende moms (inkop)</h3>
-                    <table className="w-full text-sm">
+                    <div className="overflow-x-auto">
+                    <table className="w-full text-sm min-w-[400px]">
                       <thead>
                         <tr className="border-b">
                           <th className="text-left py-2 font-medium text-gray-500">Kategori</th>
@@ -475,6 +478,7 @@ export default function VATReportPage() {
                         </tr>
                       </tbody>
                     </table>
+                    </div>
                   </div>
                 </div>
               </CardContent>

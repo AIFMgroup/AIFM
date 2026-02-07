@@ -302,8 +302,8 @@ function FundsTab({ funds, setFunds }: { funds: Fund[]; setFunds: (funds: Fund[]
                       Lägg till
                     </button>
                   </div>
-                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                    <table className="w-full text-sm">
+                  <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+                    <table className="w-full text-sm min-w-[700px]">
                       <thead>
                         <tr className="bg-gray-50 border-b border-gray-200">
                           <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-600">Klass</th>
@@ -371,8 +371,8 @@ function RecipientsTab({ recipients, setRecipients, funds }: { recipients: NAVRe
       </div>
 
       {/* Recipients List */}
-      <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
-        <table className="w-full">
+      <div className="bg-white border border-gray-100 rounded-xl overflow-hidden overflow-x-auto">
+        <table className="w-full min-w-[640px]">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-100">
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Mottagare</th>
