@@ -1733,7 +1733,6 @@ export default function AIFMAgentPage() {
           stream: useStreaming,
         }),
       });
-      setDeepAnalysis(false);
       
       if (!response.ok) throw new Error('Failed to get response');
       

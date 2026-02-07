@@ -701,7 +701,7 @@ function UploadModal({
               <label className="block text-sm font-medium text-aifm-charcoal mb-1.5">
                 Fil
               </label>
-              <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:border-aifm-gold/50 transition-colors">
+              <div className="relative border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:border-aifm-gold/50 transition-colors">
                 <Upload className="w-10 h-10 mx-auto text-gray-400 mb-3" />
                 <p className="text-aifm-charcoal/60 mb-2">
                   Dra och släpp eller klicka för att välja
