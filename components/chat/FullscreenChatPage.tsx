@@ -56,6 +56,7 @@ import {
   ListChecks,
   GitBranch,
   Pencil,
+  Bell,
 } from 'lucide-react';
 import { ShareToKnowledgeBase } from '@/components/chat/ShareToKnowledgeBase';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
@@ -159,6 +160,16 @@ interface ChatSession {
   pinnedAt?: string;
   tags?: string[];
   branches?: ChatBranch[];
+}
+
+interface ChatInvitation {
+  invitationId: string;
+  senderName: string;
+  senderEmail: string;
+  shareCode: string;
+  sessionTitle: string;
+  status: 'pending' | 'accepted' | 'dismissed';
+  createdAt: string;
 }
 
 // ============================================================================
@@ -1479,6 +1490,9 @@ interface HistoryDrawerProps {
   hasMoreSessions?: boolean;
   onLoadMoreSessions?: () => void;
   isLoadingSessions?: boolean;
+  pendingInvitations?: ChatInvitation[];
+  onAcceptInvitation?: (invitation: ChatInvitation) => void;
+  onDismissInvitation?: (invitation: ChatInvitation) => void;
 }
 
 function HistoryDrawer({ 
@@ -1495,6 +1509,9 @@ function HistoryDrawer({
   hasMoreSessions = false,
   onLoadMoreSessions,
   isLoadingSessions = false,
+  pendingInvitations = [],
+  onAcceptInvitation,
+  onDismissInvitation,
 }: HistoryDrawerProps) {
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -1598,6 +1615,65 @@ function HistoryDrawer({
             </button>
           </div>
           
+          {/* Shared With Me - Pending Invitations */}
+          {pendingInvitations.length > 0 && (
+            <div className={`p-2 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+              <div className="flex items-center gap-2 px-2 py-1.5 mb-1">
+                <Users className={`w-3.5 h-3.5 ${isDarkMode ? 'text-violet-400' : 'text-violet-500'}`} />
+                <span className={`text-xs font-semibold uppercase tracking-wider ${isDarkMode ? 'text-violet-400' : 'text-violet-600'}`}>
+                  Delade med dig
+                </span>
+                <span className="text-[10px] font-bold text-white bg-red-500 rounded-full px-1.5 py-0.5">
+                  {pendingInvitations.length}
+                </span>
+              </div>
+              <div className="space-y-1">
+                {pendingInvitations.map((inv) => (
+                  <div
+                    key={inv.invitationId}
+                    className={`p-3 rounded-xl border ${
+                      isDarkMode
+                        ? 'bg-violet-900/20 border-violet-800/40'
+                        : 'bg-violet-50 border-violet-100'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white bg-violet-500 flex-shrink-0 mt-0.5">
+                        {(inv.senderName || inv.senderEmail || '?').charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-xs font-medium ${isDarkMode ? 'text-gray-200' : 'text-[#2d2a26]'}`}>
+                          {inv.senderName || inv.senderEmail}
+                        </p>
+                        <p className={`text-[11px] mt-0.5 truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          {inv.sessionTitle}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-2">
+                          <button
+                            onClick={() => { onAcceptInvitation?.(inv); onClose(); }}
+                            className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-white bg-[#2d2a26] rounded-lg hover:bg-[#3d3a36] transition-colors touch-manipulation active:scale-95"
+                          >
+                            Gå med
+                          </button>
+                          <button
+                            onClick={() => onDismissInvitation?.(inv)}
+                            className={`px-2.5 py-1 text-[11px] font-medium rounded-lg transition-colors touch-manipulation ${
+                              isDarkMode
+                                ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'
+                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                            }`}
+                          >
+                            Avvisa
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Sessions List */}
           <div className="flex-1 overflow-y-auto p-2">
             {isLoading ? (
@@ -1769,6 +1845,11 @@ function ChatPageContent() {
   const [loadingColleagues, setLoadingColleagues] = useState(false);
   const sharePanelRef = useRef<HTMLDivElement>(null);
   
+  // Invitation notification state
+  const [pendingInvitations, setPendingInvitations] = useState<ChatInvitation[]>([]);
+  const [showInvitationPanel, setShowInvitationPanel] = useState(false);
+  const invitationPanelRef = useRef<HTMLDivElement>(null);
+  
   // Delete session confirmation
   const [sessionToDeleteId, setSessionToDeleteId] = useState<string | null>(null);
   const deleteDialogRef = useFocusTrap(!!sessionToDeleteId);
@@ -1916,6 +1997,63 @@ function ChatPageContent() {
       .catch(() => setColleagues([]))
       .finally(() => setLoadingColleagues(false));
   }, [showSharePanel, colleagues.length]);
+
+  // Fetch pending invitations on mount and poll every 30s
+  const fetchInvitations = useCallback(async () => {
+    try {
+      const res = await fetch('/api/chat/invitations');
+      if (res.ok) {
+        const data = await res.json();
+        setPendingInvitations(data.invitations || []);
+      }
+    } catch {
+      // Silently ignore - invitations are non-critical
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchInvitations();
+    const interval = setInterval(fetchInvitations, 30000);
+    return () => clearInterval(interval);
+  }, [fetchInvitations]);
+
+  // Close invitation panel on outside click
+  useEffect(() => {
+    if (!showInvitationPanel) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (invitationPanelRef.current && !invitationPanelRef.current.contains(e.target as Node)) {
+        setShowInvitationPanel(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showInvitationPanel]);
+
+  // Accept an invitation – join the shared session and mark it accepted
+  const acceptInvitation = async (invitation: ChatInvitation) => {
+    setShowInvitationPanel(false);
+    // Mark as accepted
+    fetch('/api/chat/invitations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'accept', invitationId: invitation.invitationId }),
+    }).catch(() => {});
+    // Remove from local list immediately
+    setPendingInvitations(prev => prev.filter(i => i.invitationId !== invitation.invitationId));
+    // Join the shared session
+    await joinSharedSession(invitation.shareCode);
+    showToast(`Gick med i "${invitation.sessionTitle}"`);
+  };
+
+  // Dismiss an invitation
+  const dismissInvitation = async (invitation: ChatInvitation) => {
+    fetch('/api/chat/invitations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'dismiss', invitationId: invitation.invitationId }),
+    }).catch(() => {});
+    setPendingInvitations(prev => prev.filter(i => i.invitationId !== invitation.invitationId));
+  };
 
   // Toggle dark mode
   const toggleDarkMode = useCallback(() => {
@@ -3190,6 +3328,22 @@ function ChatPageContent() {
         // Start polling for this newly shared session
         startSharedPolling(data.shareCode);
 
+        // Send invitation to the selected colleague so they see a notification
+        if (colleague?.email) {
+          const sessionTitle = chatSessions.find(s => s.sessionId === currentSessionId)?.title || 'Delad chatt';
+          fetch('/api/chat/invitations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'create',
+              recipientEmail: colleague.email,
+              recipientName: colleague.name || colleague.email,
+              shareCode: data.shareCode,
+              sessionTitle,
+            }),
+          }).catch(() => { /* ignore invitation errors – share link still works */ });
+        }
+
         await navigator.clipboard.writeText(shareUrl);
         const displayName = colleague?.name || colleague?.email;
         showToast(displayName ? `Delad med ${displayName}! Länk kopierad.` : 'Delningslänk kopierad! Skicka till en kollega.');
@@ -3456,6 +3610,9 @@ function ChatPageContent() {
         hasMoreSessions={hasMoreSessions}
         onLoadMoreSessions={loadMoreSessions}
         isLoadingSessions={isLoadingSessions}
+        pendingInvitations={pendingInvitations}
+        onAcceptInvitation={acceptInvitation}
+        onDismissInvitation={dismissInvitation}
       />
 
       {/* Compact Mobile Header */}
@@ -3557,6 +3714,104 @@ function ChatPageContent() {
               </button>
             )}
             
+            {/* Invitation notification bell */}
+            <div className="relative" ref={invitationPanelRef}>
+              <button
+                onClick={() => setShowInvitationPanel(prev => !prev)}
+                className={`relative p-2 rounded-lg transition-colors touch-manipulation ${
+                  showInvitationPanel
+                    ? 'text-[#c0a280] bg-[#c0a280]/10'
+                    : isDarkMode
+                      ? 'text-gray-400 hover:text-white hover:bg-gray-700'
+                      : 'text-gray-500 hover:text-[#2d2a26] hover:bg-gray-100'
+                }`}
+                title="Inbjudningar"
+                aria-label={`Inbjudningar${pendingInvitations.length > 0 ? ` (${pendingInvitations.length} nya)` : ''}`}
+              >
+                <Bell className="w-4 h-4" />
+                {pendingInvitations.length > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full ring-2 ring-white dark:ring-gray-800 animate-in zoom-in duration-200">
+                    {pendingInvitations.length}
+                  </span>
+                )}
+              </button>
+
+              {/* Invitation dropdown */}
+              {showInvitationPanel && (
+                <div
+                  className={`absolute right-0 top-full mt-2 w-[320px] max-h-[400px] rounded-xl shadow-xl border flex flex-col overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 ${
+                    isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+                  }`}
+                >
+                  <div className={`px-4 py-3 border-b flex items-center justify-between ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                    <h3 className={`text-sm font-semibold ${isDarkMode ? 'text-gray-100' : 'text-[#2d2a26]'}`}>
+                      Inbjudningar
+                    </h3>
+                    {pendingInvitations.length > 0 && (
+                      <span className="text-[10px] font-bold text-white bg-red-500 rounded-full px-1.5 py-0.5">
+                        {pendingInvitations.length}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex-1 overflow-y-auto min-h-0">
+                    {pendingInvitations.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-8 px-4">
+                        <Bell className={`w-8 h-8 mb-2 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
+                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          Inga nya inbjudningar
+                        </p>
+                        <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                          När någon delar en chatt med dig visas det här
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="py-1">
+                        {pendingInvitations.map((inv) => (
+                          <div
+                            key={inv.invitationId}
+                            className={`px-4 py-3 border-b last:border-0 ${isDarkMode ? 'border-gray-700' : 'border-gray-50'}`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white bg-violet-500 flex-shrink-0">
+                                {(inv.senderName || inv.senderEmail || '?').charAt(0).toUpperCase()}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-[#2d2a26]'}`}>
+                                  {inv.senderName || inv.senderEmail}
+                                </p>
+                                <p className={`text-xs mt-0.5 truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                  bjöd in dig till &quot;{inv.sessionTitle}&quot;
+                                </p>
+                                <div className="flex items-center gap-2 mt-2">
+                                  <button
+                                    onClick={() => acceptInvitation(inv)}
+                                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-[#2d2a26] rounded-lg hover:bg-[#3d3a36] transition-colors touch-manipulation active:scale-95"
+                                  >
+                                    <Users className="w-3 h-3" />
+                                    Gå med
+                                  </button>
+                                  <button
+                                    onClick={() => dismissInvitation(inv)}
+                                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors touch-manipulation ${
+                                      isDarkMode
+                                        ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'
+                                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                                    }`}
+                                  >
+                                    Avvisa
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Share conversation */}
             {currentSessionId && (
               <div className="relative flex items-center gap-1" ref={sharePanelRef}>
