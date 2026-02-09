@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo, memo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
 import { 
   Send, 
@@ -4170,8 +4171,8 @@ function ChatPageContent() {
               </button>
             )}
             
-            <button
-              onClick={() => router.push('/knowledge')}
+            <Link
+              href="/knowledge"
               className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium 
                          rounded-lg transition-colors touch-manipulation ${
                 isDarkMode
@@ -4183,11 +4184,11 @@ function ChatPageContent() {
             >
               <BookOpen className="w-4 h-4" />
               <span className="hidden xs:inline">Kunskap</span>
-            </button>
-            <button
-              onClick={() => router.push('/overview')}
+            </Link>
+            <Link
+              href="/overview"
               className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium 
-                         rounded-lg transition-colors touch-manipulation flex-shrink-0 ${
+                         rounded-lg transition-colors touch-manipulation ${
                 isDarkMode
                   ? 'text-gray-300 hover:text-white hover:bg-gray-700'
                   : 'text-gray-600 hover:text-[#2d2a26] hover:bg-gray-100'
@@ -4197,9 +4198,9 @@ function ChatPageContent() {
             >
               <LayoutDashboard className="w-4 h-4" />
               <span className="hidden xs:inline">Dashboard</span>
-            </button>
-            <button
-              onClick={() => router.push('/admin/stats')}
+            </Link>
+            <Link
+              href="/admin/stats"
               className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium 
                          rounded-lg transition-colors touch-manipulation ${
                 isDarkMode
@@ -4211,7 +4212,7 @@ function ChatPageContent() {
             >
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Stats</span>
-            </button>
+            </Link>
             <button
               onClick={toggleDarkMode}
               className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium 
