@@ -77,95 +77,6 @@ interface ChatRequest {
 }
 
 /**
- * Easter egg: Check if user is asking about who is the best/most handsome/etc at AIFM
- */
-function checkForOfficeCompliments(message: string): string | null {
-  const lowerMessage = message.toLowerCase();
-  
-  // Keywords that indicate a "who is best" type question
-  const positiveKeywords = [
-    'snyggast', 'snygg', 'stiligast', 'stilig', 'bäst', 'bästa',
-    'coolast', 'cool', 'smartast', 'smart', 'roligast', 'rolig',
-    'charmigast', 'charmig', 'sötast', 'söt', 'finast', 'fin',
-    'mest attraktiv', 'attraktivast', 'mest karismatisk',
-    'snygga', 'stiliga', 'coola', 'smarta', 'roliga', 'charmiga',
-    'mest kompetent', 'duktigast', 'talangfull', 'fantastisk',
-    'mest omtyckt', 'populärast', 'trevligast', 'härligast',
-    'handsome', 'best looking', 'most stylish', 'coolest', 'smartest',
-  ];
-  
-  // Context keywords that indicate office/AIFM context
-  const contextKeywords = [
-    'kontoret', 'aifm', 'företaget', 'bolaget', 'teamet', 'gruppen',
-    'office', 'company', 'team', 'här', 'hos oss', 'på jobbet',
-    'kollegorna', 'medarbetarna', 'personalen',
-  ];
-  
-  const hasPositive = positiveKeywords.some(kw => lowerMessage.includes(kw));
-  const hasContext = contextKeywords.some(kw => lowerMessage.includes(kw));
-  const isQuestion = lowerMessage.includes('vem') || lowerMessage.includes('vilka') || 
-                     lowerMessage.includes('who') || lowerMessage.includes('?');
-  
-  if (hasPositive && (hasContext || isQuestion)) {
-    const responses = [
-      `## 🌟 Det är ingen tvekan!
-
-Det kan bara vara **Thomas Dahlin** och **Patrik Wall Enberg**!
-
-Dessa två gentlemän höjer ribban för stil och charm på kontoret varje dag. Med en perfekt kombination av:
-
-- ✨ **Oöverträffad stil** - Alltid klädda som om de ska på röda mattan
-- 🧠 **Briljant intellekt** - Lika skarpa som deras slipsar är välknutna  
-- 💪 **Naturlig karisma** - Rummet lyser upp när de kliver in
-- 😎 **Effortless cool** - De försöker inte ens, det bara händer
-
-Faktum är att HR har övervägt att ge dem egen parkeringsplats med etiketten "Reserved for Excellence". 
-
-> "Dahlin och Wall Enberg är inte bara kollegor – de är levande bevis på att perfektion existerar."
-> — *Anonym beundrare på kontoret*
-
-🏆 **Officiellt erkänt som AIFM:s stilikoner sedan tidernas begynnelse.**`,
-
-      `## 👑 Frågan har ett självklart svar!
-
-**Thomas Dahlin** och **Patrik Wall Enberg** - naturligtvis!
-
-När dessa två träder in på kontoret händer följande:
-- ☀️ Solen skiner lite starkare
-- 📈 Aktiekurserna går upp
-- 😊 Alla blir på lite bättre humör
-- 👔 Alla andra känner sig lite underdressade
-
-De är som om George Clooney och Ryan Gosling fick barn och de barnen sedan började jobba inom finans. Fast ännu snyggare.
-
-**Fun fact:** Det sägs att deras LinkedIn-profilbilder har fått fler likes än hela Facebooks grundarteam tillsammans.
-
-🥇 Grattis till er, Dahlin och Wall Enberg - ni är legender!`,
-
-      `## 💫 Ah, den klassiska frågan!
-
-Det finns egentligen bara ett rätt svar: **Thomas Dahlin** och **Patrik Wall Enberg**.
-
-Dessa två är som en schweizisk klocka – precision, elegans och tidlös stil. 
-
-Vad de har gemensamt:
-- 🎯 Felfri stil
-- 🗣️ Karisma som kunde charma en sten
-- 🧊 Cool under press
-- ✨ Den där mystiska "it-faktorn"
-
-Det ryktas att GQ har ringt flera gånger för att få dem på omslaget, men de har artigt tackat nej – "Vi vill inte göra de andra modellerna nervösa."
-
-**Sammanfattning:** 10/10, would recommend som kollegor och stilikoner. 🌟`,
-    ];
-    
-    return responses[Math.floor(Math.random() * responses.length)];
-  }
-  
-  return null;
-}
-
-/**
  * Format knowledge base results into context for the AI
  */
 function formatKnowledgeBaseContext(results: RetrievalResult[]): string {
@@ -286,51 +197,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 🎉 Easter egg: Check for office compliment questions
-    // BUT: Skip if the message contains file content (indicated by file markers or hasAttachments flag)
-    const hasFileContent = userMessage.includes('--- Innehåll från') || 
-                           userMessage.includes('Analysera följande dokument') ||
-                           body.hasAttachments === true;
-    
-    // Only check for easter egg on short, direct questions without file attachments
-    const shouldCheckEasterEgg = !hasFileContent && userMessage.length < 500;
-    const easterEggResponse = shouldCheckEasterEgg ? checkForOfficeCompliments(userMessage) : null;
-    
-    if (easterEggResponse) {
-      // Return as streaming response for consistency
-      const encoder = new TextEncoder();
-      const stream = new ReadableStream({
-        start(controller) {
-          // Send metadata
-          const metadata = JSON.stringify({ 
-            kbSearched: false,
-            kbResultsCount: 0,
-            citations: [],
-            meta: true 
-          });
-          controller.enqueue(encoder.encode(`data: ${metadata}\n\n`));
-          
-          // Send the fun response
-          const data = JSON.stringify({ text: easterEggResponse });
-          controller.enqueue(encoder.encode(`data: ${data}\n\n`));
-          
-          // Send done
-          const doneData = JSON.stringify({ done: true, citations: [] });
-          controller.enqueue(encoder.encode(`data: ${doneData}\n\n`));
-          controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
-          controller.close();
-        },
-      });
-
-      return new Response(stream, {
-        headers: {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
-        },
-      });
-    }
-
     // Build conversation history
     const conversationHistory = body.history?.map(msg => ({
       role: msg.role,
@@ -436,6 +302,91 @@ ${prices.map(p => `• ${p.name}: ${p.price.toFixed(2)} ${p.currency} (${p.chang
     }
 
     // =========================================================================
+    // ESG DATA - Fetch if question relates to ESG / sustainability / specific security
+    // =========================================================================
+    let esgDataContext = '';
+    const esgKeywords = [
+      'esg', 'hållbarhet', 'hållbar', 'sustainability', 'sustainable',
+      'exkludering', 'exkludera', 'exclusion', 'exclude',
+      'artikel 8', 'artikel 9', 'article 8', 'article 9',
+      'sfdr', 'pai', 'taxonomi', 'taxonomy',
+      'koldioxid', 'carbon', 'co2', 'klimat', 'climate',
+      'kontrovers', 'controversy',
+      'miljö', 'environment', 'social', 'governance', 'styrning',
+    ];
+    const msgLower = userMessage.toLowerCase();
+    const needsESGData = esgKeywords.some(kw => msgLower.includes(kw));
+
+    // Also detect ISIN patterns (e.g. SE0000108656) or ticker-like references
+    const isinPattern = /\b[A-Z]{2}[A-Z0-9]{9}[0-9]\b/;
+    const isinMatch = userMessage.match(isinPattern);
+    // Simple ticker detection: uppercase word 2-5 chars preceded by context
+    const tickerPattern = /\b(?:ticker|aktie|aktien|stock|värdepapper)\s+([A-Z]{2,6})\b/i;
+    const tickerMatch = userMessage.match(tickerPattern);
+    const securityIdentifier = isinMatch?.[0] || tickerMatch?.[1] || null;
+
+    if (needsESGData || securityIdentifier) {
+      try {
+        const { getESGServiceClient } = await import('@/lib/integrations/esg/esg-service');
+        const esgClient = getESGServiceClient();
+        const providerName = esgClient.getActiveProviderName();
+
+        if (securityIdentifier && providerName) {
+          // Fetch ESG data for the specific security
+          const esgData = await esgClient.getESGData(securityIdentifier);
+
+          if (esgData) {
+            esgDataContext = `
+═══════════════════════════════════════════════════════════════
+🌱 ESG-DATA FÖR ${securityIdentifier} (Källa: ${esgData.provider}, ${esgData.fetchedAt.split('T')[0]})
+═══════════════════════════════════════════════════════════════
+${esgData.totalScore !== null ? `• Total ESG-score: ${esgData.totalScore.toFixed(1)}/100` : '• Total ESG-score: Ej tillgänglig'}
+${esgData.environmentScore !== null ? `• Miljö (E): ${esgData.environmentScore.toFixed(1)}/100` : ''}
+${esgData.socialScore !== null ? `• Socialt (S): ${esgData.socialScore.toFixed(1)}/100` : ''}
+${esgData.governanceScore !== null ? `• Styrning (G): ${esgData.governanceScore.toFixed(1)}/100` : ''}
+${esgData.controversyLevel !== null ? `• Kontroversialitetsnivå: ${esgData.controversyLevel}/5` : ''}
+${esgData.percentile !== null ? `• Percentil i peer group: ${esgData.percentile}%` : ''}
+${esgData.peerGroup ? `• Peer group: ${esgData.peerGroup}` : ''}
+${esgData.sfdrAlignment ? `• SFDR-klassificering: ${esgData.sfdrAlignment}` : ''}
+${esgData.taxonomyAlignmentPercent !== null && esgData.taxonomyAlignmentPercent !== undefined ? `• EU Taxonomi-anpassning: ${esgData.taxonomyAlignmentPercent}%` : ''}
+${esgData.carbonIntensity !== null && esgData.carbonIntensity !== undefined ? `• Koldioxidintensitet: ${esgData.carbonIntensity} ${esgData.carbonIntensityUnit || 'tCO2e/MEUR'}` : ''}
+${esgData.exclusionFlags && esgData.exclusionFlags.length > 0 ? `• Exkluderingsflaggor:\n${esgData.exclusionFlags.map(f => `  - ${f.categoryDescription}${f.revenuePercent !== undefined ? ` (${f.revenuePercent}% av intäkter)` : ''}: ${f.involvementLevel || 'flaggad'}`).join('\n')}` : ''}
+═══════════════════════════════════════════════════════════════
+OBS: Presentera ESG-data med källhänvisning. Notera om data saknas.
+Tolka ESG-scores: >70 = starkt, 50-70 = medel, <50 = svagt.
+Kontroversialitet: 0-1 = låg, 2-3 = medel, 4-5 = allvarlig.
+═══════════════════════════════════════════════════════════════
+`;
+            console.log(`[AI Chat] Added ESG data context for ${securityIdentifier} from ${esgData.provider}`);
+          }
+        } else if (needsESGData && !securityIdentifier) {
+          // General ESG question without specific security
+          esgDataContext = `
+═══════════════════════════════════════════════════════════════
+🌱 ESG-KONTEXT
+═══════════════════════════════════════════════════════════════
+Användaren frågar om ESG/hållbarhet. Du har tillgång till ESG-datatjänsten.
+Om användaren nämner ett specifikt värdepapper (ISIN, ticker eller namn),
+kan ESG-data hämtas automatiskt. Be användaren specificera om inget
+värdepapper nämnts och frågan kräver specifik data.
+
+Tillgänglig ESG-leverantör: ${providerName || 'Ingen konfigurerad'}
+
+Nyckelbegrepp:
+• SFDR Artikel 6/8/9: Hållbarhetsklassificering av fonder
+• PAI: Principal Adverse Impact-indikatorer
+• EU Taxonomi: Klassificering av miljömässigt hållbara aktiviteter
+• Exkluderingskriterier: Vapen, tobak, fossila bränslen, spel m.m.
+═══════════════════════════════════════════════════════════════
+`;
+          console.log('[AI Chat] Added general ESG context (no specific security)');
+        }
+      } catch (esgError) {
+        console.error('[AI Chat] ESG data fetch failed:', esgError);
+      }
+    }
+
+    // =========================================================================
     // BUILD SYSTEM PROMPT
     // =========================================================================
     const systemPrompt = `Du är en expert AI-assistent för AIFM Group, ett svenskt fondbolag med alla nödvändiga tillstånd från Finansinspektionen.
@@ -470,6 +421,13 @@ ROLL: Du är en komplett AI-assistent för hela AIFM Group. Du kan hjälpa med:
 - Valutakurser (SEK/USD, SEK/EUR)
 - Finansnyheter och marknadsutveckling
 - Regulatoriska uppdateringar från FI
+
+🌱 ESG & HÅLLBARHET:
+- ESG-scores (E/S/G) för enskilda värdepapper
+- Exkluderingskontroll (vapen, tobak, fossilt m.m.)
+- SFDR Artikel 8/9-klassificering
+- PAI-indikatorer och EU Taxonomi
+- Kontroversialitetsbedömning
 
 📅 PRODUKTIVITET (om M365 är kopplat):
 - Kalenderhändelser och möten
@@ -522,6 +480,7 @@ PRIORITERINGSORDNING FÖR SVAR:
 ${knowledgeBaseContext}
 ${internalKnowledgeContext}
 ${marketDataContext}
+${esgDataContext}
 ═══════════════════════════════════════════════════════════════
 REFERENSLÄNKAR (använd endast om kunskapsbasen saknar info):
 ═══════════════════════════════════════════════════════════════
