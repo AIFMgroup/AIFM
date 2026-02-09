@@ -44,7 +44,6 @@ import {
   Download,
   Link2,
   Globe,
-  Languages,
   MoreHorizontal,
   Wand2,
   Volume2,
@@ -251,20 +250,65 @@ function isFileTypeSupported(file: File): boolean {
     file.name.endsWith('.webp');
 }
 
+/** Map HTTP status to user-friendly Swedish error message */
+function friendlyApiError(status: number, fallback = 'Något gick fel. Försök igen.'): string {
+  switch (status) {
+    case 401: return 'Din session har gått ut. Ladda om sidan och logga in igen.';
+    case 403: return 'Du har inte behörighet för denna åtgärd.';
+    case 429: return 'För många förfrågningar. Vänta en stund och försök igen.';
+    case 502:
+    case 503:
+    case 504: return 'AI-tjänsten svarar inte just nu. Försök igen om en stund.';
+    default: return status >= 500 ? 'Serverfel. Försök igen senare.' : fallback;
+  }
+}
+
 /** Shared SSE stream reader for /api/ai/chat. Calls onChunk for each text update; returns final content and metadata. */
+const STREAM_TIMEOUT_MS = 90_000; // 90s total timeout
+const STREAM_IDLE_MS = 30_000;    // 30s no-chunk timeout
+
 async function streamAssistantResponse(
   response: Response,
   onChunk: (params: { fullContent: string; citations: Citation[]; internalSources: InternalKnowledgeSource[] }) => void
-): Promise<{ fullContent: string; citations: Citation[]; internalSources: InternalKnowledgeSource[] }> {
+): Promise<{ fullContent: string; citations: Citation[]; internalSources: InternalKnowledgeSource[]; timedOut?: boolean }> {
   const reader = response.body?.getReader();
   const decoder = new TextDecoder();
   let fullContent = '';
   let citations: Citation[] = [];
   let internalSources: InternalKnowledgeSource[] = [];
   if (!reader) return { fullContent, citations, internalSources };
+
+  const startTime = Date.now();
+  let lastChunkTime = Date.now();
+
   while (true) {
-    const { done, value } = await reader.read();
+    // Race between the next chunk and timeouts
+    const elapsed = Date.now() - startTime;
+    const idle = Date.now() - lastChunkTime;
+    if (elapsed > STREAM_TIMEOUT_MS || idle > STREAM_IDLE_MS) {
+      reader.cancel();
+      return { fullContent, citations, internalSources, timedOut: true };
+    }
+
+    const remaining = Math.min(STREAM_TIMEOUT_MS - elapsed, STREAM_IDLE_MS - idle);
+
+    let result: ReadableStreamReadResult<Uint8Array>;
+    try {
+      result = await Promise.race([
+        reader.read(),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('__STREAM_TIMEOUT__')), remaining)),
+      ]);
+    } catch (e) {
+      if (e instanceof Error && e.message === '__STREAM_TIMEOUT__') {
+        reader.cancel();
+        return { fullContent, citations, internalSources, timedOut: true };
+      }
+      throw e;
+    }
+
+    const { done, value } = result;
     if (done) break;
+    lastChunkTime = Date.now();
     const chunk = decoder.decode(value, { stream: true });
     for (const line of chunk.split('\n')) {
       if (line.startsWith('data: ')) {
@@ -299,10 +343,14 @@ async function streamAssistantResponse(
 function CodeBlockWithCopy({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
   
-  const copyCode = () => {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback: clipboard API may be blocked in non-secure contexts
+    }
   };
   
   return (
@@ -909,10 +957,16 @@ const MessageBubble = memo(function MessageBubble({ message, onRegenerate, onFee
 
   const { mainContent, followUpQuestions } = parseFollowUpQuestions(message.content);
   
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(message.content);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const isFailedResponse = message.role === 'assistant' && /^Kunde inte .*(Försök igen|Försök igen\.)?\s*$/.test(message.content.trim());
+  
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard API unavailable
+    }
   };
 
   const handleFeedback = (type: 'positive' | 'negative') => {
@@ -1016,7 +1070,7 @@ const MessageBubble = memo(function MessageBubble({ message, onRegenerate, onFee
       }
     } catch (error) {
       console.error('PDF export error:', error);
-      showToast('Kunde inte exportera till PDF');
+      alert('Kunde inte exportera till PDF');
     }
     setExporting(null);
   };
@@ -1059,7 +1113,7 @@ const MessageBubble = memo(function MessageBubble({ message, onRegenerate, onFee
       }
     } catch (error) {
       console.error('Excel export error:', error);
-      showToast('Kunde inte exportera till Excel');
+      alert('Kunde inte exportera till Excel');
     }
     setExporting(null);
   };
@@ -1164,6 +1218,22 @@ const MessageBubble = memo(function MessageBubble({ message, onRegenerate, onFee
           <div className={`text-sm leading-relaxed ${
             isDarkMode ? 'text-gray-100' : 'text-[#2d2a26]'
           }`}>{formatMarkdown(mainContent)}</div>
+
+          {/* Inline retry button for failed/incomplete responses */}
+          {isFailedResponse && onRegenerate && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onRegenerate(message.id); }}
+              className={`mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                isDarkMode
+                  ? 'bg-amber-900/30 text-amber-300 hover:bg-amber-900/50'
+                  : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+              }`}
+              aria-label="Försök igen"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Försök igen
+            </button>
+          )}
           
           {/* Internal Knowledge Sources */}
           {message.internalSources && message.internalSources.length > 0 && (
@@ -1800,6 +1870,8 @@ function ChatPageContent() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [showAllSessions, setShowAllSessions] = useState(false);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
   const [hasMoreSessions, setHasMoreSessions] = useState(false);
   const [sessionsStartKey, setSessionsStartKey] = useState<string | null>(null);
   const [historySearch, setHistorySearch] = useState('');
@@ -1831,6 +1903,19 @@ function ChatPageContent() {
   const [isSharedSession, setIsSharedSession] = useState(false);
   const sharedPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastUpdatedAtRef = useRef<string | null>(null);
+  const isDirtyRef = useRef(false);
+  const messagesRef = useRef<Message[]>([]);
+  const currentSessionIdRef = useRef<string | null>(null);
+  const modeRef = useRef<AgentMode>('claude');
+  const currentBranchIdRef = useRef<string | null>(null);
+  const sessionBranchesRef = useRef<ChatBranch[]>([]);
+  const mainThreadMessagesRef = useRef<Message[]>([]);
+  const isSharedSessionRef = useRef(false);
+  const sharedOwnerUserIdRef = useRef<string | null>(null);
+  const shareCodeRef = useRef<string | null>(null);
+  const saveDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingSaveBodyRef = useRef<Record<string, unknown> | null>(null);
+  const pendingSaveRef = useRef<{ finalMessages: Message[]; branchId: string | null; branches: ChatBranch[] | null } | null>(null);
   const [currentUserName, setCurrentUserName] = useState<string>('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   
@@ -1959,6 +2044,19 @@ function ChatPageContent() {
       localStorage.removeItem('aifm-chat-draft');
     }
   }, [input]);
+
+  // Keep refs in sync for flush on unload/hide
+  useEffect(() => {
+    messagesRef.current = messages;
+    currentSessionIdRef.current = currentSessionId;
+    modeRef.current = mode;
+    currentBranchIdRef.current = currentBranchId;
+    sessionBranchesRef.current = sessionBranches;
+    mainThreadMessagesRef.current = mainThreadMessages;
+    isSharedSessionRef.current = isSharedSession;
+    sharedOwnerUserIdRef.current = sharedOwnerUserId;
+    shareCodeRef.current = shareCode;
+  }, [messages, currentSessionId, mode, currentBranchId, sessionBranches, mainThreadMessages, isSharedSession, sharedOwnerUserId, shareCode]);
 
   // Clear draft when message is sent
   const clearDraft = useCallback(() => {
@@ -2207,42 +2305,20 @@ function ChatPageContent() {
     setIsLoadingSessions(false);
   };
 
-  const saveSession = async (newMessages?: Message[], branches?: ChatBranch[]) => {
-    // Allow creating new session when currentSessionId is null (first message)
-    if (newMessages && newMessages.length === 0 && !branches) return;
-    if (!currentSessionId && !(newMessages && newMessages.length > 0)) return;
-    
+  const executeSave = async (body: Record<string, unknown>) => {
     try {
-      const body: Record<string, unknown> = {
-        // Omit sessionId when creating new session (first message)
-        ...(currentSessionId ? { sessionId: currentSessionId } : {}),
-        // For shared sessions, write to the owner's session
-        ...(isSharedSession && sharedOwnerUserId && shareCode ? {
-          ownerUserId: sharedOwnerUserId,
-          shareCode,
-        } : {}),
-      };
-      if (newMessages && newMessages.length > 0) {
-        const title = newMessages[0]?.content?.slice(0, 50) + (newMessages[0]?.content?.length > 50 ? '...' : '');
-        body.title = title;
-        body.mode = mode;
-        body.messages = newMessages;
-      }
-      if (Array.isArray(branches)) body.branches = branches;
-      
       const response = await fetch('/api/chat/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      
       if (response.ok) {
         const session = await response.json();
         if (!isSharedSession) {
           setCurrentSessionId(session.sessionId);
         }
         lastUpdatedAtRef.current = new Date().toISOString();
-        
+        isDirtyRef.current = false;
         setChatSessions(prev => {
           const filtered = prev.filter(s => s.sessionId !== session.sessionId);
           return [session, ...filtered];
@@ -2253,6 +2329,92 @@ function ChatPageContent() {
       showToast('Kunde inte spara chatt');
     }
   };
+
+  const saveSession = (newMessages?: Message[], branches?: ChatBranch[]) => {
+    // Allow creating new session when currentSessionId is null (first message)
+    if (newMessages && newMessages.length === 0 && !branches) return;
+    if (!currentSessionId && !(newMessages && newMessages.length > 0)) return;
+
+    const body: Record<string, unknown> = {
+      ...(currentSessionId ? { sessionId: currentSessionId } : {}),
+      ...(isSharedSession && sharedOwnerUserId && shareCode ? {
+        ownerUserId: sharedOwnerUserId,
+        shareCode,
+      } : {}),
+    };
+    if (newMessages && newMessages.length > 0) {
+      const title = newMessages[0]?.content?.slice(0, 50) + (newMessages[0]?.content?.length > 50 ? '...' : '');
+      body.title = title;
+      body.mode = mode;
+      body.messages = newMessages;
+    }
+    if (Array.isArray(branches)) body.branches = branches;
+
+    // First save (session creation) must be immediate; subsequent saves are debounced
+    if (!currentSessionId) {
+      executeSave(body);
+      return;
+    }
+
+    // Debounce: store latest body and schedule save after 2s
+    pendingSaveBodyRef.current = body;
+    if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
+    saveDebounceRef.current = setTimeout(() => {
+      const pending = pendingSaveBodyRef.current;
+      pendingSaveBodyRef.current = null;
+      if (pending) executeSave(pending);
+    }, 2000);
+  };
+
+  /** Flush pending messages to server on tab hide/close (uses refs so it has latest state) */
+  const flushPendingSave = useCallback(() => {
+    // Cancel any pending debounced save first
+    if (saveDebounceRef.current) {
+      clearTimeout(saveDebounceRef.current);
+      saveDebounceRef.current = null;
+    }
+    if (!isDirtyRef.current) return;
+    const sid = currentSessionIdRef.current;
+    const msgs = messagesRef.current;
+    const m = modeRef.current;
+    const branchId = currentBranchIdRef.current;
+    const branches = sessionBranchesRef.current;
+    const shared = isSharedSessionRef.current;
+    const ownerId = sharedOwnerUserIdRef.current;
+    const code = shareCodeRef.current;
+    if (!sid && (!msgs || msgs.length === 0) && !branches?.length) return;
+    const body: Record<string, unknown> = {
+      ...(sid ? { sessionId: sid } : {}),
+      ...(shared && ownerId && code ? { ownerUserId: ownerId, shareCode: code } : {}),
+    };
+    if (msgs && msgs.length > 0 && !branchId) {
+      body.title = msgs[0]?.content?.slice(0, 50) + (msgs[0]?.content?.length > 50 ? '...' : '');
+      body.mode = m;
+      body.messages = msgs;
+    }
+    if (Array.isArray(branches)) body.branches = branches;
+    fetch('/api/chat/sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      keepalive: true,
+    }).then(res => { if (res.ok) isDirtyRef.current = false; }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') flushPendingSave();
+    };
+    const handleBeforeUnload = () => {
+      flushPendingSave();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [flushPendingSave]);
 
   /** Start a branch (fork) at the given message; user continues from there on the new branch */
   const startBranch = useCallback((messageId: string) => {
@@ -2276,6 +2438,7 @@ function ChatPageContent() {
 
   /** Persist messages to main thread or current branch */
   const persistMessages = useCallback((finalMessages: Message[]) => {
+    isDirtyRef.current = true;
     if (currentBranchId) {
       setSessionBranches(prev => {
         const next = prev.map(b => b.branchId === currentBranchId ? { ...b, messages: finalMessages } : b);
@@ -2505,12 +2668,14 @@ function ChatPageContent() {
         }),
       });
       
-      if (!response.ok) throw new Error('Failed to get response');
+      if (!response.ok) throw new Error(friendlyApiError(response.status));
       
       if (useStreaming && response.headers.get('content-type')?.includes('text/event-stream')) {
-        const { fullContent } = await streamAssistantResponse(response, ({ fullContent: content }) => {
+        const { fullContent, timedOut } = await streamAssistantResponse(response, ({ fullContent: content }) => {
           setMessages(prev => prev.map(m => m.id === newAssistantMessageId ? { ...m, content } : m));
         });
+        if (timedOut && fullContent) showToast('Svaret kan vara ofullständigt (timeout)');
+        if (timedOut && !fullContent) throw new Error('Stream timed out');
         const finalMessages = [...messagesWithoutResponse, { ...newAssistantMessage, content: fullContent }];
         setMessages(finalMessages);
         persistMessages(finalMessages);
@@ -2578,12 +2743,14 @@ function ChatPageContent() {
           stream: true,
         }),
       });
-      if (!response.ok) throw new Error('Failed to get response');
+      if (!response.ok) throw new Error(friendlyApiError(response.status));
 
       if (response.headers.get('content-type')?.includes('text/event-stream')) {
-        const { fullContent } = await streamAssistantResponse(response, ({ fullContent: content }) => {
+        const { fullContent, timedOut } = await streamAssistantResponse(response, ({ fullContent: content }) => {
           setMessages(prev => prev.map(m => (m.id === newAssistantMessageId ? { ...m, content } : m)));
         });
+        if (timedOut && fullContent) showToast('Svaret kan vara ofullständigt (timeout)');
+        if (timedOut && !fullContent) throw new Error('Stream timed out');
         const finalMessages = [...messagesUpToEdited, { ...newAssistantMessage, content: fullContent }];
         setMessages(finalMessages);
         persistMessages(finalMessages);
@@ -2683,9 +2850,11 @@ function ChatPageContent() {
       });
 
       if (response.body && response.headers.get('content-type')?.includes('text/event-stream')) {
-        const { fullContent } = await streamAssistantResponse(response, ({ fullContent: content }) => {
+        const { fullContent, timedOut } = await streamAssistantResponse(response, ({ fullContent: content }) => {
           setMessages(prev => prev.map(m => m.id === newAssistantMessageId ? { ...m, content } : m));
         });
+        if (timedOut && fullContent) showToast('Svaret kan vara ofullständigt (timeout)');
+        if (timedOut && !fullContent) throw new Error('Stream timed out');
         if (fullContent) {
           const finalMessages = [...messages, { ...newAssistantMessage, content: fullContent }];
           setMessages(finalMessages);
@@ -2843,9 +3012,12 @@ function ChatPageContent() {
     }
   };
 
+  const INPUT_MAX_LENGTH = 30000;
+
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = e.target;
-    setInput(textarea.value);
+    const value = textarea.value.length > INPUT_MAX_LENGTH ? textarea.value.slice(0, INPUT_MAX_LENGTH) : textarea.value;
+    setInput(value);
     textarea.style.height = 'auto';
     textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
   }, []);
@@ -3081,6 +3253,7 @@ function ChatPageContent() {
     
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
+    isDirtyRef.current = true;
     setInput('');
     clearDraft();
     setAttachedFiles([]);
@@ -3120,14 +3293,16 @@ function ChatPageContent() {
         }),
       });
       
-      if (!response.ok) throw new Error('Failed to get response');
+      if (!response.ok) throw new Error(friendlyApiError(response.status));
       
       if (useStreaming && response.headers.get('content-type')?.includes('text/event-stream')) {
-        const { fullContent, citations: streamCitations, internalSources: streamInternalSources } = await streamAssistantResponse(response, ({ fullContent: content, citations: c, internalSources: s }) => {
+        const { fullContent, citations: streamCitations, internalSources: streamInternalSources, timedOut } = await streamAssistantResponse(response, ({ fullContent: content, citations: c, internalSources: s }) => {
           setMessages(prev => prev.map(m => 
             m.id === assistantMessageId ? { ...m, content, citations: c, internalSources: s } : m
           ));
         });
+        if (timedOut && fullContent) showToast('Svaret kan vara ofullständigt (timeout)');
+        if (timedOut && !fullContent) throw new Error('Stream timed out');
         const finalMessages = [...updatedMessages, { 
           ...assistantMessage, 
           content: fullContent, 
@@ -3163,12 +3338,15 @@ function ChatPageContent() {
       
     } catch (error) {
       console.error('Chat error:', error);
+      const errMsg = error instanceof Error && error.message !== 'Stream timed out'
+        ? error.message
+        : 'Kunde inte svara just nu. Försök igen.';
       setMessages(prev => prev.map(m => 
         m.id === assistantMessageId 
-          ? { ...m, content: 'Kunde inte svara just nu. Försök igen.' }
+          ? { ...m, content: errMsg }
           : m
       ));
-      showToast('Kunde inte svara just nu. Försök igen.');
+      showToast(errMsg);
     } finally {
       setIsLoading(false);
       streamingStartTimeRef.current = null;
@@ -3306,6 +3484,7 @@ function ChatPageContent() {
       return;
     }
     
+    setIsSharing(true);
     try {
       const response = await fetch('/api/chat/sessions/share', {
         method: 'POST',
@@ -3344,7 +3523,9 @@ function ChatPageContent() {
           }).catch(() => { /* ignore invitation errors – share link still works */ });
         }
 
-        await navigator.clipboard.writeText(shareUrl);
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+        } catch { /* clipboard blocked */ }
         const displayName = colleague?.name || colleague?.email;
         showToast(displayName ? `Delad med ${displayName}! Länk kopierad.` : 'Delningslänk kopierad! Skicka till en kollega.');
       } else {
@@ -3354,6 +3535,8 @@ function ChatPageContent() {
     } catch (e) {
       console.error('Share error:', e);
       showToast('Kunde inte skapa delningslänk');
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -3378,10 +3561,28 @@ function ChatPageContent() {
           sharedPollRef.current = null;
         }
         showToast('Delningen avslutad');
+      } else {
+        const data = await response.json().catch(() => ({}));
+        showToast(data.error || 'Kunde inte avsluta delningen');
       }
     } catch {
       showToast('Kunde inte avsluta delningen');
     }
+  };
+
+  /** Leave a shared session you joined (non-owner) – just clears local state */
+  const leaveSharedSession = () => {
+    setShareCode(null);
+    setSharedParticipants([]);
+    setIsSharedSession(false);
+    setSharedOwnerUserId(null);
+    setMessages([]);
+    setCurrentSessionId(null);
+    if (sharedPollRef.current) {
+      clearInterval(sharedPollRef.current);
+      sharedPollRef.current = null;
+    }
+    showToast('Du har lämnat den delade chatten');
   };
 
   // Request response in different language
@@ -3396,6 +3597,7 @@ function ChatPageContent() {
       : `Vänligen översätt följande svar till svenska. Behåll samma formatering och struktur:\n\n${lastAssistantMessage.content}`;
     
     setIsLoading(true);
+    setIsTranslating(true);
     
     const newAssistantMessageId = `assistant-${Date.now()}`;
     const newAssistantMessage: Message = {
@@ -3421,12 +3623,14 @@ function ChatPageContent() {
         }),
       });
       
-      if (!response.ok) throw new Error('Translation failed');
+      if (!response.ok) throw new Error(friendlyApiError(response.status, 'Kunde inte översätta.'));
 
       if (response.headers.get('content-type')?.includes('text/event-stream')) {
-        const { fullContent } = await streamAssistantResponse(response, ({ fullContent: content }) => {
+        const { fullContent, timedOut } = await streamAssistantResponse(response, ({ fullContent: content }) => {
           setMessages(prev => prev.map(m => m.id === newAssistantMessageId ? { ...m, content } : m));
         });
+        if (timedOut && fullContent) showToast('Svaret kan vara ofullständigt (timeout)');
+        if (timedOut && !fullContent) throw new Error('Stream timed out');
         if (fullContent) {
           const finalMessages = [...messages, { ...newAssistantMessage, content: fullContent }];
           setMessages(finalMessages);
@@ -3442,6 +3646,7 @@ function ChatPageContent() {
       showToast('Kunde inte översätta svaret. Försök igen.');
     } finally {
       setIsLoading(false);
+      setIsTranslating(false);
     }
   };
 
@@ -3480,7 +3685,7 @@ function ChatPageContent() {
     >
       {/* Toast notification */}
       {toastMessage && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-2 duration-300">
+        <div role="alert" aria-live="assertive" className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-2 duration-300">
           <div className={`px-4 py-2.5 rounded-xl shadow-lg border text-sm font-medium flex items-center gap-2 ${
             isDarkMode
               ? 'bg-gray-800 border-gray-700 text-gray-100'
@@ -3902,8 +4107,9 @@ function ChatPageContent() {
                             <button
                               key={c.username}
                               type="button"
+                              disabled={isSharing}
                               onClick={() => shareConversation({ name: c.name, email: c.email })}
-                              className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
+                              className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors disabled:opacity-50 ${
                                 isDarkMode
                                   ? 'text-gray-200 hover:bg-gray-700'
                                   : 'text-[#2d2a26] hover:bg-gray-50'
@@ -3930,15 +4136,16 @@ function ChatPageContent() {
                     <div className={`p-2 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
                       <button
                         type="button"
+                        disabled={isSharing}
                         onClick={() => shareConversation()}
-                        className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
+                        className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors disabled:opacity-50 ${
                           isDarkMode
                             ? 'text-gray-300 hover:bg-gray-700'
                             : 'text-gray-600 hover:bg-gray-50'
                         }`}
                       >
-                        <Link2 className="w-4 h-4" />
-                        Kopiera länk
+                        {isSharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
+                        {isSharing ? 'Delar...' : 'Kopiera länk'}
                       </button>
                     </div>
                   </div>
@@ -3950,7 +4157,8 @@ function ChatPageContent() {
             {messages.length > 0 && messages.some(m => m.role === 'assistant') && (
               <button
                 onClick={() => requestInLanguage('english')}
-                className={`p-2 rounded-lg transition-colors touch-manipulation ${
+                disabled={isTranslating}
+                className={`p-2 rounded-lg transition-colors touch-manipulation disabled:opacity-50 ${
                   isDarkMode
                     ? 'text-gray-400 hover:text-white hover:bg-gray-700'
                     : 'text-gray-500 hover:text-[#2d2a26] hover:bg-gray-100'
@@ -3958,7 +4166,7 @@ function ChatPageContent() {
                 title="Översätt till engelska"
                 aria-label="Översätt till engelska"
               >
-                <Globe className="w-4 h-4" />
+                {isTranslating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4" />}
               </button>
             )}
             
@@ -4030,7 +4238,7 @@ function ChatPageContent() {
               <Paperclip className="w-6 h-6 sm:w-8 sm:h-8 text-[#c0a280]" />
             </div>
             <p className="text-base sm:text-lg font-medium text-[#2d2a26]">Släpp filer här</p>
-            <p className="text-xs sm:text-sm text-gray-500 mt-1">PDF, Word, Excel, bilder</p>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">PDF, Word, Excel, bilder &middot; Max 10 MB</p>
           </div>
         </div>
       )}
@@ -4079,7 +4287,7 @@ function ChatPageContent() {
                   onClick={async () => {
                     if (shareCode) {
                       const url = `${window.location.origin}/chat?share=${shareCode}`;
-                      await navigator.clipboard.writeText(url);
+                      try { await navigator.clipboard.writeText(url); } catch { /* clipboard blocked */ }
                       showToast('Länk kopierad!');
                     }
                   }}
@@ -4094,16 +4302,16 @@ function ChatPageContent() {
                   Kopiera länk
                 </button>
                 <button
-                  onClick={stopSharing}
-                  className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                  onClick={sharedOwnerUserId ? leaveSharedSession : stopSharing}
+                  className={`px-2 py-1 rounded text-[11px] font-medium transition-colors ${
                     isDarkMode
                       ? 'hover:bg-red-900/30 text-red-400'
                       : 'hover:bg-red-50 text-red-500'
                   }`}
-                  title="Sluta dela konversationen"
-                  aria-label="Sluta dela"
+                  title={sharedOwnerUserId ? 'Lämna den delade chatten' : 'Sluta dela konversationen'}
+                  aria-label={sharedOwnerUserId ? 'Lämna chatt' : 'Sluta dela'}
                 >
-                  Sluta dela
+                  {sharedOwnerUserId ? 'Lämna' : 'Sluta dela'}
                 </button>
               </div>
             </div>
@@ -4407,8 +4615,22 @@ function ChatPageContent() {
                         ? 'text-white placeholder-gray-500'
                         : 'text-[#2d2a26] placeholder-gray-400'
                     }`}
+                    maxLength={INPUT_MAX_LENGTH}
                     style={{ minHeight: '48px', maxHeight: '120px' }}
                   />
+                  
+                  {/* Character counter - shows when >80% of limit */}
+                  {input.length > INPUT_MAX_LENGTH * 0.8 && (
+                    <span className={`absolute right-14 sm:right-16 bottom-1.5 text-[10px] tabular-nums ${
+                      input.length >= INPUT_MAX_LENGTH
+                        ? 'text-red-500 font-medium'
+                        : input.length > INPUT_MAX_LENGTH * 0.9
+                        ? 'text-amber-500'
+                        : isDarkMode ? 'text-gray-500' : 'text-gray-400'
+                    }`}>
+                      {input.length.toLocaleString()}/{(INPUT_MAX_LENGTH / 1000)}k
+                    </span>
+                  )}
                   
                   <button
                     onClick={() => fileInputRef.current?.click()}
@@ -4419,7 +4641,7 @@ function ChatPageContent() {
                         ? 'text-gray-400 hover:text-[#c0a280] hover:bg-gray-600'
                         : 'text-gray-400 hover:text-[#c0a280] hover:bg-gray-100'
                     }`}
-                    title="Bifoga fil"
+                    title="Bifoga fil (PDF, Word, Excel, bilder · Max 10 MB)"
                     aria-label="Bifoga fil"
                   >
                     {isProcessingFile ? (

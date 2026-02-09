@@ -263,10 +263,10 @@ export async function POST(request: NextRequest) {
       if (internalResults.length > 0) {
         internalKnowledgeContext = formatKnowledgeForContext(internalResults);
         internalKnowledgeSources = internalResults.map(item => ({
-          id: item.id,
+          id: item.knowledgeId,
           title: item.title,
           category: item.category,
-          sharedBy: item.sharedBy,
+          sharedBy: item.sharedByName || item.sharedByEmail || item.sharedByUserId,
           sharedAt: item.createdAt,
         }));
         console.log(`[AI Chat] Found ${internalResults.length} relevant internal knowledge items`);

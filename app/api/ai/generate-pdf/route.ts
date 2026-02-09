@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { checkRateLimit, getClientId } from '@/lib/security/rateLimiter';
 
 interface PDFRequest {
   title: string;
@@ -14,6 +15,15 @@ interface PDFRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    const clientId = await getClientId();
+    const rateLimitResult = await checkRateLimit(clientId, 'ai-generate');
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: 'Too Many Requests', message: 'Du har gjort för många förfrågningar. Vänta innan du försöker igen.', retryAfter: rateLimitResult.retryAfter },
+        { status: 429, headers: { 'Retry-After': String(rateLimitResult.retryAfter || 60) } }
+      );
+    }
+
     const body: PDFRequest = await request.json();
     const { title, content, subtitle, sections, footer } = body;
 
@@ -266,7 +276,7 @@ export async function POST(request: NextRequest) {
     const pdfBytes = await pdfDoc.save();
 
     // Return PDF as download
-    return new Response(pdfBytes, {
+    return new Response(Buffer.from(pdfBytes), {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${title.replace(/[^a-zA-Z0-9åäöÅÄÖ\s]/g, '_')}.pdf"`,
