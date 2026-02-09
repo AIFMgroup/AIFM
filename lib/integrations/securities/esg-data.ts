@@ -1,11 +1,48 @@
 /**
  * ESG Data Integration
- * Fetches ESG scores from Yahoo Finance and checks against exclusion criteria
+ * Fetches ESG scores from Yahoo Finance and checks against exclusion criteria.
+ * Enhanced with provider-agnostic data and configurable revenue thresholds.
  */
 
 import { getYahooFinanceClient } from './yahoo-finance-client';
+import type { ExclusionInvolvement, NormalizedESGData } from '../esg/types';
 
 const YAHOO_QUOTESUMMARY_URL = 'https://query1.finance.yahoo.com/v10/finance/quoteSummary';
+
+// ---------------------------------------------------------------------------
+// Configurable revenue thresholds (per exclusion category)
+// Used when provider supplies involvement percentages.
+// ---------------------------------------------------------------------------
+
+export interface RevenueThreshold {
+  /** Revenue % above which the security is excluded outright */
+  excludeAbovePercent: number;
+  /** Revenue % above which a warning is raised (but not excluded) */
+  warnAbovePercent: number;
+}
+
+/** Default revenue thresholds per category (industry best-practice defaults) */
+export const DEFAULT_REVENUE_THRESHOLDS: Record<string, RevenueThreshold> = {
+  weapons: { excludeAbovePercent: 0, warnAbovePercent: 0 },
+  tobacco: { excludeAbovePercent: 5, warnAbovePercent: 0 },
+  fossilFuels: { excludeAbovePercent: 5, warnAbovePercent: 1 },
+  gambling: { excludeAbovePercent: 5, warnAbovePercent: 1 },
+  adultContent: { excludeAbovePercent: 0, warnAbovePercent: 0 },
+  animalTesting: { excludeAbovePercent: 10, warnAbovePercent: 5 },
+  nuclear: { excludeAbovePercent: 10, warnAbovePercent: 5 },
+  gmo: { excludeAbovePercent: 10, warnAbovePercent: 5 },
+  alcohol: { excludeAbovePercent: 10, warnAbovePercent: 5 },
+};
+
+/** Fund-level exclusion policy (can be stored in DynamoDB per fund) */
+export interface FundExclusionPolicy {
+  fundId: string;
+  categories: string[];
+  /** Override default revenue thresholds per category */
+  revenueThresholds?: Record<string, RevenueThreshold>;
+  /** Maximum controversy level (0-5); higher => excluded */
+  maxControversyLevel?: number;
+};
 
 export interface ESGScores {
   success: boolean;
@@ -262,6 +299,107 @@ export function checkExclusions(
   return result;
 }
 
+// ---------------------------------------------------------------------------
+// Enhanced exclusion check: consumes provider-level involvement data
+// ---------------------------------------------------------------------------
+
+export interface EnhancedExclusionResult extends ExclusionCheckResult {
+  /** Provider-level involvement data that was evaluated */
+  evaluatedInvolvements?: ExclusionInvolvement[];
+  /** Which thresholds were applied */
+  appliedThresholds?: Record<string, RevenueThreshold>;
+}
+
+/**
+ * Enhanced exclusion check that merges keyword-based screening with
+ * provider-level involvement data and configurable revenue thresholds.
+ *
+ * @param params.sector          GICS sector
+ * @param params.industry        Industry name
+ * @param params.companyName     Company name (for keyword matching)
+ * @param params.controversyLevel 0-5 from provider
+ * @param params.providerFlags   ExclusionInvolvement[] from ESG provider (optional)
+ * @param params.policy          Fund-level exclusion policy (optional)
+ */
+export function checkExclusionsEnhanced(params: {
+  sector?: string;
+  industry?: string;
+  companyName?: string;
+  controversyLevel?: number;
+  providerFlags?: ExclusionInvolvement[];
+  policy?: FundExclusionPolicy;
+}): EnhancedExclusionResult {
+  const {
+    sector,
+    industry,
+    companyName,
+    controversyLevel,
+    providerFlags = [],
+    policy,
+  } = params;
+
+  const categories = policy?.categories ?? ['weapons', 'tobacco', 'fossilFuels'];
+  const thresholds: Record<string, RevenueThreshold> = {
+    ...DEFAULT_REVENUE_THRESHOLDS,
+    ...(policy?.revenueThresholds ?? {}),
+  };
+
+  // Start with the existing keyword-based check for backward compatibility
+  const base = checkExclusions(sector, industry, companyName, controversyLevel, categories);
+
+  const result: EnhancedExclusionResult = {
+    ...base,
+    evaluatedInvolvements: providerFlags,
+    appliedThresholds: thresholds,
+  };
+
+  // ---- Provider-level involvement data (revenue thresholds) ----
+  for (const flag of providerFlags) {
+    const cat = flag.category;
+    if (!categories.includes(cat)) continue;
+
+    const threshold = thresholds[cat];
+    if (!threshold) continue;
+
+    const revenue = flag.revenuePercent;
+    const level = flag.involvementLevel;
+
+    if (revenue !== undefined) {
+      // Revenue-based threshold
+      if (revenue > threshold.excludeAbovePercent) {
+        result.excluded = true;
+        const catDesc = ESG_EXCLUSION_LIST[cat as keyof typeof ESG_EXCLUSION_LIST]?.description ?? cat;
+        const msg = `${catDesc}: ${revenue.toFixed(1)}% av intäkterna (tröskel: >${threshold.excludeAbovePercent}%)`;
+        if (!result.reasons.includes(msg)) result.reasons.push(msg);
+      } else if (revenue > threshold.warnAbovePercent) {
+        const catDesc = ESG_EXCLUSION_LIST[cat as keyof typeof ESG_EXCLUSION_LIST]?.description ?? cat;
+        const msg = `${catDesc}: ${revenue.toFixed(1)}% av intäkterna (varningströskel: >${threshold.warnAbovePercent}%)`;
+        if (!result.warnings.includes(msg)) result.warnings.push(msg);
+      }
+    } else if (level === 'high') {
+      // No revenue data but provider flags high involvement
+      result.excluded = true;
+      const catDesc = ESG_EXCLUSION_LIST[cat as keyof typeof ESG_EXCLUSION_LIST]?.description ?? cat;
+      const msg = `${catDesc}: Hög involvering (leverantörsdata)`;
+      if (!result.reasons.includes(msg)) result.reasons.push(msg);
+    } else if (level === 'medium') {
+      const catDesc = ESG_EXCLUSION_LIST[cat as keyof typeof ESG_EXCLUSION_LIST]?.description ?? cat;
+      const msg = `${catDesc}: Medel involvering (leverantörsdata)`;
+      if (!result.warnings.includes(msg)) result.warnings.push(msg);
+    }
+  }
+
+  // ---- Fund-level max controversy ----
+  const maxControversy = policy?.maxControversyLevel ?? 4;
+  if (controversyLevel !== undefined && controversyLevel >= maxControversy) {
+    result.excluded = true;
+    const msg = `Kontroversialitetsnivå ${controversyLevel}/5 överstiger fondens gräns (${maxControversy})`;
+    if (!result.reasons.includes(msg)) result.reasons.push(msg);
+  }
+
+  return result;
+}
+
 /**
  * Get ESG recommendation text based on scores and exclusions
  */
@@ -363,7 +501,12 @@ export function getESGRecommendation(
 }
 
 /**
- * Complete ESG analysis combining Yahoo Finance data and exclusion checks
+ * Complete ESG analysis combining ESG service (or Yahoo Finance fallback)
+ * with exclusion checks and recommendation.
+ *
+ * When the ESG service is available (with any registered provider), it is used
+ * as the primary data source. Otherwise falls back to the legacy Yahoo Finance
+ * direct call.
  */
 export async function analyzeESG(
   symbol: string,
@@ -371,27 +514,77 @@ export async function analyzeESG(
   industry?: string,
   companyName?: string,
   fundArticle: '6' | '8' | '9' = '8',
-  fundExclusionCategories: string[] = ['weapons', 'tobacco', 'fossilFuels']
+  fundExclusionCategories: string[] = ['weapons', 'tobacco', 'fossilFuels'],
+  fundExclusionPolicy?: FundExclusionPolicy
 ): Promise<{
   esgScores: ESGScores;
-  exclusionCheck: ExclusionCheckResult;
+  exclusionCheck: EnhancedExclusionResult;
   recommendation: {
     recommendation: string;
     suitable: boolean;
     details: string[];
   };
+  /** Normalized provider data if ESG service was used */
+  normalizedData?: NormalizedESGData | null;
+  /** Which provider served the data */
+  dataSource?: string;
 }> {
-  // Fetch ESG scores
-  const esgScores = await getESGScores(symbol);
+  let normalizedData: NormalizedESGData | null = null;
+  let dataSource = 'yahoo_finance_legacy';
 
-  // Check exclusions
-  const exclusionCheck = checkExclusions(
+  // Try ESG service first (provider-agnostic path)
+  try {
+    const { getESGServiceClient } = await import('../esg/esg-service');
+    const client = getESGServiceClient();
+    const activeProvider = client.getActiveProviderName();
+
+    if (activeProvider) {
+      normalizedData = await client.getESGData(symbol);
+      if (normalizedData) {
+        dataSource = normalizedData.provider;
+      }
+    }
+  } catch {
+    // ESG service not available; fall through to legacy
+  }
+
+  // Build legacy ESGScores from normalizedData or fetch from Yahoo directly
+  let esgScores: ESGScores;
+
+  if (normalizedData) {
+    // Convert normalized back to legacy ESGScores format for backward compat
+    esgScores = {
+      success: true,
+      data: {
+        totalScore: normalizedData.totalScore,
+        environmentScore: normalizedData.environmentScore,
+        socialScore: normalizedData.socialScore,
+        governanceScore: normalizedData.governanceScore,
+        percentile: normalizedData.percentile,
+        peerGroup: normalizedData.peerGroup,
+        controversyLevel: normalizedData.controversyLevel,
+        relatedControversies: normalizedData.relatedControversies,
+      },
+      source: 'yahoo_finance', // type limitation; actual source in dataSource
+      sourceUrl: '',
+    };
+  } else {
+    esgScores = await getESGScores(symbol);
+    dataSource = 'yahoo_finance_legacy';
+  }
+
+  // Enhanced exclusion check (uses provider involvement data when available)
+  const exclusionCheck = checkExclusionsEnhanced({
     sector,
     industry,
     companyName,
-    esgScores.data?.controversyLevel ?? undefined,
-    fundExclusionCategories
-  );
+    controversyLevel: esgScores.data?.controversyLevel ?? undefined,
+    providerFlags: normalizedData?.exclusionFlags,
+    policy: fundExclusionPolicy ?? {
+      fundId: '',
+      categories: fundExclusionCategories,
+    },
+  });
 
   // Get recommendation
   const recommendation = getESGRecommendation(esgScores, exclusionCheck, fundArticle);
@@ -400,5 +593,7 @@ export async function analyzeESG(
     esgScores,
     exclusionCheck,
     recommendation,
+    normalizedData,
+    dataSource,
   };
 }

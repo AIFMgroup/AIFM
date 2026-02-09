@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
+import { getESGServiceClient } from '@/lib/integrations/esg/esg-service';
+import type { NormalizedESGData } from '@/lib/integrations/esg/types';
 
 // Initialize Bedrock client
 const bedrockClient = new BedrockRuntimeClient({
@@ -140,6 +142,42 @@ export async function POST(request: NextRequest) {
         error: 'Otillräcklig verifierad data för AI-analys (minst 3 datapunkter krävs)',
         suggestions: null,
       });
+    }
+
+    // ---- Fetch ESG data from service (provider-agnostic) ----
+    let esgProviderData: NormalizedESGData | null = null;
+    let esgDataSource = 'ai_analysis';
+
+    if (fund.article === '8' || fund.article === '9') {
+      try {
+        const esgClient = getESGServiceClient();
+        const identifier = security.isin || security.ticker;
+        if (identifier && esgClient.getActiveProviderName()) {
+          esgProviderData = await esgClient.getESGData(identifier);
+          if (esgProviderData) {
+            esgDataSource = esgProviderData.provider;
+            // Add ESG facts from provider to the verified data set
+            if (esgProviderData.totalScore !== null)
+              verifiedFacts.push(`ESG Total Score: ${esgProviderData.totalScore.toFixed(1)}/100 (källa: ${esgProviderData.provider})`);
+            if (esgProviderData.environmentScore !== null)
+              verifiedFacts.push(`ESG Miljö-score: ${esgProviderData.environmentScore.toFixed(1)}/100 (källa: ${esgProviderData.provider})`);
+            if (esgProviderData.socialScore !== null)
+              verifiedFacts.push(`ESG Social-score: ${esgProviderData.socialScore.toFixed(1)}/100 (källa: ${esgProviderData.provider})`);
+            if (esgProviderData.governanceScore !== null)
+              verifiedFacts.push(`ESG Styrnings-score: ${esgProviderData.governanceScore.toFixed(1)}/100 (källa: ${esgProviderData.provider})`);
+            if (esgProviderData.controversyLevel !== null)
+              verifiedFacts.push(`Kontroversialitetsnivå: ${esgProviderData.controversyLevel}/5 (källa: ${esgProviderData.provider})`);
+            if (esgProviderData.sfdrAlignment)
+              verifiedFacts.push(`SFDR-klassificering: ${esgProviderData.sfdrAlignment} (källa: ${esgProviderData.provider})`);
+            if (esgProviderData.exclusionFlags && esgProviderData.exclusionFlags.length > 0) {
+              verifiedFacts.push(`Exkluderingsflaggor: ${esgProviderData.exclusionFlags.map(f => f.categoryDescription).join(', ')} (källa: ${esgProviderData.provider})`);
+            }
+            console.log(`[Security Analyze] ESG data from ${esgProviderData.provider} for ${identifier}`);
+          }
+        }
+      } catch (esgErr) {
+        console.warn('[Security Analyze] ESG service fetch failed:', esgErr);
+      }
     }
 
     // Build system prompt with strict instructions
@@ -288,11 +326,62 @@ Svara ENDAST i JSON-format. Om du inte kan ge ett svar baserat på verifierad da
         }
       }
 
+      // Auto-populate ESG fields from provider data (higher confidence than AI)
+      if (esgProviderData && (fund.article === '8' || fund.article === '9')) {
+        const providerTimestamp = new Date().toISOString();
+        const providerSource = {
+          type: 'esg_provider' as const,
+          basedOn: [`ESG-data från ${esgProviderData.provider}`],
+          reasoning: `Automatiskt ifyllt baserat på ESG-data från ${esgProviderData.provider}`,
+          generatedAt: providerTimestamp,
+        };
+
+        // meetsExclusionCriteria
+        if (esgProviderData.meetsExclusionCriteria !== undefined) {
+          suggestions.meetsExclusionCriteria = esgProviderData.meetsExclusionCriteria;
+          suggestions.meetsExclusionCriteriaSource = providerSource;
+          suggestions.meetsExclusionCriteriaConfidence = 'high';
+        }
+
+        // Scores for ESGInfo auto-fill
+        if (esgProviderData.totalScore !== null) {
+          suggestions.esgTotalScore = esgProviderData.totalScore;
+          suggestions.esgTotalScoreSource = providerSource;
+        }
+        if (esgProviderData.environmentScore !== null) {
+          suggestions.esgEnvironmentScore = esgProviderData.environmentScore;
+          suggestions.esgEnvironmentScoreSource = providerSource;
+        }
+        if (esgProviderData.socialScore !== null) {
+          suggestions.esgSocialScore = esgProviderData.socialScore;
+          suggestions.esgSocialScoreSource = providerSource;
+        }
+        if (esgProviderData.governanceScore !== null) {
+          suggestions.esgGovernanceScore = esgProviderData.governanceScore;
+          suggestions.esgGovernanceScoreSource = providerSource;
+        }
+        if (esgProviderData.controversyLevel !== null) {
+          suggestions.controversyLevel = esgProviderData.controversyLevel;
+          suggestions.controversyLevelSource = providerSource;
+        }
+      }
+
       return NextResponse.json({
         success: true,
         suggestions,
         aiFields: result,
         verifiedDataUsed: verifiedFacts,
+        esgDataSource,
+        esgProviderData: esgProviderData ? {
+          provider: esgProviderData.provider,
+          totalScore: esgProviderData.totalScore,
+          environmentScore: esgProviderData.environmentScore,
+          socialScore: esgProviderData.socialScore,
+          governanceScore: esgProviderData.governanceScore,
+          controversyLevel: esgProviderData.controversyLevel,
+          sfdrAlignment: esgProviderData.sfdrAlignment,
+          exclusionFlags: esgProviderData.exclusionFlags,
+        } : null,
       });
 
     } catch (aiError) {

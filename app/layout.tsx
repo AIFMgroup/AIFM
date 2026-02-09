@@ -32,6 +32,7 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
+      { url: "/favicon.ico" },
       { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
       { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
     ],
@@ -39,10 +40,6 @@ export const metadata: Metadata = {
       { url: "/icons/icon-152x152.png", sizes: "152x152", type: "image/png" },
       { url: "/icons/icon-180x180.png", sizes: "180x180", type: "image/png" },
     ],
-  },
-  other: {
-    "mobile-web-app-capable": "yes",
-    "apple-touch-fullscreen": "yes",
   },
 };
 
@@ -66,17 +63,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="sv" className="h-full">
-      <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="apple-touch-icon" href="/icons/icon-152x152.png" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180x180.png" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="theme-color" content="#2d2a26" />
-        {/* Prevent iOS from auto-detecting phone numbers */}
-        <meta name="format-detection" content="telephone=no" />
-      </head>
       <body className="h-full overscroll-none">
         <Providers>
           {children}

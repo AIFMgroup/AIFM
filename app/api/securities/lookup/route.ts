@@ -5,6 +5,7 @@ import {
   MIC_CODES,
   COUNTRY_NAMES,
 } from '@/lib/integrations/securities';
+import { getESGServiceClient } from '@/lib/integrations/esg/esg-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -176,6 +177,31 @@ export async function POST(request: NextRequest) {
       securityUrlSource: enrichedData.valuationDefaults?.priceSourceUrl?.source || null,
     };
 
+    // ---- ESG data enrichment ----
+    let esgSummary: Record<string, unknown> | null = null;
+    try {
+      const esgClient = getESGServiceClient();
+      const esgId = responseData.isin || responseData.ticker;
+      if (esgId && esgClient.getActiveProviderName()) {
+        const esgData = await esgClient.getESGData(esgId);
+        if (esgData) {
+          esgSummary = {
+            provider: esgData.provider,
+            totalScore: esgData.totalScore,
+            environmentScore: esgData.environmentScore,
+            socialScore: esgData.socialScore,
+            governanceScore: esgData.governanceScore,
+            controversyLevel: esgData.controversyLevel,
+            sfdrAlignment: esgData.sfdrAlignment,
+            exclusionFlags: esgData.exclusionFlags,
+            fetchedAt: esgData.fetchedAt,
+          };
+        }
+      }
+    } catch {
+      // ESG enrichment is optional; don't fail the lookup
+    }
+
     // List of auto-filled fields for UI feedback
     const autoFilledFields: string[] = [];
     
@@ -209,6 +235,7 @@ export async function POST(request: NextRequest) {
         name: formatSourceName(s as any),
       })),
       warnings: result.warnings,
+      esgSummary,
     });
 
   } catch (error) {

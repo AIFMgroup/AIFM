@@ -11,6 +11,10 @@ RUN npm install
 # Copy source
 COPY . .
 
+# Inject cache version into service worker for cache busting on deploy
+ARG CACHE_VERSION=dev
+RUN sed -i "s/__CACHE_VERSION__/${CACHE_VERSION}/g" public/sw.js
+
 # Build the root Next.js app (the new design)
 RUN npx next build
 

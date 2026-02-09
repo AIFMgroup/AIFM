@@ -8,6 +8,19 @@ interface MermaidDiagramProps {
   className?: string;
 }
 
+/** Quick heuristic: does this look like valid mermaid syntax? */
+function looksLikeMermaid(code: string): boolean {
+  const trimmed = code.trim().split('\n')[0].trim().toLowerCase();
+  const validStarts = [
+    'graph ', 'graph\n', 'flowchart ', 'flowchart\n',
+    'sequencediagram', 'sequence', 'classdiagram', 'class ',
+    'statediagram', 'erdiagram', 'gantt', 'pie', 'gitgraph',
+    'journey', 'mindmap', 'timeline', 'quadrantchart',
+    'sankey', 'xychart', 'block-beta',
+  ];
+  return validStarts.some(s => trimmed.startsWith(s));
+}
+
 export function MermaidDiagram({ code, id, className = '' }: MermaidDiagramProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -15,6 +28,13 @@ export function MermaidDiagram({ code, id, className = '' }: MermaidDiagramProps
 
   useEffect(() => {
     if (!code.trim() || !containerRef.current) return;
+
+    // Skip rendering if the content doesn't look like valid mermaid syntax
+    if (!looksLikeMermaid(code)) {
+      setError('not-mermaid');
+      return;
+    }
+
     const diagramId = id || `mermaid-${Math.random().toString(36).slice(2, 9)}`;
     setError(null);
     setSvg(null);
@@ -26,26 +46,27 @@ export function MermaidDiagram({ code, id, className = '' }: MermaidDiagramProps
           startOnLoad: false,
           theme: 'neutral',
           securityLevel: 'loose',
+          suppressErrorRendering: true,
+          logLevel: 5, // fatal only – suppress console noise
         });
         const { svg: out } = await mermaid.render(diagramId, code.trim());
         setSvg(out);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Kunde inte rendera diagram');
+      } catch {
+        // Silently fall back to showing raw code – no console spam
+        setError('render-failed');
       }
     };
 
     render();
   }, [code, id]);
 
+  // On error, fall back to a plain code block instead of showing the mermaid error
   if (error) {
     return (
-      <div className={`my-3 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm ${className}`}>
-        <p className="font-medium">Diagram kunde inte visas</p>
-        <pre className="mt-1 text-xs overflow-x-auto whitespace-pre-wrap">{error}</pre>
-        <details className="mt-2">
-          <summary className="cursor-pointer text-xs">Visa Mermaid-kod</summary>
-          <pre className="mt-1 text-xs overflow-x-auto whitespace-pre-wrap border-t border-amber-200 pt-2 mt-2">{code}</pre>
-        </details>
+      <div className={`my-3 ${className}`}>
+        <pre className="p-3 rounded-lg bg-gray-50 border border-gray-200 text-xs overflow-x-auto whitespace-pre-wrap font-mono text-gray-700">
+          {code}
+        </pre>
       </div>
     );
   }

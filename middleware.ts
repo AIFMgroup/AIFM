@@ -9,6 +9,9 @@ const PUBLIC_PATHS = [
   "/auth/callback",
   "/fortnox/callback", // OAuth callback must be public (no session during redirect)
   "/favicon.ico",
+  "/manifest.json",
+  "/sw.js",
+  "/offline",
 ];
 
 // Endpoints that are allowed to be triggered without a user session (via cron secret)
@@ -43,6 +46,9 @@ const addSecurityHeaders = (response: NextResponse) => {
     "frame-ancestors 'none'",
     "form-action 'self' https://eu-north-12xz9dqe00.auth.eu-north-1.amazoncognito.com",
     "base-uri 'self'",
+    "object-src 'none'",
+    "worker-src 'self' blob:",
+    "manifest-src 'self'",
   ].join("; ");
 
   response.headers.set("Content-Security-Policy", csp);

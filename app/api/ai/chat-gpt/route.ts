@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { BedrockRuntimeClient, InvokeModelWithResponseStreamCommand } from '@aws-sdk/client-bedrock-runtime';
+import { checkRateLimit, getClientId } from '@/lib/security/rateLimiter';
 
 // Initialize Bedrock client
 const bedrockClient = new BedrockRuntimeClient({
@@ -47,6 +48,19 @@ interface ChatRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    const clientId = await getClientId();
+    const rateLimitResult = await checkRateLimit(clientId, 'ai-chat-gpt');
+    if (!rateLimitResult.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: 'Too Many Requests',
+          message: 'Du har gjort för många förfrågningar. Vänta innan du försöker igen.',
+          retryAfter: rateLimitResult.retryAfter,
+        }),
+        { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': String(rateLimitResult.retryAfter || 60) } }
+      );
+    }
+
     const body: ChatRequest = await request.json();
     const userMessage = body.message || body.question;
     

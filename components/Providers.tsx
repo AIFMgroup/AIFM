@@ -7,6 +7,7 @@ import { ToastProvider } from './Toast';
 import { SidebarProvider } from './SidebarContext';
 import { WebSocketProvider } from '@/lib/websocket';
 import { InstallBanner } from './InstallBanner';
+import { UpdateBanner } from './UpdateBanner';
 import { KeyboardShortcutsProvider } from './KeyboardShortcuts';
 import { ErrorBoundary } from './ErrorBoundary';
 
@@ -20,6 +21,7 @@ export function Providers({ children }: { children: ReactNode }) {
               <ToastProvider>
                 <KeyboardShortcutsProvider>
                   {children}
+                  <UpdateBanner />
                   <InstallBanner />
                 </KeyboardShortcutsProvider>
               </ToastProvider>

@@ -11,6 +11,7 @@ import {
 import { cookies } from 'next/headers';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
+import { checkRateLimit, getClientId } from '@/lib/security/rateLimiter';
 
 // ---------------------------------------------------------------------------
 // Request body schemas
@@ -215,6 +216,15 @@ export async function POST(request: NextRequest) {
     
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const clientId = `user:${userId}`;
+    const rateLimitResult = await checkRateLimit(clientId, 'chat-sessions');
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: 'Too Many Requests', message: 'Du har gjort för många förfrågningar. Vänta innan du försöker igen.', retryAfter: rateLimitResult.retryAfter },
+        { status: 429, headers: { 'Retry-After': String(rateLimitResult.retryAfter || 60) } }
+      );
     }
     
     const rawBody = await safeParseJson(request);

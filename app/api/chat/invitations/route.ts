@@ -136,6 +136,10 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    if (!user.email) {
+      return NextResponse.json({ invitations: [], count: 0 });
+    }
+
     // Query by recipientEmail (GSI: recipientEmail-index)
     const result = await docClient.send(new QueryCommand({
       TableName: TABLE,

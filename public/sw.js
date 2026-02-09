@@ -1,5 +1,5 @@
 // AIFM Service Worker - Offline Support & Caching
-const CACHE_NAME = 'aifm-cache-v2';
+const CACHE_NAME = 'aifm-cache-__CACHE_VERSION__';
 const OFFLINE_URL = '/offline';
 
 // Assets to cache immediately on install

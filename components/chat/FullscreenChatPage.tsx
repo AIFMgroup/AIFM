@@ -3826,7 +3826,7 @@ function ChatPageContent() {
       }`}>
         <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3">
           {/* Left: Menu + Logo */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <button
               onClick={() => setIsHistoryOpen(true)}
               className={`lg:hidden p-2 -ml-2 rounded-lg touch-manipulation transition-colors ${
@@ -3848,7 +3848,7 @@ function ChatPageContent() {
           </div>
           
           {/* Right: New Chat + Dashboard */}
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto flex-shrink min-w-0 scrollbar-hide [&>*]:flex-shrink-0 [&>button]:flex-shrink-0">
             <button
               onClick={(e) => {
                 e.preventDefault();
@@ -3856,7 +3856,7 @@ function ChatPageContent() {
                 startNewChat();
               }}
               className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium 
-                         border rounded-lg transition-all touch-manipulation active:scale-95 ${
+                         border rounded-lg transition-all touch-manipulation active:scale-95 flex-shrink-0 ${
                 isDarkMode
                   ? 'text-[#d4b896] hover:text-[#e8d4bc] hover:bg-[#c0a280]/20 border-[#c0a280]/40'
                   : 'text-[#c0a280] hover:text-[#8a7355] hover:bg-[#c0a280]/10 border-[#c0a280]/30'
@@ -4187,11 +4187,13 @@ function ChatPageContent() {
             <button
               onClick={() => router.push('/overview')}
               className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium 
-                         rounded-lg transition-colors touch-manipulation ${
+                         rounded-lg transition-colors touch-manipulation flex-shrink-0 ${
                 isDarkMode
                   ? 'text-gray-300 hover:text-white hover:bg-gray-700'
                   : 'text-gray-600 hover:text-[#2d2a26] hover:bg-gray-100'
               }`}
+              title="Dashboard"
+              aria-label="Dashboard"
             >
               <LayoutDashboard className="w-4 h-4" />
               <span className="hidden xs:inline">Dashboard</span>
