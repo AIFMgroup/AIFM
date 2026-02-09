@@ -3825,7 +3825,7 @@ function ChatPageContent() {
       <header className={`flex-shrink-0 border-b transition-colors duration-200 ${
         isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
       }`}>
-        <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3">
+        <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 flex-wrap gap-y-1">
           {/* Left: Menu + Logo */}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <button
@@ -3849,7 +3849,7 @@ function ChatPageContent() {
           </div>
           
           {/* Right: New Chat + Dashboard */}
-          <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto flex-shrink min-w-0 scrollbar-hide [&>*]:flex-shrink-0 [&>button]:flex-shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
             <button
               onClick={(e) => {
                 e.preventDefault();
@@ -4171,10 +4171,10 @@ function ChatPageContent() {
               </button>
             )}
             
-            <Link
+            <a
               href="/knowledge"
               className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium 
-                         rounded-lg transition-colors touch-manipulation ${
+                         rounded-lg transition-colors touch-manipulation no-underline ${
                 isDarkMode
                   ? 'text-gray-300 hover:text-white hover:bg-gray-700'
                   : 'text-gray-600 hover:text-[#2d2a26] hover:bg-gray-100'
@@ -4184,11 +4184,11 @@ function ChatPageContent() {
             >
               <BookOpen className="w-4 h-4" />
               <span className="hidden xs:inline">Kunskap</span>
-            </Link>
-            <Link
+            </a>
+            <a
               href="/overview"
               className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium 
-                         rounded-lg transition-colors touch-manipulation ${
+                         rounded-lg transition-colors touch-manipulation no-underline ${
                 isDarkMode
                   ? 'text-gray-300 hover:text-white hover:bg-gray-700'
                   : 'text-gray-600 hover:text-[#2d2a26] hover:bg-gray-100'
@@ -4198,11 +4198,11 @@ function ChatPageContent() {
             >
               <LayoutDashboard className="w-4 h-4" />
               <span className="hidden xs:inline">Dashboard</span>
-            </Link>
-            <Link
+            </a>
+            <a
               href="/admin/stats"
               className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium 
-                         rounded-lg transition-colors touch-manipulation ${
+                         rounded-lg transition-colors touch-manipulation no-underline ${
                 isDarkMode
                   ? 'text-gray-300 hover:text-white hover:bg-gray-700'
                   : 'text-gray-600 hover:text-[#2d2a26] hover:bg-gray-100'
@@ -4212,7 +4212,7 @@ function ChatPageContent() {
             >
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Stats</span>
-            </Link>
+            </a>
             <button
               onClick={toggleDarkMode}
               className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium 
