@@ -131,7 +131,7 @@ function ContactsContent() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl font-semibold text-[#2d2a26] tracking-tight">Kontakter</h1>
-            <p className="text-gray-500 mt-1">
+            <p className="text-sm text-aifm-charcoal/40 mt-1">
               {loading ? '...' : `${contacts.length} kontakter totalt`}
             </p>
           </div>
@@ -203,19 +203,19 @@ function ContactsContent() {
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-0.5">
-                          <h3 className="font-medium text-gray-900 truncate">
+                          <h3 className="font-medium text-aifm-charcoal truncate">
                             {contact.firstName} {contact.lastName}
                           </h3>
                           <StatusPill status={contact.status} size="sm" />
                         </div>
                         
                         {contact.title && (
-                          <p className="text-sm text-gray-500 truncate">{contact.title}</p>
+                          <p className="text-sm text-aifm-charcoal/40 truncate">{contact.title}</p>
                         )}
                         
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
                           {getCompanyName(contact.crmCompanyId) && (
-                            <span className="inline-flex items-center gap-1.5 text-sm text-gray-500">
+                            <span className="inline-flex items-center gap-1.5 text-sm text-aifm-charcoal/40">
                               <Building2 className="w-3.5 h-3.5" />
                               <span className="truncate">{getCompanyName(contact.crmCompanyId)}</span>
                             </span>
@@ -224,7 +224,7 @@ function ContactsContent() {
                             <a 
                               href={`mailto:${contact.email}`}
                               onClick={(e) => e.stopPropagation()}
-                              className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#c0a280] transition-colors"
+                              className="inline-flex items-center gap-1.5 text-sm text-aifm-charcoal/40 hover:text-aifm-gold transition-colors"
                             >
                               <Mail className="w-3.5 h-3.5" />
                               <span className="truncate max-w-[180px]">{contact.email}</span>
@@ -234,7 +234,7 @@ function ContactsContent() {
                             <a 
                               href={`tel:${contact.phone}`}
                               onClick={(e) => e.stopPropagation()}
-                              className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#c0a280] transition-colors"
+                              className="inline-flex items-center gap-1.5 text-sm text-aifm-charcoal/40 hover:text-aifm-gold transition-colors"
                             >
                               <Phone className="w-3.5 h-3.5" />
                               {contact.phone}
@@ -248,7 +248,7 @@ function ContactsContent() {
                             {contact.linkedManagedCompanyNames.map((name, i) => (
                               <span 
                                 key={i}
-                                className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-[#c0a280]/10 text-[#c0a280]"
+                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-aifm-gold/15 text-aifm-charcoal"
                               >
                                 {name}
                               </span>

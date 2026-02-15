@@ -30,7 +30,7 @@ interface DocumentsResponse {
  * GET /api/bank/documents
  * 
  * Query params:
- * - category: swedbank | seb | reconciliation | secura (optional)
+ * - category: swedbank | seb | reconciliation (optional)
  * - subCategory: positions | balances | pdfs | processed | reports etc. (optional)
  * - fundId: Filter by fund (optional)
  * - accountId: Filter by account (optional)
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<DocumentsR
       });
     } else {
       // List all categories
-      const categories: DataCategory[] = ['swedbank', 'seb', 'reconciliation', 'secura'];
+      const categories: DataCategory[] = ['swedbank', 'seb', 'reconciliation'];
       
       for (const cat of categories) {
         const catDocs = await storage.list({

@@ -59,7 +59,7 @@ const mockRecipients: Recipient[] = [
 
 function StatusBadge({ status }: { status: Report['status'] }) {
   const config = {
-    ready: { label: 'Redo att skicka', color: 'bg-blue-50 text-blue-600', icon: FileText },
+    ready: { label: 'Redo att skicka', color: 'bg-aifm-gold/15 text-aifm-charcoal', icon: FileText },
     sent: { label: 'Skickad', color: 'bg-emerald-50 text-emerald-600', icon: CheckCircle2 },
     pending: { label: 'Genereras', color: 'bg-amber-50 text-amber-600', icon: Clock },
     error: { label: 'Fel', color: 'bg-red-50 text-red-600', icon: AlertCircle },
@@ -77,14 +77,14 @@ function StatusBadge({ status }: { status: Report['status'] }) {
 
 function ReportTypeBadge({ type }: { type: Report['reportType'] }) {
   const colors = {
-    NAV: 'bg-purple-50 text-purple-600',
-    Nota: 'bg-blue-50 text-blue-600',
+    NAV: 'bg-aifm-gold/15 text-aifm-charcoal',
+    Nota: 'bg-aifm-charcoal/[0.06] text-aifm-charcoal',
     SubRed: 'bg-emerald-50 text-emerald-600',
     Kontoutdrag: 'bg-amber-50 text-amber-600',
   };
 
   return (
-    <span className={`px-2 py-0.5 rounded text-xs font-medium ${colors[type]}`}>
+    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${colors[type]}`}>
       {type}
     </span>
   );
@@ -121,58 +121,60 @@ export default function NAVReportsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/nav-admin"
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 text-aifm-charcoal/60" />
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-aifm-charcoal">NAV-rapporter</h1>
-          <p className="text-aifm-charcoal/60 mt-1">
-            Hantera och skicka ut NAV-rapporter, Notor och SubReds till förvaltare
-          </p>
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-10 -mx-6 -mt-6 px-6 py-4 mb-2">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/nav-admin"
+            className="p-2 hover:bg-aifm-charcoal/[0.04] rounded-xl transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-aifm-charcoal/60" />
+          </Link>
+          <div className="flex-1">
+            <h1 className="text-lg font-semibold text-aifm-charcoal tracking-tight">NAV-rapporter</h1>
+            <p className="text-sm text-aifm-charcoal/40">
+              Hantera och skicka ut NAV-rapporter, Notor och SubReds till förvaltare
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
-          <p className="text-2xl font-bold text-aifm-charcoal">{readyReports.length}</p>
-          <p className="text-sm text-aifm-charcoal/60">Redo att skicka</p>
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+          <p className="text-2xl font-semibold tracking-tight text-aifm-charcoal">{readyReports.length}</p>
+          <p className="text-sm text-aifm-charcoal/40">Redo att skicka</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
-          <p className="text-2xl font-bold text-emerald-600">{sentReports.length}</p>
-          <p className="text-sm text-aifm-charcoal/60">Skickade idag</p>
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+          <p className="text-2xl font-semibold tracking-tight text-emerald-600">{sentReports.length}</p>
+          <p className="text-sm text-aifm-charcoal/40">Skickade idag</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
-          <p className="text-2xl font-bold text-aifm-charcoal">{mockRecipients.length}</p>
-          <p className="text-sm text-aifm-charcoal/60">Mottagare</p>
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+          <p className="text-2xl font-semibold tracking-tight text-aifm-charcoal">{mockRecipients.length}</p>
+          <p className="text-sm text-aifm-charcoal/40">Mottagare</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
-          <p className="text-2xl font-bold text-aifm-gold">~45 min</p>
-          <p className="text-sm text-aifm-charcoal/60">Tid sparad/dag</p>
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+          <p className="text-2xl font-semibold tracking-tight text-aifm-gold">~45 min</p>
+          <p className="text-sm text-aifm-charcoal/40">Tid sparad/dag</p>
         </div>
       </div>
 
       {/* Automation Banner */}
-      <div className="bg-gradient-to-r from-emerald-50 to-emerald-100/50 rounded-2xl p-5 border border-emerald-200/50">
+      <div className="bg-aifm-charcoal/[0.03] rounded-2xl p-5 border border-gray-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-emerald-500 rounded-xl">
-              <Zap className="w-6 h-6 text-white" />
+            <div className="p-3 bg-aifm-charcoal rounded-xl">
+              <Zap className="w-6 h-6 text-aifm-gold" />
             </div>
             <div>
-              <h3 className="font-semibold text-emerald-900">Automatisk utskick aktiverat</h3>
-              <p className="text-sm text-emerald-700">
+              <h3 className="font-semibold text-aifm-charcoal tracking-tight">Automatisk utskick aktiverat</h3>
+              <p className="text-sm text-aifm-charcoal/40">
                 NAV-rapporter skickas automatiskt kl 08:30 varje bankdag till konfigurerade mottagare
               </p>
             </div>
           </div>
           <Link
             href="/nav-admin/settings"
-            className="flex items-center gap-2 px-4 py-2 bg-white text-emerald-700 rounded-lg hover:bg-emerald-50 transition-colors text-sm font-medium"
+            className="flex items-center gap-2 px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm transition-all"
           >
             <Settings className="w-4 h-4" />
             Konfigurera
@@ -189,14 +191,14 @@ export default function NAVReportsPage() {
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold/50"
+              className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
             />
           </div>
           
           <select
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
-            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold/50"
+            className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
           >
             <option value="all">Alla typer</option>
             <option value="NAV">NAV-rapporter</option>
@@ -205,7 +207,7 @@ export default function NAVReportsPage() {
             <option value="Kontoutdrag">Kontoutdrag</option>
           </select>
 
-          <button className="flex items-center gap-2 px-3 py-2 text-sm text-aifm-charcoal/70 hover:text-aifm-charcoal border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm transition-all">
             <RefreshCw className="w-4 h-4" />
             Uppdatera
           </button>
@@ -219,14 +221,14 @@ export default function NAVReportsPage() {
           )}
           <button
             onClick={selectAllReady}
-            className="px-3 py-2 text-sm text-aifm-charcoal/70 hover:text-aifm-charcoal border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
+            className="px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm transition-all"
           >
             Välj alla redo
           </button>
           <button
             onClick={() => setShowSendModal(true)}
             disabled={selectedReports.length === 0}
-            className="flex items-center gap-2 px-4 py-2 bg-aifm-gold text-white rounded-lg hover:bg-aifm-gold/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Send className="w-4 h-4" />
             Skicka valda ({selectedReports.length})
@@ -239,7 +241,7 @@ export default function NAVReportsPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-gray-50/50 border-b border-gray-100">
+              <tr className="bg-aifm-charcoal/[0.03] border-b border-gray-100">
                 <th className="px-4 py-3 w-10">
                   <input
                     type="checkbox"
@@ -248,17 +250,17 @@ export default function NAVReportsPage() {
                     className="w-4 h-4 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold/20"
                   />
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">Fond</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">Typ</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">Datum</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">Storlek</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">Åtgärder</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Fond</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Typ</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Datum</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Storlek</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Åtgärder</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredReports.map((report) => (
-                <tr key={report.id} className="hover:bg-gray-50/50 transition-colors">
+                <tr key={report.id} className="hover:bg-aifm-charcoal/[0.02] transition-colors">
                   <td className="px-4 py-3">
                     <input
                       type="checkbox"
@@ -314,7 +316,7 @@ export default function NAVReportsPage() {
       {/* Recipients Overview */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-aifm-charcoal">Konfigurerade mottagare</h2>
+          <h2 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Konfigurerade mottagare</h2>
           <button className="text-sm text-aifm-gold hover:underline flex items-center gap-1">
             <Users className="w-4 h-4" />
             Hantera mottagare
@@ -323,7 +325,7 @@ export default function NAVReportsPage() {
         
         <div className="grid md:grid-cols-3 gap-4">
           {mockRecipients.map((recipient) => (
-            <div key={recipient.id} className="p-4 bg-gray-50 rounded-xl">
+            <div key={recipient.id} className="p-4 bg-aifm-charcoal/[0.02] rounded-xl">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 bg-aifm-gold/20 rounded-full flex items-center justify-center">
                   <span className="text-sm font-semibold text-aifm-gold">
@@ -365,7 +367,7 @@ export default function NAVReportsPage() {
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
             <div className="p-6 border-b border-gray-100">
-              <h3 className="text-lg font-semibold text-aifm-charcoal">Skicka rapporter</h3>
+              <h3 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Skicka rapporter</h3>
               <p className="text-sm text-aifm-charcoal/60 mt-1">
                 {selectedReports.length} rapporter kommer att skickas till konfigurerade mottagare
               </p>
@@ -376,7 +378,7 @@ export default function NAVReportsPage() {
                   const report = mockReports.find(r => r.id === id);
                   if (!report) return null;
                   return (
-                    <div key={id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={id} className="flex items-center justify-between p-3 bg-aifm-charcoal/[0.02] rounded-xl">
                       <div className="flex items-center gap-2">
                         <Paperclip className="w-4 h-4 text-aifm-charcoal/40" />
                         <span className="text-sm text-aifm-charcoal">{report.fundName}</span>
@@ -390,7 +392,7 @@ export default function NAVReportsPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowSendModal(false)}
-                  className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-aifm-charcoal/70 hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2.5 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm font-medium transition-all"
                 >
                   Avbryt
                 </button>
@@ -400,7 +402,7 @@ export default function NAVReportsPage() {
                     setShowSendModal(false);
                     setSelectedReports([]);
                   }}
-                  className="flex-1 px-4 py-2.5 bg-aifm-gold text-white rounded-xl text-sm font-medium hover:bg-aifm-gold/90 transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm flex items-center justify-center gap-2"
                 >
                   <Mail className="w-4 h-4" />
                   Skicka nu

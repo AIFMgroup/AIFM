@@ -4,15 +4,15 @@ This module provides integration with SEB and Swedbank for automated NAV reconci
 
 ## Overview
 
-The bank integration system compares NAV data from Secura (fund registry) against custody data from SEB and Swedbank to identify discrepancies.
+The bank integration system compares NAV data from the internal Fund Registry against custody data from SEB and Swedbank to identify discrepancies.
 
 ```
-Secura NAV Data  <-->  Bank Custody Data  =  Reconciliation Report
-       ↓                     ↓
-   - Holdings           - Positions
-   - Cash Balance       - Cash Balance
-   - NAV Value          - Market Value
-   - Total AUM          - Total Value
+Fund Registry Data  <-->  Bank Custody Data  =  Reconciliation Report
+       ↓                         ↓
+   - Holdings               - Positions
+   - Cash Balance           - Cash Balance
+   - NAV Value              - Market Value
+   - Total AUM              - Total Value
 ```
 
 ## Architecture
@@ -74,10 +74,6 @@ aifm-bank-data-{env}-{account-id}/
 │   └── exports/          # Excel exports
 │       └── 2026/01/26/
 │           └── {fund-id}-{timestamp}.xlsx
-└── secura/
-    └── nav/              # NAV data snapshots
-        └── 2026/01/26/
-            └── {fund-id}-nav.json
 ```
 
 ### Storage Lifecycle
@@ -141,14 +137,20 @@ EMAIL_BUCKET=aifm-emails-accountid                # Legacy bucket (optional)
 SNS_TOPIC_ARN=arn:aws:sns:eu-north-1:accountid:aifm-bank-email-notifications
 ```
 
-### Secura Integration
+### LSEG / Refinitiv Integration
 
 ```bash
-# Secura API
-SECURA_HOST=194.62.154.68
-SECURA_API_PORT=20023
-SECURA_USERNAME=RESTAPI_AIFM
-SECURA_PASSWORD=your-password
+# LSEG API (OAuth2 client credentials)
+LSEG_API_KEY=your-api-key
+LSEG_API_SECRET=your-api-secret
+LSEG_API_URL=https://api.refinitiv.com   # Production
+```
+
+### Fund Registry
+
+```bash
+# DynamoDB table for persistent fund data
+FUND_REGISTRY_TABLE=aifm-fund-registry
 ```
 
 ## SEB Developer Portal Setup
@@ -221,7 +223,7 @@ In production, these mappings should be stored in DynamoDB or a configuration se
 
 ```
 1. Fetch positions from SEB API
-2. Fetch NAV data from Secura
+2. Fetch NAV data from Fund Registry
 3. Compare holdings, cash, NAV
 4. Generate reconciliation report
 5. Flag discrepancies
@@ -233,7 +235,7 @@ In production, these mappings should be stored in DynamoDB or a configuration se
 1. Receive PDF (email or upload)
 2. Extract text with AWS Textract
 3. Structure data with Claude AI
-4. Compare with Secura NAV
+4. Compare with Fund Registry
 5. Generate reconciliation report
 ```
 
@@ -328,7 +330,7 @@ interface ReconciliationResult {
 ### Document Browser
 
 The document browser displays all stored bank documents with:
-- Category filtering (SEB, Swedbank, Reconciliation, Secura)
+- Category filtering (SEB, Swedbank, Reconciliation)
 - Date range filtering
 - Search by filename
 - Direct download links

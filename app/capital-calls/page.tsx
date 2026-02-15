@@ -6,11 +6,9 @@ import {
   Send, Download, Wallet, FileText, Bell, X,
   AlertCircle, Users, TrendingUp, BarChart3
 } from 'lucide-react';
-import {
-  getFundByCompanyId, getCapitalCallsByCompanyId, getCommitmentsByFund,
-  formatCurrency, formatDate, formatPercentage, CapitalCall
-} from '@/lib/fundData';
-
+import { formatCurrency, formatDate, formatPercentage } from '@/lib/fundData';
+import type { CapitalCall } from '@/lib/fundData';
+import { useFundsData, getFundByCompanyId, getCapitalCallsByCompanyId, getCommitmentsByFund } from '@/lib/fundsApi';
 import { useCompany } from '@/components/CompanyContext';
 import { PageHeader, PrimaryButton } from '@/components/shared/PageHeader';
 
@@ -141,6 +139,7 @@ function AnimatedProgressBar({ percentage }: { percentage: number }) {
 
 export default function CapitalCallsPage() {
   const { selectedCompany } = useCompany();
+  const { data: fundsData, loading, error } = useFundsData();
   const [activeTab, setActiveTab] = useState<TabType>('active');
   const [selectedCall, setSelectedCall] = useState<CapitalCall | null>(null);
   const [showNewCallModal, setShowNewCallModal] = useState(false);
@@ -149,9 +148,9 @@ export default function CapitalCallsPage() {
   const [newCallDueDate, setNewCallDueDate] = useState('');
   const [newCallType, setNewCallType] = useState('investment');
 
-  const selectedFund = getFundByCompanyId(selectedCompany.id);
-  const fundCalls = getCapitalCallsByCompanyId(selectedCompany.id);
-  const commitments = selectedFund ? getCommitmentsByFund(selectedFund.id) : [];
+  const selectedFund = fundsData ? getFundByCompanyId(fundsData, selectedCompany.id) : undefined;
+  const fundCalls = fundsData ? getCapitalCallsByCompanyId(fundsData, selectedCompany.id) : [];
+  const commitments = fundsData && selectedFund ? getCommitmentsByFund(fundsData, selectedFund.id) : [];
   const currency = selectedFund?.currency || 'SEK';
   const fundName = selectedFund?.name || selectedCompany.shortName;
   
@@ -181,6 +180,21 @@ export default function CapitalCallsPage() {
     { value: 'fees', label: 'Avgift' },
     { value: 'expenses', label: 'Kostnader' },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[40vh]">
+        <div className="animate-spin w-8 h-8 border-2 border-aifm-gold border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="p-4 text-center text-red-600">
+        {error.message ?? 'Kunde inte ladda kapitalanropsdata'}
+      </div>
+    );
+  }
 
   return (
     <>

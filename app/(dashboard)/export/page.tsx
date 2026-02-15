@@ -48,7 +48,7 @@ const exportCategories: ExportCategory[] = [
     name: 'Ekonomi & Bokföring',
     description: 'Finansiella rapporter, transaktioner och bokslut',
     icon: Calculator,
-    color: 'from-emerald-500 to-emerald-600',
+    color: 'from-aifm-charcoal to-aifm-charcoal/80',
     sections: [
       { 
         id: 'general_ledger', 
@@ -121,7 +121,7 @@ const exportCategories: ExportCategory[] = [
     name: 'Fond & NAV',
     description: 'Fonddata, värderingar och NAV-beräkningar',
     icon: BarChart3,
-    color: 'from-blue-500 to-blue-600',
+    color: 'from-aifm-gold to-aifm-gold/80',
     sections: [
       { 
         id: 'nav_history', 
@@ -160,7 +160,7 @@ const exportCategories: ExportCategory[] = [
     name: 'Investerare & Kapital',
     description: 'Investerardata, kapitalanrop och utdelningar',
     icon: Users,
-    color: 'from-purple-500 to-purple-600',
+    color: 'from-aifm-charcoal/90 to-aifm-charcoal/70',
     sections: [
       { 
         id: 'investor_list', 
@@ -207,7 +207,7 @@ const exportCategories: ExportCategory[] = [
     name: 'Dokument & Datarum',
     description: 'Alla uppladdade dokument och avtal',
     icon: FolderOpen,
-    color: 'from-amber-500 to-amber-600',
+    color: 'from-aifm-gold/90 to-aifm-gold/70',
     sections: [
       { 
         id: 'all_documents', 
@@ -244,7 +244,7 @@ const exportCategories: ExportCategory[] = [
     name: 'Compliance & Audit',
     description: 'Regulatoriska rapporter och granskningsunderlag',
     icon: Shield,
-    color: 'from-rose-500 to-rose-600',
+    color: 'from-aifm-charcoal/80 to-aifm-charcoal/60',
     sections: [
       { 
         id: 'kyc_records', 
@@ -284,7 +284,7 @@ const exportCategories: ExportCategory[] = [
     name: 'CRM & Kontakter',
     description: 'Kundregister och aktivitetshistorik',
     icon: Building2,
-    color: 'from-cyan-500 to-cyan-600',
+    color: 'from-aifm-gold/80 to-aifm-gold/60',
     sections: [
       { 
         id: 'contacts', 
@@ -325,9 +325,9 @@ const exportCategories: ExportCategory[] = [
 
 const formatIcons: Record<string, { icon: React.ElementType; label: string; color: string }> = {
   pdf: { icon: FileText, label: 'PDF', color: 'text-red-500 bg-red-50' },
-  xlsx: { icon: FileSpreadsheet, label: 'Excel', color: 'text-emerald-600 bg-emerald-50' },
-  csv: { icon: File, label: 'CSV', color: 'text-blue-500 bg-blue-50' },
-  json: { icon: FileArchive, label: 'JSON', color: 'text-purple-500 bg-purple-50' },
+  xlsx: { icon: FileSpreadsheet, label: 'Excel', color: 'text-aifm-charcoal/70 bg-aifm-charcoal/[0.06]' },
+  csv: { icon: File, label: 'CSV', color: 'text-aifm-gold bg-aifm-gold/10' },
+  json: { icon: FileArchive, label: 'JSON', color: 'text-aifm-charcoal/50 bg-aifm-charcoal/[0.04]' },
 };
 
 // ============================================================================
@@ -412,7 +412,7 @@ function CategoryCard({
                     <div className="flex items-center gap-2">
                       <p className="font-medium text-aifm-charcoal">{section.name}</p>
                       {section.premium && (
-                        <span className="px-1.5 py-0.5 bg-purple-100 text-purple-600 text-[10px] font-semibold rounded">
+                        <span className="px-1.5 py-0.5 bg-aifm-gold/15 text-aifm-charcoal text-[10px] font-semibold rounded-full">
                           PREMIUM
                         </span>
                       )}
@@ -569,7 +569,7 @@ function ExportSummary({
           onClick={onExport}
           disabled={isExporting || totalItems === 0}
           className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-aifm-charcoal 
-                    text-white rounded-xl font-medium hover:bg-aifm-charcoal/90 transition-all
+                    text-white rounded-full font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm
                     disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isExporting ? (
@@ -670,44 +670,40 @@ export default function ExportPage() {
   return (
     <div className="w-full">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/80 
-                          flex items-center justify-center shadow-lg shadow-aifm-charcoal/20">
-            <Download className="w-7 h-7 text-white" />
-          </div>
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-aifm-charcoal tracking-tight">Exportera data</h1>
-            <p className="text-sm text-aifm-charcoal/50">
+            <h1 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Exportera data</h1>
+            <p className="text-sm text-aifm-charcoal/40">
               {selectedCompany?.name || 'Välj företag'} • Välj vad du vill ladda ner
             </p>
           </div>
-        </div>
 
-        {/* Date Range Selector */}
-        <div className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 p-2">
-          <Calendar className="w-4 h-4 text-aifm-charcoal/40 ml-2" />
-          <input
-            type="date"
-            value={dateRange.from}
-            onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
-            className="px-2 py-1.5 text-sm bg-transparent border-0 focus:outline-none focus:ring-0"
-          />
-          <ArrowRight className="w-4 h-4 text-aifm-charcoal/30" />
-          <input
-            type="date"
-            value={dateRange.to}
-            onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
-            className="px-2 py-1.5 text-sm bg-transparent border-0 focus:outline-none focus:ring-0"
-          />
+          {/* Date Range Selector */}
+          <div className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 p-2">
+            <Calendar className="w-4 h-4 text-aifm-charcoal/40 ml-2" />
+            <input
+              type="date"
+              value={dateRange.from}
+              onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
+              className="px-2 py-1.5 text-sm bg-transparent border-0 focus:outline-none focus:ring-0"
+            />
+            <ArrowRight className="w-4 h-4 text-aifm-charcoal/30" />
+            <input
+              type="date"
+              value={dateRange.to}
+              onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
+              className="px-2 py-1.5 text-sm bg-transparent border-0 focus:outline-none focus:ring-0"
+            />
+          </div>
         </div>
       </div>
 
       {/* Info Banner */}
-      <div className="bg-blue-50 rounded-2xl border border-blue-100 p-4 mb-6 flex items-start gap-3">
-        <Info className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+      <div className="bg-aifm-gold/[0.06] rounded-2xl border border-aifm-gold/20 p-4 mb-6 flex items-start gap-3">
+        <Info className="w-5 h-5 text-aifm-gold flex-shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm text-blue-800">
+          <p className="text-sm text-aifm-charcoal/70">
             Välj de datakategorier du vill exportera. Alla filer paketeras i en ZIP-fil för enkel nedladdning.
             Data som kräver tidsperiod använder det valda datumintervallet ovan.
           </p>
@@ -764,19 +760,19 @@ export default function ExportPage() {
               <h4 className="text-sm font-semibold text-aifm-charcoal mb-3">Tips</h4>
               <ul className="space-y-2 text-xs text-aifm-charcoal/60">
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-aifm-gold flex-shrink-0 mt-0.5" />
                   PDF för dokument som ska delas externt
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-aifm-gold flex-shrink-0 mt-0.5" />
                   Excel för data som ska bearbetas vidare
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-aifm-gold flex-shrink-0 mt-0.5" />
                   JSON för systemintegration
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-aifm-gold flex-shrink-0 mt-0.5" />
                   SIE för import till bokföringssystem
                 </li>
               </ul>

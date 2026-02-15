@@ -149,6 +149,29 @@ export interface ESGInfo {
   article9GoodGovernance?: boolean;
   article9OECDCompliant?: boolean;
   article9UNGPCompliant?: boolean;
+  // Extended ESG pre-trade (norm screening, exclusions, governance, risk, PAI, taxonomy, allocation, summary)
+  fundArticle?: '6' | '8' | '9';
+  normScreening?: Record<string, string>;
+  exclusionResults?: Record<string, { hasExposure: boolean; aboveThreshold: boolean; approved: boolean; comment: string; percent?: number }>;
+  governance?: Record<string, string>;
+  envRiskLevel?: string;
+  socialRiskLevel?: string;
+  govRiskLevel?: string;
+  ghgData?: string;
+  sbtiTarget?: boolean | null;
+  fossilExposurePercent?: number | string;
+  pai?: Record<string, string | boolean | null>;
+  sustainableGoalCategory?: string;
+  revenueCapExFromSustainable?: string;
+  taxonomyQualifiedPercent?: number | string;
+  taxonomyAlignedPercent?: number | string;
+  allocationBeforePercent?: number | string;
+  allocationAfterPercent?: number | string;
+  promotedCharacteristicsResult?: string;
+  esgDecision?: 'approved' | 'rejected';
+  esgDecisionMotivation?: string;
+  engagementRequired?: boolean | null;
+  engagementComment?: string;
 }
 
 // Complete security approval request

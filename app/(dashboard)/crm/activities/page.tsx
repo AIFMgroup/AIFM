@@ -86,20 +86,20 @@ export default function ActivitiesPage() {
 
   const getActivityColor = (type: Activity['type']) => {
     const colors = {
-      meeting: 'bg-blue-100 text-blue-600',
-      call: 'bg-green-100 text-green-600',
-      email: 'bg-amber-100 text-amber-600',
-      note: 'bg-purple-100 text-purple-600',
-      task_completed: 'bg-emerald-100 text-emerald-600',
+      meeting: 'bg-aifm-charcoal/5 text-aifm-charcoal',
+      call: 'bg-aifm-gold/10 text-aifm-gold',
+      email: 'bg-aifm-gold/10 text-aifm-charcoal',
+      note: 'bg-aifm-charcoal/5 text-aifm-charcoal/60',
+      task_completed: 'bg-aifm-gold/10 text-aifm-gold',
     };
-    return colors[type] || 'bg-gray-100 text-gray-600';
+    return colors[type] || 'bg-aifm-charcoal/5 text-aifm-charcoal/60';
   };
 
   const getStatusBadge = (status: Activity['status']) => {
     const badges = {
-      scheduled: { label: 'Planerad', className: 'bg-blue-50 text-blue-700' },
-      completed: { label: 'Genomförd', className: 'bg-green-50 text-green-700' },
-      cancelled: { label: 'Avbokad', className: 'bg-gray-100 text-gray-600' },
+      scheduled: { label: 'Planerad', className: 'bg-aifm-gold/15 text-aifm-charcoal' },
+      completed: { label: 'Genomförd', className: 'bg-aifm-charcoal/5 text-aifm-charcoal' },
+      cancelled: { label: 'Avbokad', className: 'bg-gray-100 text-aifm-charcoal/50' },
       no_show: { label: 'Utebliven', className: 'bg-red-50 text-red-700' },
     };
     return badges[status] || badges.scheduled;
@@ -119,12 +119,12 @@ export default function ActivitiesPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Aktiviteter</h1>
-            <p className="text-gray-500 mt-1">{activities.length} aktiviteter totalt</p>
+            <h1 className="text-2xl font-semibold text-aifm-charcoal tracking-tight">Aktiviteter</h1>
+            <p className="text-sm text-aifm-charcoal/40 mt-1">{activities.length} aktiviteter totalt</p>
           </div>
           <Link
             href="/crm/calendar?new=true"
-            className="flex items-center gap-2 px-4 py-2 bg-[#2d2a26] text-white text-sm font-medium rounded-lg hover:bg-[#3d3a36] transition-colors"
+            className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white text-sm font-medium rounded-full hover:bg-aifm-charcoal/90 transition-all shadow-sm"
           >
             <Calendar className="w-4 h-4" />
             Ny aktivitet
@@ -140,18 +140,18 @@ export default function ActivitiesPage() {
               placeholder="Sök aktiviteter..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#c0a280] focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
             />
           </div>
-          <div className="flex items-center bg-gray-100 rounded-lg p-1">
+          <div className="flex items-center bg-aifm-charcoal/[0.03] rounded-xl p-1">
             {activityTypes.map((type) => (
               <button
                 key={type.id}
                 onClick={() => setTypeFilter(type.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
                   typeFilter === type.id
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-white text-aifm-charcoal shadow-sm'
+                    : 'text-aifm-charcoal/40 hover:text-aifm-charcoal/60'
                 }`}
               >
                 {type.icon && <type.icon className="w-4 h-4" />}
@@ -167,17 +167,17 @@ export default function ActivitiesPage() {
             <div className="w-8 h-8 border-2 border-[#c0a280] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : filteredActivities.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Calendar className="w-8 h-8 text-gray-300" />
+          <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
+            <div className="w-16 h-16 bg-aifm-charcoal/5 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <Calendar className="w-8 h-8 text-aifm-charcoal/20" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-1">Inga aktiviteter</h3>
-            <p className="text-gray-500 mb-4">
+            <h3 className="text-lg font-medium text-aifm-charcoal mb-1">Inga aktiviteter</h3>
+            <p className="text-aifm-charcoal/40 mb-4">
               {searchQuery ? 'Inga aktiviteter matchar din sökning' : 'Börja med att lägga till en aktivitet'}
             </p>
             <Link
               href="/crm/calendar?new=true"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#2d2a26] text-white text-sm font-medium rounded-lg hover:bg-[#3d3a36] transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white text-sm font-medium rounded-full hover:bg-aifm-charcoal/90 transition-all shadow-sm"
             >
               <Calendar className="w-4 h-4" />
               Lägg till aktivitet
@@ -187,7 +187,7 @@ export default function ActivitiesPage() {
           <div className="space-y-8">
             {Object.entries(groupedActivities).map(([dateKey, dayActivities]) => (
               <div key={dateKey}>
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                <h2 className="text-sm font-semibold text-aifm-charcoal/60 uppercase tracking-wider mb-4">
                   {getDateLabel(dateKey)}
                 </h2>
                 <div className="space-y-3">
@@ -199,7 +199,7 @@ export default function ActivitiesPage() {
                       <Link
                         key={activity.id}
                         href={`/crm/calendar?activity=${activity.id}`}
-                        className="block bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md hover:border-gray-300 transition-all"
+                        className="block bg-white rounded-2xl border border-gray-100 p-4 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300"
                       >
                         <div className="flex items-start gap-4">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${getActivityColor(activity.type)}`}>
@@ -209,9 +209,9 @@ export default function ActivitiesPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-3">
                               <div>
-                                <h3 className="font-medium text-gray-900">{activity.title}</h3>
+                                <h3 className="font-medium text-aifm-charcoal">{activity.title}</h3>
                                 {activity.description && (
-                                  <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">
+                                  <p className="text-sm text-aifm-charcoal/40 mt-0.5 line-clamp-2">
                                     {activity.description}
                                   </p>
                                 )}
@@ -221,7 +221,7 @@ export default function ActivitiesPage() {
                               </span>
                             </div>
 
-                            <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                            <div className="flex items-center gap-4 mt-3 text-sm text-aifm-charcoal/40">
                               {activity.startTime && (
                                 <span className="flex items-center gap-1">
                                   <Clock className="w-4 h-4" />
@@ -252,15 +252,15 @@ export default function ActivitiesPage() {
                             </div>
 
                             {activity.location && (
-                              <div className="mt-2 text-sm text-gray-400 flex items-center gap-1">
+                              <div className="mt-2 text-sm text-aifm-charcoal/30 flex items-center gap-1">
                                 📍 {activity.location}
                               </div>
                             )}
 
                             {activity.outcome && (
-                              <div className="mt-3 p-3 bg-gray-50 rounded-lg text-sm">
-                                <div className="font-medium text-gray-700 mb-1">Resultat</div>
-                                <p className="text-gray-600">{activity.outcome}</p>
+                              <div className="mt-3 p-3 bg-aifm-charcoal/[0.03] rounded-xl text-sm">
+                                <div className="font-medium text-aifm-charcoal/70 mb-1">Resultat</div>
+                                <p className="text-aifm-charcoal/50">{activity.outcome}</p>
                               </div>
                             )}
                           </div>

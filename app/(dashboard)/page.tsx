@@ -28,7 +28,7 @@ export default function RootPage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 text-[#c0a280] animate-spin" />
+        <Loader2 className="w-8 h-8 text-aifm-gold animate-spin" />
       </div>
     }>
       <RootPageContent />

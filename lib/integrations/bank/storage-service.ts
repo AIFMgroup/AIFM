@@ -5,7 +5,6 @@
  * - Swedbank PDF:er och extraherad data
  * - SEB API-snapshots (positioner, saldon, transaktioner)
  * - Avstämningsrapporter
- * - Secura NAV-data
  * 
  * S3 Bucket Structure:
  * aifm-bank-data/
@@ -17,11 +16,9 @@
  * │   ├── positions/        # Daily position snapshots
  * │   ├── balances/         # Daily balance snapshots
  * │   └── transactions/     # Transaction history
- * ├── reconciliation/
- * │   ├── reports/          # Reconciliation results
- * │   └── exports/          # Excel exports
- * └── secura/
- *     └── nav/              # NAV data snapshots
+ * └── reconciliation/
+ *     ├── reports/          # Reconciliation results
+ *     └── exports/          # Excel exports
  */
 
 import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command, DeleteObjectCommand } from '@aws-sdk/client-s3';
@@ -31,12 +28,10 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 // Types
 // ============================================================================
 
-export type DataCategory = 'swedbank' | 'seb' | 'reconciliation' | 'secura';
+export type DataCategory = 'swedbank' | 'seb' | 'reconciliation';
 export type SwedBankSubCategory = 'emails' | 'pdfs' | 'processed';
 export type SEBSubCategory = 'positions' | 'balances' | 'transactions';
 export type ReconciliationSubCategory = 'reports' | 'exports';
-export type SecuraSubCategory = 'nav';
-
 export interface StoredDocument {
   key: string;
   category: DataCategory;
@@ -350,22 +345,6 @@ export class BankStorageService {
     });
   }
 
-  /**
-   * Save Secura NAV snapshot
-   */
-  async saveSecuraNAV(
-    navData: object,
-    fundId: string
-  ): Promise<{ key: string; url: string }> {
-    return this.save(navData, {
-      category: 'secura',
-      subCategory: 'nav',
-      fundId,
-      contentType: 'application/json',
-      fileName: `${fundId}-nav.json`,
-    });
-  }
-
   // ==========================================================================
   // Read Operations
   // ==========================================================================
@@ -556,7 +535,7 @@ export class BankStorageService {
     byCategory: Record<DataCategory, number>;
     totalSizeBytes: number;
   }> {
-    const categories: DataCategory[] = ['swedbank', 'seb', 'reconciliation', 'secura'];
+    const categories: DataCategory[] = ['swedbank', 'seb', 'reconciliation'];
     const stats = {
       totalDocuments: 0,
       byCategory: {} as Record<DataCategory, number>,

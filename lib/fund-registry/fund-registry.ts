@@ -23,18 +23,8 @@ import {
   Currency,
   PaginatedResponse,
 } from './types';
-
-// ============================================================================
-// Storage Interface (abstraction for different backends)
-// ============================================================================
-
-interface StorageAdapter {
-  get<T>(key: string): Promise<T | null>;
-  set<T>(key: string, value: T): Promise<void>;
-  delete(key: string): Promise<void>;
-  list<T>(prefix: string): Promise<T[]>;
-  query<T>(prefix: string, filter: (item: T) => boolean): Promise<T[]>;
-}
+import type { StorageAdapter } from './storage-types';
+import { DynamoDBStorage } from './dynamo-storage';
 
 // In-memory storage for development/demo
 class InMemoryStorage implements StorageAdapter {
@@ -76,7 +66,13 @@ export class FundRegistry {
   private storage: StorageAdapter;
 
   constructor(storage?: StorageAdapter) {
-    this.storage = storage || new InMemoryStorage();
+    if (storage) {
+      this.storage = storage;
+    } else if (process.env.FUND_REGISTRY_TABLE) {
+      this.storage = new DynamoDBStorage();
+    } else {
+      this.storage = new InMemoryStorage();
+    }
     this.initializeDemoData();
   }
 

@@ -6,7 +6,7 @@ import {
   ArrowLeft, Settings, Building2, Users, Mail, Shield, Clock,
   Plus, Trash2, Edit2, Check, X, Save, RefreshCw, Loader2,
   DollarSign, Percent, Calendar, Globe, FileText, Bell,
-  ChevronRight, AlertCircle, CheckCircle2, Info
+  ChevronRight, AlertCircle, CheckCircle2, Info, Database
 } from 'lucide-react';
 
 // ============================================================================
@@ -162,7 +162,7 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
       isActive 
         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-        : 'bg-gray-50 text-gray-500 border border-gray-200'
+        : 'bg-gray-50 text-aifm-charcoal/40 border border-gray-200'
     }`}>
       <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-gray-400'}`} />
       {isActive ? 'Aktiv' : 'Inaktiv'}
@@ -172,8 +172,8 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
 
 function RoleBadge({ role }: { role: ApprovalRole['role'] }) {
   const config = {
-    ADMIN: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200', label: 'Admin' },
-    FIRST_APPROVER: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', label: 'Första godkännare' },
+    ADMIN: { bg: 'bg-aifm-gold/15', text: 'text-aifm-charcoal', border: 'border-aifm-gold/30', label: 'Admin' },
+    FIRST_APPROVER: { bg: 'bg-aifm-charcoal/[0.06]', text: 'text-aifm-charcoal', border: 'border-aifm-charcoal/10', label: 'Första godkännare' },
     SECOND_APPROVER: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', label: 'Andra godkännare' },
   }[role];
 
@@ -186,8 +186,8 @@ function RoleBadge({ role }: { role: ApprovalRole['role'] }) {
 
 function TypeBadge({ type }: { type: NAVRecipient['type'] }) {
   const config = {
-    INTERNAL: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', label: 'Intern' },
-    EXTERNAL: { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200', label: 'Extern' },
+    INTERNAL: { bg: 'bg-aifm-charcoal/[0.06]', text: 'text-aifm-charcoal', border: 'border-aifm-charcoal/10', label: 'Intern' },
+    EXTERNAL: { bg: 'bg-gray-50', text: 'text-aifm-charcoal/60', border: 'border-gray-200', label: 'Extern' },
     REGULATOR: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', label: 'Myndighet' },
   }[type];
 
@@ -230,12 +230,12 @@ function FundsTab({ funds, setFunds }: { funds: Fund[]; setFunds: (funds: Fund[]
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-aifm-charcoal">Fondkonfiguration</h3>
-          <p className="text-sm text-gray-500 mt-1">Hantera fonder och andelsklasser</p>
+          <h3 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Fondkonfiguration</h3>
+          <p className="text-sm text-aifm-charcoal/40 mt-1">Hantera fonder och andelsklasser</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2.5 bg-aifm-gold text-white rounded-xl hover:bg-aifm-gold/90 transition-colors">
+        <button className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm">
           <Plus className="w-4 h-4" />
-          <span className="text-sm font-medium">Lägg till fond</span>
+          <span>Lägg till fond</span>
         </button>
       </div>
 
@@ -253,13 +253,13 @@ function FundsTab({ funds, setFunds }: { funds: Fund[]; setFunds: (funds: Fund[]
             >
               <div className="flex items-center gap-4">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                  fund.isActive ? 'bg-gradient-to-br from-aifm-gold to-amber-500' : 'bg-gray-200'
+                  fund.isActive ? 'bg-aifm-charcoal' : 'bg-gray-200'
                 }`}>
-                  <Building2 className="w-5 h-5 text-white" />
+                  <Building2 className={`w-5 h-5 ${fund.isActive ? 'text-aifm-gold' : 'text-white'}`} />
                 </div>
                 <div>
                   <div className="font-semibold text-aifm-charcoal">{fund.name}</div>
-                  <div className="text-sm text-gray-500">{fund.shareClasses.length} andelsklasser • {fund.baseCurrency}</div>
+                  <div className="text-sm text-aifm-charcoal/40">{fund.shareClasses.length} andelsklasser • {fund.baseCurrency}</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -270,25 +270,25 @@ function FundsTab({ funds, setFunds }: { funds: Fund[]; setFunds: (funds: Fund[]
 
             {/* Expanded Content */}
             {expandedFund === fund.id && (
-              <div className="border-t border-gray-100 p-4 bg-gray-50/50">
+              <div className="border-t border-gray-100 p-4 bg-aifm-charcoal/[0.02]">
                 {/* Fund Details */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Juridiskt namn</label>
+                    <label className="block text-xs font-medium text-aifm-charcoal/40 mb-1">Juridiskt namn</label>
                     <div className="text-sm text-aifm-charcoal">{fund.legalName}</div>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">NAV-frekvens</label>
+                    <label className="block text-xs font-medium text-aifm-charcoal/40 mb-1">NAV-frekvens</label>
                     <div className="text-sm text-aifm-charcoal">
                       {fund.navFrequency === 'DAILY' ? 'Daglig' : fund.navFrequency === 'WEEKLY' ? 'Veckovis' : 'Månadsvis'}
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">NAV-tid</label>
+                    <label className="block text-xs font-medium text-aifm-charcoal/40 mb-1">NAV-tid</label>
                     <div className="text-sm text-aifm-charcoal">{fund.navTime} CET</div>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Räkenskapsår</label>
+                    <label className="block text-xs font-medium text-aifm-charcoal/40 mb-1">Räkenskapsår</label>
                     <div className="text-sm text-aifm-charcoal">{fund.fiscalYearEnd}</div>
                   </div>
                 </div>
@@ -296,28 +296,28 @@ function FundsTab({ funds, setFunds }: { funds: Fund[]; setFunds: (funds: Fund[]
                 {/* Share Classes */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-semibold text-gray-700">Andelsklasser</h4>
+                    <h4 className="text-sm font-semibold text-aifm-charcoal/60">Andelsklasser</h4>
                     <button className="flex items-center gap-1.5 text-sm text-aifm-gold hover:text-aifm-gold/80">
                       <Plus className="w-4 h-4" />
                       Lägg till
                     </button>
                   </div>
-                  <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+                  <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
                     <table className="w-full text-sm min-w-[700px]">
                       <thead>
-                        <tr className="bg-gray-50 border-b border-gray-200">
-                          <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-600">Klass</th>
-                          <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-600">ISIN</th>
-                          <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-600">Valuta</th>
-                          <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-600">Mgmt Fee</th>
-                          <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-600">Perf Fee</th>
-                          <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-600">Status</th>
-                          <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-600">Åtgärd</th>
+                        <tr className="bg-aifm-charcoal/[0.03] border-b border-gray-200">
+                          <th className="px-4 py-2.5 text-left text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Klass</th>
+                          <th className="px-4 py-2.5 text-left text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">ISIN</th>
+                          <th className="px-4 py-2.5 text-left text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Valuta</th>
+                          <th className="px-4 py-2.5 text-right text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Mgmt Fee</th>
+                          <th className="px-4 py-2.5 text-right text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Perf Fee</th>
+                          <th className="px-4 py-2.5 text-center text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Status</th>
+                          <th className="px-4 py-2.5 text-center text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Åtgärd</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
                         {fund.shareClasses.map((sc) => (
-                          <tr key={sc.id} className="hover:bg-gray-50/50">
+                          <tr key={sc.id} className="hover:bg-aifm-charcoal/[0.02]">
                             <td className="px-4 py-3 font-medium">{sc.name}</td>
                             <td className="px-4 py-3 font-mono text-gray-600">{sc.isin}</td>
                             <td className="px-4 py-3">{sc.currency}</td>
@@ -358,15 +358,15 @@ function RecipientsTab({ recipients, setRecipients, funds }: { recipients: NAVRe
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-aifm-charcoal">NAV-mottagare</h3>
-          <p className="text-sm text-gray-500 mt-1">Hantera vem som får NAV-rapporter</p>
+          <h3 className="text-lg font-semibold text-aifm-charcoal tracking-tight">NAV-mottagare</h3>
+          <p className="text-sm text-aifm-charcoal/40 mt-1">Hantera vem som får NAV-rapporter</p>
         </div>
         <button 
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-aifm-gold text-white rounded-xl hover:bg-aifm-gold/90 transition-colors"
+          className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm"
         >
           <Plus className="w-4 h-4" />
-          <span className="text-sm font-medium">Lägg till mottagare</span>
+          <span>Lägg till mottagare</span>
         </button>
       </div>
 
@@ -374,22 +374,22 @@ function RecipientsTab({ recipients, setRecipients, funds }: { recipients: NAVRe
       <div className="bg-white border border-gray-100 rounded-xl overflow-hidden overflow-x-auto">
         <table className="w-full min-w-[640px]">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-100">
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Mottagare</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Typ</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Fonder</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Daglig</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Vecka</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Månad</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Åtgärd</th>
+            <tr className="bg-aifm-charcoal/[0.03] border-b border-gray-100">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Mottagare</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Typ</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Fonder</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Daglig</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Vecka</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Månad</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Åtgärd</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {recipients.map((recipient) => (
-              <tr key={recipient.id} className="hover:bg-gray-50/50">
+              <tr key={recipient.id} className="hover:bg-aifm-charcoal/[0.02]">
                 <td className="px-4 py-3">
                   <div className="font-medium text-aifm-charcoal">{recipient.name}</div>
-                  <div className="text-sm text-gray-500">{recipient.email}</div>
+                  <div className="text-sm text-aifm-charcoal/40">{recipient.email}</div>
                 </td>
                 <td className="px-4 py-3">
                   <TypeBadge type={recipient.type} />
@@ -458,21 +458,21 @@ function ApprovalsTab({ roles, setRoles, funds }: { roles: ApprovalRole[]; setRo
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-aifm-charcoal">Godkännare</h3>
-          <p className="text-sm text-gray-500 mt-1">Hantera vem som kan godkänna NAV (4-ögonprincipen)</p>
+          <h3 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Godkännare</h3>
+          <p className="text-sm text-aifm-charcoal/40 mt-1">Hantera vem som kan godkänna NAV (4-ögonprincipen)</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2.5 bg-aifm-gold text-white rounded-xl hover:bg-aifm-gold/90 transition-colors">
+        <button className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm">
           <Plus className="w-4 h-4" />
-          <span className="text-sm font-medium">Lägg till godkännare</span>
+          <span>Lägg till godkännare</span>
         </button>
       </div>
 
       {/* Info Box */}
-      <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
-        <Info className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+      <div className="bg-aifm-charcoal/[0.03] border border-gray-100 rounded-xl p-4 flex items-start gap-3">
+        <Info className="w-5 h-5 text-aifm-gold flex-shrink-0 mt-0.5" />
         <div>
-          <div className="font-medium text-blue-800">4-ögonprincipen</div>
-          <div className="text-sm text-blue-700 mt-1">
+          <div className="font-medium text-aifm-charcoal">4-ögonprincipen</div>
+          <div className="text-sm text-aifm-charcoal/40 mt-1">
             NAV måste godkännas av två separata personer innan den blir officiell. 
             Första godkännaren verifierar beräkningen, andra godkännaren slutgodkänner.
           </div>
@@ -484,20 +484,20 @@ function ApprovalsTab({ roles, setRoles, funds }: { roles: ApprovalRole[]; setRo
         {/* First Approvers */}
         <div className="bg-white border border-gray-100 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-              <span className="text-blue-600 font-bold text-sm">1</span>
+            <div className="w-8 h-8 rounded-lg bg-aifm-charcoal/[0.06] flex items-center justify-center">
+              <span className="text-aifm-charcoal font-bold text-sm">1</span>
             </div>
             <div>
               <h4 className="font-semibold text-aifm-charcoal">Första godkännare</h4>
-              <p className="text-xs text-gray-500">Verifierar beräkningen</p>
+              <p className="text-xs text-aifm-charcoal/40">Verifierar beräkningen</p>
             </div>
           </div>
           <div className="space-y-2">
             {roles.filter(r => r.role === 'FIRST_APPROVER').map((role) => (
-              <div key={role.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div key={role.id} className="flex items-center justify-between p-3 bg-aifm-charcoal/[0.02] rounded-xl">
                 <div>
-                  <div className="font-medium text-sm">{role.userName}</div>
-                  <div className="text-xs text-gray-500">{role.email}</div>
+                  <div className="font-medium text-sm text-aifm-charcoal">{role.userName}</div>
+                  <div className="text-xs text-aifm-charcoal/40">{role.email}</div>
                 </div>
                 <button className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors">
                   <Trash2 className="w-4 h-4 text-gray-400" />
@@ -510,20 +510,20 @@ function ApprovalsTab({ roles, setRoles, funds }: { roles: ApprovalRole[]; setRo
         {/* Second Approvers */}
         <div className="bg-white border border-gray-100 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
-              <span className="text-amber-600 font-bold text-sm">2</span>
+            <div className="w-8 h-8 rounded-lg bg-aifm-gold/15 flex items-center justify-center">
+              <span className="text-aifm-gold font-bold text-sm">2</span>
             </div>
             <div>
               <h4 className="font-semibold text-aifm-charcoal">Andra godkännare</h4>
-              <p className="text-xs text-gray-500">Slutgodkänner NAV</p>
+              <p className="text-xs text-aifm-charcoal/40">Slutgodkänner NAV</p>
             </div>
           </div>
           <div className="space-y-2">
             {roles.filter(r => r.role === 'SECOND_APPROVER').map((role) => (
-              <div key={role.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div key={role.id} className="flex items-center justify-between p-3 bg-aifm-charcoal/[0.02] rounded-xl">
                 <div>
-                  <div className="font-medium text-sm">{role.userName}</div>
-                  <div className="text-xs text-gray-500">{role.email}</div>
+                  <div className="font-medium text-sm text-aifm-charcoal">{role.userName}</div>
+                  <div className="text-xs text-aifm-charcoal/40">{role.email}</div>
                 </div>
                 <button className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors">
                   <Trash2 className="w-4 h-4 text-gray-400" />
@@ -537,20 +537,20 @@ function ApprovalsTab({ roles, setRoles, funds }: { roles: ApprovalRole[]; setRo
       {/* Admins */}
       <div className="bg-white border border-gray-100 rounded-xl p-4">
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
-            <Shield className="w-4 h-4 text-purple-600" />
-          </div>
-          <div>
-            <h4 className="font-semibold text-aifm-charcoal">Administratörer</h4>
-            <p className="text-xs text-gray-500">Full behörighet till alla funktioner</p>
+            <div className="w-8 h-8 rounded-lg bg-aifm-gold/15 flex items-center justify-center">
+              <Shield className="w-4 h-4 text-aifm-gold" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-aifm-charcoal">Administratörer</h4>
+              <p className="text-xs text-aifm-charcoal/40">Full behörighet till alla funktioner</p>
           </div>
         </div>
         <div className="space-y-2">
           {roles.filter(r => r.role === 'ADMIN').map((role) => (
-            <div key={role.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div key={role.id} className="flex items-center justify-between p-3 bg-aifm-charcoal/[0.02] rounded-xl">
               <div>
-                <div className="font-medium text-sm">{role.userName}</div>
-                <div className="text-xs text-gray-500">{role.email}</div>
+                <div className="font-medium text-sm text-aifm-charcoal">{role.userName}</div>
+                <div className="text-xs text-aifm-charcoal/40">{role.email}</div>
               </div>
               <RoleBadge role={role.role} />
             </div>
@@ -576,8 +576,8 @@ function ScheduleTab() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h3 className="text-lg font-semibold text-aifm-charcoal">Schemaläggning</h3>
-        <p className="text-sm text-gray-500 mt-1">Konfigurera automatisk NAV-beräkning</p>
+        <h3 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Schemaläggning</h3>
+        <p className="text-sm text-aifm-charcoal/40 mt-1">Konfigurera automatisk NAV-beräkning</p>
       </div>
 
       {/* NAV Time */}
@@ -585,16 +585,16 @@ function ScheduleTab() {
         <h4 className="font-semibold text-aifm-charcoal mb-4">NAV-tid</h4>
         <div className="grid md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Beräkningstid</label>
+            <label className="block text-sm font-medium text-aifm-charcoal/60 mb-2">Beräkningstid</label>
             <div className="flex gap-2">
               {['14:00', '14:30', '15:00', '15:30', '16:00'].map((time) => (
                 <button
                   key={time}
                   onClick={() => setNavTime(time)}
-                  className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
                     navTime === time
-                      ? 'bg-aifm-gold text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-aifm-charcoal text-white shadow-sm'
+                      : 'bg-aifm-charcoal/[0.04] text-aifm-charcoal/60 hover:bg-aifm-charcoal/[0.08]'
                   }`}
                 >
                   {time}
@@ -603,7 +603,7 @@ function ScheduleTab() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tidszon</label>
+            <label className="block text-sm font-medium text-aifm-charcoal/60 mb-2">Tidszon</label>
             <div className="flex gap-2">
               {[
                 { id: 'Europe/Stockholm', label: 'CET' },
@@ -612,10 +612,10 @@ function ScheduleTab() {
                 <button
                   key={tz.id}
                   onClick={() => setTimezone(tz.id)}
-                  className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
                     timezone === tz.id
-                      ? 'bg-aifm-gold text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-aifm-charcoal text-white shadow-sm'
+                      : 'bg-aifm-charcoal/[0.04] text-aifm-charcoal/60 hover:bg-aifm-charcoal/[0.08]'
                   }`}
                 >
                   {tz.label}
@@ -632,15 +632,15 @@ function ScheduleTab() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium text-gray-900">Vardagar (mån-fre)</div>
-              <div className="text-sm text-gray-500">Kör NAV-beräkning på vardagar</div>
+              <div className="font-medium text-aifm-charcoal">Vardagar (mån-fre)</div>
+              <div className="text-sm text-aifm-charcoal/40">Kör NAV-beräkning på vardagar</div>
             </div>
             <ToggleSwitch checked={true} onChange={() => {}} disabled />
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium text-gray-900">Helger (lör-sön)</div>
-              <div className="text-sm text-gray-500">Kör NAV-beräkning på helger</div>
+              <div className="font-medium text-aifm-charcoal">Helger (lör-sön)</div>
+              <div className="text-sm text-aifm-charcoal/40">Kör NAV-beräkning på helger</div>
             </div>
             <ToggleSwitch checked={runOnWeekends} onChange={setRunOnWeekends} />
           </div>
@@ -653,23 +653,23 @@ function ScheduleTab() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium text-gray-900">Auto-godkänn små förändringar</div>
-              <div className="text-sm text-gray-500">Hoppa över godkännande om NAV-förändringen är under tröskelvärdet</div>
+              <div className="font-medium text-aifm-charcoal">Auto-godkänn små förändringar</div>
+              <div className="text-sm text-aifm-charcoal/40">Hoppa över godkännande om NAV-förändringen är under tröskelvärdet</div>
             </div>
             <ToggleSwitch checked={autoApprove} onChange={setAutoApprove} />
           </div>
           {autoApprove && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Tröskelvärde</label>
+              <label className="block text-sm font-medium text-aifm-charcoal/60 mb-2">Tröskelvärde</label>
               <div className="flex gap-2">
                 {[0.5, 1.0, 2.0, 5.0].map((threshold) => (
                   <button
                     key={threshold}
                     onClick={() => setAutoApproveThreshold(threshold)}
-                    className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    className={`px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
                       autoApproveThreshold === threshold
-                        ? 'bg-aifm-gold text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-aifm-charcoal text-white shadow-sm'
+                        : 'bg-aifm-charcoal/[0.04] text-aifm-charcoal/60 hover:bg-aifm-charcoal/[0.08]'
                     }`}
                   >
                     ±{threshold}%
@@ -689,7 +689,8 @@ function ScheduleTab() {
 // ============================================================================
 
 function IntegrationsTab() {
-  const [securaConnected, setSecuraConnected] = useState(false);
+  const [lsegConnected, setLsegConnected] = useState(false);
+  const [sebConnected, setSebConnected] = useState(false);
   const [ecbEnabled, setEcbEnabled] = useState(true);
   const [sesEnabled, setSesEnabled] = useState(true);
 
@@ -697,22 +698,22 @@ function IntegrationsTab() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h3 className="text-lg font-semibold text-aifm-charcoal">Integrationer</h3>
-        <p className="text-sm text-gray-500 mt-1">Konfigurera externa system och datakällor</p>
+        <h3 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Integrationer</h3>
+        <p className="text-sm text-aifm-charcoal/40 mt-1">Konfigurera externa system och datakällor</p>
       </div>
 
-      {/* ISEC/SECURA */}
+      {/* LSEG / Refinitiv */}
       <div className="bg-white border border-gray-100 rounded-xl p-6">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-              <Globe className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 rounded-xl bg-aifm-charcoal flex items-center justify-center">
+              <Globe className="w-6 h-6 text-aifm-gold" />
             </div>
             <div>
-              <h4 className="font-semibold text-aifm-charcoal">ISEC / SECURA API</h4>
-              <p className="text-sm text-gray-500 mt-1">Hämta fonddata, positioner, och NAV-historik</p>
+              <h4 className="font-semibold text-aifm-charcoal">LSEG / Refinitiv API</h4>
+              <p className="text-sm text-aifm-charcoal/40 mt-1">Priser, referensdata, ESG-data och corporate actions</p>
               <div className="mt-3 flex items-center gap-2">
-                {securaConnected ? (
+                {lsegConnected ? (
                   <span className="flex items-center gap-1.5 text-sm text-emerald-600">
                     <CheckCircle2 className="w-4 h-4" />
                     Ansluten
@@ -726,7 +727,38 @@ function IntegrationsTab() {
               </div>
             </div>
           </div>
-          <button className="px-4 py-2 text-sm font-medium text-aifm-gold border border-aifm-gold rounded-lg hover:bg-aifm-gold/5 transition-colors">
+          <button className="px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm font-medium transition-all">
+            Konfigurera
+          </button>
+        </div>
+      </div>
+
+      {/* SEB API */}
+      <div className="bg-white border border-gray-100 rounded-xl p-6">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-aifm-charcoal flex items-center justify-center">
+              <Database className="w-6 h-6 text-aifm-gold" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-aifm-charcoal">SEB Custody API</h4>
+              <p className="text-sm text-aifm-charcoal/40 mt-1">Realtidspositioner, kassasaldon och avstämning</p>
+              <div className="mt-3 flex items-center gap-2">
+                {sebConnected ? (
+                  <span className="flex items-center gap-1.5 text-sm text-emerald-600">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Ansluten
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5 text-sm text-amber-600">
+                    <AlertCircle className="w-4 h-4" />
+                    Väntar på konfiguration
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          <button className="px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm font-medium transition-all">
             Konfigurera
           </button>
         </div>
@@ -736,12 +768,12 @@ function IntegrationsTab() {
       <div className="bg-white border border-gray-100 rounded-xl p-6">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 rounded-xl bg-aifm-charcoal flex items-center justify-center">
+              <DollarSign className="w-6 h-6 text-aifm-gold" />
             </div>
             <div>
               <h4 className="font-semibold text-aifm-charcoal">ECB Valutakurser</h4>
-              <p className="text-sm text-gray-500 mt-1">Automatiska växelkurser från Europeiska Centralbanken</p>
+              <p className="text-sm text-aifm-charcoal/40 mt-1">Automatiska växelkurser från Europeiska Centralbanken</p>
               <div className="mt-3 flex items-center gap-2">
                 <span className="flex items-center gap-1.5 text-sm text-emerald-600">
                   <CheckCircle2 className="w-4 h-4" />
@@ -758,12 +790,12 @@ function IntegrationsTab() {
       <div className="bg-white border border-gray-100 rounded-xl p-6">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
-              <Mail className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 rounded-xl bg-aifm-charcoal flex items-center justify-center">
+              <Mail className="w-6 h-6 text-aifm-gold" />
             </div>
             <div>
               <h4 className="font-semibold text-aifm-charcoal">AWS SES (E-post)</h4>
-              <p className="text-sm text-gray-500 mt-1">Skicka NAV-rapporter och notifikationer</p>
+              <p className="text-sm text-aifm-charcoal/40 mt-1">Skicka NAV-rapporter och notifikationer</p>
               <div className="mt-3 flex items-center gap-2">
                 <span className="flex items-center gap-1.5 text-sm text-emerald-600">
                   <CheckCircle2 className="w-4 h-4" />
@@ -789,41 +821,112 @@ export default function NAVSettingsPage() {
   const [recipients, setRecipients] = useState<NAVRecipient[]>(mockRecipients);
   const [approvalRoles, setApprovalRoles] = useState<ApprovalRole[]>(mockApprovalRoles);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/nav-automation/settings')
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled || !data?.settings) return;
+        const s = data.settings as { funds?: { id: string; name: string; isin: string; currency: string; enabled: boolean }[]; recipients?: { id: string; name: string; email: string; fundIds: string[]; reportTypes: string[] }[] };
+        if (s.funds?.length) {
+          setFunds(
+            s.funds.map((f) => ({
+              id: f.id,
+              name: f.name,
+              legalName: f.name,
+              baseCurrency: f.currency,
+              navFrequency: 'DAILY' as const,
+              navTime: '15:00',
+              fiscalYearEnd: '12-31',
+              launchDate: '',
+              isActive: f.enabled,
+              shareClasses: [{ id: f.id, name: 'A', isin: f.isin, currency: f.currency, managementFee: 0, performanceFee: 0, minInvestment: 0, isActive: true }],
+            }))
+          );
+        }
+        if (s.recipients?.length) {
+          setRecipients(
+            s.recipients.map((r) => ({
+              id: r.id,
+              name: r.name,
+              email: r.email,
+              type: 'EXTERNAL' as const,
+              funds: r.fundIds || [],
+              receiveDaily: r.reportTypes?.includes('NAV') ?? true,
+              receiveWeekly: r.reportTypes?.includes('NOTOR') ?? false,
+              receiveMonthly: r.reportTypes?.includes('SUBRED') ?? true,
+            }))
+          );
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleSave = async () => {
     setIsSaving(true);
-    // Simulate save
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsSaving(false);
+    try {
+      const res = await fetch('/api/nav-automation/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          funds: funds.map((f) => ({ id: f.id, name: f.name, isin: f.shareClasses[0]?.isin ?? '', currency: f.baseCurrency, enabled: f.isActive })),
+          recipients: recipients.map((r) => ({ id: r.id, name: r.name, email: r.email, fundIds: r.funds, reportTypes: [r.receiveDaily && 'NAV', r.receiveWeekly && 'NOTOR', r.receiveMonthly && 'SUBRED'].filter(Boolean) as string[] })),
+          schedule: { dataFetch: '06:00', notor: '07:00', navReports: '08:30', priceData: '09:00', ownerData: '09:15', subRed: '15:00' },
+        }),
+      });
+      if (!res.ok) throw new Error('Kunde inte spara');
+    } catch {
+      // keep state
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="w-8 h-8 animate-spin text-aifm-gold" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Link
-            href="/nav-admin"
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-aifm-charcoal">NAV-inställningar</h1>
-            <p className="text-aifm-charcoal/60 mt-1">
-              Konfigurera fonder, mottagare och schemaläggning
-            </p>
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-10 -mx-6 -mt-6 px-6 py-4 mb-2">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/nav-admin"
+              className="p-2 hover:bg-aifm-charcoal/[0.04] rounded-xl transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-aifm-charcoal/60" />
+            </Link>
+            <div>
+              <h1 className="text-lg font-semibold text-aifm-charcoal tracking-tight">NAV-inställningar</h1>
+              <p className="text-sm text-aifm-charcoal/40">
+                Konfigurera fonder, mottagare och schemaläggning
+              </p>
+            </div>
           </div>
+          
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm disabled:opacity-50"
+          >
+            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            <span>Spara ändringar</span>
+          </button>
         </div>
-        
-        <button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="flex items-center gap-2 px-6 py-2.5 bg-aifm-gold text-white rounded-xl hover:bg-aifm-gold/90 transition-colors disabled:opacity-50"
-        >
-          {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          <span className="font-medium">Spara ändringar</span>
-        </button>
       </div>
 
       {/* Tabs */}
@@ -839,7 +942,7 @@ export default function NAVSettingsPage() {
                 className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px ${
                   activeTab === tab.id
                     ? 'border-aifm-gold text-aifm-gold bg-aifm-gold/5'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    : 'border-transparent text-aifm-charcoal/40 hover:text-aifm-charcoal hover:bg-aifm-charcoal/[0.03]'
                 }`}
               >
                 <Icon className="w-4 h-4" />

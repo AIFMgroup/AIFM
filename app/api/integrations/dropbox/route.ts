@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DropboxClient, isDropboxConfigured } from '@/lib/integrations/dropbox/dropbox-client';
 import { getSyncStore, SyncJob } from '@/lib/integrations/dropbox/sync-store';
+import { getUserIdFromSession } from '@/lib/auth/session';
+import { parseOr400, dropboxPostBodySchema } from '@/lib/api/validate';
 import { v4 as uuidv4 } from 'uuid';
 
 // ============================================================================
@@ -11,14 +13,18 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action') || 'status';
-    const userId = 'default-user'; // In production, get from session
+    const userId = await getUserIdFromSession();
+    if (!userId && action !== 'auth-url') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const effectiveUserId = userId ?? 'default-user';
 
     const store = getSyncStore();
 
     if (action === 'status') {
-      const connection = await store.getConnection(userId);
+      const connection = await store.getConnection(effectiveUserId);
       const stats = await store.getSyncStats();
-      const latestJob = await store.getLatestSyncJob(userId);
+      const latestJob = await store.getLatestSyncJob(effectiveUserId);
 
       return NextResponse.json({
         configured: isDropboxConfigured(),
@@ -82,9 +88,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { action, folders } = body;
-    const userId = 'default-user'; // In production, get from session
+    const raw = await request.json();
+    const parsed = parseOr400(dropboxPostBodySchema, raw);
+    if (!parsed.ok) return parsed.response;
+    const { action, folders } = parsed.data;
+
+    const userId = await getUserIdFromSession();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const store = getSyncStore();
 
@@ -200,7 +212,10 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const userId = 'default-user'; // In production, get from session
+    const userId = await getUserIdFromSession();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const store = getSyncStore();
 
     await store.deleteConnection(userId);

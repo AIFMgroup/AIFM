@@ -272,29 +272,31 @@ export default function AdminIntegrationsPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Link
-            href="/settings"
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-aifm-charcoal/60" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-aifm-charcoal">Integrationer</h1>
-            <p className="text-aifm-charcoal/60 mt-1">
-              Koppla externa tjänster för att utöka AI-assistentens kapacitet
-            </p>
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/settings"
+              className="p-2 hover:bg-aifm-charcoal/[0.03] rounded-xl transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-aifm-charcoal/40" />
+            </Link>
+            <div>
+              <h1 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Integrationer</h1>
+              <p className="text-sm text-aifm-charcoal/40">
+                Koppla externa tjänster för att utöka AI-assistentens kapacitet
+              </p>
+            </div>
           </div>
-        </div>
 
-        <button
-          onClick={loadStatuses}
-          className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Uppdatera
-        </button>
+          <button
+            onClick={loadStatuses}
+            className="flex items-center gap-2 px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm transition-all"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Uppdatera
+          </button>
+        </div>
       </div>
 
       {/* Success/Error Messages */}
@@ -367,7 +369,7 @@ export default function AdminIntegrationsPage() {
                 return (
                   <div
                     key={integration.id}
-                    className="bg-white rounded-2xl border border-gray-100 overflow-hidden"
+                    className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300"
                   >
                     {/* Header */}
                     <div className="p-5 border-b border-gray-100">
@@ -386,7 +388,7 @@ export default function AdminIntegrationsPage() {
 
                       {/* User info if connected */}
                       {status.connected && (status.user || status.team) && (
-                        <div className="mt-3 p-2.5 bg-gray-50 rounded-lg flex items-center gap-2 text-sm">
+                        <div className="mt-3 p-2.5 bg-aifm-charcoal/[0.03] rounded-xl flex items-center gap-2 text-sm">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                           <span className="text-aifm-charcoal/70">
                             {status.user?.displayName || status.user?.email || status.team?.name || 'Ansluten'}
@@ -396,8 +398,8 @@ export default function AdminIntegrationsPage() {
                     </div>
 
                     {/* Features */}
-                    <div className="p-5 bg-gray-50/50">
-                      <h4 className="text-xs font-medium text-aifm-charcoal/50 uppercase tracking-wider mb-2">
+                    <div className="p-5 bg-white">
+                      <h4 className="text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider mb-2">
                         Funktioner
                       </h4>
                       <ul className="space-y-1.5">
@@ -420,7 +422,7 @@ export default function AdminIntegrationsPage() {
                       ) : status.connected ? (
                         <button
                           onClick={() => handleDisconnect(integration.id)}
-                          className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-full text-sm font-medium transition-all"
                         >
                           <Unlink className="w-4 h-4" />
                           Koppla bort
@@ -429,7 +431,7 @@ export default function AdminIntegrationsPage() {
                         <button
                           onClick={() => handleConnect(integration.id)}
                           disabled={connectingId === integration.id || integration.id === 'market-data'}
-                          className="flex items-center gap-2 px-4 py-2 bg-aifm-gold text-white rounded-lg hover:bg-aifm-gold/90 transition-colors disabled:opacity-50"
+                          className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm disabled:opacity-50"
                         >
                           {connectingId === integration.id ? (
                             <>
@@ -464,8 +466,8 @@ export default function AdminIntegrationsPage() {
 
       {/* Setup Instructions */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6">
-        <h3 className="text-lg font-semibold text-aifm-charcoal mb-4">Miljövariabler</h3>
-        <p className="text-sm text-aifm-charcoal/60 mb-4">
+        <h3 className="text-lg font-semibold text-aifm-charcoal tracking-tight mb-4">Miljövariabler</h3>
+        <p className="text-sm text-aifm-charcoal/40 mb-4">
           Lägg till följande miljövariabler i ECS Task Definition för att aktivera integrationer:
         </p>
         <div className="bg-gray-900 rounded-xl p-4 overflow-x-auto">
@@ -527,7 +529,7 @@ function SummaryCard({
         <Icon className="w-4 h-4" />
         <span className="text-xs font-medium opacity-80">{label}</span>
       </div>
-      <p className="text-2xl font-bold">
+      <p className="text-2xl font-semibold tracking-tight">
         {value}<span className="text-sm font-normal opacity-60">/{total}</span>
       </p>
     </div>

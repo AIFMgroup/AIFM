@@ -8,3 +8,4 @@ export * from './ai-analysis';
 export * from './esg-data';
 export * from './fund-restrictions';
 export * from './pdf-generator';
+export * from './esg-fund-configs';

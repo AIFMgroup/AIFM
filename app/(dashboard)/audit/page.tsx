@@ -177,19 +177,19 @@ const getCategoryIcon = (category: string) => {
 
 const getCategoryColor = (category: string) => {
   const colors: Record<string, string> = {
-    user: 'bg-blue-100 text-blue-700',
-    document: 'bg-purple-100 text-purple-700',
-    compliance: 'bg-emerald-100 text-emerald-700',
+    user: 'bg-aifm-gold/10 text-aifm-charcoal',
+    document: 'bg-aifm-charcoal/[0.06] text-aifm-charcoal',
+    compliance: 'bg-aifm-gold/15 text-aifm-charcoal',
     financial: 'bg-amber-100 text-amber-700',
-    system: 'bg-gray-100 text-gray-700',
+    system: 'bg-gray-100 text-aifm-charcoal/70',
     security: 'bg-red-100 text-red-700',
   };
-  return colors[category] || 'bg-gray-100 text-gray-700';
+  return colors[category] || 'bg-gray-100 text-aifm-charcoal/70';
 };
 
 const getSeverityBadge = (severity: string) => {
   const styles: Record<string, { bg: string; text: string; icon: React.ReactNode }> = {
-    info: { bg: 'bg-blue-50', text: 'text-blue-600', icon: <CheckCircle className="w-3 h-3" /> },
+    info: { bg: 'bg-aifm-gold/10', text: 'text-aifm-charcoal', icon: <CheckCircle className="w-3 h-3" /> },
     warning: { bg: 'bg-amber-50', text: 'text-amber-600', icon: <AlertTriangle className="w-3 h-3" /> },
     error: { bg: 'bg-red-50', text: 'text-red-600', icon: <AlertTriangle className="w-3 h-3" /> },
     critical: { bg: 'bg-red-100', text: 'text-red-700', icon: <AlertTriangle className="w-3 h-3" /> },
@@ -279,76 +279,78 @@ export default function AuditTrailPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Audit Trail</h1>
-            <p className="text-gray-500 mt-1">Spåra alla händelser och aktiviteter i systemet</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Exportera</span>
-            </button>
-            <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-              <RefreshCw className="w-4 h-4" />
-              <span className="hidden sm:inline">Uppdatera</span>
-            </button>
+        <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Audit Trail</h1>
+              <p className="text-sm text-aifm-charcoal/40">Spåra alla händelser och aktiviteter i systemet</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button className="inline-flex items-center gap-2 px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm transition-all">
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">Exportera</span>
+              </button>
+              <button className="inline-flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm">
+                <RefreshCw className="w-4 h-4" />
+                <span className="hidden sm:inline">Uppdatera</span>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                <FileText className="w-5 h-5 text-gray-600" />
+              <div className="w-10 h-10 rounded-xl bg-aifm-charcoal/[0.06] flex items-center justify-center">
+                <FileText className="w-5 h-5 text-aifm-charcoal/60" />
               </div>
               <div>
-                <div className="text-2xl font-semibold text-gray-900">{stats.total}</div>
-                <div className="text-sm text-gray-500">Totala loggar</div>
+                <div className="text-2xl font-semibold tracking-tight text-aifm-charcoal">{stats.total}</div>
+                <div className="text-sm text-aifm-charcoal/40">Totala loggar</div>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                <Clock className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 rounded-xl bg-aifm-gold/10 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-aifm-gold" />
               </div>
               <div>
-                <div className="text-2xl font-semibold text-gray-900">{stats.today}</div>
-                <div className="text-sm text-gray-500">Idag</div>
+                <div className="text-2xl font-semibold tracking-tight text-aifm-charcoal">{stats.today}</div>
+                <div className="text-sm text-aifm-charcoal/40">Idag</div>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
                 <AlertTriangle className="w-5 h-5 text-red-600" />
               </div>
               <div>
-                <div className="text-2xl font-semibold text-gray-900">{stats.critical}</div>
-                <div className="text-sm text-gray-500">Kritiska</div>
+                <div className="text-2xl font-semibold tracking-tight text-aifm-charcoal">{stats.critical}</div>
+                <div className="text-sm text-aifm-charcoal/40">Kritiska</div>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
                 <AlertTriangle className="w-5 h-5 text-amber-600" />
               </div>
               <div>
-                <div className="text-2xl font-semibold text-gray-900">{stats.warnings}</div>
-                <div className="text-sm text-gray-500">Varningar</div>
+                <div className="text-2xl font-semibold tracking-tight text-aifm-charcoal">{stats.warnings}</div>
+                <div className="text-sm text-aifm-charcoal/40">Varningar</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-6">
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search */}
             <div className="flex-1">
@@ -359,7 +361,7 @@ export default function AuditTrailPage() {
                   placeholder="Sök händelser, användare, dokument..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
                 />
               </div>
             </div>
@@ -369,7 +371,7 @@ export default function AuditTrailPage() {
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-white"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
               >
                 <option value="all">Alla kategorier</option>
                 <option value="user">Användare</option>
@@ -386,7 +388,7 @@ export default function AuditTrailPage() {
               <select
                 value={selectedSeverity}
                 onChange={(e) => setSelectedSeverity(e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-white"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
               >
                 <option value="all">Alla nivåer</option>
                 <option value="info">Info</option>
@@ -402,26 +404,26 @@ export default function AuditTrailPage() {
                 type="date"
                 value={dateRange.from}
                 onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
-                className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
               />
-              <span className="text-gray-400">–</span>
+              <span className="text-aifm-charcoal/30">–</span>
               <input
                 type="date"
                 value={dateRange.to}
                 onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
-                className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
               />
             </div>
           </div>
         </div>
 
         {/* Audit Log List */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="divide-y divide-gray-100">
             {filteredLogs.map((log) => (
               <div
                 key={log.id}
-                className={`transition-colors ${expandedLog === log.id ? 'bg-gray-50' : 'hover:bg-gray-50/50'}`}
+                className={`transition-colors ${expandedLog === log.id ? 'bg-aifm-charcoal/[0.02]' : 'hover:bg-aifm-charcoal/[0.01]'}`}
               >
                 {/* Main Row */}
                 <div
@@ -430,7 +432,7 @@ export default function AuditTrailPage() {
                 >
                   <div className="flex items-start gap-4">
                     {/* Category Icon */}
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${getCategoryColor(log.category)}`}>
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${getCategoryColor(log.category)}`}>
                       {getCategoryIcon(log.category)}
                     </div>
 
@@ -439,11 +441,11 @@ export default function AuditTrailPage() {
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-medium text-gray-900">{getActionLabel(log.action)}</span>
+                            <span className="font-medium text-aifm-charcoal">{getActionLabel(log.action)}</span>
                             {getSeverityBadge(log.severity)}
                           </div>
-                          <div className="text-sm text-gray-500 mt-1">
-                            <span className="font-medium text-gray-700">{log.actor.name}</span>
+                          <div className="text-sm text-aifm-charcoal/40 mt-1">
+                            <span className="font-medium text-aifm-charcoal/70">{log.actor.name}</span>
                             {log.target && (
                               <>
                                 <span className="mx-1">→</span>
@@ -453,7 +455,7 @@ export default function AuditTrailPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-3 flex-shrink-0">
-                          <span className="text-sm text-gray-400">{formatTimestamp(log.timestamp)}</span>
+                          <span className="text-sm text-aifm-charcoal/30">{formatTimestamp(log.timestamp)}</span>
                           <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${expandedLog === log.id ? 'rotate-90' : ''}`} />
                         </div>
                       </div>
@@ -461,7 +463,7 @@ export default function AuditTrailPage() {
                       {/* Company badge */}
                       {log.companyName && (
                         <div className="mt-2">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-aifm-gold/15 text-aifm-charcoal rounded-full text-xs font-medium">
                             <Building2 className="w-3 h-3" />
                             {log.companyName}
                           </span>
@@ -474,28 +476,28 @@ export default function AuditTrailPage() {
                 {/* Expanded Details */}
                 {expandedLog === log.id && (
                   <div className="px-4 pb-4">
-                    <div className="ml-13 pl-4 border-l-2 border-gray-200">
+                    <div className="ml-13 pl-4 border-l-2 border-gray-100">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         {/* Actor Info */}
                         <div className="space-y-2">
-                          <h4 className="font-medium text-gray-700">Användare</h4>
-                          <div className="bg-gray-50 rounded-lg p-3 space-y-1">
+                          <h4 className="font-medium text-aifm-charcoal/70">Användare</h4>
+                          <div className="bg-aifm-charcoal/[0.03] rounded-xl p-3 space-y-1">
                             <div className="flex justify-between">
-                              <span className="text-gray-500">Namn:</span>
-                              <span className="text-gray-900">{log.actor.name}</span>
+                              <span className="text-aifm-charcoal/40">Namn:</span>
+                              <span className="text-aifm-charcoal">{log.actor.name}</span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-500">E-post:</span>
-                              <span className="text-gray-900">{log.actor.email}</span>
+                              <span className="text-aifm-charcoal/40">E-post:</span>
+                              <span className="text-aifm-charcoal">{log.actor.email}</span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-500">Roll:</span>
-                              <span className="text-gray-900">{log.actor.role}</span>
+                              <span className="text-aifm-charcoal/40">Roll:</span>
+                              <span className="text-aifm-charcoal">{log.actor.role}</span>
                             </div>
                             {log.ipAddress && (
                               <div className="flex justify-between">
-                                <span className="text-gray-500">IP-adress:</span>
-                                <span className="text-gray-900 font-mono text-xs">{log.ipAddress}</span>
+                                <span className="text-aifm-charcoal/40">IP-adress:</span>
+                                <span className="text-aifm-charcoal font-mono text-xs">{log.ipAddress}</span>
                               </div>
                             )}
                           </div>
@@ -503,12 +505,12 @@ export default function AuditTrailPage() {
 
                         {/* Details */}
                         <div className="space-y-2">
-                          <h4 className="font-medium text-gray-700">Detaljer</h4>
-                          <div className="bg-gray-50 rounded-lg p-3 space-y-1">
+                          <h4 className="font-medium text-aifm-charcoal/70">Detaljer</h4>
+                          <div className="bg-aifm-charcoal/[0.03] rounded-xl p-3 space-y-1">
                             {Object.entries(log.details).map(([key, value]) => (
                               <div key={key} className="flex justify-between">
-                                <span className="text-gray-500 capitalize">{key.replace(/_/g, ' ')}:</span>
-                                <span className="text-gray-900">{String(value)}</span>
+                                <span className="text-aifm-charcoal/40 capitalize">{key.replace(/_/g, ' ')}:</span>
+                                <span className="text-aifm-charcoal">{String(value)}</span>
                               </div>
                             ))}
                           </div>
@@ -517,19 +519,19 @@ export default function AuditTrailPage() {
                         {/* Target Info */}
                         {log.target && (
                           <div className="space-y-2">
-                            <h4 className="font-medium text-gray-700">Mål</h4>
-                            <div className="bg-gray-50 rounded-lg p-3 space-y-1">
+                            <h4 className="font-medium text-aifm-charcoal/70">Mål</h4>
+                            <div className="bg-aifm-charcoal/[0.03] rounded-xl p-3 space-y-1">
                               <div className="flex justify-between">
-                                <span className="text-gray-500">Typ:</span>
-                                <span className="text-gray-900 capitalize">{log.target.type}</span>
+                                <span className="text-aifm-charcoal/40">Typ:</span>
+                                <span className="text-aifm-charcoal capitalize">{log.target.type}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-gray-500">Namn:</span>
-                                <span className="text-gray-900">{log.target.name}</span>
+                                <span className="text-aifm-charcoal/40">Namn:</span>
+                                <span className="text-aifm-charcoal">{log.target.name}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-gray-500">ID:</span>
-                                <span className="text-gray-900 font-mono text-xs">{log.target.id}</span>
+                                <span className="text-aifm-charcoal/40">ID:</span>
+                                <span className="text-aifm-charcoal font-mono text-xs">{log.target.id}</span>
                               </div>
                             </div>
                           </div>
@@ -537,9 +539,9 @@ export default function AuditTrailPage() {
 
                         {/* Timestamp */}
                         <div className="space-y-2">
-                          <h4 className="font-medium text-gray-700">Tidsstämpel</h4>
-                          <div className="bg-gray-50 rounded-lg p-3">
-                            <div className="flex items-center gap-2 text-gray-900">
+                          <h4 className="font-medium text-aifm-charcoal/70">Tidsstämpel</h4>
+                          <div className="bg-aifm-charcoal/[0.03] rounded-xl p-3">
+                            <div className="flex items-center gap-2 text-aifm-charcoal">
                               <Calendar className="w-4 h-4 text-gray-400" />
                               {new Date(log.timestamp).toLocaleString('sv-SE', {
                                 year: 'numeric',
@@ -563,18 +565,18 @@ export default function AuditTrailPage() {
           {/* Empty State */}
           {filteredLogs.length === 0 && (
             <div className="p-12 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                <Search className="w-8 h-8 text-gray-400" />
+              <div className="w-16 h-16 mx-auto mb-4 bg-aifm-charcoal/[0.03] rounded-full flex items-center justify-center">
+                <Search className="w-8 h-8 text-aifm-charcoal/20" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-1">Inga loggar hittades</h3>
-              <p className="text-gray-500">Försök justera dina sökfilter</p>
+              <h3 className="text-lg font-semibold text-aifm-charcoal tracking-tight mb-1">Inga loggar hittades</h3>
+              <p className="text-aifm-charcoal/40">Försök justera dina sökfilter</p>
             </div>
           )}
 
           {/* Load More */}
           {filteredLogs.length > 0 && (
             <div className="p-4 border-t border-gray-100 text-center">
-              <button className="text-sm text-gray-500 hover:text-gray-700 font-medium">
+              <button className="text-sm text-aifm-charcoal/40 hover:text-aifm-charcoal font-medium transition-colors">
                 Ladda fler loggar
               </button>
             </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
+import { useToast } from '@/components/Toast';
 
 // ============ Types ============
 export type WebSocketStatus = 'connecting' | 'connected' | 'disconnected' | 'error' | 'disabled';
@@ -71,14 +72,21 @@ interface WebSocketProviderProps {
 export function WebSocketProvider({ children, url }: WebSocketProviderProps) {
   const [status, setStatus] = useState<WebSocketStatus>(WEBSOCKET_ENABLED ? 'disconnected' : 'disabled');
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
-  
+  const toast = useToast();
+  const prevStatusRef = useRef<WebSocketStatus>(status);
+
   const wsRef = useRef<WebSocket | null>(null);
   const subscribersRef = useRef<Map<string, Set<(payload: any) => void>>>(new Map());
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
+  /** Queue of messages to send when reconnected (buffered while disconnected) */
+  const outboundQueueRef = useRef<any[]>([]);
   
-  const MAX_RECONNECT_ATTEMPTS = 3;
+  const MAX_RECONNECT_ATTEMPTS = 15;
   const RECONNECT_DELAY_BASE = 2000;
+  const MAX_RECONNECT_DELAY = 60000;
+  const HEARTBEAT_INTERVAL = 30000;
 
   const getWebSocketUrl = useCallback(() => {
     if (url) return url;
@@ -90,6 +98,22 @@ export function WebSocketProvider({ children, url }: WebSocketProviderProps) {
     }
     return null;
   }, [url]);
+
+  const stopHeartbeat = useCallback(() => {
+    if (heartbeatIntervalRef.current) {
+      clearInterval(heartbeatIntervalRef.current);
+      heartbeatIntervalRef.current = null;
+    }
+  }, []);
+
+  const startHeartbeat = useCallback((ws: WebSocket) => {
+    stopHeartbeat();
+    heartbeatIntervalRef.current = setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'ping', timestamp: new Date().toISOString() }));
+      }
+    }, HEARTBEAT_INTERVAL);
+  }, [stopHeartbeat]);
 
   const connect = useCallback(() => {
     // Don't connect if WebSocket is disabled
@@ -117,13 +141,25 @@ export function WebSocketProvider({ children, url }: WebSocketProviderProps) {
         setStatus('connected');
         reconnectAttemptsRef.current = 0;
         console.log('[WebSocket] Connected');
-        
+
+        // Flush outbound queue (messages buffered while disconnected)
+        const queue = outboundQueueRef.current;
+        while (queue.length > 0) {
+          const msg = queue.shift();
+          if (msg != null && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(msg));
+          }
+        }
+
+        // Start heartbeat to keep connection alive
+        startHeartbeat(ws);
+
         // Send auth token if available
         const token = document.cookie
           .split('; ')
           .find(row => row.startsWith('__Host-aifm_id_token='))
           ?.split('=')[1];
-        
+
         if (token) {
           ws.send(JSON.stringify({ type: 'auth', token }));
         }
@@ -151,6 +187,8 @@ export function WebSocketProvider({ children, url }: WebSocketProviderProps) {
       };
 
       ws.onclose = (event) => {
+        stopHeartbeat();
+        
         // Check if we ever successfully connected (reconnectAttempts reset to 0 on successful connect)
         const wasConnected = reconnectAttemptsRef.current === 0 && event.code !== 1006;
         
@@ -164,8 +202,12 @@ export function WebSocketProvider({ children, url }: WebSocketProviderProps) {
         
         // Attempt to reconnect if not a clean close and under max attempts
         if (event.code !== 1000 && reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
-          const delay = RECONNECT_DELAY_BASE * Math.pow(2, reconnectAttemptsRef.current);
+          // Exponential backoff with jitter, capped at MAX_RECONNECT_DELAY
+          const baseDelay = RECONNECT_DELAY_BASE * Math.pow(2, reconnectAttemptsRef.current);
+          const jitter = Math.random() * 1000;
+          const delay = Math.min(baseDelay + jitter, MAX_RECONNECT_DELAY);
           reconnectAttemptsRef.current++;
+          console.log(`[WebSocket] Reconnecting in ${Math.round(delay)}ms (attempt ${reconnectAttemptsRef.current}/${MAX_RECONNECT_ATTEMPTS})`);
           reconnectTimeoutRef.current = setTimeout(connect, delay);
         } else if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
           // Stop trying after max attempts - WebSocket not available
@@ -187,9 +229,11 @@ export function WebSocketProvider({ children, url }: WebSocketProviderProps) {
       // Connection failed - WebSocket likely not supported or available
       setStatus('disabled');
     }
-  }, [getWebSocketUrl]);
+  }, [getWebSocketUrl, startHeartbeat, stopHeartbeat]);
 
   const disconnect = useCallback(() => {
+    stopHeartbeat();
+    
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
@@ -201,15 +245,17 @@ export function WebSocketProvider({ children, url }: WebSocketProviderProps) {
     }
     
     setStatus('disconnected');
-  }, []);
+  }, [stopHeartbeat]);
 
   const sendMessage = useCallback((message: any) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
+    } else if (WEBSOCKET_ENABLED && (status === 'disconnected' || status === 'connecting' || status === 'error')) {
+      outboundQueueRef.current.push(message);
     } else {
       console.warn('[WebSocket] Cannot send message: not connected');
     }
-  }, []);
+  }, [status]);
 
   const subscribe = useCallback((type: string, callback: (payload: any) => void) => {
     if (!subscribersRef.current.has(type)) {
@@ -229,6 +275,21 @@ export function WebSocketProvider({ children, url }: WebSocketProviderProps) {
     reconnectAttemptsRef.current = 0;
     connect();
   }, [connect, disconnect]);
+
+  // Toast on status change (connected / disconnected)
+  useEffect(() => {
+    const prev = prevStatusRef.current;
+    if (prev !== status) {
+      prevStatusRef.current = status;
+      if (status === 'connected') {
+        toast.info('Realtidsanslutning aktiv', 'Du är ansluten.');
+      } else if (status === 'disconnected' && prev === 'connected') {
+        toast.warning('Frånkopplad', 'Realtidsanslutningen bröts. Försöker återansluta.');
+      } else if (status === 'error') {
+        toast.error('WebSocket-fel', 'Kunde inte ansluta. Klicka på status för att försöka igen.');
+      }
+    }
+  }, [status, toast]);
 
   // Connect on mount (only if enabled)
   useEffect(() => {
@@ -288,11 +349,13 @@ export function WebSocketStatusIndicator() {
   
   return (
     <button
+      type="button"
       onClick={status !== 'connected' ? reconnect : undefined}
-      className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+      className="flex items-center gap-2 text-xs text-gray-600 hover:text-gray-800 transition-colors"
       title={status !== 'connected' ? 'Klicka för att återansluta' : 'Realtidsanslutning aktiv'}
+      aria-label={status !== 'connected' ? 'Återanslut realtidsuppdateringar' : 'Realtidsanslutning aktiv'}
     >
-      <span className={`w-2 h-2 rounded-full ${config.color} ${config.pulse ? 'animate-pulse' : ''}`} />
+      <span className={`w-2 h-2 rounded-full ${config.color} ${config.pulse ? 'animate-pulse' : ''}`} aria-hidden />
       <span className="hidden sm:inline">{config.text}</span>
     </button>
   );

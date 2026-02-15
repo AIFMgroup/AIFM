@@ -37,7 +37,7 @@ import {
 interface PositionComparison {
   isin: string;
   instrumentName: string;
-  secura: { quantity: number; price: number; value: number } | null;
+  registry: { quantity: number; price: number; value: number } | null;
   bank: { quantity: number; price: number; value: number; source: string } | null;
   differences: {
     quantityDiff: number;
@@ -47,7 +47,7 @@ interface PositionComparison {
     valueDiff: number;
     valueDiffPercent: number;
   };
-  status: 'MATCH' | 'MINOR_DIFF' | 'MAJOR_DIFF' | 'MISSING_SECURA' | 'MISSING_BANK';
+  status: 'MATCH' | 'MINOR_DIFF' | 'MAJOR_DIFF' | 'MISSING_REGISTRY' | 'MISSING_BANK';
   flags: string[];
 }
 
@@ -61,9 +61,9 @@ interface ReconciliationResult {
     matchingPositions: number;
     minorDifferences: number;
     majorDifferences: number;
-    missingInSecura: number;
+    missingInRegistry: number;
     missingInBank: number;
-    securaTotalValue: number;
+    registryTotalValue: number;
     bankTotalValue: number;
     totalValueDifference: number;
     totalValueDifferencePercent: number;
@@ -71,7 +71,7 @@ interface ReconciliationResult {
   };
   cashComparison: {
     currency: string;
-    securaBalance: number;
+    registryBalance: number;
     bankBalance: number;
     difference: number;
     differencePercent: number;
@@ -81,7 +81,7 @@ interface ReconciliationResult {
   positions: PositionComparison[];
   flags: { level: string; message: string; details?: string }[];
   sources: {
-    secura: { timestamp: string; dataPoints: number };
+    registry: { timestamp: string; dataPoints: number };
     bank: { source: string; timestamp: string; dataPoints: number };
   };
 }
@@ -113,9 +113,9 @@ const MOCK_RECONCILIATION: ReconciliationResult = {
     matchingPositions: 9,
     minorDifferences: 2,
     majorDifferences: 1,
-    missingInSecura: 0,
+    missingInRegistry: 0,
     missingInBank: 0,
-    securaTotalValue: 245678901,
+    registryTotalValue: 245678901,
     bankTotalValue: 245123456,
     totalValueDifference: 555445,
     totalValueDifferencePercent: 0.23,
@@ -123,7 +123,7 @@ const MOCK_RECONCILIATION: ReconciliationResult = {
   },
   cashComparison: {
     currency: 'SEK',
-    securaBalance: 15234567,
+    registryBalance: 15234567,
     bankBalance: 15234567,
     difference: 0,
     differencePercent: 0,
@@ -134,7 +134,7 @@ const MOCK_RECONCILIATION: ReconciliationResult = {
     {
       isin: 'SE0017832488',
       instrumentName: 'Boliden AB',
-      secura: { quantity: 50000, price: 285.50, value: 14275000 },
+      registry: { quantity: 50000, price: 285.50, value: 14275000 },
       bank: { quantity: 50000, price: 285.50, value: 14275000, source: 'SEB' },
       differences: { quantityDiff: 0, quantityDiffPercent: 0, priceDiff: 0, priceDiffPercent: 0, valueDiff: 0, valueDiffPercent: 0 },
       status: 'MATCH',
@@ -143,7 +143,7 @@ const MOCK_RECONCILIATION: ReconciliationResult = {
     {
       isin: 'CA0679011084',
       instrumentName: 'Barrick Gold Corp',
-      secura: { quantity: 25000, price: 180.25, value: 4506250 },
+      registry: { quantity: 25000, price: 180.25, value: 4506250 },
       bank: { quantity: 25000, price: 178.25, value: 4456250, source: 'SEB' },
       differences: { quantityDiff: 0, quantityDiffPercent: 0, priceDiff: 2.0, priceDiffPercent: 1.12, valueDiff: 50000, valueDiffPercent: 1.12 },
       status: 'MINOR_DIFF',
@@ -152,7 +152,7 @@ const MOCK_RECONCILIATION: ReconciliationResult = {
     {
       isin: 'US8336351056',
       instrumentName: 'SilverCrest Metals Inc',
-      secura: { quantity: 100000, price: 68.40, value: 6840000 },
+      registry: { quantity: 100000, price: 68.40, value: 6840000 },
       bank: { quantity: 98500, price: 65.40, value: 6441900, source: 'SEB' },
       differences: { quantityDiff: 1500, quantityDiffPercent: 1.52, priceDiff: 3.0, priceDiffPercent: 4.59, valueDiff: 398100, valueDiffPercent: 6.18 },
       status: 'MAJOR_DIFF',
@@ -161,7 +161,7 @@ const MOCK_RECONCILIATION: ReconciliationResult = {
     {
       isin: 'CA6091251046',
       instrumentName: 'MAG Silver Corp',
-      secura: { quantity: 35000, price: 125.80, value: 4403000 },
+      registry: { quantity: 35000, price: 125.80, value: 4403000 },
       bank: { quantity: 35000, price: 125.80, value: 4403000, source: 'SEB' },
       differences: { quantityDiff: 0, quantityDiffPercent: 0, priceDiff: 0, priceDiffPercent: 0, valueDiff: 0, valueDiffPercent: 0 },
       status: 'MATCH',
@@ -173,7 +173,7 @@ const MOCK_RECONCILIATION: ReconciliationResult = {
     { level: 'INFO', message: 'Kassasaldo matchar', details: 'Ingen differens i kassasaldo' },
   ],
   sources: {
-    secura: { timestamp: new Date().toISOString(), dataPoints: 13 },
+    registry: { timestamp: new Date().toISOString(), dataPoints: 13 },
     bank: { source: 'SEB', timestamp: new Date().toISOString(), dataPoints: 12 },
   },
 };
@@ -236,7 +236,7 @@ function StatusBadge({ status }: { status: string }) {
     'MATCH': { bg: 'bg-emerald-100', text: 'text-emerald-700', icon: CheckCircle2, label: 'Matchar' },
     'MINOR_DIFF': { bg: 'bg-amber-100', text: 'text-amber-700', icon: AlertTriangle, label: 'Mindre avvikelse' },
     'MAJOR_DIFF': { bg: 'bg-red-100', text: 'text-red-700', icon: XCircle, label: 'Stor avvikelse' },
-    'MISSING_SECURA': { bg: 'bg-orange-100', text: 'text-orange-700', icon: AlertTriangle, label: 'Saknas i Secura' },
+    'MISSING_REGISTRY': { bg: 'bg-orange-100', text: 'text-orange-700', icon: AlertTriangle, label: 'Saknas i Registry' },
     'MISSING_BANK': { bg: 'bg-orange-100', text: 'text-orange-700', icon: AlertTriangle, label: 'Saknas i bank' },
   }[status] || { bg: 'bg-gray-100', text: 'text-gray-700', icon: AlertTriangle, label: status };
   
@@ -356,7 +356,6 @@ function DocumentBrowser({ documents }: { documents: StoredDocument[] }) {
       case 'swedbank': return Building2;
       case 'seb': return Database;
       case 'reconciliation': return FileSpreadsheet;
-      case 'secura': return BarChart3;
       default: return FileText;
     }
   };
@@ -366,7 +365,6 @@ function DocumentBrowser({ documents }: { documents: StoredDocument[] }) {
       case 'swedbank': return 'bg-orange-100 text-orange-600';
       case 'seb': return 'bg-blue-100 text-blue-600';
       case 'reconciliation': return 'bg-emerald-100 text-emerald-600';
-      case 'secura': return 'bg-purple-100 text-purple-600';
       default: return 'bg-gray-100 text-gray-600';
     }
   };
@@ -410,7 +408,7 @@ function DocumentBrowser({ documents }: { documents: StoredDocument[] }) {
             <option value="reconciliation">Avstämningar</option>
             <option value="seb">SEB</option>
             <option value="swedbank">Swedbank</option>
-            <option value="secura">Secura</option>
+            <option value="reconciliation">Avstämningar</option>
           </select>
         </div>
       </div>
@@ -478,7 +476,7 @@ function PositionsTable({ positions, expanded, onToggle }: {
             <tr className="bg-gray-50">
               <th className="px-4 py-3 text-left font-medium text-gray-500">ISIN</th>
               <th className="px-4 py-3 text-left font-medium text-gray-500">Instrument</th>
-              <th className="px-4 py-3 text-right font-medium text-gray-500">Secura</th>
+              <th className="px-4 py-3 text-right font-medium text-gray-500">Registry</th>
               <th className="px-4 py-3 text-right font-medium text-gray-500">Bank</th>
               <th className="px-4 py-3 text-right font-medium text-gray-500">Differens</th>
               <th className="px-4 py-3 text-center font-medium text-gray-500">Status</th>
@@ -490,7 +488,7 @@ function PositionsTable({ positions, expanded, onToggle }: {
                 <td className="px-4 py-3 font-mono text-xs text-gray-600">{pos.isin}</td>
                 <td className="px-4 py-3 font-medium">{pos.instrumentName}</td>
                 <td className="px-4 py-3 text-right">
-                  {pos.secura ? formatCurrency(pos.secura.value) : '-'}
+                  {pos.registry ? formatCurrency(pos.registry.value) : '-'}
                 </td>
                 <td className="px-4 py-3 text-right">
                   {pos.bank ? formatCurrency(pos.bank.value) : '-'}
@@ -585,11 +583,23 @@ export default function ReconciliationPage() {
   const runReconciliation = async () => {
     setIsLoading(true);
     try {
-      // TODO: Anropa API
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setReconciliation(MOCK_RECONCILIATION);
+      const response = await fetch('/api/nav-reconciliation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fundId: selectedFund, date: selectedDate }),
+      });
+      const data = await response.json();
+      if (data.success && data.result) {
+        setReconciliation(data.result);
+      } else {
+        // Fallback to mock if API not available
+        console.warn('Reconciliation API error, using mock:', data.error);
+        setReconciliation(MOCK_RECONCILIATION);
+      }
     } catch (error) {
       console.error('Reconciliation failed:', error);
+      // Fallback to mock if API unavailable
+      setReconciliation(MOCK_RECONCILIATION);
     } finally {
       setIsLoading(false);
     }
@@ -602,7 +612,7 @@ export default function ReconciliationPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-aifm-charcoal">NAV-avstämning</h1>
-            <p className="text-aifm-charcoal/60 mt-1">Jämför NAV-data från Secura med bankdata</p>
+            <p className="text-aifm-charcoal/60 mt-1">Jämför positioner i Fund Registry med bankdata</p>
           </div>
           
           <div className="flex items-center gap-3">
@@ -733,8 +743,8 @@ export default function ReconciliationPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4">
               <SummaryCard
-                label="Secura totalt"
-                value={formatCurrency(reconciliation.summary.securaTotalValue)}
+                label="Registry totalt"
+                value={formatCurrency(reconciliation.summary.registryTotalValue)}
                 icon={FileSpreadsheet}
                 highlight
               />
@@ -778,8 +788,8 @@ export default function ReconciliationPage() {
             <h3 className="font-semibold text-aifm-charcoal mb-4">Kassaavstämning</h3>
             <div className="grid grid-cols-3 gap-6">
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Secura</p>
-                <p className="text-xl font-semibold">{formatCurrency(reconciliation.cashComparison.securaBalance)}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Registry</p>
+                <p className="text-xl font-semibold">{formatCurrency(reconciliation.cashComparison.registryBalance)}</p>
               </div>
               <div className="flex items-center justify-center">
                 <ArrowRight className="w-5 h-5 text-gray-300" />

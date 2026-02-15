@@ -119,7 +119,7 @@ function AddUrlModal({
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-[#2d2a26]">Lägg till regelverk</h2>
+            <h2 className="text-xl font-semibold text-aifm-charcoal tracking-tight">Lägg till regelverk</h2>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
               ✕
             </button>
@@ -129,14 +129,14 @@ function AddUrlModal({
         <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
           {/* Recommended Regulations */}
           <div>
-            <h3 className="text-sm font-medium text-[#2d2a26] mb-3">Rekommenderade regelverk</h3>
+            <h3 className="text-sm font-medium text-aifm-charcoal mb-3">Rekommenderade regelverk</h3>
             <div className="space-y-2">
               {RECOMMENDED_REGULATIONS.map((reg) => (
                 <label
                   key={reg.url}
                   className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
                     selectedPreset.includes(reg.url)
-                      ? 'border-[#c0a280] bg-[#c0a280]/5'
+                      ? 'border-aifm-gold bg-aifm-gold/5'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
@@ -144,14 +144,14 @@ function AddUrlModal({
                     type="checkbox"
                     checked={selectedPreset.includes(reg.url)}
                     onChange={() => togglePreset(reg.url)}
-                    className="mt-1 w-4 h-4 rounded border-gray-300 text-[#c0a280] focus:ring-[#c0a280]"
+                    className="mt-1 w-4 h-4 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#2d2a26]">{reg.title}</p>
+                    <p className="text-sm font-medium text-aifm-charcoal">{reg.title}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-gray-500">{reg.authority}</span>
+                      <span className="text-xs text-aifm-charcoal/40">{reg.authority}</span>
                       <span className="text-xs text-gray-300">•</span>
-                      <span className="text-xs text-[#c0a280]">{reg.category}</span>
+                      <span className="text-xs text-aifm-gold">{reg.category}</span>
                     </div>
                   </div>
                 </label>
@@ -161,14 +161,14 @@ function AddUrlModal({
 
           {/* Custom URLs */}
           <div>
-            <h3 className="text-sm font-medium text-[#2d2a26] mb-3">Egna URL:er</h3>
+            <h3 className="text-sm font-medium text-aifm-charcoal mb-3">Egna URL:er</h3>
             <textarea
               value={urls}
               onChange={(e) => setUrls(e.target.value)}
               placeholder="Klistra in URL:er (en per rad)&#10;https://www.riksdagen.se/...&#10;https://www.fi.se/..."
               rows={4}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm
-                         focus:outline-none focus:border-[#c0a280] focus:ring-2 focus:ring-[#c0a280]/10
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white
+                         focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors
                          resize-none"
             />
           </div>
@@ -185,9 +185,9 @@ function AddUrlModal({
           <button
             onClick={handleSubmit}
             disabled={isLoading || (selectedPreset.length === 0 && !urls.trim())}
-            className="px-6 py-2.5 bg-[#2d2a26] text-white rounded-xl text-sm font-medium
-                       hover:bg-[#3d3a36] disabled:opacity-50 disabled:cursor-not-allowed
-                       flex items-center gap-2"
+            className="px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium
+                       hover:bg-aifm-charcoal/90 disabled:opacity-50 disabled:cursor-not-allowed
+                       flex items-center gap-2 transition-all shadow-sm"
           >
             {isLoading ? (
               <>
@@ -269,7 +269,7 @@ function UploadModal({
       <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl">
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-[#2d2a26]">Ladda upp dokument</h2>
+            <h2 className="text-xl font-semibold text-aifm-charcoal tracking-tight">Ladda upp dokument</h2>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
               ✕
             </button>
@@ -284,17 +284,17 @@ function UploadModal({
             onDragOver={handleDrag}
             onDrop={handleDrop}
             className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-              dragActive ? 'border-[#c0a280] bg-[#c0a280]/5' : 'border-gray-200'
+              dragActive ? 'border-aifm-gold bg-aifm-gold/5' : 'border-gray-200'
             }`}
           >
             {file ? (
               <div className="flex items-center justify-center gap-3">
-                <FileText className="w-8 h-8 text-[#c0a280]" />
+                <FileText className="w-8 h-8 text-aifm-gold" />
                 <div className="text-left">
-                  <p className="font-medium text-[#2d2a26]">{file.name}</p>
-                  <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                  <p className="font-medium text-aifm-charcoal">{file.name}</p>
+                  <p className="text-xs text-aifm-charcoal/40">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                 </div>
-                <button 
+                  <button 
                   onClick={() => setFile(null)}
                   className="text-gray-400 hover:text-red-500"
                 >
@@ -304,11 +304,11 @@ function UploadModal({
             ) : (
               <>
                 <Upload className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-aifm-charcoal/60 mb-2">
                   Dra och släpp en fil här
                 </p>
-                <p className="text-xs text-gray-400 mb-4">eller</p>
-                <label className="inline-block px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-700 cursor-pointer hover:bg-gray-200">
+                <p className="text-xs text-aifm-charcoal/30 mb-4">eller</p>
+                <label className="inline-block px-4 py-2 bg-aifm-charcoal/[0.06] rounded-full text-sm text-aifm-charcoal cursor-pointer hover:bg-aifm-charcoal/10 transition-colors">
                   Välj fil
                   <input
                     type="file"
@@ -336,24 +336,24 @@ function UploadModal({
               placeholder="Titel"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm
-                         focus:outline-none focus:border-[#c0a280]"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white
+                         focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
             />
             <input
               type="text"
               placeholder="Dokumentnummer (t.ex. FFFS 2013:10)"
               value={documentNumber}
               onChange={(e) => setDocumentNumber(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm
-                         focus:outline-none focus:border-[#c0a280]"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white
+                         focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
             />
             <input
               type="text"
               placeholder="Utfärdare (t.ex. Finansinspektionen)"
               value={authority}
               onChange={(e) => setAuthority(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm
-                         focus:outline-none focus:border-[#c0a280]"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white
+                         focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
             />
           </div>
         </div>
@@ -369,9 +369,9 @@ function UploadModal({
           <button
             onClick={handleSubmit}
             disabled={!file || isLoading}
-            className="px-6 py-2.5 bg-[#2d2a26] text-white rounded-xl text-sm font-medium
-                       hover:bg-[#3d3a36] disabled:opacity-50 disabled:cursor-not-allowed
-                       flex items-center gap-2"
+            className="px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium
+                       hover:bg-aifm-charcoal/90 disabled:opacity-50 disabled:cursor-not-allowed
+                       flex items-center gap-2 transition-all shadow-sm"
           >
             {isLoading ? (
               <>
@@ -523,30 +523,31 @@ export default function ComplianceArchivePage() {
   return (
     <div className="p-4 sm:p-6 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-semibold text-[#2d2a26]">Regelverksarkiv</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Hantera dokument som används av AI-agenten
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowUrlModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl
-                       text-sm font-medium text-[#2d2a26] hover:border-[#c0a280] transition-colors"
-          >
-            <LinkIcon className="w-4 h-4" />
-            Lägg till URL
-          </button>
-          <button
-            onClick={() => setShowUploadModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#2d2a26] text-white rounded-xl
-                       text-sm font-medium hover:bg-[#3d3a36] transition-colors"
-          >
-            <Upload className="w-4 h-4" />
-            Ladda upp
-          </button>
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 py-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Regelverksarkiv</h1>
+            <p className="text-sm text-aifm-charcoal/40">
+              Hantera dokument som används av AI-agenten
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowUrlModal(true)}
+              className="flex items-center gap-2 px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm transition-all"
+            >
+              <LinkIcon className="w-4 h-4" />
+              Lägg till URL
+            </button>
+            <button
+              onClick={() => setShowUploadModal(true)}
+              className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full
+                         text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm"
+            >
+              <Upload className="w-4 h-4" />
+              Ladda upp
+            </button>
+          </div>
         </div>
       </div>
 
@@ -574,44 +575,44 @@ export default function ComplianceArchivePage() {
           placeholder="Sök i dokument..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl
-                     text-sm focus:outline-none focus:border-[#c0a280] focus:ring-2 focus:ring-[#c0a280]/10"
+          className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl bg-white
+                     text-sm focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
         />
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-2xl font-semibold text-[#2d2a26]">{documents.length}</p>
-          <p className="text-sm text-gray-500">Dokument</p>
+        <div className="bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+          <p className="text-2xl font-semibold tracking-tight text-aifm-charcoal">{documents.length}</p>
+          <p className="text-sm text-aifm-charcoal/40">Dokument</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-2xl font-semibold text-[#2d2a26]">
+        <div className="bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+          <p className="text-2xl font-semibold tracking-tight text-aifm-charcoal">
             {documents.filter(d => d.sourceType === 'url').length}
           </p>
-          <p className="text-sm text-gray-500">Webbsidor</p>
+          <p className="text-sm text-aifm-charcoal/40">Webbsidor</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-2xl font-semibold text-[#2d2a26]">
+        <div className="bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+          <p className="text-2xl font-semibold tracking-tight text-aifm-charcoal">
             {documents.filter(d => d.sourceType === 'pdf').length}
           </p>
-          <p className="text-sm text-gray-500">PDF:er</p>
+          <p className="text-sm text-aifm-charcoal/40">PDF:er</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-2xl font-semibold text-[#c0a280]">
+        <div className="bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+          <p className="text-2xl font-semibold tracking-tight text-aifm-gold">
             {new Set(documents.map(d => d.metadata.authority).filter(Boolean)).size}
           </p>
-          <p className="text-sm text-gray-500">Källor</p>
+          <p className="text-sm text-aifm-charcoal/40">Källor</p>
         </div>
       </div>
 
       {/* Documents List */}
-      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+      <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="font-medium text-[#2d2a26]">Dokument</h2>
-          <button
+          <h2 className="font-medium text-aifm-charcoal">Dokument</h2>
+            <button
             onClick={fetchDocuments}
-            className="text-gray-400 hover:text-[#c0a280] transition-colors"
+            className="text-gray-400 hover:text-aifm-gold transition-colors"
             title="Uppdatera"
           >
             <RefreshCw className="w-4 h-4" />
@@ -620,8 +621,8 @@ export default function ComplianceArchivePage() {
 
         {isLoading ? (
           <div className="p-12 text-center">
-            <Loader2 className="w-8 h-8 text-[#c0a280] animate-spin mx-auto mb-3" />
-            <p className="text-sm text-gray-500">Laddar dokument...</p>
+            <Loader2 className="w-8 h-8 text-aifm-gold animate-spin mx-auto mb-3" />
+            <p className="text-sm text-aifm-charcoal/40">Laddar dokument...</p>
           </div>
         ) : filteredDocuments.length === 0 ? (
           <div className="p-12 text-center">
@@ -632,8 +633,8 @@ export default function ComplianceArchivePage() {
             </p>
             <button
               onClick={() => setShowUrlModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#c0a280]/10 text-[#c0a280] 
-                         rounded-lg text-sm font-medium hover:bg-[#c0a280]/20 transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white 
+                         rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm"
             >
               <Plus className="w-4 h-4" />
               Lägg till ditt första dokument
@@ -647,21 +648,21 @@ export default function ComplianceArchivePage() {
                 className="p-4 hover:bg-gray-50 transition-colors flex items-start gap-4"
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                  doc.sourceType === 'url' ? 'bg-blue-50 text-blue-600' : 'bg-[#c0a280]/10 text-[#c0a280]'
+                  doc.sourceType === 'url' ? 'bg-aifm-gold/10 text-aifm-gold' : 'bg-aifm-charcoal/[0.06] text-aifm-charcoal/60'
                 }`}>
                   {getSourceIcon(doc.sourceType)}
                 </div>
                 
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-[#2d2a26] truncate">{doc.title}</h3>
+                  <h3 className="font-medium text-aifm-charcoal truncate">{doc.title}</h3>
                   <div className="flex flex-wrap items-center gap-3 mt-1">
                     {doc.metadata.documentNumber && (
-                      <span className="text-xs text-[#c0a280] bg-[#c0a280]/10 px-2 py-0.5 rounded-full">
+                      <span className="px-2.5 py-0.5 text-xs font-medium bg-aifm-gold/15 text-aifm-charcoal rounded-full">
                         {doc.metadata.documentNumber}
                       </span>
                     )}
                     {doc.metadata.authority && (
-                      <span className="flex items-center gap-1 text-xs text-gray-500">
+                      <span className="flex items-center gap-1 text-xs text-aifm-charcoal/40">
                         <Building2 className="w-3 h-3" />
                         {doc.metadata.authority}
                       </span>
@@ -679,7 +680,7 @@ export default function ComplianceArchivePage() {
                       href={doc.source}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 text-gray-400 hover:text-[#c0a280] transition-colors"
+                      className="p-2 text-gray-400 hover:text-aifm-gold transition-colors"
                       title="Öppna källa"
                     >
                       <ExternalLink className="w-4 h-4" />

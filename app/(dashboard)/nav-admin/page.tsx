@@ -35,11 +35,10 @@ interface FundNAV {
 }
 
 interface SystemStatus {
-  secura: {
-    configured: boolean;
-    connected: boolean;
-    host: string;
-    error: string | null;
+  dataSources: {
+    fundRegistry: { available: boolean; fundCount: number };
+    priceProvider: { available: boolean; source: string; message?: string };
+    seb: { configured: boolean; connected: boolean; error?: string };
   };
   database: {
     connected: boolean;
@@ -109,25 +108,25 @@ function StatCard({
 }) {
   const colors = {
     gold: 'bg-aifm-gold/10 text-aifm-gold',
-    green: 'bg-emerald-50 text-emerald-600',
-    blue: 'bg-blue-50 text-blue-600',
-    purple: 'bg-purple-50 text-purple-600',
+    green: 'bg-aifm-gold/10 text-aifm-gold',
+    blue: 'bg-aifm-charcoal/[0.06] text-aifm-charcoal',
+    purple: 'bg-aifm-gold/10 text-aifm-gold',
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg transition-shadow">
+    <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
       <div className="flex items-start justify-between mb-3">
         <div className={`p-2.5 rounded-xl ${colors[color]}`}>
           <Icon className="w-5 h-5" />
         </div>
         {trend && (
-          <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+          <span className="text-xs font-medium text-aifm-charcoal bg-aifm-gold/15 px-2.5 py-0.5 rounded-full">
             {trend}
           </span>
         )}
       </div>
-      <p className="text-2xl font-bold text-aifm-charcoal">{value}</p>
-      <p className="text-sm text-aifm-charcoal/60 mt-1">{title}</p>
+      <p className="text-2xl font-semibold tracking-tight text-aifm-charcoal">{value}</p>
+      <p className="text-sm text-aifm-charcoal/40 mt-1">{title}</p>
       {subtitle && <p className="text-xs text-aifm-charcoal/40 mt-0.5">{subtitle}</p>}
     </div>
   );
@@ -145,7 +144,7 @@ function ProcessCard({ process }: { process: ProcessStatus }) {
   const StatusIcon = config.icon;
 
   return (
-    <div className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl hover:bg-gray-100/50 transition-colors">
+    <div className="flex items-center justify-between p-4 bg-aifm-charcoal/[0.02] rounded-xl hover:bg-aifm-charcoal/[0.04] transition-colors">
       <div className="flex items-center gap-3">
         <div className={`p-2 rounded-lg ${config.bg}`}>
           <StatusIcon className={`w-4 h-4 ${config.color} ${process.status === 'running' ? 'animate-spin' : ''}`} />
@@ -164,7 +163,7 @@ function ProcessCard({ process }: { process: ProcessStatus }) {
       </div>
       <div className="flex items-center gap-3">
         {process.savedTime && (
-          <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full flex items-center gap-1">
+          <span className="text-xs font-medium text-aifm-charcoal bg-aifm-gold/15 px-2.5 py-0.5 rounded-full flex items-center gap-1">
             <Timer className="w-3 h-3" />
             {process.savedTime} sparad
           </span>
@@ -197,8 +196,8 @@ function QuickActionCard({
   const content = (
     <>
       <div className="flex items-start justify-between mb-4">
-        <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-          <Icon className="w-6 h-6 text-white" />
+        <div className={`w-12 h-12 rounded-xl bg-aifm-charcoal flex items-center justify-center group-hover:scale-110 transition-transform`}>
+          <Icon className="w-6 h-6 text-aifm-gold" />
         </div>
         {badge && (
           <span className="px-2 py-1 bg-aifm-gold/10 text-aifm-gold text-xs font-medium rounded-full">
@@ -363,49 +362,51 @@ export default function NAVAdminPage() {
       {/* Connection Status Banner */}
       {systemStatus && (
         <div className={`flex items-center gap-3 px-4 py-3 rounded-xl ${
-          systemStatus.secura.connected 
+          systemStatus.readiness.fullyOperational 
             ? 'bg-emerald-50 border border-emerald-200' 
-            : systemStatus.secura.configured
+            : systemStatus.dataSources.fundRegistry.available
               ? 'bg-amber-50 border border-amber-200'
-              : 'bg-blue-50 border border-blue-200'
+              : 'bg-aifm-charcoal/[0.04] border border-aifm-charcoal/10'
         }`}>
-          {systemStatus.secura.connected ? (
+          {systemStatus.readiness.fullyOperational ? (
             <>
               <Wifi className="w-5 h-5 text-emerald-600" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-emerald-800">SECURA ansluten</p>
-                <p className="text-xs text-emerald-600">Live-data från {systemStatus.secura.host}</p>
+                <p className="text-sm font-medium text-emerald-800">Datakällor anslutna</p>
+                <p className="text-xs text-emerald-600">
+                  Fund Registry ({systemStatus.dataSources.fundRegistry.fundCount} fonder) &bull; {systemStatus.dataSources.priceProvider.source} &bull; SEB
+                </p>
               </div>
             </>
-          ) : systemStatus.secura.configured ? (
+          ) : systemStatus.dataSources.fundRegistry.available ? (
             <>
               <WifiOff className="w-5 h-5 text-amber-600" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-amber-800">SECURA ej tillgänglig</p>
-                <p className="text-xs text-amber-600">{systemStatus.secura.error || 'Anslutningen misslyckades'}</p>
+                <p className="text-sm font-medium text-amber-800">Delvis ansluten</p>
+                <p className="text-xs text-amber-600">{systemStatus.dataSources.priceProvider.message || 'Vissa datakällor ej tillgängliga'}</p>
               </div>
             </>
           ) : (
             <>
-              <Database className="w-5 h-5 text-blue-600" />
+              <Database className="w-5 h-5 text-aifm-charcoal/60" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-blue-800">Demo-läge</p>
-                <p className="text-xs text-blue-600">Konfigurera SECURA API-nyckel för live-data</p>
+                <p className="text-sm font-medium text-aifm-charcoal">Demo-läge</p>
+                <p className="text-xs text-aifm-charcoal/40">Konfigurera datakällor (LSEG, SEB, Fund Registry) för live-data</p>
               </div>
               <Link
                 href="/nav-admin/settings"
-                className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-aifm-charcoal text-white text-xs font-medium rounded-full hover:bg-aifm-charcoal/90 transition-all shadow-sm"
               >
                 Konfigurera
               </Link>
             </>
           )}
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            dataSource === 'secura' ? 'bg-emerald-100 text-emerald-700' :
-            dataSource === 'database' ? 'bg-purple-100 text-purple-700' :
-            'bg-gray-100 text-gray-700'
+          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            dataSource === 'live' ? 'bg-emerald-100 text-emerald-700' :
+            dataSource === 'database' ? 'bg-aifm-gold/15 text-aifm-charcoal' :
+            'bg-gray-100 text-aifm-charcoal/60'
           }`}>
-            {dataSource === 'secura' ? 'SECURA' : dataSource === 'database' ? 'Databas' : 'Mock'}
+            {dataSource === 'live' ? 'Live' : dataSource === 'database' ? 'Databas' : 'Mock'}
           </span>
         </div>
       )}
@@ -413,8 +414,8 @@ export default function NAVAdminPage() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-aifm-charcoal">NAV-processer</h1>
-          <p className="text-aifm-charcoal/60 mt-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-aifm-charcoal">NAV-processer</h1>
+          <p className="text-aifm-charcoal/40 mt-1">
             Automatisera NAV-rapportering, prisdata och ägardata
           </p>
         </div>
@@ -423,11 +424,11 @@ export default function NAVAdminPage() {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="flex-1 sm:flex-none px-3 sm:px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-aifm-gold/50"
+            className="flex-1 sm:flex-none px-3 sm:px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
           />
           <Link
             href="/nav-admin/settings"
-            className="flex items-center gap-2 px-3 sm:px-4 py-2.5 bg-white border border-gray-200 text-aifm-charcoal rounded-xl hover:border-aifm-gold/50 hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2.5 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm transition-all"
           >
             <Settings className="w-4 h-4" />
             <span className="text-sm font-medium hidden sm:inline">Inställningar</span>
@@ -435,7 +436,7 @@ export default function NAVAdminPage() {
           <button 
             onClick={() => fetchNAVData(true)}
             disabled={isRefreshing}
-            className="flex items-center gap-2 px-3 sm:px-4 py-2.5 bg-aifm-charcoal text-white rounded-xl hover:bg-aifm-charcoal/90 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm disabled:opacity-50"
           >
             {isRefreshing ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -498,7 +499,7 @@ export default function NAVAdminPage() {
       <div>
         <div className="flex items-center gap-2 mb-4">
           <Shield className="w-5 h-5 text-aifm-gold" />
-          <h2 className="text-lg font-semibold text-aifm-charcoal">Dagens NAV-godkännande</h2>
+          <h2 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Dagens NAV-godkännande</h2>
         </div>
         <NAVApprovalCard
           onApprove={handleApprove}
@@ -511,7 +512,7 @@ export default function NAVAdminPage() {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-lg font-semibold text-aifm-charcoal mb-4">Snabbåtgärder</h2>
+        <h2 className="text-lg font-semibold text-aifm-charcoal tracking-tight mb-4">Snabbåtgärder</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
           <QuickActionCard
             title="NAV-historik"
@@ -552,7 +553,7 @@ export default function NAVAdminPage() {
         </div>
         
         {/* Tools & Analysis Section */}
-        <h2 className="text-lg font-semibold text-aifm-charcoal mb-4 mt-8">Verktyg & Analys</h2>
+        <h2 className="text-lg font-semibold text-aifm-charcoal tracking-tight mb-4 mt-8">Verktyg & Analys</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           <QuickActionCard
             title="NAV-simulator"
@@ -581,7 +582,7 @@ export default function NAVAdminPage() {
         </div>
 
         {/* Investor Management Section */}
-        <h2 className="text-lg font-semibold text-aifm-charcoal mb-4 mt-8">Investerarhantering</h2>
+        <h2 className="text-lg font-semibold text-aifm-charcoal tracking-tight mb-4 mt-8">Investerarhantering</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           <QuickActionCard
             title="Andelsägare"
@@ -600,7 +601,7 @@ export default function NAVAdminPage() {
         </div>
 
         {/* Bank Integration Section */}
-        <h2 className="text-lg font-semibold text-aifm-charcoal mb-4 mt-8">Bankintegration</h2>
+        <h2 className="text-lg font-semibold text-aifm-charcoal tracking-tight mb-4 mt-8">Bankintegration</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           <QuickActionCard
             title="Bankavstämning"
@@ -649,15 +650,15 @@ export default function NAVAdminPage() {
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         <div className="px-4 sm:px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-base sm:text-lg font-semibold text-aifm-charcoal">Aktuella NAV-kurser</h2>
+            <h2 className="text-base sm:text-lg font-semibold text-aifm-charcoal tracking-tight">Aktuella NAV-kurser</h2>
             <p className="text-xs sm:text-sm text-aifm-charcoal/50 mt-0.5">Data från {selectedDate}</p>
           </div>
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 px-3 py-2 text-sm text-aifm-charcoal/70 hover:text-aifm-charcoal border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
+            <button className="flex items-center gap-2 px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm transition-all">
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">Exportera Excel</span>
             </button>
-            <button className="flex items-center gap-2 px-3 py-2 text-sm text-white bg-aifm-gold rounded-lg hover:bg-aifm-gold/90 transition-colors">
+            <button className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm">
               <Mail className="w-4 h-4" />
               <span className="hidden sm:inline">Skicka rapport</span>
             </button>
@@ -675,7 +676,7 @@ export default function NAVAdminPage() {
             <p className="text-sm text-red-600">{error}</p>
             <button 
               onClick={() => fetchNAVData(true)}
-              className="mt-3 px-4 py-2 text-sm bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+              className="mt-3 px-4 py-2 text-sm bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition-colors"
             >
               Försök igen
             </button>
@@ -684,20 +685,20 @@ export default function NAVAdminPage() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px]">
               <thead>
-                <tr className="bg-gray-50/50">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">ISIN</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">Fond</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">Valuta</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">NAV kurs</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">Förändring</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">AUM</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">Utst. andelar</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-aifm-charcoal/70 uppercase tracking-wider">Status</th>
+                <tr className="bg-aifm-charcoal/[0.03]">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">ISIN</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Fond</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Valuta</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">NAV kurs</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Förändring</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">AUM</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Utst. andelar</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {fundNAVs.map((fund) => (
-                  <tr key={fund.isin} className="hover:bg-gray-50/50 transition-colors">
+                  <tr key={fund.isin} className="hover:bg-aifm-charcoal/[0.02] transition-colors">
                     <td className="px-4 py-3">
                       <span className="font-mono text-sm text-aifm-charcoal/70">{fund.isin}</span>
                     </td>
@@ -730,9 +731,9 @@ export default function NAVAdminPage() {
                       {formatCurrency(fund.sharesOutstanding)}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         fund.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' :
-                        fund.status === 'PUBLISHED' ? 'bg-blue-100 text-blue-700' :
+                        fund.status === 'PUBLISHED' ? 'bg-aifm-gold/15 text-aifm-charcoal' :
                         'bg-amber-100 text-amber-700'
                       }`}>
                         {fund.status === 'APPROVED' ? 'Godkänd' :
@@ -751,21 +752,21 @@ export default function NAVAdminPage() {
       <div className="bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/90 rounded-2xl p-4 sm:p-6 text-white">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h2 className="text-base sm:text-lg font-semibold mb-2">Effektiviseringsöversikt</h2>
+            <h2 className="text-base sm:text-lg font-semibold tracking-tight mb-2">Effektiviseringsöversikt</h2>
             <p className="text-white/70 text-xs sm:text-sm mb-4">
               Genom automatisering av NAV-processer sparar ni uppskattningsvis:
             </p>
             <div className="grid grid-cols-3 gap-3 sm:gap-6">
               <div>
-                <p className="text-xl sm:text-3xl font-bold text-aifm-gold">45-90 min</p>
+                <p className="text-xl sm:text-3xl font-semibold tracking-tight text-aifm-gold">45-90 min</p>
                 <p className="text-xs sm:text-sm text-white/60">per dag</p>
               </div>
               <div>
-                <p className="text-xl sm:text-3xl font-bold text-aifm-gold">~6 tim</p>
+                <p className="text-xl sm:text-3xl font-semibold tracking-tight text-aifm-gold">~6 tim</p>
                 <p className="text-xs sm:text-sm text-white/60">per vecka</p>
               </div>
               <div>
-                <p className="text-xl sm:text-3xl font-bold text-aifm-gold">~25 tim</p>
+                <p className="text-xl sm:text-3xl font-semibold tracking-tight text-aifm-gold">~25 tim</p>
                 <p className="text-xs sm:text-sm text-white/60">per månad</p>
               </div>
             </div>

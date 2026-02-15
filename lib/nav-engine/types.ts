@@ -399,7 +399,7 @@ export interface NAVComparison {
   
   calculated: NAVCalculationResult;
   reference?: {
-    source: 'SECURA' | 'ADMINISTRATOR' | 'PREVIOUS';
+    source: 'FUND_REGISTRY' | 'ADMINISTRATOR' | 'PREVIOUS' | 'SEB';
     navPerShare: number;
     netAssetValue: number;
     timestamp: string;

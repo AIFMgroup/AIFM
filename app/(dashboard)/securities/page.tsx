@@ -22,6 +22,8 @@ import {
   Edit3,
   Trash2,
   Download,
+  Leaf,
+  ShieldAlert,
 } from 'lucide-react';
 import type { SecurityApprovalRequest, SecurityApprovalSummary } from '@/lib/integrations/securities';
 
@@ -199,34 +201,34 @@ export default function SecuritiesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-6 py-5">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-semibold text-aifm-charcoal">Värdepappersgodkännanden</h1>
-              <p className="text-sm text-gray-500 mt-1">Hantera ansökningar för nya värdepapper i fonderna</p>
+              <h1 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Värdepappersgodkännanden</h1>
+              <p className="text-sm text-aifm-charcoal/40 mt-1">Hantera ansökningar för nya värdepapper i fonderna</p>
             </div>
             <button
               onClick={() => router.push('/securities/new-approval')}
-              className="flex items-center gap-2 px-4 py-2.5 bg-aifm-charcoal text-white rounded-xl hover:bg-aifm-charcoal/90 transition-colors shadow-lg shadow-aifm-charcoal/20"
+              className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full hover:bg-aifm-charcoal/90 transition-all shadow-sm text-sm font-medium"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-4 h-4" />
               Ny ansökan
             </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-6 py-6">
         {/* Success Message */}
         {showSuccessMessage && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-center gap-3">
-            <CheckCircle2 className="w-5 h-5 text-green-600" />
+          <div className="mb-6 p-4 bg-aifm-gold/5 border border-aifm-gold/20 rounded-xl flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-aifm-gold" />
             <div>
-              <p className="font-medium text-green-900">Ansökan skickad!</p>
-              <p className="text-sm text-green-700">Din ansökan har skickats till Operations för granskning.</p>
+              <p className="font-medium text-aifm-charcoal">Ansökan skickad!</p>
+              <p className="text-sm text-aifm-charcoal/60">Din ansökan har skickats till Operations för granskning.</p>
             </div>
           </div>
         )}
@@ -235,12 +237,12 @@ export default function SecuritiesPage() {
         {drafts.length > 0 && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold text-aifm-charcoal">Dina utkast</h2>
+              <h2 className="text-sm font-semibold text-aifm-charcoal tracking-tight">Dina utkast</h2>
               <button
                 onClick={() => setShowCopyModal(true)}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-1.5 text-xs font-medium text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full transition-all"
               >
-                <Copy className="w-4 h-4" />
+                <Copy className="w-3.5 h-3.5" />
                 Kopiera från tidigare
               </button>
             </div>
@@ -249,7 +251,7 @@ export default function SecuritiesPage() {
                 <div
                   key={draft.id}
                   onClick={() => router.push(`/securities/new-approval?draftId=${draft.id}`)}
-                  className="bg-white rounded-xl border border-gray-200 p-4 hover:border-aifm-gold hover:shadow-md cursor-pointer transition-all group"
+                  className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-aifm-gold/30 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] cursor-pointer transition-all duration-300 group"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
@@ -261,7 +263,7 @@ export default function SecuritiesPage() {
                         {draft.isin && <span>• {draft.isin}</span>}
                       </div>
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
+                        <span className="px-2.5 py-0.5 text-xs font-medium bg-aifm-gold/10 text-aifm-charcoal/70 rounded-full">
                           Steg {draft.step}/8
                         </span>
                         <span className="text-xs text-gray-400">
@@ -307,11 +309,11 @@ export default function SecuritiesPage() {
 
         {/* Copy from Previous Modal */}
         {showCopyModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
-              <div className="p-4 border-b border-gray-200">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+              <div className="p-6 border-b border-gray-100">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-aifm-charcoal">Kopiera från tidigare ansökan</h3>
+                  <h3 className="text-sm font-semibold text-aifm-charcoal tracking-tight">Kopiera från tidigare ansökan</h3>
                   <button
                     onClick={() => setShowCopyModal(false)}
                     className="p-1 text-gray-400 hover:text-gray-600"
@@ -373,48 +375,48 @@ export default function SecuritiesPage() {
 
         {/* Summary Cards */}
         {summary && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-blue-600" />
+                <div className="w-10 h-10 rounded-xl bg-aifm-gold/10 flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-aifm-gold" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-aifm-charcoal">{summary.totalPending}</p>
-                  <p className="text-sm text-gray-500">Väntar på beslut</p>
+                  <p className="text-2xl font-semibold text-aifm-charcoal tracking-tight">{summary.totalPending}</p>
+                  <p className="text-xs text-aifm-charcoal/40">Väntar på beslut</p>
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                  <CheckCircle2 className="w-5 h-5 text-green-600" />
+                <div className="w-10 h-10 rounded-xl bg-aifm-charcoal/5 flex items-center justify-center">
+                  <CheckCircle2 className="w-5 h-5 text-aifm-charcoal/60" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-aifm-charcoal">{summary.totalApproved}</p>
-                  <p className="text-sm text-gray-500">Godkända</p>
+                  <p className="text-2xl font-semibold text-aifm-charcoal tracking-tight">{summary.totalApproved}</p>
+                  <p className="text-xs text-aifm-charcoal/40">Godkända</p>
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
-                  <XCircle className="w-5 h-5 text-red-600" />
+                <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+                  <XCircle className="w-5 h-5 text-red-400" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-aifm-charcoal">{summary.totalRejected}</p>
-                  <p className="text-sm text-gray-500">Avvisade</p>
+                  <p className="text-2xl font-semibold text-aifm-charcoal tracking-tight">{summary.totalRejected}</p>
+                  <p className="text-xs text-aifm-charcoal/40">Avvisade</p>
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-amber-600" />
+                <div className="w-10 h-10 rounded-xl bg-aifm-gold/8 flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-aifm-gold" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-aifm-charcoal">{summary.expiringApprovals.length}</p>
-                  <p className="text-sm text-gray-500">Utgår inom 30 dagar</p>
+                  <p className="text-2xl font-semibold text-aifm-charcoal tracking-tight">{summary.expiringApprovals.length}</p>
+                  <p className="text-xs text-aifm-charcoal/40">Utgår inom 30 dagar</p>
                 </div>
               </div>
             </div>
@@ -422,22 +424,22 @@ export default function SecuritiesPage() {
         )}
 
         {/* Filters */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-aifm-charcoal/30" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Sök på namn, ISIN, ticker eller fond..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold"
+                className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
               />
             </div>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold"
+              className="px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
             >
               <option value="all">Alla status</option>
               <option value="draft">Utkast</option>
@@ -447,7 +449,7 @@ export default function SecuritiesPage() {
             </select>
             <button
               onClick={loadApprovals}
-              className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 border border-gray-300 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full transition-all text-sm"
             >
               <RefreshCw className="w-4 h-4" />
               Uppdatera
@@ -456,7 +458,7 @@ export default function SecuritiesPage() {
         </div>
 
         {/* Approvals List */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
@@ -485,8 +487,8 @@ export default function SecuritiesPage() {
                     onClick={() => router.push(`/securities/${approval.id}`)}
                     className="flex items-center gap-4 p-4 hover:bg-gray-50 cursor-pointer transition-colors"
                   >
-                    <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                      <TrendingUp className="w-5 h-5 text-gray-600" />
+                    <div className="w-10 h-10 rounded-xl bg-aifm-charcoal/5 flex items-center justify-center flex-shrink-0">
+                      <TrendingUp className="w-5 h-5 text-aifm-charcoal/60" />
                     </div>
                     
                     <div className="flex-1 min-w-0">
@@ -507,6 +509,22 @@ export default function SecuritiesPage() {
                           <Building2 className="w-3 h-3" />
                           {approval.fundName}
                         </span>
+                        {approval.esgInfo && (
+                          <>
+                            <span>•</span>
+                            {approval.esgInfo.meetsExclusionCriteria ? (
+                              <span className="flex items-center gap-1 text-green-600">
+                                <Leaf className="w-3 h-3" />
+                                ESG OK
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 text-amber-600">
+                                <ShieldAlert className="w-3 h-3" />
+                                ESG-varning
+                              </span>
+                            )}
+                          </>
+                        )}
                       </div>
                     </div>
 
@@ -557,22 +575,22 @@ export default function SecuritiesPage() {
                     <div
                       key={approval.id}
                       onClick={() => router.push(`/securities/${approval.id}`)}
-                      className="flex items-center gap-4 p-4 hover:bg-amber-100/50 cursor-pointer transition-colors"
+                      className="flex items-center gap-4 p-4 hover:bg-aifm-gold/5 cursor-pointer transition-colors"
                     >
-                      <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                      <AlertCircle className="w-5 h-5 text-aifm-gold flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-amber-900">{approval.basicInfo.name}</p>
-                        <p className="text-sm text-amber-700">{approval.fundName}</p>
+                        <p className="font-medium text-aifm-charcoal">{approval.basicInfo.name}</p>
+                        <p className="text-sm text-aifm-charcoal/60">{approval.fundName}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium text-amber-900">
+                        <p className="text-sm font-medium text-aifm-charcoal">
                           {daysUntilExpiry} dagar kvar
                         </p>
-                        <p className="text-xs text-amber-600">
+                        <p className="text-xs text-aifm-charcoal/40">
                           Utgår {formatDate(approval.expiresAt!)}
                         </p>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-amber-600" />
+                      <ChevronRight className="w-5 h-5 text-aifm-charcoal/30" />
                     </div>
                   );
                 })}

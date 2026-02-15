@@ -86,17 +86,17 @@ function formatLargeCurrency(value: number): string {
 
 function SourceBadge({ source }: { source: PriceDataSource }) {
   const config: Record<PriceDataSource, { label: string; color: string; icon: React.ElementType }> = {
-    mock: { label: 'Test', color: 'bg-gray-100 text-gray-600', icon: Database },
-    csv: { label: 'CSV', color: 'bg-blue-50 text-blue-600', icon: FileSpreadsheet },
+    mock: { label: 'Test', color: 'bg-gray-100 text-aifm-charcoal/60', icon: Database },
+    csv: { label: 'CSV', color: 'bg-aifm-charcoal/[0.06] text-aifm-charcoal', icon: FileSpreadsheet },
     manual: { label: 'Manuell', color: 'bg-amber-50 text-amber-600', icon: Edit3 },
-    fund_registry: { label: 'Fondregister', color: 'bg-emerald-50 text-emerald-600', icon: Database },
-    lseg: { label: 'LSEG', color: 'bg-purple-50 text-purple-600', icon: Globe },
+    fund_registry: { label: 'Fondregister', color: 'bg-aifm-gold/15 text-aifm-charcoal', icon: Database },
+    lseg: { label: 'LSEG', color: 'bg-aifm-charcoal/[0.06] text-aifm-charcoal', icon: Globe },
   };
 
   const { label, color, icon: Icon } = config[source];
 
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${color}`}>
+    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${color}`}>
       <Icon className="w-3 h-3" />
       {label}
     </span>
@@ -113,7 +113,7 @@ function StatusBadge({ status }: { status: Institution['status'] }) {
   const { label, color, icon: Icon } = config[status];
 
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${color}`}>
+    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${color}`}>
       <Icon className="w-3 h-3" />
       {label}
     </span>
@@ -136,31 +136,31 @@ function ProviderCard({
       name: 'Test/Mock', 
       description: 'Använd testdata för utveckling',
       icon: Database, 
-      color: 'from-gray-500 to-gray-600' 
+      color: 'bg-aifm-charcoal/80' 
     },
     csv: { 
       name: 'CSV Import', 
       description: 'Ladda upp prisdata från Excel/CSV',
       icon: FileSpreadsheet, 
-      color: 'from-blue-500 to-blue-600' 
+      color: 'bg-aifm-charcoal' 
     },
     manual: { 
       name: 'Manuell inmatning', 
       description: 'Mata in priser direkt i systemet',
       icon: Edit3, 
-      color: 'from-amber-500 to-amber-600' 
+      color: 'bg-aifm-gold' 
     },
     fund_registry: { 
       name: 'Fondregister', 
       description: 'Internt fondregister med NAV-data',
       icon: Database, 
-      color: 'from-emerald-500 to-emerald-600' 
+      color: 'bg-aifm-charcoal' 
     },
     lseg: { 
       name: 'LSEG/Refinitiv', 
       description: 'Realtidspriser från LSEG (kräver licens)',
       icon: Globe, 
-      color: 'from-purple-500 to-purple-600' 
+      color: 'bg-aifm-charcoal' 
     },
   };
 
@@ -181,7 +181,7 @@ function ProviderCard({
         </div>
       )}
       
-      <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${color} flex items-center justify-center mb-3`}>
+      <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center mb-3`}>
         <Icon className="w-5 h-5 text-white" />
       </div>
       
@@ -323,7 +323,7 @@ function CSVUploadModal({
               value={csvText}
               onChange={(e) => { setCsvText(e.target.value); setError(null); }}
               placeholder="ISIN;Fondnamn;NAV;Datum;Valuta&#10;SE0019175563;AUAG Essential Metals A;142.42;2025-01-17;SEK"
-              className="w-full h-40 px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:border-aifm-gold resize-none"
+              className="w-full h-40 px-3 py-2 border border-gray-200 rounded-xl text-sm font-mono bg-white focus:outline-none focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors resize-none"
             />
           </div>
 
@@ -334,7 +334,7 @@ function CSVUploadModal({
             </div>
           )}
 
-          <div className="bg-gray-50 rounded-lg p-4">
+          <div className="bg-aifm-charcoal/[0.02] rounded-xl p-4">
             <h4 className="text-sm font-medium text-aifm-charcoal mb-2">Obligatoriska kolumner:</h4>
             <ul className="text-xs text-aifm-charcoal/70 space-y-1">
               <li>• <code className="bg-white px-1 rounded">ISIN</code> - Fondens ISIN-kod</li>
@@ -353,14 +353,14 @@ function CSVUploadModal({
         <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-aifm-charcoal hover:bg-gray-100 rounded-lg"
+            className="px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm transition-all"
           >
             Avbryt
           </button>
           <button
             onClick={handleSubmit}
             disabled={!csvText.trim()}
-            className="px-4 py-2 text-sm bg-aifm-gold text-white rounded-lg hover:bg-aifm-gold/90 disabled:opacity-50"
+            className="px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm disabled:opacity-50"
           >
             Importera
           </button>
@@ -455,7 +455,7 @@ function ManualPriceModal({
               <select
                 value={formData.fundId}
                 onChange={(e) => handleFundSelect(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold"
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
               >
                 <option value="">-- Välj fond --</option>
                 {existingFunds.map(f => (
@@ -475,7 +475,7 @@ function ManualPriceModal({
                 value={formData.isin}
                 onChange={(e) => setFormData(prev => ({ ...prev, isin: e.target.value }))}
                 placeholder="SE0019175563"
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold"
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
               />
             </div>
             
@@ -486,7 +486,7 @@ function ManualPriceModal({
                 value={formData.fundName}
                 onChange={(e) => setFormData(prev => ({ ...prev, fundName: e.target.value }))}
                 placeholder="AUAG Essential Metals A"
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold"
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
               />
             </div>
 
@@ -498,7 +498,7 @@ function ManualPriceModal({
                 value={formData.nav}
                 onChange={(e) => setFormData(prev => ({ ...prev, nav: e.target.value }))}
                 placeholder="142.42"
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold"
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
               />
             </div>
 
@@ -508,7 +508,7 @@ function ManualPriceModal({
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold"
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
               />
             </div>
 
@@ -517,7 +517,7 @@ function ManualPriceModal({
               <select
                 value={formData.currency}
                 onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold"
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
               >
                 <option value="SEK">SEK</option>
                 <option value="EUR">EUR</option>
@@ -535,7 +535,7 @@ function ManualPriceModal({
                 value={formData.aum}
                 onChange={(e) => setFormData(prev => ({ ...prev, aum: e.target.value }))}
                 placeholder="395584099.11"
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold"
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
               />
             </div>
           </div>
@@ -544,14 +544,14 @@ function ManualPriceModal({
         <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-aifm-charcoal hover:bg-gray-100 rounded-lg"
+            className="px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm transition-all"
           >
             Avbryt
           </button>
           <button
             onClick={handleSubmit}
             disabled={!formData.isin || !formData.nav}
-            className="px-4 py-2 text-sm bg-aifm-gold text-white rounded-lg hover:bg-aifm-gold/90 disabled:opacity-50"
+            className="px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm disabled:opacity-50"
           >
             Spara
           </button>
@@ -705,15 +705,17 @@ export default function PriceDataPage() {
       )}
 
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/nav-admin" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-          <ArrowLeft className="w-5 h-5 text-aifm-charcoal/60" />
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-aifm-charcoal">Prisdata-hantering</h1>
-          <p className="text-aifm-charcoal/60 mt-1">
-            Hantera priskällor, importera data och skicka till institut
-          </p>
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-10 -mx-6 -mt-6 px-6 py-4 mb-2">
+        <div className="flex items-center gap-4">
+          <Link href="/nav-admin" className="p-2 hover:bg-aifm-charcoal/[0.04] rounded-xl transition-colors">
+            <ArrowLeft className="w-5 h-5 text-aifm-charcoal/60" />
+          </Link>
+          <div className="flex-1">
+            <h1 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Prisdata-hantering</h1>
+            <p className="text-sm text-aifm-charcoal/40">
+              Hantera priskällor, importera data och skicka till institut
+            </p>
+          </div>
         </div>
       </div>
 
@@ -721,20 +723,20 @@ export default function PriceDataPage() {
       <div className="bg-white rounded-2xl border border-gray-100 p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="font-semibold text-aifm-charcoal">Priskälla</h2>
+            <h2 className="font-semibold text-aifm-charcoal tracking-tight">Priskälla</h2>
             <p className="text-sm text-aifm-charcoal/60">Välj var prisdata ska hämtas från</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsCSVModalOpen(true)}
-              className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg hover:border-gray-300 text-sm"
+              className="flex items-center gap-2 px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm transition-all"
             >
               <Upload className="w-4 h-4" />
               Importera CSV
             </button>
             <button
               onClick={() => setIsManualModalOpen(true)}
-              className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg hover:border-gray-300 text-sm"
+              className="flex items-center gap-2 px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm transition-all"
             >
               <Plus className="w-4 h-4" />
               Lägg till pris
@@ -772,23 +774,23 @@ export default function PriceDataPage() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
-          <p className="text-2xl font-bold text-aifm-charcoal">{priceData.length}</p>
-          <p className="text-sm text-aifm-charcoal/60">Andelsklasser</p>
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+          <p className="text-2xl font-semibold tracking-tight text-aifm-charcoal">{priceData.length}</p>
+          <p className="text-sm text-aifm-charcoal/40">Andelsklasser</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
-          <p className="text-2xl font-bold text-emerald-600">{mockInstitutions.filter(i => i.status === 'sent').length}</p>
-          <p className="text-sm text-aifm-charcoal/60">Skickade idag</p>
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+          <p className="text-2xl font-semibold tracking-tight text-emerald-600">{mockInstitutions.filter(i => i.status === 'sent').length}</p>
+          <p className="text-sm text-aifm-charcoal/40">Skickade idag</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
-          <p className="text-2xl font-bold text-aifm-charcoal">{mockInstitutions.length}</p>
-          <p className="text-sm text-aifm-charcoal/60">Mottagare</p>
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+          <p className="text-2xl font-semibold tracking-tight text-aifm-charcoal">{mockInstitutions.length}</p>
+          <p className="text-sm text-aifm-charcoal/40">Mottagare</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
           <div className="flex items-center gap-2">
             <SourceBadge source={activeSource} />
           </div>
-          <p className="text-sm text-aifm-charcoal/60 mt-1">Aktiv källa</p>
+          <p className="text-sm text-aifm-charcoal/40 mt-1">Aktiv källa</p>
         </div>
       </div>
 
@@ -801,26 +803,26 @@ export default function PriceDataPage() {
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold/50"
+              className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
             />
           </div>
           <button 
             onClick={fetchPriceData}
-            className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm transition-all"
           >
-            <RefreshCw className={`w-4 h-4 text-aifm-charcoal/60 ${isLoading ? 'animate-spin' : ''}`} />
-            <span className="text-sm">Uppdatera</span>
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <span>Uppdatera</span>
           </button>
         </div>
         
         <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
-            <FileSpreadsheet className="w-4 h-4 text-aifm-charcoal/60" />
-            <span className="text-sm">Exportera Excel</span>
+          <button className="flex items-center gap-2 px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm transition-all">
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>Exportera Excel</span>
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-aifm-gold text-white rounded-lg hover:bg-aifm-gold/90 transition-colors">
+          <button className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm">
             <Send className="w-4 h-4" />
-            <span className="text-sm font-medium">Skicka till alla</span>
+            <span>Skicka till alla</span>
           </button>
         </div>
       </div>
@@ -829,7 +831,7 @@ export default function PriceDataPage() {
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h2 className="font-semibold text-aifm-charcoal">NAV-data för {selectedDate}</h2>
+            <h2 className="font-semibold text-aifm-charcoal tracking-tight">NAV-data för {selectedDate}</h2>
             <SourceBadge source={activeSource} />
           </div>
           <div className="flex items-center gap-2">
@@ -860,7 +862,7 @@ export default function PriceDataPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-50/50">
+                <tr className="bg-aifm-charcoal/[0.03]">
                   <th className="px-4 py-3 w-10">
                     <input
                       type="checkbox"
@@ -869,18 +871,18 @@ export default function PriceDataPage() {
                       className="w-4 h-4 rounded border-gray-300 text-aifm-gold focus:ring-aifm-gold/20"
                     />
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/70 uppercase">ISIN</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/70 uppercase">Fond</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-aifm-charcoal/70 uppercase">Valuta</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase">NAV kurs</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase">Förändring</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase">Totalt AUM</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-aifm-charcoal/70 uppercase">Källa</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">ISIN</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Fond</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Valuta</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">NAV kurs</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Förändring</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Totalt AUM</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Källa</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {priceData.map((record) => (
-                  <tr key={record.isin} className="hover:bg-gray-50/50 transition-colors">
+                  <tr key={record.isin} className="hover:bg-aifm-charcoal/[0.02] transition-colors">
                     <td className="px-4 py-3">
                       <input
                         type="checkbox"
@@ -927,7 +929,7 @@ export default function PriceDataPage() {
       {/* Institutions Grid */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-aifm-charcoal">Mottagare & Institut</h2>
+          <h2 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Mottagare & Institut</h2>
           <Link href="/nav-admin/settings" className="flex items-center gap-2 text-sm text-aifm-gold hover:underline">
             <Settings className="w-4 h-4" />
             Hantera mottagare
@@ -936,7 +938,7 @@ export default function PriceDataPage() {
         
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {mockInstitutions.map((institution) => (
-            <div key={institution.id} className="bg-white rounded-xl border border-gray-100 p-4 hover:shadow-md transition-shadow">
+            <div key={institution.id} className="bg-white rounded-2xl border border-gray-100 p-4 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <h4 className="font-medium text-aifm-charcoal">{institution.name}</h4>

@@ -6,11 +6,9 @@ import {
   Users, FileText, Shield,
   Check, X, Eye, Download, TrendingUp, Clock, BarChart3
 } from 'lucide-react';
-import {
-  getFundByCompanyId, getDistributionsByCompanyId, getCommitmentsByFund,
-  formatCurrency, formatDate, Distribution
-} from '@/lib/fundData';
-
+import { formatCurrency, formatDate } from '@/lib/fundData';
+import type { Distribution } from '@/lib/fundData';
+import { useFundsData, getFundByCompanyId, getDistributionsByCompanyId, getCommitmentsByFund } from '@/lib/fundsApi';
 import { useCompany } from '@/components/CompanyContext';
 import { PageHeader, PrimaryButton } from '@/components/shared/PageHeader';
 
@@ -153,6 +151,7 @@ function TypeSelector({ value, onChange }: { value: Distribution['type']; onChan
 
 export default function DistributionsPage() {
   const { selectedCompany } = useCompany();
+  const { data: fundsData, loading, error } = useFundsData();
   const [activeTab, setActiveTab] = useState<TabType>('pending');
   const [selectedDistribution, setSelectedDistribution] = useState<Distribution | null>(null);
   const [showNewDistModal, setShowNewDistModal] = useState(false);
@@ -160,9 +159,9 @@ export default function DistributionsPage() {
   const [newDistAmount, setNewDistAmount] = useState('');
   const [newDistType, setNewDistType] = useState<Distribution['type']>('PROFIT_DISTRIBUTION');
 
-  const selectedFund = getFundByCompanyId(selectedCompany.id);
-  const fundDists = getDistributionsByCompanyId(selectedCompany.id);
-  const commitments = selectedFund ? getCommitmentsByFund(selectedFund.id) : [];
+  const selectedFund = fundsData ? getFundByCompanyId(fundsData, selectedCompany.id) : undefined;
+  const fundDists = fundsData ? getDistributionsByCompanyId(fundsData, selectedCompany.id) : [];
+  const commitments = fundsData && selectedFund ? getCommitmentsByFund(fundsData, selectedFund.id) : [];
   const currency = selectedFund?.currency || 'SEK';
   
   const totalDistributed = commitments.reduce((sum, c) => sum + c.distributedAmount, 0);
@@ -180,6 +179,21 @@ export default function DistributionsPage() {
       default: return type;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[40vh]">
+        <div className="animate-spin w-8 h-8 border-2 border-aifm-gold border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="p-4 text-center text-red-600">
+        {error.message ?? 'Kunde inte ladda utdelningsdata'}
+      </div>
+    );
+  }
 
   return (
     <>

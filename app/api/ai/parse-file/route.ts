@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { TextractClient, DetectDocumentTextCommand, AnalyzeDocumentCommand } from '@aws-sdk/client-textract';
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import * as XLSX from 'xlsx';
+import { DocxXmlEditor } from '@/lib/docx/docx-xml-editor';
 
 // Dynamic imports for server-side only modules
 let mammoth: typeof import('mammoth') | null = null;
@@ -578,7 +579,7 @@ export async function POST(request: NextRequest) {
     console.log(`[Parse] Completed: ${parseMethod}, ${extractedText.length} chars extracted`);
     console.log(`[Parse] First 200 chars: ${extractedText.substring(0, 200)}`);
 
-    const responseData = {
+    const responseData: Record<string, unknown> = {
       content: extractedText,
       fileName: file.name,
       fileType: file.type,
@@ -587,8 +588,18 @@ export async function POST(request: NextRequest) {
       truncated,
       extractedLength: extractedText.length,
     };
+
+    if (parseMethod === 'docx') {
+      try {
+        const editor = await DocxXmlEditor.load(buffer);
+        responseData.paragraphs = editor.getParagraphTexts();
+        responseData.rawBase64 = buffer.toString('base64');
+      } catch (docxMetaErr) {
+        console.warn('[Parse] Could not extract paragraphs/rawBase64 for DOCX:', docxMetaErr);
+      }
+    }
     
-    console.log('[Parse] Sending response with content length:', responseData.content.length);
+    console.log('[Parse] Sending response with content length:', String(responseData.content).length);
     
     return NextResponse.json(responseData);
 

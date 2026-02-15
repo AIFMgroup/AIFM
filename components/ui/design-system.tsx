@@ -267,53 +267,15 @@ export function Input({ label, icon, error, size = 'md', className = '', ...prop
 }
 
 // =============================================================================
-// BUTTON
+// BUTTON — consolidated from @/components/Button (defaults: variant=primary, size=md)
 // =============================================================================
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'accent' | 'ghost' | 'danger';
-  size?: 'sm' | 'md' | 'lg';
-  loading?: boolean;
-  icon?: ReactNode;
+import { Button as BaseButton, type ButtonProps as BaseButtonProps } from '@/components/Button';
+
+export function Button({ variant = 'primary', size = 'md', ...props }: BaseButtonProps) {
+  return <BaseButton variant={variant} size={size} {...props} />;
 }
-
-export function Button({ 
-  children, 
-  variant = 'primary', 
-  size = 'md', 
-  loading, 
-  icon, 
-  disabled,
-  className = '',
-  ...props 
-}: ButtonProps) {
-  const baseClasses = 'inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed';
-
-  const variantClasses = {
-    primary: 'bg-[#2d2a26] text-white hover:bg-[#2d2a26]/90 active:bg-[#2d2a26]/80',
-    secondary: 'bg-white border border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100',
-    accent: 'bg-[#c0a280] text-white hover:bg-[#c0a280]/90 active:bg-[#c0a280]/80',
-    ghost: 'text-gray-600 hover:bg-gray-100 active:bg-gray-200',
-    danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800',
-  };
-
-  const sizeClasses = {
-    sm: 'px-3 py-1.5 text-xs',
-    md: 'px-4 py-2.5 text-sm',
-    lg: 'px-6 py-3 text-base',
-  };
-
-  return (
-    <button
-      {...props}
-      disabled={disabled || loading}
-      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
-    >
-      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : icon}
-      {children}
-    </button>
-  );
-}
+export type { ButtonProps } from '@/components/Button';
 
 // =============================================================================
 // CARD

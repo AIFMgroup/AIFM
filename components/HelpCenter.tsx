@@ -235,7 +235,7 @@ const helpSections: HelpSection[] = [
       setup: [
         { step: 1, title: 'Konfigurera NAV-beräkning', description: 'Ställ in parametrar för automatisk NAV-beräkning', details: ['Definiera värderingsmetoder per tillgångsklass', 'Sätt upp avgiftsstruktur (förvaltningsavgift, carried interest)', 'Välj beräkningsfrekvens (daglig/vecka/månad)'] },
         { step: 2, title: 'Sätt upp rapportmottagare', description: 'Konfigurera vem som ska få vilka rapporter', details: ['Lägg till investerare och deras e-postadresser', 'Välj rapportformat per mottagare (PDF, Excel)', 'Aktivera automatiskt utskick'] },
-        { step: 3, title: 'Koppla datakällor', description: 'Integrera med externa system', details: ['Anslut till Secura Portfolio för NAV-kurser', 'Konfigurera bankintegration för flöden', 'Sätt upp hemsideuppladdning'] },
+        { step: 3, title: 'Koppla datakällor', description: 'Integrera med externa system', details: ['Anslut till LSEG för priser och referensdata', 'Konfigurera bankintegration (SEB/Swedbank) för flöden', 'Sätt upp hemsideuppladdning'] },
         { step: 4, title: 'Aktivera automation', description: 'Automatisera återkommande processer', details: ['Schemalägg daglig NAV-publicering', 'Aktivera påminnelser för Notor/SubReds', 'Sätt upp Clearstream-rapportering'] },
       ],
       tips: [

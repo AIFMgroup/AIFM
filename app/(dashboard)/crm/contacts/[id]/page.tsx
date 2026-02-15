@@ -32,16 +32,16 @@ type TabId = typeof TABS[number]['id'];
 // Breadcrumb Component
 function Breadcrumbs({ contact }: { contact: Contact }) {
   return (
-    <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-      <Link href="/crm" className="hover:text-[#c0a280] transition-colors">
+    <nav className="flex items-center gap-2 text-sm text-aifm-charcoal/40 mb-6">
+      <Link href="/crm" className="hover:text-aifm-gold transition-colors">
         CRM
       </Link>
       <ChevronRight className="w-4 h-4" />
-      <Link href="/crm/contacts" className="hover:text-[#c0a280] transition-colors">
+      <Link href="/crm/contacts" className="hover:text-aifm-gold transition-colors">
         Kontakter
       </Link>
       <ChevronRight className="w-4 h-4" />
-      <span className="text-[#2d2a26] font-medium">
+      <span className="text-aifm-charcoal font-medium">
         {contact.firstName} {contact.lastName}
       </span>
     </nav>
@@ -74,7 +74,7 @@ function TimelineItem({ entry }: { entry: TimelineEntry }) {
       case 'task_completed': return 'bg-emerald-100 text-emerald-600';
       case 'kyc_approved': return 'bg-emerald-100 text-emerald-600';
       case 'kyc_rejected': return 'bg-red-100 text-red-600';
-      default: return 'bg-gray-100 text-gray-600';
+      default: return 'bg-aifm-charcoal/[0.03] text-aifm-charcoal/60';
     }
   };
 
@@ -83,12 +83,12 @@ function TimelineItem({ entry }: { entry: TimelineEntry }) {
       <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${getColor()}`}>
         {getIcon()}
       </div>
-      <div className="flex-1 min-w-0 pb-6 border-l border-gray-200 -ml-4 pl-8">
-        <p className="text-sm font-medium text-[#2d2a26]">{entry.title}</p>
+      <div className="flex-1 min-w-0 pb-6 border-l border-gray-100 -ml-4 pl-8">
+        <p className="text-sm font-medium text-aifm-charcoal">{entry.title}</p>
         {entry.description && (
-          <p className="text-sm text-gray-500 mt-1">{entry.description}</p>
+          <p className="text-sm text-aifm-charcoal/40 mt-1">{entry.description}</p>
         )}
-        <p className="text-xs text-gray-400 mt-2">
+        <p className="text-xs text-aifm-charcoal/30 mt-2">
           {formatDistanceToNow(parseISO(entry.timestamp), { addSuffix: true, locale: sv })}
         </p>
       </div>
@@ -221,7 +221,7 @@ export default function ContactDetailPage() {
     return (
       <CrmLayout>
         <div className="flex items-center justify-center py-20">
-          <div className="w-8 h-8 border-2 border-[#c0a280] border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-aifm-gold border-t-transparent rounded-full animate-spin" />
         </div>
       </CrmLayout>
     );
@@ -232,8 +232,8 @@ export default function ContactDetailPage() {
       <CrmLayout>
         <div className="text-center py-20">
           <User className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-lg font-medium text-gray-900">Kontakt hittades inte</h2>
-          <p className="text-gray-500 mt-1">Kontakten kan ha tagits bort.</p>
+          <h2 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Kontakt hittades inte</h2>
+          <p className="text-aifm-charcoal/40 mt-1">Kontakten kan ha tagits bort.</p>
           <Button onClick={() => router.push('/crm/contacts')} className="mt-4">
             Tillbaka till kontakter
           </Button>
@@ -260,16 +260,16 @@ export default function ContactDetailPage() {
               <Avatar name={fullName} size="xl" className="w-20 h-20 text-2xl" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <h1 className="text-2xl font-semibold text-[#2d2a26]">{fullName}</h1>
+                  <h1 className="text-xl font-semibold text-aifm-charcoal tracking-tight">{fullName}</h1>
                   <StatusPill status={contact.status} />
                 </div>
                 {contact.title && (
-                  <p className="text-gray-500 mt-1">{contact.title}</p>
+                  <p className="text-aifm-charcoal/40 mt-1">{contact.title}</p>
                 )}
                 {company && (
                   <Link 
                     href={`/crm/companies/${company.id}`}
-                    className="inline-flex items-center gap-1.5 text-[#c0a280] hover:underline mt-1"
+                    className="inline-flex items-center gap-1.5 text-aifm-gold hover:underline mt-1"
                   >
                     <Building2 className="w-4 h-4" />
                     {company.name}
@@ -281,7 +281,7 @@ export default function ContactDetailPage() {
                   {contact.email && (
                     <a 
                       href={`mailto:${contact.email}`}
-                      className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-[#c0a280] transition-colors"
+                      className="inline-flex items-center gap-1.5 text-sm text-aifm-charcoal/60 hover:text-aifm-gold transition-colors"
                     >
                       <Mail className="w-4 h-4" />
                       {contact.email}
@@ -290,7 +290,7 @@ export default function ContactDetailPage() {
                   {contact.phone && (
                     <a 
                       href={`tel:${contact.phone}`}
-                      className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-[#c0a280] transition-colors"
+                      className="inline-flex items-center gap-1.5 text-sm text-aifm-charcoal/60 hover:text-aifm-gold transition-colors"
                     >
                       <Phone className="w-4 h-4" />
                       {contact.phone}
@@ -301,7 +301,7 @@ export default function ContactDetailPage() {
                       href={contact.linkedIn}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-[#c0a280] transition-colors"
+                      className="inline-flex items-center gap-1.5 text-sm text-aifm-charcoal/60 hover:text-aifm-gold transition-colors"
                     >
                       <Linkedin className="w-4 h-4" />
                       LinkedIn
@@ -325,22 +325,22 @@ export default function ContactDetailPage() {
           {/* Quick Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-100">
             <div className="text-center sm:text-left">
-              <p className="text-2xl font-bold text-[#2d2a26]">{openDeals.length}</p>
-              <p className="text-sm text-gray-500">Öppna affärer</p>
+              <p className="text-2xl font-semibold text-aifm-charcoal tracking-tight">{openDeals.length}</p>
+              <p className="text-sm text-aifm-charcoal/40">Öppna affärer</p>
             </div>
             <div className="text-center sm:text-left">
-              <p className="text-2xl font-bold text-[#2d2a26]">
+              <p className="text-2xl font-semibold text-aifm-charcoal tracking-tight">
                 {openDeals.reduce((sum, d) => sum + (d.value || 0), 0).toLocaleString('sv-SE')}
               </p>
-              <p className="text-sm text-gray-500">Pipeline-värde (SEK)</p>
+              <p className="text-sm text-aifm-charcoal/40">Pipeline-värde (SEK)</p>
             </div>
             <div className="text-center sm:text-left">
-              <p className="text-2xl font-bold text-[#2d2a26]">{pendingTasks.length}</p>
-              <p className="text-sm text-gray-500">Pågående uppgifter</p>
+              <p className="text-2xl font-semibold text-aifm-charcoal tracking-tight">{pendingTasks.length}</p>
+              <p className="text-sm text-aifm-charcoal/40">Pågående uppgifter</p>
             </div>
             <div className="text-center sm:text-left">
-              <p className="text-2xl font-bold text-[#2d2a26]">{activities.length}</p>
-              <p className="text-sm text-gray-500">Aktiviteter</p>
+              <p className="text-2xl font-semibold text-aifm-charcoal tracking-tight">{activities.length}</p>
+              <p className="text-sm text-aifm-charcoal/40">Aktiviteter</p>
             </div>
           </div>
         </Card>
@@ -349,15 +349,15 @@ export default function ContactDetailPage() {
         {linkedManagedCompanies.length > 0 && (
           <Card className="p-4 mb-6">
             <div className="flex items-center gap-2 mb-3">
-              <Link2 className="w-4 h-4 text-[#c0a280]" />
-              <h3 className="text-sm font-semibold text-[#2d2a26]">Kopplade bolag</h3>
+              <Link2 className="w-4 h-4 text-aifm-gold" />
+              <h3 className="text-sm font-semibold text-aifm-charcoal tracking-tight">Kopplade bolag</h3>
             </div>
             <div className="flex flex-wrap gap-2">
               {linkedManagedCompanies.map(company => (
                 <Link
                   key={company.id}
                   href={`/overview?company=${company.id}`}
-                  className="inline-flex items-center gap-2 px-3 py-2 bg-[#c0a280]/10 text-[#c0a280] rounded-lg hover:bg-[#c0a280]/20 transition-colors text-sm font-medium"
+                  className="inline-flex items-center gap-2 px-3 py-2 bg-aifm-gold/10 text-aifm-gold rounded-xl hover:bg-aifm-gold/20 transition-colors text-sm font-medium"
                 >
                   <Building2 className="w-4 h-4" />
                   {company.name}
@@ -369,15 +369,15 @@ export default function ContactDetailPage() {
         )}
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-1 border-b border-gray-200 mb-6 overflow-x-auto">
+        <div className="flex items-center gap-1 border-b border-gray-100 mb-6 overflow-x-auto">
           {TABS.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-[#c0a280] text-[#c0a280]'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-aifm-gold text-aifm-gold'
+                  : 'border-transparent text-aifm-charcoal/40 hover:text-aifm-charcoal/60'
               }`}
             >
               <tab.icon className="w-4 h-4" />
@@ -394,9 +394,9 @@ export default function ContactDetailPage() {
               <>
                 {/* Recent Activity Timeline */}
                 <Card className="p-6">
-                  <h3 className="font-semibold text-[#2d2a26] mb-4">Senaste aktivitet</h3>
+                  <h3 className="font-semibold text-aifm-charcoal tracking-tight mb-4">Senaste aktivitet</h3>
                   {timeline.length === 0 ? (
-                    <p className="text-gray-500 text-sm">Ingen aktivitet ännu</p>
+                    <p className="text-aifm-charcoal/40 text-sm">Ingen aktivitet ännu</p>
                   ) : (
                     <div className="space-y-0">
                       {timeline.slice(0, 5).map(entry => (
@@ -409,8 +409,8 @@ export default function ContactDetailPage() {
                 {/* Notes */}
                 {contact.notes && (
                   <Card className="p-6">
-                    <h3 className="font-semibold text-[#2d2a26] mb-3">Anteckningar</h3>
-                    <p className="text-gray-600 text-sm whitespace-pre-wrap">{contact.notes}</p>
+                    <h3 className="font-semibold text-aifm-charcoal tracking-tight mb-3">Anteckningar</h3>
+                    <p className="text-aifm-charcoal/60 text-sm whitespace-pre-wrap">{contact.notes}</p>
                   </Card>
                 )}
               </>
@@ -419,26 +419,26 @@ export default function ContactDetailPage() {
             {activeTab === 'deals' && (
               <Card className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-[#2d2a26]">Affärer</h3>
+                  <h3 className="font-semibold text-aifm-charcoal tracking-tight">Affärer</h3>
                   <Button size="sm" icon={<Plus className="w-4 h-4" />}>Ny affär</Button>
                 </div>
                 {deals.length === 0 ? (
-                  <p className="text-gray-500 text-sm">Inga affärer kopplade till denna kontakt</p>
+                  <p className="text-aifm-charcoal/40 text-sm">Inga affärer kopplade till denna kontakt</p>
                 ) : (
                   <div className="space-y-3">
                     {deals.map(deal => (
                       <Link
                         key={deal.id}
                         href={`/crm/pipeline?deal=${deal.id}`}
-                        className="block p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                        className="block p-4 bg-white border border-gray-100 rounded-xl hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300"
                       >
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="font-medium text-[#2d2a26]">{deal.name}</p>
-                            <p className="text-sm text-gray-500">{deal.crmCompanyName}</p>
+                            <p className="font-medium text-aifm-charcoal">{deal.name}</p>
+                            <p className="text-sm text-aifm-charcoal/40">{deal.crmCompanyName}</p>
                           </div>
                           <div className="text-right">
-                            <p className="font-semibold text-[#2d2a26]">
+                            <p className="font-semibold text-aifm-charcoal tracking-tight">
                               {deal.value?.toLocaleString('sv-SE')} SEK
                             </p>
                             <StatusPill status={deal.stage} size="sm" />
@@ -454,19 +454,17 @@ export default function ContactDetailPage() {
             {activeTab === 'tasks' && (
               <Card className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-[#2d2a26]">Uppgifter</h3>
+                  <h3 className="font-semibold text-aifm-charcoal tracking-tight">Uppgifter</h3>
                   <Button size="sm" icon={<Plus className="w-4 h-4" />}>Ny uppgift</Button>
                 </div>
                 {tasks.length === 0 ? (
-                  <p className="text-gray-500 text-sm">Inga uppgifter kopplade till denna kontakt</p>
+                  <p className="text-aifm-charcoal/40 text-sm">Inga uppgifter kopplade till denna kontakt</p>
                 ) : (
                   <div className="space-y-3">
                     {tasks.map(task => (
                       <div
                         key={task.id}
-                        className={`p-4 rounded-xl ${
-                          task.status === 'completed' ? 'bg-gray-50' : 'bg-gray-50'
-                        }`}
+                        className="p-4 rounded-xl bg-white border border-gray-100"
                       >
                         <div className="flex items-start gap-3">
                           <div className={`w-5 h-5 rounded-full flex items-center justify-center mt-0.5 ${
@@ -478,10 +476,10 @@ export default function ContactDetailPage() {
                           </div>
                           <div className="flex-1">
                             <p className={`font-medium ${
-                              task.status === 'completed' ? 'text-gray-400 line-through' : 'text-[#2d2a26]'
+                              task.status === 'completed' ? 'text-aifm-charcoal/30 line-through' : 'text-aifm-charcoal'
                             }`}>{task.title}</p>
                             {task.dueDate && (
-                              <p className="text-sm text-gray-500 mt-1">
+                              <p className="text-sm text-aifm-charcoal/40 mt-1">
                                 Deadline: {format(parseISO(task.dueDate), 'd MMM yyyy', { locale: sv })}
                               </p>
                             )}
@@ -497,25 +495,25 @@ export default function ContactDetailPage() {
             {activeTab === 'activities' && (
               <Card className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-[#2d2a26]">Aktiviteter</h3>
+                  <h3 className="font-semibold text-aifm-charcoal tracking-tight">Aktiviteter</h3>
                   <Button size="sm" icon={<Plus className="w-4 h-4" />}>Ny aktivitet</Button>
                 </div>
                 {activities.length === 0 ? (
-                  <p className="text-gray-500 text-sm">Inga aktiviteter loggade</p>
+                  <p className="text-aifm-charcoal/40 text-sm">Inga aktiviteter loggade</p>
                 ) : (
                   <div className="space-y-3">
                     {activities.map(activity => (
-                      <div key={activity.id} className="p-4 bg-gray-50 rounded-xl">
+                      <div key={activity.id} className="p-4 bg-white border border-gray-100 rounded-xl">
                         <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 rounded-full bg-[#c0a280]/10 flex items-center justify-center">
-                            <Activity className="w-4 h-4 text-[#c0a280]" />
+                          <div className="w-8 h-8 rounded-full bg-aifm-gold/10 flex items-center justify-center">
+                            <Activity className="w-4 h-4 text-aifm-gold" />
                           </div>
                           <div className="flex-1">
-                            <p className="font-medium text-[#2d2a26]">{activity.title}</p>
+                            <p className="font-medium text-aifm-charcoal">{activity.title}</p>
                             {activity.description && (
-                              <p className="text-sm text-gray-500 mt-1">{activity.description}</p>
+                              <p className="text-sm text-aifm-charcoal/40 mt-1">{activity.description}</p>
                             )}
-                            <p className="text-xs text-gray-400 mt-2">
+                            <p className="text-xs text-aifm-charcoal/30 mt-2">
                               {activity.startTime && format(parseISO(activity.startTime), 'd MMM yyyy HH:mm', { locale: sv })}
                             </p>
                           </div>
@@ -530,10 +528,10 @@ export default function ContactDetailPage() {
             {activeTab === 'documents' && (
               <Card className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-[#2d2a26]">Dokument</h3>
+                  <h3 className="font-semibold text-aifm-charcoal tracking-tight">Dokument</h3>
                   <Button size="sm" icon={<Plus className="w-4 h-4" />}>Ladda upp</Button>
                 </div>
-                <p className="text-gray-500 text-sm">Inga dokument uppladdade</p>
+                <p className="text-aifm-charcoal/40 text-sm">Inga dokument uppladdade</p>
               </Card>
             )}
           </div>
@@ -542,14 +540,14 @@ export default function ContactDetailPage() {
           <div className="space-y-6">
             {/* Contact Details */}
             <Card className="p-6">
-              <h3 className="font-semibold text-[#2d2a26] mb-4">Kontaktuppgifter</h3>
+              <h3 className="font-semibold text-aifm-charcoal tracking-tight mb-4">Kontaktuppgifter</h3>
               <div className="space-y-4">
                 {contact.email && (
                   <div className="flex items-start gap-3">
-                    <Mail className="w-4 h-4 text-gray-400 mt-0.5" />
+                    <Mail className="w-4 h-4 text-aifm-charcoal/30 mt-0.5" />
                     <div>
-                      <p className="text-xs text-gray-400 uppercase tracking-wider">E-post</p>
-                      <a href={`mailto:${contact.email}`} className="text-sm text-[#2d2a26] hover:text-[#c0a280]">
+                      <p className="text-xs text-aifm-charcoal/40 uppercase tracking-wider">E-post</p>
+                      <a href={`mailto:${contact.email}`} className="text-sm text-aifm-charcoal hover:text-aifm-gold transition-colors">
                         {contact.email}
                       </a>
                     </div>
@@ -557,10 +555,10 @@ export default function ContactDetailPage() {
                 )}
                 {contact.phone && (
                   <div className="flex items-start gap-3">
-                    <Phone className="w-4 h-4 text-gray-400 mt-0.5" />
+                    <Phone className="w-4 h-4 text-aifm-charcoal/30 mt-0.5" />
                     <div>
-                      <p className="text-xs text-gray-400 uppercase tracking-wider">Telefon</p>
-                      <a href={`tel:${contact.phone}`} className="text-sm text-[#2d2a26] hover:text-[#c0a280]">
+                      <p className="text-xs text-aifm-charcoal/40 uppercase tracking-wider">Telefon</p>
+                      <a href={`tel:${contact.phone}`} className="text-sm text-aifm-charcoal hover:text-aifm-gold transition-colors">
                         {contact.phone}
                       </a>
                     </div>
@@ -568,10 +566,10 @@ export default function ContactDetailPage() {
                 )}
                 {contact.mobile && (
                   <div className="flex items-start gap-3">
-                    <Phone className="w-4 h-4 text-gray-400 mt-0.5" />
+                    <Phone className="w-4 h-4 text-aifm-charcoal/30 mt-0.5" />
                     <div>
-                      <p className="text-xs text-gray-400 uppercase tracking-wider">Mobil</p>
-                      <a href={`tel:${contact.mobile}`} className="text-sm text-[#2d2a26] hover:text-[#c0a280]">
+                      <p className="text-xs text-aifm-charcoal/40 uppercase tracking-wider">Mobil</p>
+                      <a href={`tel:${contact.mobile}`} className="text-sm text-aifm-charcoal hover:text-aifm-gold transition-colors">
                         {contact.mobile}
                       </a>
                     </div>
@@ -579,10 +577,10 @@ export default function ContactDetailPage() {
                 )}
                 {contact.address && (contact.address.street || contact.address.city) && (
                   <div className="flex items-start gap-3">
-                    <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
+                    <MapPin className="w-4 h-4 text-aifm-charcoal/30 mt-0.5" />
                     <div>
-                      <p className="text-xs text-gray-400 uppercase tracking-wider">Adress</p>
-                      <p className="text-sm text-[#2d2a26]">
+                      <p className="text-xs text-aifm-charcoal/40 uppercase tracking-wider">Adress</p>
+                      <p className="text-sm text-aifm-charcoal">
                         {contact.address.street && <span>{contact.address.street}<br /></span>}
                         {contact.address.postalCode} {contact.address.city}
                       </p>
@@ -595,12 +593,12 @@ export default function ContactDetailPage() {
             {/* Tags */}
             {contact.tags && contact.tags.length > 0 && (
               <Card className="p-6">
-                <h3 className="font-semibold text-[#2d2a26] mb-4">Taggar</h3>
+                <h3 className="font-semibold text-aifm-charcoal tracking-tight mb-4">Taggar</h3>
                 <div className="flex flex-wrap gap-2">
                   {contact.tags.map(tag => (
                     <span
                       key={tag}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
+                      className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-aifm-gold/15 text-aifm-charcoal rounded-full text-xs font-medium"
                     >
                       <Tag className="w-3 h-3" />
                       {tag}
@@ -612,22 +610,22 @@ export default function ContactDetailPage() {
 
             {/* Quick Actions */}
             <Card className="p-6">
-              <h3 className="font-semibold text-[#2d2a26] mb-4">Snabbåtgärder</h3>
+              <h3 className="font-semibold text-aifm-charcoal tracking-tight mb-4">Snabbåtgärder</h3>
               <div className="space-y-2">
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
-                  <Mail className="w-4 h-4 text-gray-400" />
+                <button className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-aifm-charcoal/60 hover:bg-aifm-charcoal/[0.03] rounded-xl transition-colors">
+                  <Mail className="w-4 h-4 text-aifm-charcoal/30" />
                   Skicka e-post
                 </button>
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
-                  <Phone className="w-4 h-4 text-gray-400" />
+                <button className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-aifm-charcoal/60 hover:bg-aifm-charcoal/[0.03] rounded-xl transition-colors">
+                  <Phone className="w-4 h-4 text-aifm-charcoal/30" />
                   Logga samtal
                 </button>
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
-                  <Calendar className="w-4 h-4 text-gray-400" />
+                <button className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-aifm-charcoal/60 hover:bg-aifm-charcoal/[0.03] rounded-xl transition-colors">
+                  <Calendar className="w-4 h-4 text-aifm-charcoal/30" />
                   Boka möte
                 </button>
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
-                  <CheckSquare className="w-4 h-4 text-gray-400" />
+                <button className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-aifm-charcoal/60 hover:bg-aifm-charcoal/[0.03] rounded-xl transition-colors">
+                  <CheckSquare className="w-4 h-4 text-aifm-charcoal/30" />
                   Skapa uppgift
                 </button>
               </div>
@@ -638,4 +636,3 @@ export default function ContactDetailPage() {
     </CrmLayout>
   );
 }
-

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DropboxClient } from '@/lib/integrations/dropbox/dropbox-client';
 import { getSyncStore, DropboxConnection } from '@/lib/integrations/dropbox/sync-store';
+import { getUserIdFromSession } from '@/lib/auth/session';
 
 /**
  * Dropbox OAuth Callback
@@ -41,13 +42,17 @@ export async function GET(request: NextRequest) {
       redirectUri: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/integrations/dropbox/callback`,
     });
 
+    const userId = await getUserIdFromSession();
+    if (!userId) {
+      return NextResponse.redirect(
+        new URL('/admin/dropbox?error=Session+expired+please+log+in', request.url)
+      );
+    }
+
     const tokens = await client.exchangeCodeForTokens(code);
 
-    // Get account info
     const accountInfo = await client.getAccountInfo();
 
-    // Store connection
-    const userId = 'default-user'; // In production, get from session
     const connection: DropboxConnection = {
       userId,
       dropboxAccountId: accountInfo.accountId,

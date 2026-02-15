@@ -18,7 +18,11 @@ import {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userEmail = searchParams.get('userEmail');
+    let userEmail = searchParams.get('userEmail');
+    if (!userEmail) {
+      const session = await getSession().catch(() => null);
+      userEmail = session?.email ?? null;
+    }
     const draftId = searchParams.get('id');
     const searchQuery = searchParams.get('search');
     const searchApproved = searchParams.get('searchApproved');
@@ -101,20 +105,24 @@ export async function GET(request: NextRequest) {
 // Create or update draft (auto-save)
 export async function POST(request: NextRequest) {
   try {
+    const session = await getSession().catch(() => null);
     const body = await request.json();
-    const { 
-      draftId, 
-      formData, 
-      fundId, 
-      fundName, 
-      createdBy = 'Current User', 
-      createdByEmail = 'user@aifm.se',
+    const {
+      draftId,
+      formData,
+      fundId,
+      fundName,
+      createdBy: bodyCreatedBy,
+      createdByEmail: bodyCreatedByEmail,
       // For copy action
       action,
       sourceId,
       targetFundId,
       targetFundName,
     } = body;
+
+    const createdBy = session?.name ?? bodyCreatedBy ?? 'Current User';
+    const createdByEmail = session?.email ?? bodyCreatedByEmail ?? 'user@aifm.se';
 
     // Copy from previous approval
     if (action === 'copy' && sourceId) {

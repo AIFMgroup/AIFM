@@ -5,6 +5,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getApproval, generateApprovalPDFContent, exportApprovalJSON } from '@/lib/integrations/securities';
+import { getESGServiceClient } from '@/lib/integrations/esg/esg-service';
+import type { PDFESGLiveData } from '@/lib/integrations/securities/pdf-generator';
+import { generateApprovalPDF } from '@/lib/integrations/securities/pdf-generator-real';
 
 // GET /api/securities/pdf?id=xxx
 // Generate PDF for an approval
@@ -12,7 +15,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const approvalId = searchParams.get('id');
-    const format = searchParams.get('format') || 'html'; // html, json
+    const format = searchParams.get('format') || 'pdf'; // pdf, html, json
 
     if (!approvalId) {
       return NextResponse.json(
@@ -41,17 +44,56 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Generate HTML for PDF
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.aifm.se';
-    const htmlContent = generateApprovalPDFContent(approval, undefined, baseUrl);
+    // Fetch live ESG data if ISIN is available
+    let esgLiveData: PDFESGLiveData | undefined;
+    const isin = approval.basicInfo?.isin;
+    if (isin) {
+      try {
+        const esgClient = getESGServiceClient();
+        const esgData = await esgClient.getESGData(isin);
+        if (esgData) {
+          esgLiveData = {
+            totalScore: esgData.totalScore,
+            environmentScore: esgData.environmentScore,
+            socialScore: esgData.socialScore,
+            governanceScore: esgData.governanceScore,
+            sfdrAlignment: esgData.sfdrAlignment,
+            taxonomyAlignmentPercent: esgData.taxonomyAlignmentPercent,
+            carbonIntensity: esgData.carbonIntensity,
+            carbonIntensityUnit: esgData.carbonIntensityUnit,
+            meetsExclusionCriteria: esgData.meetsExclusionCriteria,
+            exclusionFlags: esgData.exclusionFlags?.map(f => ({
+              category: f.category,
+              categoryDescription: f.categoryDescription,
+              revenuePercent: f.revenuePercent,
+            })),
+            provider: esgData.provider,
+            fetchedAt: esgData.fetchedAt,
+          };
+        }
+      } catch (err) {
+        console.warn('[PDF] Failed to fetch live ESG data:', err);
+      }
+    }
 
-    // Return HTML (can be converted to PDF on client-side or via a PDF service)
-    return new NextResponse(htmlContent, {
+    // HTML fallback (for preview/print)
+    if (format === 'html') {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.aifm.se';
+      const htmlContent = generateApprovalPDFContent(approval, undefined, baseUrl, esgLiveData);
+      return new NextResponse(htmlContent, {
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+        },
+      });
+    }
+
+    // Generate real PDF (default)
+    const pdfBuffer = await generateApprovalPDF(approval, esgLiveData);
+    const safeFilename = (approval.basicInfo?.name ?? 'approval').replace(/[^a-zA-Z0-9åäöÅÄÖ\s_-]/g, '').trim().replace(/\s+/g, '_');
+    return new NextResponse(pdfBuffer, {
       headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Content-Disposition': format === 'download' 
-          ? `attachment; filename="approval-${approvalId}.html"` 
-          : 'inline',
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${safeFilename}_${approvalId.slice(-6)}.pdf"`,
       },
     });
   } catch (error) {
@@ -167,12 +209,11 @@ export async function POST(request: NextRequest) {
       plannedAcquisitionShare: formData.plannedAcquisitionShare,
     };
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.aifm.se';
-    const htmlContent = generateApprovalPDFContent(previewApproval as any, undefined, baseUrl);
-
-    return new NextResponse(htmlContent, {
+    const pdfBuffer = await generateApprovalPDF(previewApproval as any);
+    return new NextResponse(pdfBuffer, {
       headers: {
-        'Content-Type': 'text/html; charset=utf-8',
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'inline; filename="preview.pdf"',
       },
     });
   } catch (error) {

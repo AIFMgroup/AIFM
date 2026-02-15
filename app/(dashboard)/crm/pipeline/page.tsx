@@ -138,19 +138,19 @@ function PipelineContent() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 px-4 sm:px-6 lg:px-8">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Pipeline</h1>
+            <h1 className="text-xl sm:text-2xl font-semibold text-aifm-charcoal tracking-tight">Pipeline</h1>
             <div className="flex flex-wrap items-center gap-3 sm:gap-6 mt-1 text-sm">
-              <span className="text-gray-500">
-                <span className="font-semibold text-gray-900">{pipelineValue.toLocaleString('sv-SE')}</span> SEK
+              <span className="text-aifm-charcoal/40">
+                <span className="font-semibold tracking-tight text-aifm-charcoal">{pipelineValue.toLocaleString('sv-SE')}</span> SEK
               </span>
-              <span className="text-gray-500">
-                <span className="font-semibold text-emerald-600">{wonValue.toLocaleString('sv-SE')}</span> SEK vunna
+              <span className="text-aifm-charcoal/40">
+                <span className="font-semibold tracking-tight text-aifm-gold">{wonValue.toLocaleString('sv-SE')}</span> SEK vunna
               </span>
             </div>
           </div>
           <button
             onClick={() => handleCreateDeal('lead')}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#2d2a26] text-white text-sm font-medium rounded-lg hover:bg-[#3d3a36] transition-colors w-full sm:w-auto"
+            className="flex items-center justify-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white text-sm font-medium rounded-full hover:bg-aifm-charcoal/90 transition-all shadow-sm w-full sm:w-auto"
           >
             <Plus className="w-4 h-4" />
             Ny affär
@@ -255,9 +255,9 @@ function DealForm({ deal, stage, companies, contacts, onSave, onDelete, onCancel
   return (
     <form onSubmit={handleSubmit} className="h-full flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-lg font-semibold text-aifm-charcoal tracking-tight">
             {deal ? 'Redigera affär' : 'Ny affär'}
           </h2>
           <div className="flex items-center gap-2 mt-1">
@@ -265,13 +265,13 @@ function DealForm({ deal, stage, companies, contacts, onSave, onDelete, onCancel
               className="w-3 h-3 rounded-full"
               style={{ backgroundColor: currentStage?.color }}
             />
-            <span className="text-sm text-gray-500">{currentStage?.name}</span>
+            <span className="text-sm text-aifm-charcoal/40">{currentStage?.name}</span>
           </div>
         </div>
         <button 
           type="button"
           onClick={onCancel}
-          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 text-aifm-charcoal/30 hover:text-aifm-charcoal hover:bg-aifm-charcoal/5 rounded-xl transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -280,39 +280,39 @@ function DealForm({ deal, stage, companies, contacts, onSave, onDelete, onCancel
       {/* Form Body */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-aifm-charcoal/70 mb-1">
             Affärsnamn <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c0a280] focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
             placeholder="T.ex. Implementation hos Företag AB"
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Beskrivning</label>
+          <label className="block text-sm font-medium text-aifm-charcoal/70 mb-1">Beskrivning</label>
           <textarea
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c0a280] focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
           />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-aifm-charcoal/70 mb-1">
               <Building2 className="w-4 h-4 inline mr-1" />
               Företag
             </label>
             <select
               value={formData.crmCompanyId}
               onChange={(e) => setFormData({ ...formData, crmCompanyId: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c0a280] focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
             >
               <option value="">Välj företag...</option>
               {companies.map((company) => (
@@ -321,14 +321,14 @@ function DealForm({ deal, stage, companies, contacts, onSave, onDelete, onCancel
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-aifm-charcoal/70 mb-1">
               <User className="w-4 h-4 inline mr-1" />
               Kontakt
             </label>
             <select
               value={formData.primaryContactId}
               onChange={(e) => setFormData({ ...formData, primaryContactId: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c0a280] focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
             >
               <option value="">Välj kontakt...</option>
               {contacts.map((contact) => (
@@ -342,7 +342,7 @@ function DealForm({ deal, stage, companies, contacts, onSave, onDelete, onCancel
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-aifm-charcoal/70 mb-1">
               <DollarSign className="w-4 h-4 inline mr-1" />
               Värde
             </label>
@@ -351,13 +351,13 @@ function DealForm({ deal, stage, companies, contacts, onSave, onDelete, onCancel
                 type="number"
                 value={formData.value}
                 onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-[#c0a280] focus:border-transparent"
+                className="flex-1 px-3 py-2 border border-gray-200 rounded-l-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
                 placeholder="0"
               />
               <select
                 value={formData.currency}
                 onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                className="px-3 py-2 border border-l-0 border-gray-300 rounded-r-lg focus:ring-2 focus:ring-[#c0a280] focus:border-transparent bg-gray-50"
+                className="px-3 py-2 border border-l-0 border-gray-200 rounded-r-xl text-sm focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors bg-aifm-charcoal/[0.03]"
               >
                 <option value="SEK">SEK</option>
                 <option value="EUR">EUR</option>
@@ -366,7 +366,7 @@ function DealForm({ deal, stage, companies, contacts, onSave, onDelete, onCancel
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-aifm-charcoal/70 mb-1">
               <Calendar className="w-4 h-4 inline mr-1" />
               Förväntat avslut
             </label>
@@ -374,25 +374,25 @@ function DealForm({ deal, stage, companies, contacts, onSave, onDelete, onCancel
               type="date"
               value={formData.expectedCloseDate}
               onChange={(e) => setFormData({ ...formData, expectedCloseDate: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c0a280] focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Prioritet</label>
+          <label className="block text-sm font-medium text-aifm-charcoal/70 mb-1">Prioritet</label>
           <div className="flex gap-2">
             {(['low', 'medium', 'high'] as const).map((p) => (
               <button
                 key={p}
                 type="button"
                 onClick={() => setFormData({ ...formData, priority: p })}
-                className={`flex-1 py-2 px-3 text-sm font-medium rounded-lg border transition-colors ${
+                className={`flex-1 py-2 px-3 text-sm font-medium rounded-full border transition-all ${
                   formData.priority === p
                     ? p === 'high' ? 'bg-red-50 border-red-300 text-red-700' :
-                      p === 'medium' ? 'bg-amber-50 border-amber-300 text-amber-700' :
-                      'bg-gray-100 border-gray-300 text-gray-700'
-                    : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                      p === 'medium' ? 'bg-aifm-gold/15 border-aifm-gold/30 text-aifm-charcoal' :
+                      'bg-aifm-charcoal/5 border-aifm-charcoal/10 text-aifm-charcoal'
+                    : 'border-gray-200 text-aifm-charcoal/50 hover:bg-aifm-charcoal/[0.03]'
                 }`}
               >
                 {p === 'high' ? 'Hög' : p === 'medium' ? 'Medium' : 'Låg'}
@@ -402,7 +402,7 @@ function DealForm({ deal, stage, companies, contacts, onSave, onDelete, onCancel
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-aifm-charcoal/70 mb-1">
             <Tag className="w-4 h-4 inline mr-1" />
             Taggar
           </label>
@@ -410,19 +410,19 @@ function DealForm({ deal, stage, companies, contacts, onSave, onDelete, onCancel
             type="text"
             value={formData.tags}
             onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c0a280] focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
             placeholder="Kommaseparerade taggar"
           />
         </div>
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-4 border-t border-gray-200 flex justify-between">
+      <div className="px-6 py-4 border-t border-gray-100 flex justify-between">
         {onDelete ? (
           <button
             type="button"
             onClick={onDelete}
-            className="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors"
           >
             Ta bort
           </button>
@@ -433,14 +433,14 @@ function DealForm({ deal, stage, companies, contacts, onSave, onDelete, onCancel
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            className="px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm font-medium transition-all"
           >
             Avbryt
           </button>
           <button
             type="submit"
             disabled={loading || !formData.name}
-            className="px-4 py-2 text-sm font-medium text-white bg-[#2d2a26] rounded-lg hover:bg-[#3d3a36] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            className="px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {loading ? (
               <>

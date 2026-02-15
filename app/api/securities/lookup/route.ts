@@ -193,9 +193,26 @@ export async function POST(request: NextRequest) {
             governanceScore: esgData.governanceScore,
             controversyLevel: esgData.controversyLevel,
             sfdrAlignment: esgData.sfdrAlignment,
+            taxonomyAlignmentPercent: esgData.taxonomyAlignmentPercent,
+            carbonIntensity: esgData.carbonIntensity,
+            carbonIntensityUnit: esgData.carbonIntensityUnit,
             exclusionFlags: esgData.exclusionFlags,
+            meetsExclusionCriteria: esgData.meetsExclusionCriteria,
+            paiIndicators: esgData.paiIndicators,
             fetchedAt: esgData.fetchedAt,
           };
+        }
+
+        // Also fetch PAI indicators if provider supports it
+        if (esgId) {
+          try {
+            const paiData = await esgClient.getPAIIndicators(esgId);
+            if (paiData && esgSummary) {
+              esgSummary.paiIndicators = paiData;
+            }
+          } catch {
+            // PAI enrichment is optional
+          }
         }
       }
     } catch {

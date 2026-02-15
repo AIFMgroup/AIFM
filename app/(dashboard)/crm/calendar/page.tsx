@@ -301,19 +301,19 @@ function ActivityForm({
   return (
     <form onSubmit={handleSubmit} className="h-full flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-lg font-semibold text-aifm-charcoal tracking-tight">
             {activity ? 'Redigera aktivitet' : 'Ny aktivitet'}
           </h2>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p className="text-sm text-aifm-charcoal/40 mt-0.5">
             {format(parseISO(formData.date), 'd MMMM yyyy')}
           </p>
         </div>
         <button 
           type="button"
           onClick={onCancel}
-          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 text-aifm-charcoal/30 hover:text-aifm-charcoal hover:bg-aifm-charcoal/5 rounded-xl transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -323,17 +323,17 @@ function ActivityForm({
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {/* Activity Type */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Typ</label>
+          <label className="block text-sm font-medium text-aifm-charcoal/70 mb-2">Typ</label>
           <div className="grid grid-cols-4 gap-2">
             {activityTypes.map((type) => (
               <button
                 key={type.id}
                 type="button"
                 onClick={() => setFormData({ ...formData, type: type.id as Activity['type'], color: type.color })}
-                className={`flex flex-col items-center gap-1 p-3 rounded-lg border transition-colors ${
+                className={`flex flex-col items-center gap-1 p-3 rounded-xl border transition-all ${
                   formData.type === type.id
-                    ? 'border-gray-900 bg-gray-900 text-white'
-                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                    ? 'border-aifm-charcoal bg-aifm-charcoal text-white'
+                    : 'border-gray-200 text-aifm-charcoal/50 hover:bg-aifm-charcoal/[0.03]'
                 }`}
               >
                 <type.icon className="w-5 h-5" />
@@ -344,26 +344,26 @@ function ActivityForm({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-aifm-charcoal/70 mb-1">
             Titel <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c0a280] focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
             placeholder="T.ex. Möte med kund"
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Beskrivning</label>
+          <label className="block text-sm font-medium text-aifm-charcoal/70 mb-1">Beskrivning</label>
           <textarea
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c0a280] focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
             placeholder="Lägg till detaljer..."
           />
         </div>
@@ -377,37 +377,37 @@ function ActivityForm({
               onChange={(e) => setFormData({ ...formData, isAllDay: e.target.checked })}
               className="w-4 h-4 text-[#c0a280] rounded focus:ring-[#c0a280]"
             />
-            <span className="text-sm text-gray-700">Heldag</span>
+            <span className="text-sm text-aifm-charcoal/70">Heldag</span>
           </label>
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Datum</label>
+              <label className="block text-sm font-medium text-aifm-charcoal/70 mb-1">Datum</label>
               <input
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c0a280] focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
               />
             </div>
             {!formData.isAllDay && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Starttid</label>
+                  <label className="block text-sm font-medium text-aifm-charcoal/70 mb-1">Starttid</label>
                   <input
                     type="time"
                     value={formData.startTime}
                     onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c0a280] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Sluttid</label>
+                  <label className="block text-sm font-medium text-aifm-charcoal/70 mb-1">Sluttid</label>
                   <input
                     type="time"
                     value={formData.endTime}
                     onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c0a280] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
                   />
                 </div>
               </>
@@ -417,7 +417,7 @@ function ActivityForm({
 
         {/* Location */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-aifm-charcoal/70 mb-1">
             <MapPin className="w-4 h-4 inline mr-1" />
             Plats
           </label>
@@ -425,7 +425,7 @@ function ActivityForm({
             type="text"
             value={formData.location}
             onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c0a280] focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
             placeholder="T.ex. Kontoret, Teams-möte"
           />
         </div>
@@ -433,14 +433,14 @@ function ActivityForm({
         {/* Linked entities */}
         <div className="grid grid-cols-1 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-aifm-charcoal/70 mb-1">
               <User className="w-4 h-4 inline mr-1" />
               Kontakt
             </label>
             <select
               value={formData.contactId}
               onChange={(e) => setFormData({ ...formData, contactId: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c0a280] focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
             >
               <option value="">Välj kontakt...</option>
               {contacts.map((contact) => (
@@ -452,14 +452,14 @@ function ActivityForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-aifm-charcoal/70 mb-1">
               <Building2 className="w-4 h-4 inline mr-1" />
               Företag
             </label>
             <select
               value={formData.crmCompanyId}
               onChange={(e) => setFormData({ ...formData, crmCompanyId: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c0a280] focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
             >
               <option value="">Välj företag...</option>
               {companies.map((company) => (
@@ -469,14 +469,14 @@ function ActivityForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-aifm-charcoal/70 mb-1">
               <Briefcase className="w-4 h-4 inline mr-1" />
               Affär
             </label>
             <select
               value={formData.dealId}
               onChange={(e) => setFormData({ ...formData, dealId: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c0a280] focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
             >
               <option value="">Välj affär...</option>
               {deals.filter(d => d.status === 'open').map((deal) => (
@@ -489,11 +489,11 @@ function ActivityForm({
         {/* Status (for editing) */}
         {activity && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <label className="block text-sm font-medium text-aifm-charcoal/70 mb-1">Status</label>
             <select
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value as Activity['status'] })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c0a280] focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
             >
               <option value="scheduled">Planerad</option>
               <option value="completed">Genomförd</option>
@@ -507,22 +507,22 @@ function ActivityForm({
         {(activity?.status === 'completed' || formData.status === 'completed') && (
           <>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Resultat</label>
+              <label className="block text-sm font-medium text-aifm-charcoal/70 mb-1">Resultat</label>
               <textarea
                 value={formData.outcome}
                 onChange={(e) => setFormData({ ...formData, outcome: e.target.value })}
                 rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c0a280] focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
                 placeholder="Vad blev resultatet?"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nästa steg</label>
+              <label className="block text-sm font-medium text-aifm-charcoal/70 mb-1">Nästa steg</label>
               <textarea
                 value={formData.nextSteps}
                 onChange={(e) => setFormData({ ...formData, nextSteps: e.target.value })}
                 rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c0a280] focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
                 placeholder="Vad är nästa steg?"
               />
             </div>
@@ -531,12 +531,12 @@ function ActivityForm({
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-4 border-t border-gray-200 flex justify-between">
+      <div className="px-6 py-4 border-t border-gray-100 flex justify-between">
         {onDelete ? (
           <button
             type="button"
             onClick={onDelete}
-            className="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors"
           >
             Ta bort
           </button>
@@ -547,14 +547,14 @@ function ActivityForm({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            className="px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm font-medium transition-all"
           >
             Avbryt
           </button>
           <button
             type="submit"
             disabled={loading || !formData.title}
-            className="px-4 py-2 text-sm font-medium text-white bg-[#2d2a26] rounded-lg hover:bg-[#3d3a36] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            className="px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {loading ? (
               <>

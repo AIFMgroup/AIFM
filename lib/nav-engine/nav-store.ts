@@ -218,9 +218,6 @@ export interface FundConfigRecord {
     status: 'ACTIVE' | 'INACTIVE';
   }[];
   
-  // SECURA mapping
-  securaFundId?: string;
-  
   // Timestamps
   createdAt: string;
   updatedAt: string;

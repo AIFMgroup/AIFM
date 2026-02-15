@@ -1,7 +1,7 @@
 /**
  * NAV Calculations
  * 
- * Alla beräkningar som SECURA använder för NAV-sättning
+ * Beräkningar för NAV-sättning
  * Implementerar standard fondredovisning enligt UCITS/AIF-regler
  */
 
@@ -120,7 +120,7 @@ export function calculateAccruedDividend(
  * 
  * Daglig avgift = AUM × (Årlig avgift / 365)
  * 
- * SECURA använder typiskt ACT/365 konvention
+ * Använder typiskt ACT/365 konvention
  */
 export function calculateDailyManagementFee(
   aum: number,
@@ -434,12 +434,12 @@ export function calculateYearFraction(
 }
 
 // ============================================================================
-// Rounding Rules (SECURA-standard)
+// Rounding Rules
 // ============================================================================
 
 /**
  * Avrunda NAV per andel
- * SECURA använder typiskt 2-4 decimaler beroende på andelsklass
+ * Typiskt 2-4 decimaler beroende på andelsklass
  */
 export function roundNAVPerShare(
   value: number,

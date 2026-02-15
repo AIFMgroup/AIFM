@@ -204,38 +204,40 @@ export default function KnowledgeBasePage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Link
-            href="/settings"
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-aifm-charcoal/60" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-aifm-charcoal">Kunskapsbas</h1>
-            <p className="text-aifm-charcoal/60 mt-1">
-              Hantera dokument för AI-assistenten
-            </p>
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/settings"
+              className="p-2 hover:bg-aifm-charcoal/[0.03] rounded-xl transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-aifm-charcoal/40" />
+            </Link>
+            <div>
+              <h1 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Kunskapsbas</h1>
+              <p className="text-sm text-aifm-charcoal/40">
+                Hantera dokument för AI-assistenten
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleSync}
-            disabled={isSyncing}
-            className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
-          >
-            <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-            Synkronisera
-          </button>
-          <button
-            onClick={() => setShowUploadModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-aifm-gold text-white rounded-xl hover:bg-aifm-gold/90 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Ladda upp dokument
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleSync}
+              disabled={isSyncing}
+              className="flex items-center gap-2 px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm transition-all disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+              Synkronisera
+            </button>
+            <button
+              onClick={() => setShowUploadModal(true)}
+              className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+              Ladda upp dokument
+            </button>
+          </div>
         </div>
       </div>
 
@@ -292,7 +294,7 @@ export default function KnowledgeBasePage() {
             placeholder="Sök dokument..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-aifm-gold"
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold focus:outline-none transition-colors"
           />
         </div>
         <div className="relative">
@@ -300,7 +302,7 @@ export default function KnowledgeBasePage() {
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="pl-10 pr-8 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-aifm-gold appearance-none bg-white"
+            className="pl-10 pr-8 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold focus:outline-none appearance-none transition-colors"
           >
             <option value="all">Alla kategorier</option>
             {CATEGORIES.map(cat => (
@@ -314,19 +316,19 @@ export default function KnowledgeBasePage() {
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-aifm-charcoal/[0.03] border-b border-gray-100">
               <tr>
-                <th className="text-left px-6 py-4 text-sm font-medium text-aifm-charcoal/70">Dokument</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-aifm-charcoal/70">Kategori</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-aifm-charcoal/70">Status</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-aifm-charcoal/70">Uppladdat</th>
-                <th className="text-right px-6 py-4 text-sm font-medium text-aifm-charcoal/70">Åtgärder</th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Dokument</th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Kategori</th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Status</th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Uppladdat</th>
+                <th className="text-right px-6 py-4 text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Åtgärder</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filteredDocuments.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-aifm-charcoal/50">
+                    <td colSpan={5} className="px-6 py-12 text-center text-aifm-charcoal/40">
                     <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
                     <p>Inga dokument hittades</p>
                     <button
@@ -339,22 +341,22 @@ export default function KnowledgeBasePage() {
                 </tr>
               ) : (
                 filteredDocuments.map(doc => (
-                  <tr key={doc.id} className="hover:bg-gray-50/50">
+                  <tr key={doc.id} className="hover:bg-aifm-charcoal/[0.02] transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                        <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
                           <FileText className="w-5 h-5 text-blue-600" />
                         </div>
                         <div>
                           <p className="font-medium text-aifm-charcoal">{doc.title}</p>
                           {doc.documentNumber && (
-                            <p className="text-sm text-aifm-charcoal/50">{doc.documentNumber}</p>
+                            <p className="text-sm text-aifm-charcoal/40">{doc.documentNumber}</p>
                           )}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="px-2.5 py-1 bg-gray-100 rounded-full text-xs font-medium text-gray-700">
+                      <span className="px-2.5 py-0.5 text-xs font-medium bg-aifm-gold/15 text-aifm-charcoal rounded-full">
                         {doc.categoryLabel || doc.category}
                       </span>
                     </td>
@@ -368,7 +370,7 @@ export default function KnowledgeBasePage() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleDelete(doc.id, doc.title)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
                           title="Ta bort"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -433,7 +435,7 @@ function StatCard({
         <Icon className="w-5 h-5" />
         <span className="text-sm font-medium opacity-80">{label}</span>
       </div>
-      <p className={`${isText ? 'text-lg' : 'text-2xl'} font-bold`}>
+      <p className={`${isText ? 'text-lg' : 'text-2xl'} font-semibold tracking-tight`}>
         {typeof value === 'number' ? value.toLocaleString('sv-SE') : value}
       </p>
     </div>
@@ -572,16 +574,16 @@ function UploadModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-aifm-charcoal/[0.03] rounded-xl transition-colors"
           >
-            <X className="w-5 h-5 text-gray-400" />
+            <X className="w-5 h-5 text-aifm-charcoal/40" />
           </button>
         </div>
 
         {/* Content */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Upload Type Toggle */}
-          <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+          <div className="flex gap-2 p-1 bg-aifm-charcoal/[0.03] rounded-xl">
             <button
               type="button"
               onClick={() => setUploadType('text')}
@@ -616,7 +618,7 @@ function UploadModal({
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
               placeholder="t.ex. FFFS 2013:10 - AIF-förvaltare"
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-aifm-gold"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold focus:outline-none transition-colors"
             />
           </div>
 
@@ -631,7 +633,7 @@ function UploadModal({
                 value={formData.documentNumber}
                 onChange={(e) => setFormData(prev => ({ ...prev, documentNumber: e.target.value }))}
                 placeholder="t.ex. FFFS 2013:10"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-aifm-gold"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold focus:outline-none transition-colors"
               />
             </div>
             <div>
@@ -642,7 +644,7 @@ function UploadModal({
                 type="date"
                 value={formData.effectiveDate}
                 onChange={(e) => setFormData(prev => ({ ...prev, effectiveDate: e.target.value }))}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-aifm-gold"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold focus:outline-none transition-colors"
               />
             </div>
           </div>
@@ -656,7 +658,7 @@ function UploadModal({
               <select
                 value={formData.category}
                 onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-aifm-gold"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold focus:outline-none transition-colors"
               >
                 {CATEGORIES.map(cat => (
                   <option key={cat.value} value={cat.value}>{cat.label}</option>
@@ -670,7 +672,7 @@ function UploadModal({
               <select
                 value={formData.source}
                 onChange={(e) => setFormData(prev => ({ ...prev, source: e.target.value }))}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-aifm-gold"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold focus:outline-none transition-colors"
               >
                 {SOURCES.map(src => (
                   <option key={src.value} value={src.value}>{src.label}</option>
@@ -690,9 +692,9 @@ function UploadModal({
                 onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
                 placeholder="Klistra in dokumentets text här..."
                 rows={12}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-aifm-gold resize-none font-mono text-sm"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold focus:outline-none resize-none font-mono text-sm transition-colors"
               />
-              <p className="mt-1.5 text-xs text-aifm-charcoal/50">
+              <p className="mt-1.5 text-xs text-aifm-charcoal/40">
                 {formData.content.length.toLocaleString()} tecken
               </p>
             </div>
@@ -739,14 +741,14 @@ function UploadModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm transition-all"
           >
             Avbryt
           </button>
           <button
             onClick={handleSubmit}
             disabled={isUploading}
-            className="flex items-center gap-2 px-5 py-2.5 bg-aifm-gold text-white rounded-xl hover:bg-aifm-gold/90 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm disabled:opacity-50"
           >
             {isUploading ? (
               <>

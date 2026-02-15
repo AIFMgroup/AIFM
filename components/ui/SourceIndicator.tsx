@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { HelpCircle, ExternalLink, AlertCircle, CheckCircle2, Info } from 'lucide-react';
 
 export interface FieldSourceInfo {
-  source: 'openfigi' | 'gleif' | 'yahoo_finance' | 'mic_database' | 'isin_derivation' | 'regulatory_rule' | 'ai_analysis';
+  source: 'openfigi' | 'gleif' | 'yahoo_finance' | 'mic_database' | 'isin_derivation' | 'regulatory_rule' | 'ai_analysis' | 'datia' | 'esg_provider';
   sourceUrl?: string;
   retrievedAt?: string;
   confidence: 'high' | 'medium' | 'low' | 'not_found';
@@ -27,6 +27,8 @@ const SOURCE_NAMES: Record<FieldSourceInfo['source'], string> = {
   'isin_derivation': 'ISIN Standard',
   'regulatory_rule': 'FFFS 2013:9 / LVF',
   'ai_analysis': 'AI-analys (Claude)',
+  'datia': 'Datia ESG',
+  'esg_provider': 'ESG-dataleverantör',
 };
 
 const SOURCE_DESCRIPTIONS: Record<FieldSourceInfo['source'], string> = {
@@ -37,6 +39,8 @@ const SOURCE_DESCRIPTIONS: Record<FieldSourceInfo['source'], string> = {
   'isin_derivation': 'Härledd från ISIN-kodens struktur',
   'regulatory_rule': 'Baserat på svensk fondlagstiftning (FFFS 2013:9, LVF 2004:46)',
   'ai_analysis': 'Genererat av AI baserat på verifierad data',
+  'datia': 'ESG-data från Datia ECO API — hållbarhetspoäng, exkluderingsscreening och PAI-indikatorer',
+  'esg_provider': 'ESG-data från extern dataleverantör',
 };
 
 export function SourceIndicator({ source, className = '', showInline = false }: SourceIndicatorProps) {

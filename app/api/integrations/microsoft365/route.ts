@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MS365Client, getMS365Config, isMS365Configured } from '@/lib/integrations/microsoft365';
 import { getToken, deleteToken } from '@/lib/integrations/microsoft365/token-store';
+import { getUserIdFromSession } from '@/lib/auth/session';
+import { parseOr400, ms365PostBodySchema } from '@/lib/api/validate';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action') || 'status';
-    const userId = 'default-user';
+    const userId = await getUserIdFromSession();
+    if (!userId && action !== 'auth-url') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const effectiveUserId = userId ?? 'default-user';
 
     if (action === 'status') {
-      const tokens = getToken(userId);
+      const tokens = getToken(effectiveUserId);
       
       return NextResponse.json({
         configured: isMS365Configured(),
@@ -34,7 +40,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (action === 'calendar') {
-      const tokens = getToken(userId);
+      const tokens = getToken(effectiveUserId);
       if (!tokens) {
         return NextResponse.json({ error: 'Not connected' }, { status: 401 });
       }
@@ -49,7 +55,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (action === 'today') {
-      const tokens = getToken(userId);
+      const tokens = getToken(effectiveUserId);
       if (!tokens) {
         return NextResponse.json({ error: 'Not connected' }, { status: 401 });
       }
@@ -62,7 +68,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (action === 'emails') {
-      const tokens = getToken(userId);
+      const tokens = getToken(effectiveUserId);
       if (!tokens) {
         return NextResponse.json({ error: 'Not connected' }, { status: 401 });
       }
@@ -88,11 +94,17 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { action } = body;
-    const userId = 'default-user';
+    const raw = await request.json();
+    const parsed = parseOr400(ms365PostBodySchema, raw);
+    if (!parsed.ok) return parsed.response;
+    const body = parsed.data;
 
-    if (action === 'create-event') {
+    const userId = await getUserIdFromSession();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (body.action === 'create-event') {
       const tokens = getToken(userId);
       if (!tokens) {
         return NextResponse.json({ error: 'Not connected' }, { status: 401 });
@@ -114,7 +126,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ event });
     }
 
-    if (action === 'send-email') {
+    if (body.action === 'send-email') {
       const tokens = getToken(userId);
       if (!tokens) {
         return NextResponse.json({ error: 'Not connected' }, { status: 401 });
@@ -134,7 +146,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
-    if (action === 'search-emails') {
+    if (body.action === 'search-emails') {
       const tokens = getToken(userId);
       if (!tokens) {
         return NextResponse.json({ error: 'Not connected' }, { status: 401 });
@@ -143,12 +155,12 @@ export async function POST(request: NextRequest) {
       const config = getMS365Config()!;
       const client = new MS365Client(config, tokens);
 
-      const emails = await client.searchEmails(body.query, body.limit || 25);
+      const emails = await client.searchEmails(body.query, body.limit ?? 25);
 
       return NextResponse.json({ emails });
     }
 
-    if (action === 'check-availability') {
+    if (body.action === 'check-availability') {
       const tokens = getToken(userId);
       if (!tokens) {
         return NextResponse.json({ error: 'Not connected' }, { status: 401 });
@@ -163,8 +175,8 @@ export async function POST(request: NextRequest) {
         body.endDate
       );
 
-      return NextResponse.json({ 
-        availability: Object.fromEntries(freeBusy) 
+      return NextResponse.json({
+        availability: Object.fromEntries(freeBusy),
       });
     }
 
@@ -178,7 +190,10 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const userId = 'default-user';
+    const userId = await getUserIdFromSession();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     deleteToken(userId);
     return NextResponse.json({ message: 'Disconnected' });
   } catch (error) {

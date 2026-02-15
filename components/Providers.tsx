@@ -17,15 +17,15 @@ export function Providers({ children }: { children: ReactNode }) {
       <CompanyProvider>
         <UserProfileProvider>
           <SidebarProvider>
-            <WebSocketProvider>
-              <ToastProvider>
+            <ToastProvider>
+              <WebSocketProvider>
                 <KeyboardShortcutsProvider>
                   {children}
                   <UpdateBanner />
                   <InstallBanner />
                 </KeyboardShortcutsProvider>
-              </ToastProvider>
-            </WebSocketProvider>
+              </WebSocketProvider>
+            </ToastProvider>
           </SidebarProvider>
         </UserProfileProvider>
       </CompanyProvider>

@@ -2,7 +2,7 @@
  * NAV Calculation Engine
  * 
  * Beräkningsmotor för NAV (Net Asset Value)
- * Implementerar samma beräkningslogik som SECURA
+ * Implementerar standard fondredovisning enligt UCITS/AIF-regler
  */
 
 import {
@@ -35,10 +35,18 @@ export class NAVCalculator {
   private validationErrors: ValidationError[] = [];
   private validationWarnings: ValidationWarning[] = [];
 
+  /** Default threshold (percent) for daily NAV change warning. Configurable per call. */
+  static readonly DEFAULT_CHANGE_WARNING_THRESHOLD_PERCENT = 5;
+
   /**
-   * Calculate NAV for a fund/share class
+   * Calculate NAV for a fund/share class.
+   * Optional options.previousNavPerShare: when provided, result includes change vs previous and a warning if change exceeds threshold.
+   * Optional options.changeWarningThresholdPercent: warn when |navChangePercent| exceeds this (default 5).
    */
-  calculate(input: NAVCalculationInput): NAVCalculationResult {
+  calculate(
+    input: NAVCalculationInput,
+    options?: { previousNavPerShare?: number; changeWarningThresholdPercent?: number }
+  ): NAVCalculationResult {
     // Reset state
     this.calculationDetails = [];
     this.validationErrors = [];
@@ -95,6 +103,23 @@ export class NAVCalculator {
     // 5. Validate result
     this.validateResult(input, navPerShare, netAssetValue);
 
+    const previousNavPerShare = options?.previousNavPerShare;
+    const thresholdPercent = options?.changeWarningThresholdPercent ?? NAVCalculator.DEFAULT_CHANGE_WARNING_THRESHOLD_PERCENT;
+
+    const navChange = previousNavPerShare != null ? navPerShare - previousNavPerShare : 0;
+    const navChangePercent = previousNavPerShare != null && previousNavPerShare > 0
+      ? (navChange / previousNavPerShare) * 100
+      : 0;
+
+    if (previousNavPerShare != null && Math.abs(navChangePercent) > thresholdPercent) {
+      this.addWarning(
+        'NAV_CHANGE_ABOVE_THRESHOLD',
+        `NAV-förändring ${navChangePercent >= 0 ? '+' : ''}${navChangePercent.toFixed(2)}% över tröskeln ${thresholdPercent}%. Kontrollera indata och priser.`,
+        'navPerShare',
+        { previousNavPerShare, navPerShare, navChangePercent, thresholdPercent }
+      );
+    }
+
     // Build result
     const result: NAVCalculationResult = {
       fundId: input.fundId,
@@ -108,9 +133,9 @@ export class NAVCalculator {
       sharesOutstanding,
       navPerShare,
       
-      previousNAV: undefined, // Set externally if available
-      navChange: 0,
-      navChangePercent: 0,
+      previousNAV: previousNavPerShare,
+      navChange,
+      navChangePercent,
       
       breakdown: {
         assets: assetBreakdown,
@@ -455,7 +480,7 @@ export class NAVCalculator {
   }
 
   // ==========================================================================
-  // Fee Calculations (SECURA-style)
+  // Fee Calculations
   // ==========================================================================
 
   /**
@@ -654,8 +679,7 @@ export class NAVCalculator {
       );
     }
 
-    // Check NAV change threshold (warn if > 5% daily change)
-    // This would need previousNAV to be passed in
+    // NAV change vs previous day is checked in calculate() when options.previousNavPerShare is provided.
   }
 
   // ==========================================================================

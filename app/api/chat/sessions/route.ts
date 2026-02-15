@@ -159,7 +159,27 @@ export async function GET(request: NextRequest) {
       if (!result.Item) {
         return NextResponse.json({ error: 'Session not found' }, { status: 404 });
       }
-      
+
+      // ── Export single session ──
+      const exportFormat = searchParams.get('export');
+      if (exportFormat === 'json') {
+        const session = result.Item as ChatSession;
+        const jsonContent = JSON.stringify({
+          title: session.title,
+          mode: session.mode,
+          createdAt: session.createdAt,
+          updatedAt: session.updatedAt,
+          messages: session.messages,
+          tags: session.tags,
+        }, null, 2);
+        return new Response(jsonContent, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Disposition': `attachment; filename="chat-${sessionId}.json"`,
+          },
+        });
+      }
+
       return NextResponse.json(result.Item);
     }
     
@@ -183,7 +203,33 @@ export async function GET(request: NextRequest) {
       ...(exclusiveStartKey && { ExclusiveStartKey: exclusiveStartKey }),
     }));
     
-    const items = (result.Items || []) as ChatSession[];
+    let items = (result.Items || []) as ChatSession[];
+
+    // ── Advanced search / filter ──
+    const searchQuery = searchParams.get('q')?.toLowerCase().trim();
+    const fromDate = searchParams.get('fromDate');
+    const toDate = searchParams.get('toDate');
+    const tagFilter = searchParams.get('tag');
+
+    if (searchQuery) {
+      items = items.filter(s =>
+        s.title?.toLowerCase().includes(searchQuery) ||
+        s.messages?.some(m => m.content?.toLowerCase().includes(searchQuery))
+      );
+    }
+    if (fromDate) {
+      const from = new Date(fromDate).getTime();
+      items = items.filter(s => new Date(s.updatedAt).getTime() >= from);
+    }
+    if (toDate) {
+      const to = new Date(toDate).getTime() + 86_400_000; // include the whole day
+      items = items.filter(s => new Date(s.updatedAt).getTime() <= to);
+    }
+    if (tagFilter) {
+      const tags = tagFilter.split(',').map(t => t.trim().toLowerCase());
+      items = items.filter(s => s.tags?.some(t => tags.includes(t.toLowerCase())));
+    }
+
     // Sort: pinned first, then by updatedAt descending
     items.sort((a, b) => {
       const aPinned = a.pinned === true ? 1 : 0;

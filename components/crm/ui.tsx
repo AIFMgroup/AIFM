@@ -359,70 +359,8 @@ Textarea.displayName = 'Textarea';
 // Button Components
 // ============================================================================
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
-  size?: 'sm' | 'md' | 'lg';
-  icon?: ReactNode;
-  iconPosition?: 'left' | 'right';
-  loading?: boolean;
-  fullWidth?: boolean;
-}
-
-export function Button({
-  variant = 'primary',
-  size = 'md',
-  icon,
-  iconPosition = 'left',
-  loading = false,
-  fullWidth = false,
-  children,
-  className,
-  disabled,
-  ...props
-}: ButtonProps) {
-  const variantClasses = {
-    primary: 'bg-[#2d2a26] text-white hover:bg-[#3d3a36] active:bg-[#1d1a16]',
-    secondary: 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300 active:bg-gray-100',
-    ghost: 'bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900 active:bg-gray-200',
-    danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800',
-  };
-
-  const sizeClasses = {
-    sm: 'h-8 px-3 text-xs gap-1.5',
-    md: 'h-10 px-4 text-sm gap-2',
-    lg: 'h-12 px-5 text-base gap-2.5',
-  };
-
-  return (
-    <button
-      className={cn(
-        'inline-flex items-center justify-center font-medium rounded-xl',
-        'transition-all duration-200 outline-none whitespace-nowrap',
-        'focus-visible:ring-2 focus-visible:ring-[#c0a280] focus-visible:ring-offset-2',
-        'disabled:opacity-50 disabled:cursor-not-allowed',
-        variantClasses[variant],
-        sizeClasses[size],
-        fullWidth && 'w-full',
-        className
-      )}
-      disabled={disabled || loading}
-      {...props}
-    >
-      {loading ? (
-        <>
-          <Loader2 className="w-4 h-4 animate-spin" />
-          <span>Laddar...</span>
-        </>
-      ) : (
-        <>
-          {icon && iconPosition === 'left' && icon}
-          {children}
-          {icon && iconPosition === 'right' && icon}
-        </>
-      )}
-    </button>
-  );
-}
+// Button consolidated: use canonical @/components/Button
+export { Button, type ButtonProps } from '@/components/Button';
 
 // ============================================================================
 // IconButton

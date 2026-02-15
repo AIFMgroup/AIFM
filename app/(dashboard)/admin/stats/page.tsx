@@ -89,18 +89,18 @@ export default function AdminStatsPage() {
 
   if (error === 'Du har inte administratörsrättigheter') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md text-center">
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-lg shadow-aifm-charcoal/[0.03] p-8 max-w-md text-center">
           <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
             <Shield className="w-8 h-8 text-red-600" />
           </div>
-          <h1 className="text-xl font-semibold text-gray-900 mb-2">Åtkomst nekad</h1>
-          <p className="text-gray-600 mb-6">
+          <h1 className="text-xl font-semibold text-aifm-charcoal tracking-tight mb-2">Åtkomst nekad</h1>
+          <p className="text-aifm-charcoal/40 mb-6">
             Du har inte behörighet att se admin-dashboarden.
           </p>
           <Link
             href="/chat"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-[#2d2a26] text-white rounded-lg hover:bg-[#4a4540] transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm"
           >
             <ArrowLeft className="w-4 h-4" />
             Tillbaka till chatten
@@ -111,40 +111,40 @@ export default function AdminStatsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
               <Link 
                 href="/chat" 
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-aifm-charcoal/[0.03] rounded-xl transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
+                <ArrowLeft className="w-5 h-5 text-aifm-charcoal/40" />
               </Link>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2d2a26] to-[#4a4540] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/80 flex items-center justify-center">
                   <BarChart3 className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-semibold text-gray-900">Plattformsstatistik</h1>
-                  <p className="text-sm text-gray-500">AI & kunskapsbas</p>
+                  <h1 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Plattformsstatistik</h1>
+                  <p className="text-sm text-aifm-charcoal/40">AI & kunskapsbas</p>
                 </div>
               </div>
             </div>
             
             <div className="flex items-center gap-3">
               {/* Time Range Selector */}
-              <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-lg">
+              <div className="flex items-center gap-1 p-1 bg-aifm-charcoal/[0.03] rounded-xl">
                 {TIME_RANGES.map(range => (
                   <button
                     key={range.value}
                     onClick={() => setTimeRange(range.value)}
-                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                    className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                       timeRange === range.value
-                        ? 'bg-white text-[#2d2a26] shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
+                        ? 'bg-white text-aifm-charcoal shadow-sm'
+                        : 'text-aifm-charcoal/40 hover:text-aifm-charcoal'
                     }`}
                   >
                     {range.label}
@@ -155,10 +155,10 @@ export default function AdminStatsPage() {
               <button
                 onClick={loadStats}
                 disabled={isLoading}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-aifm-charcoal/[0.03] rounded-xl transition-colors"
                 title="Uppdatera"
               >
-                <RefreshCw className={`w-5 h-5 text-gray-600 ${isLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-5 h-5 text-aifm-charcoal/40 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
             </div>
           </div>
@@ -168,14 +168,14 @@ export default function AdminStatsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {isLoading && !stats ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            <Loader2 className="w-8 h-8 animate-spin text-aifm-gold" />
           </div>
         ) : error ? (
           <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
             <p className="text-red-600">{error}</p>
             <button
               onClick={loadStats}
-              className="mt-4 px-4 py-2 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+              className="mt-4 px-4 py-2 text-sm bg-red-100 text-red-700 rounded-full hover:bg-red-200 transition-all"
             >
               Försök igen
             </button>
@@ -184,59 +184,59 @@ export default function AdminStatsPage() {
           <div className="space-y-8">
             {/* Overview Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
                     <BookOpen className="w-5 h-5 text-violet-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Delad kunskap</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.knowledge.total}</p>
+                    <p className="text-sm text-aifm-charcoal/40">Delad kunskap</p>
+                    <p className="text-2xl font-semibold tracking-tight text-aifm-charcoal">{stats.knowledge.total}</p>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-aifm-charcoal/40">
                   <span className="text-green-600 font-medium">+{stats.knowledge.recent}</span> senaste {timeRange === '24h' ? '24 timmarna' : timeRange === '7d' ? '7 dagarna' : '30 dagarna'}
                 </p>
               </div>
 
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
                     <MessageSquare className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Chattsamtal</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.chat.total}</p>
+                    <p className="text-sm text-aifm-charcoal/40">Chattsamtal</p>
+                    <p className="text-2xl font-semibold tracking-tight text-aifm-charcoal">{stats.chat.total}</p>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-aifm-charcoal/40">
                   <span className="text-green-600 font-medium">+{stats.chat.recent}</span> nya samtal
                 </p>
               </div>
 
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
                     <Sparkles className="w-5 h-5 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">AI-förfrågningar</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.aiUsage.totalRequests}</p>
+                    <p className="text-sm text-aifm-charcoal/40">AI-förfrågningar</p>
+                    <p className="text-2xl font-semibold tracking-tight text-aifm-charcoal">{stats.aiUsage.totalRequests}</p>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-aifm-charcoal/40">
                   <span className="text-green-600 font-medium">+{stats.aiUsage.recentRequests}</span> nya
                 </p>
               </div>
 
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
                     <Clock className="w-5 h-5 text-orange-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Genomsn. svarstid</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-sm text-aifm-charcoal/40">Genomsn. svarstid</p>
+                    <p className="text-2xl font-semibold tracking-tight text-aifm-charcoal">
                       {stats.aiUsage.avgResponseTime > 0 
                         ? `${(stats.aiUsage.avgResponseTime / 1000).toFixed(1)}s`
                         : '—'
@@ -244,15 +244,15 @@ export default function AdminStatsPage() {
                     </p>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">AI-svarstid</p>
+                <p className="text-xs text-aifm-charcoal/40">AI-svarstid</p>
               </div>
             </div>
 
             {/* Knowledge by Category */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Database className="w-5 h-5 text-gray-400" />
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+                <h2 className="text-lg font-semibold text-aifm-charcoal tracking-tight mb-4 flex items-center gap-2">
+                  <Database className="w-5 h-5 text-aifm-charcoal/40" />
                   Kunskap per kategori
                 </h2>
                 <div className="space-y-3">
@@ -265,10 +265,10 @@ export default function AdminStatsPage() {
                     return (
                       <div key={category.id}>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium text-gray-700">{category.name}</span>
-                          <span className="text-sm text-gray-500">{count} ({percentage}%)</span>
+                          <span className="text-sm font-medium text-aifm-charcoal/70">{category.name}</span>
+                          <span className="text-sm text-aifm-charcoal/40">{count} ({percentage}%)</span>
                         </div>
-                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-2 bg-aifm-charcoal/[0.03] rounded-full overflow-hidden">
                           <div 
                             className={`h-full rounded-full transition-all ${
                               category.id === 'clients' ? 'bg-blue-500' :
@@ -286,34 +286,34 @@ export default function AdminStatsPage() {
               </div>
 
               {/* Top Contributors */}
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-gray-400" />
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+                <h2 className="text-lg font-semibold text-aifm-charcoal tracking-tight mb-4 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-aifm-charcoal/40" />
                   Topp bidragsgivare
                 </h2>
                 {stats.knowledge.topContributors.length === 0 ? (
-                  <p className="text-gray-500 text-sm">Ingen data ännu</p>
+                  <p className="text-aifm-charcoal/40 text-sm">Ingen data ännu</p>
                 ) : (
                   <div className="space-y-3">
                     {stats.knowledge.topContributors.map((contributor, index) => (
                       <div 
                         key={contributor.userId}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                        className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl"
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
-                            index === 0 ? 'bg-yellow-500' :
-                            index === 1 ? 'bg-gray-400' :
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm ${
+                            index === 0 ? 'bg-aifm-gold' :
+                            index === 1 ? 'bg-aifm-charcoal/40' :
                             index === 2 ? 'bg-orange-400' :
                             'bg-gray-300'
                           }`}>
                             {index + 1}
                           </div>
-                          <span className="text-sm font-medium text-gray-700">
+                          <span className="text-sm font-medium text-aifm-charcoal/70">
                             {contributor.email}
                           </span>
                         </div>
-                        <span className="text-sm text-gray-500">
+                        <span className="px-2.5 py-0.5 text-xs font-medium bg-aifm-gold/15 text-aifm-charcoal rounded-full">
                           {contributor.count} bidrag
                         </span>
                       </div>
@@ -324,21 +324,21 @@ export default function AdminStatsPage() {
             </div>
 
             {/* Active Users */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-gray-400" />
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+              <h2 className="text-lg font-semibold text-aifm-charcoal tracking-tight mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-aifm-charcoal/40" />
                 Aktiva användare
               </h2>
-              <div className="text-3xl font-bold text-gray-900 mb-2">
+              <div className="text-3xl font-semibold tracking-tight text-aifm-charcoal mb-2">
                 {Object.keys(stats.chat.byUser).length}
               </div>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-aifm-charcoal/40">
                 Unika användare som har chattsamtal
               </p>
             </div>
 
             {/* Footer */}
-            <div className="text-center text-xs text-gray-400">
+            <div className="text-center text-xs text-aifm-charcoal/30">
               <p className="flex items-center justify-center gap-1">
                 <Calendar className="w-3 h-3" />
                 Uppdaterad {new Date(stats.generatedAt).toLocaleString('sv-SE')}

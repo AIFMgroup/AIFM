@@ -55,11 +55,10 @@ interface ScheduleConfig {
   subRed: string;
 }
 
-interface SecuraConfig {
-  host: string;
-  port: string;
-  username: string;
-  connected: boolean;
+interface DataSourceConfig {
+  lseg: { configured: boolean; environment: string };
+  seb: { configured: boolean; sandbox: boolean };
+  fundRegistry: { configured: boolean };
 }
 
 interface NAVSettings {
@@ -67,7 +66,7 @@ interface NAVSettings {
   funds: Fund[];
   recipients: Recipient[];
   schedule: ScheduleConfig;
-  securaConfig: SecuraConfig;
+  dataSourceConfig: DataSourceConfig;
   options: {
     uploadToWebsite: boolean;
     slackNotifications: boolean;
@@ -97,11 +96,10 @@ const DEFAULT_SCHEDULE: ScheduleConfig = {
   subRed: '15:00',
 };
 
-const DEFAULT_SECURA_CONFIG: SecuraConfig = {
-  host: '194.62.154.68',
-  port: '20023',
-  username: 'RESTAPI_AIFM',
-  connected: false,
+const DEFAULT_DATA_SOURCE_CONFIG: DataSourceConfig = {
+  lseg: { configured: !!process.env.LSEG_API_KEY, environment: process.env.LSEG_API_URL ? 'production' : 'sandbox' },
+  seb: { configured: !!process.env.SEB_CLIENT_ID, sandbox: !process.env.SEB_API_URL?.includes('api.seb.se') },
+  fundRegistry: { configured: !!process.env.FUND_REGISTRY_TABLE },
 };
 
 const DEFAULT_OPTIONS = {
@@ -143,7 +141,7 @@ export async function GET(request: NextRequest) {
       funds: DEFAULT_FUNDS,
       recipients: [],
       schedule: DEFAULT_SCHEDULE,
-      securaConfig: DEFAULT_SECURA_CONFIG,
+      dataSourceConfig: DEFAULT_DATA_SOURCE_CONFIG,
       options: DEFAULT_OPTIONS,
       updatedAt: new Date().toISOString(),
     };
@@ -188,7 +186,7 @@ export async function POST(request: NextRequest) {
       funds: body.funds || DEFAULT_FUNDS,
       recipients: body.recipients || [],
       schedule: body.schedule || DEFAULT_SCHEDULE,
-      securaConfig: body.securaConfig || DEFAULT_SECURA_CONFIG,
+      dataSourceConfig: body.dataSourceConfig || DEFAULT_DATA_SOURCE_CONFIG,
       options: body.options || DEFAULT_OPTIONS,
       updatedAt: new Date().toISOString(),
       updatedBy: userId,
@@ -243,7 +241,7 @@ export async function DELETE(request: NextRequest) {
       funds: DEFAULT_FUNDS,
       recipients: [],
       schedule: DEFAULT_SCHEDULE,
-      securaConfig: DEFAULT_SECURA_CONFIG,
+      dataSourceConfig: DEFAULT_DATA_SOURCE_CONFIG,
       options: DEFAULT_OPTIONS,
       updatedAt: new Date().toISOString(),
     };

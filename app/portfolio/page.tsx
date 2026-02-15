@@ -7,20 +7,65 @@ import {
   Eye, BarChart3, PieChart,
   Calendar, DollarSign, Briefcase
 } from 'lucide-react';
-import {
-  mockFunds, getPortfolioByFund,
-  formatCurrency, formatPercentage, formatDate, Fund, PortfolioCompany
-} from '@/lib/fundData';
+import { formatCurrency, formatPercentage, formatDate } from '@/lib/fundData';
+import type { Fund, PortfolioCompany } from '@/lib/fundData';
+import { useFundsData, getPortfolioByFund } from '@/lib/fundsApi';
 import { CustomSelect } from '@/components/CustomSelect';
 import { PageHeader, SecondaryButton } from '@/components/shared/PageHeader';
+import { Skeleton, EmptyState } from '@/components/ui/design-system';
 
 export default function PortfolioPage() {
-  const [selectedFund, setSelectedFund] = useState<Fund>(mockFunds[0]);
+  const { data, loading, error } = useFundsData();
+  const [selectedFundId, setSelectedFundId] = useState<string>('');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_selectedCompany, setSelectedCompany] = useState<PortfolioCompany | null>(null);
 
-  const portfolio = getPortfolioByFund(selectedFund.id);
+  const funds = data?.funds ?? [];
+  const selectedFund = funds.find((f) => f.id === selectedFundId) ?? funds[0];
+  const portfolio = data && selectedFund ? getPortfolioByFund(data, selectedFund.id) : [];
+
+  if (loading) {
+    return (
+      <div className="w-full min-h-screen bg-gradient-to-br from-aifm-charcoal via-aifm-charcoal to-aifm-charcoal/95 -m-2 sm:-m-4 p-2 sm:p-4">
+        <div className="flex flex-wrap gap-4 mb-8">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-20 flex-1 min-w-[140px] rounded-xl bg-white/10" />
+          ))}
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-24 rounded-xl bg-white/10" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Skeleton key={i} className="h-40 rounded-xl bg-white/10" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+  if (error || !data) {
+    return (
+      <div className="w-full min-h-screen bg-gradient-to-br from-aifm-charcoal via-aifm-charcoal to-aifm-charcoal/95 -m-2 sm:-m-4 p-2 sm:p-4 flex items-center justify-center text-white">
+        {error?.message ?? 'Kunde inte ladda fonddata'}
+      </div>
+    );
+  }
+  if (funds.length === 0) {
+    return (
+      <div className="w-full min-h-screen bg-gradient-to-br from-aifm-charcoal via-aifm-charcoal to-aifm-charcoal/95 -m-2 sm:-m-4 p-2 sm:p-4 flex items-center justify-center">
+        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 max-w-md">
+          <EmptyState
+            icon={<Briefcase className="w-8 h-8 text-aifm-gold" />}
+            title="Inga fonder att visa"
+            description="Välj en fond eller lägg till portföljbolag för att se data."
+          />
+        </div>
+      </div>
+    );
+  }
   
   // Calculate portfolio metrics
   const totalInvested = portfolio.reduce((sum, pc) => sum + pc.initialInvestment, 0);
@@ -76,16 +121,13 @@ export default function PortfolioPage() {
         actions={
           <>
             <CustomSelect
-              options={mockFunds.map((fund) => ({
+              options={funds.map((fund) => ({
                 value: fund.id,
                 label: fund.name,
                 icon: <Briefcase className="w-4 h-4 text-aifm-gold" />
               }))}
-              value={selectedFund.id}
-              onChange={(value) => {
-                const fund = mockFunds.find(f => f.id === value);
-                if (fund) setSelectedFund(fund);
-              }}
+              value={selectedFundId || selectedFund.id}
+              onChange={(value) => setSelectedFundId(value)}
               className="min-w-[200px]"
               variant="minimal"
               size="md"

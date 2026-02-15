@@ -63,6 +63,7 @@
     "clsx": "^2.0.0",
     "date-fns": "^2.30.0",
     "docx": "^9.5.1",
+    "jszip": "^3.10.1",
     "dotenv": "^16.3.1",
     "exceljs": "^4.4.0",
     "isomorphic-dompurify": "^2.3.0",

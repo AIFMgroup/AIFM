@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MS365Client, getMS365Config } from '@/lib/integrations/microsoft365';
 import { setToken } from '@/lib/integrations/microsoft365/token-store';
+import { getUserIdFromSession } from '@/lib/auth/session';
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,14 +31,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const userId = await getUserIdFromSession();
+    if (!userId) {
+      return NextResponse.redirect(
+        new URL('/admin/integrations?error=Session+expired+please+log+in', request.url)
+      );
+    }
+
     const client = new MS365Client(config);
     const tokens = await client.exchangeCodeForTokens(code);
 
-    // Get user info
     const user = await client.getMe();
 
-    // Store tokens (in production, use DynamoDB)
-    const userId = 'default-user';
     setToken(userId, {
       ...tokens,
       user,

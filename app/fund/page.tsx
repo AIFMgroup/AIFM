@@ -5,21 +5,65 @@ import Link from 'next/link';
 import { 
   TrendingUp, Wallet, 
   ArrowUpRight, ArrowDownRight, DollarSign,
-  ChevronRight, Download, Building2, Briefcase, BarChart3
+  ChevronRight, Download, Building2, Briefcase, BarChart3,
+  Leaf, ShieldCheck
 } from 'lucide-react';
-import { 
-  mockFunds, getCommitmentsByFund, getPortfolioByFund,
-  formatCurrency, formatPercentage, formatDate, Fund
-} from '@/lib/fundData';
+import { formatCurrency, formatPercentage, formatDate } from '@/lib/fundData';
+import type { Fund } from '@/lib/fundData';
+import { useFundsData, getCommitmentsByFund, getPortfolioByFund } from '@/lib/fundsApi';
 import { CustomSelect } from '@/components/CustomSelect';
 import { PageHeader, SecondaryButton } from '@/components/shared/PageHeader';
+import { Skeleton, EmptyState } from '@/components/ui/design-system';
 
 export default function FundOverviewPage() {
-  const [selectedFund, setSelectedFund] = useState<Fund>(mockFunds[0]);
+  const { data, loading, error } = useFundsData();
+  const [selectedFundId, setSelectedFundId] = useState<string>('');
 
-  const commitments = getCommitmentsByFund(selectedFund.id);
-  const portfolio = getPortfolioByFund(selectedFund.id);
+  const funds = data?.funds ?? [];
+  const selectedFund = funds.find((f) => f.id === selectedFundId) ?? funds[0];
+  const commitments = data && selectedFund ? getCommitmentsByFund(data, selectedFund.id) : [];
+  const portfolio = data && selectedFund ? getPortfolioByFund(data, selectedFund.id) : [];
 
+  if (loading) {
+    return (
+      <div className="w-full min-h-screen bg-gradient-to-br from-aifm-charcoal via-aifm-charcoal to-aifm-charcoal/95 -m-2 sm:-m-4 p-2 sm:p-4">
+        <div className="flex flex-wrap gap-4 mb-8">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-20 flex-1 min-w-[140px] rounded-xl bg-white/10" />
+          ))}
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-24 rounded-xl bg-white/10" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Skeleton className="h-64 rounded-xl bg-white/10" />
+          <Skeleton className="h-64 rounded-xl bg-white/10 lg:col-span-2" />
+        </div>
+      </div>
+    );
+  }
+  if (error || !data) {
+    return (
+      <div className="w-full min-h-screen bg-gradient-to-br from-aifm-charcoal via-aifm-charcoal to-aifm-charcoal/95 -m-2 sm:-m-4 p-2 sm:p-4 flex items-center justify-center text-white">
+        {error?.message ?? 'Kunde inte ladda fonddata'}
+      </div>
+    );
+  }
+  if (funds.length === 0) {
+    return (
+      <div className="w-full min-h-screen bg-gradient-to-br from-aifm-charcoal via-aifm-charcoal to-aifm-charcoal/95 -m-2 sm:-m-4 p-2 sm:p-4 flex items-center justify-center">
+        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 max-w-md">
+          <EmptyState
+            icon={<Building2 className="w-8 h-8 text-aifm-gold" />}
+            title="Inga fonder att visa"
+            description="Lägg till en fond eller kontakta administratören för att komma igång."
+          />
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-aifm-charcoal via-aifm-charcoal to-aifm-charcoal/95 -m-2 sm:-m-4 p-2 sm:p-4">
       <PageHeader
@@ -58,13 +102,13 @@ export default function FundOverviewPage() {
         actions={
           <>
             <CustomSelect
-              options={mockFunds.map((fund) => ({
+              options={funds.map((fund) => ({
                 value: fund.id,
                 label: fund.name,
                 icon: <Building2 className="w-4 h-4 text-aifm-gold" />
               }))}
-              value={selectedFund.id}
-              onChange={(value) => setSelectedFund(mockFunds.find(f => f.id === value) || mockFunds[0])}
+              value={selectedFundId || selectedFund.id}
+              onChange={(value) => setSelectedFundId(value)}
               className="min-w-[200px]"
               variant="gold"
               size="md"
@@ -190,6 +234,44 @@ export default function FundOverviewPage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </div>
+
+      {/* ESG Summary */}
+      <div className="mt-8 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <Leaf className="w-5 h-5 text-green-400" />
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider">ESG & Hållbarhet</h3>
+          </div>
+          <Link href="/portfolio" className="text-sm text-aifm-gold hover:underline flex items-center gap-1">
+            ESG Dashboard <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div>
+            <p className="text-xs text-white/50 uppercase tracking-wider mb-1">SFDR-klassificering</p>
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-green-400" />
+              <p className="font-medium text-white">Artikel 8</p>
+            </div>
+            <p className="text-xs text-white/40 mt-1">Främjar hållbarhet</p>
+          </div>
+          <div>
+            <p className="text-xs text-white/50 uppercase tracking-wider mb-1">ESG-dataleverantör</p>
+            <p className="font-medium text-white">Datia</p>
+            <p className="text-xs text-white/40 mt-1">Realtidsdata via API</p>
+          </div>
+          <div>
+            <p className="text-xs text-white/50 uppercase tracking-wider mb-1">Exkluderingsscreening</p>
+            <p className="font-medium text-green-400">Aktiv</p>
+            <p className="text-xs text-white/40 mt-1">48+ kategorier granskas</p>
+          </div>
+          <div>
+            <p className="text-xs text-white/50 uppercase tracking-wider mb-1">PAI-rapportering</p>
+            <p className="font-medium text-white">Tillgänglig</p>
+            <p className="text-xs text-white/40 mt-1">Principal Adverse Impact</p>
           </div>
         </div>
       </div>

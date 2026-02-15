@@ -96,13 +96,13 @@ function getCategoryIcon(categoryId: string): React.ReactElement {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  clients: 'bg-blue-50 border-blue-200 text-blue-700',
-  negotiations: 'bg-green-50 border-green-200 text-green-700',
-  compliance: 'bg-purple-50 border-purple-200 text-purple-700',
-  internal: 'bg-orange-50 border-orange-200 text-orange-700',
+  clients: 'bg-aifm-gold/10 border-aifm-gold/20 text-aifm-charcoal',
+  negotiations: 'bg-aifm-charcoal/[0.06] border-aifm-charcoal/10 text-aifm-charcoal',
+  compliance: 'bg-aifm-gold/15 border-aifm-gold/25 text-aifm-charcoal',
+  internal: 'bg-aifm-charcoal/[0.04] border-aifm-charcoal/10 text-aifm-charcoal',
 };
 
-const DEFAULT_CATEGORY_COLOR = 'bg-gray-50 border-gray-200 text-gray-700';
+const DEFAULT_CATEGORY_COLOR = 'bg-aifm-charcoal/[0.04] border-gray-100 text-aifm-charcoal';
 
 export default function KnowledgePage() {
   const router = useRouter();
@@ -221,32 +221,27 @@ export default function KnowledgePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
               <Link 
                 href="/chat" 
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-aifm-charcoal/[0.04] rounded-xl transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
+                <ArrowLeft className="w-5 h-5 text-aifm-charcoal/50" />
               </Link>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2d2a26] to-[#4a4540] flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-semibold text-gray-900">Kunskapsbas</h1>
-                  <p className="text-sm text-gray-500">Teamets delade kunskap</p>
-                </div>
+              <div>
+                <h1 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Kunskapsbas</h1>
+                <p className="text-sm text-aifm-charcoal/40">Teamets delade kunskap</p>
               </div>
             </div>
             
             <Link
               href="/chat"
-              className="flex items-center gap-2 px-4 py-2 bg-[#2d2a26] text-white rounded-lg hover:bg-[#4a4540] transition-colors"
+              className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm"
             >
               <MessageSquare className="w-4 h-4" />
               <span className="hidden sm:inline">Tillbaka till chatten</span>
@@ -259,28 +254,28 @@ export default function KnowledgePage() {
         {/* Stats */}
         {stats && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-            <div className="bg-white rounded-xl p-4 border border-gray-200">
-              <div className="text-2xl font-bold text-gray-900">{stats.totalItems}</div>
-              <div className="text-sm text-gray-500">Totalt delad kunskap</div>
+            <div className="bg-white rounded-2xl p-4 border border-gray-100 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+              <div className="text-2xl font-semibold tracking-tight text-aifm-charcoal">{stats.totalItems}</div>
+              <div className="text-sm text-aifm-charcoal/40">Totalt delad kunskap</div>
             </div>
             {KNOWLEDGE_CATEGORIES.map(cat => (
               <div 
                 key={cat.id}
-                className={`rounded-xl p-4 border ${CATEGORY_COLORS[cat.id] || DEFAULT_CATEGORY_COLOR} cursor-pointer hover:opacity-80 transition-opacity`}
+                className={`rounded-2xl p-4 border ${CATEGORY_COLORS[cat.id] || DEFAULT_CATEGORY_COLOR} cursor-pointer hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300`}
                 onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
               >
                 <div className="flex items-center gap-2 mb-1">
                   {getCategoryIcon(cat.id)}
                   <span className="font-medium">{cat.name}</span>
                 </div>
-                <div className="text-2xl font-bold">{stats.byCategory[cat.id] || 0}</div>
+                <div className="text-2xl font-semibold tracking-tight">{stats.byCategory[cat.id] || 0}</div>
               </div>
             ))}
           </div>
         )}
 
         {/* Search and Filter */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -290,7 +285,7 @@ export default function KnowledgePage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder="Sök i kunskapsbasen..."
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c0a280]/50 focus:border-[#c0a280]"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
               />
             </div>
             
@@ -298,10 +293,10 @@ export default function KnowledgePage() {
               <div className="relative">
                 <button
                   onClick={() => setShowCategoryFilter(!showCategoryFilter)}
-                  className={`flex items-center gap-2 px-4 py-2.5 border rounded-lg transition-colors ${
+                  className={`flex items-center gap-2 px-4 py-2 border rounded-full text-sm transition-all ${
                     selectedCategory 
-                      ? 'border-[#c0a280] bg-[#c0a280]/10 text-[#2d2a26]' 
-                      : 'border-gray-300 hover:bg-gray-50'
+                      ? 'border-aifm-gold bg-aifm-gold/10 text-aifm-charcoal' 
+                      : 'border-gray-200 hover:border-gray-300 text-aifm-charcoal/50 hover:text-aifm-charcoal'
                   }`}
                 >
                   <Filter className="w-4 h-4" />
@@ -310,10 +305,10 @@ export default function KnowledgePage() {
                 </button>
                 
                 {showCategoryFilter && (
-                  <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-lg border border-gray-200 shadow-lg z-20">
+                  <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl border border-gray-100 shadow-lg z-20">
                     <button
                       onClick={() => { setSelectedCategory(null); setShowCategoryFilter(false); }}
-                      className="w-full px-4 py-2.5 text-left hover:bg-gray-50 text-sm"
+                      className="w-full px-4 py-2.5 text-left hover:bg-aifm-charcoal/[0.03] text-sm rounded-t-xl transition-colors"
                     >
                       Alla kategorier
                     </button>
@@ -321,8 +316,8 @@ export default function KnowledgePage() {
                       <button
                         key={cat.id}
                         onClick={() => { setSelectedCategory(cat.id); setShowCategoryFilter(false); }}
-                        className={`w-full px-4 py-2.5 text-left hover:bg-gray-50 text-sm flex items-center gap-2 ${
-                          selectedCategory === cat.id ? 'bg-gray-50' : ''
+                        className={`w-full px-4 py-2.5 text-left hover:bg-aifm-charcoal/[0.03] text-sm flex items-center gap-2 transition-colors ${
+                          selectedCategory === cat.id ? 'bg-aifm-charcoal/[0.03]' : ''
                         }`}
                       >
                         {getCategoryIcon(cat.id)}
@@ -335,24 +330,24 @@ export default function KnowledgePage() {
               
               <button
                 onClick={handleSearch}
-                className="px-4 py-2.5 bg-[#2d2a26] text-white rounded-lg hover:bg-[#4a4540] transition-colors"
+                className="px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm"
               >
                 Sök
               </button>
               
               <button
                 onClick={loadKnowledge}
-                className="p-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="p-2.5 border border-gray-200 rounded-full hover:border-gray-300 transition-all"
                 title="Uppdatera"
               >
-                <RefreshCw className="w-5 h-5 text-gray-600" />
+                <RefreshCw className="w-5 h-5 text-aifm-charcoal/40" />
               </button>
             </div>
           </div>
           
           {selectedCategory && (
             <div className="mt-3 flex items-center gap-2">
-              <span className="text-sm text-gray-500">Filter:</span>
+              <span className="text-sm text-aifm-charcoal/40">Filter:</span>
               <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm ${CATEGORY_COLORS[selectedCategory || ''] || DEFAULT_CATEGORY_COLOR}`}>
                 {getCategoryIcon(selectedCategory)}
                 {getCategoryInfo(selectedCategory)?.name}
@@ -373,10 +368,10 @@ export default function KnowledgePage() {
             <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
           </div>
         ) : items.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-            <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Ingen kunskap hittades</h3>
-            <p className="text-gray-500 max-w-md mx-auto">
+          <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
+            <BookOpen className="w-12 h-12 text-aifm-charcoal/10 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-aifm-charcoal tracking-tight mb-2">Ingen kunskap hittades</h3>
+            <p className="text-aifm-charcoal/40 max-w-md mx-auto">
               {searchQuery 
                 ? 'Inga resultat matchade din sökning. Prova att ändra sökorden.'
                 : 'Börja dela kunskap från chatten genom att klicka på "Dela"-knappen på AI-svar.'}
@@ -392,7 +387,7 @@ export default function KnowledgePage() {
               return (
                 <div
                   key={item.knowledgeId}
-                  className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                  className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300"
                 >
                   <div 
                     className="p-4 cursor-pointer"
@@ -406,20 +401,20 @@ export default function KnowledgePage() {
                             {category?.name}
                           </span>
                           {item.tags.slice(0, 3).map(tag => (
-                            <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">
+                            <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-aifm-gold/15 text-aifm-charcoal rounded-full text-xs font-medium">
                               <Tag className="w-3 h-3" />
                               {tag}
                             </span>
                           ))}
                         </div>
                         
-                        <h3 className="font-medium text-gray-900 mb-1">{item.title}</h3>
+                        <h3 className="font-medium text-aifm-charcoal mb-1">{item.title}</h3>
                         
-                        <p className="text-sm text-gray-600 line-clamp-2">
+                        <p className="text-sm text-aifm-charcoal/50 line-clamp-2">
                           {item.content}
                         </p>
                         
-                        <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
+                        <div className="flex items-center gap-4 mt-3 text-xs text-aifm-charcoal/40">
                           <span className="flex items-center gap-1">
                             <User className="w-3 h-3" />
                             {item.sharedByName || item.sharedByEmail || 'Anonym'}
@@ -437,7 +432,7 @@ export default function KnowledgePage() {
                   
                   {isExpanded && (
                     <div className="px-4 pb-4 border-t border-gray-100 pt-4">
-                      <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-700 whitespace-pre-wrap">
+                      <div className="bg-aifm-charcoal/[0.03] rounded-xl p-4 text-sm text-aifm-charcoal/70 whitespace-pre-wrap">
                         {item.content}
                       </div>
                       
@@ -446,7 +441,7 @@ export default function KnowledgePage() {
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDelete(item); }}
                             disabled={deletingItem === item.knowledgeId}
-                            className="flex items-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm disabled:opacity-50"
+                            className="flex items-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-full transition-colors text-sm disabled:opacity-50"
                           >
                             {deletingItem === item.knowledgeId ? (
                               <Loader2 className="w-4 h-4 animate-spin" />

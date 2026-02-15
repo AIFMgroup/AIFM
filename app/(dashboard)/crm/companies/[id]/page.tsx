@@ -22,16 +22,16 @@ import { sv } from 'date-fns/locale';
 // Breadcrumb Component
 function Breadcrumbs({ customer }: { customer: CrmCompany }) {
   return (
-    <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-      <Link href="/crm" className="hover:text-[#c0a280] transition-colors">
+    <nav className="flex items-center gap-2 text-sm text-aifm-charcoal/40 mb-6">
+      <Link href="/crm" className="hover:text-aifm-gold transition-colors">
         CRM
       </Link>
       <ChevronRight className="w-4 h-4" />
-      <Link href="/crm/companies" className="hover:text-[#c0a280] transition-colors">
+      <Link href="/crm/companies" className="hover:text-aifm-gold transition-colors">
         Företag
       </Link>
       <ChevronRight className="w-4 h-4" />
-      <span className="text-[#2d2a26] font-medium">
+      <span className="text-aifm-charcoal font-medium">
         {customer.name}
       </span>
     </nav>
@@ -57,8 +57,8 @@ function LinkedManagedCompaniesSection({ linkedIds }: { linkedIds?: string[] }) 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
       <div className="flex items-center gap-2 mb-4">
-        <Link2 className="w-5 h-5 text-[#c0a280]" />
-        <h3 className="font-semibold text-[#2d2a26]">Kopplade förvaltade bolag</h3>
+        <Link2 className="w-5 h-5 text-aifm-gold" />
+        <h3 className="font-semibold text-aifm-charcoal tracking-tight">Kopplade förvaltade bolag</h3>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {linkedCompanies.map(company => {
@@ -67,31 +67,31 @@ function LinkedManagedCompaniesSection({ linkedIds }: { linkedIds?: string[] }) 
             <Link
               key={company.id}
               href={`/overview`}
-              className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors group"
+              className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300 group"
             >
               <div className="flex items-center gap-3">
                 <div 
-                  className="w-10 h-10 rounded-lg flex items-center justify-center"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center"
                   style={{ backgroundColor: `${company.color}20` }}
                 >
                   <Building2 className="w-5 h-5" style={{ color: company.color }} />
                 </div>
                 <div>
-                  <p className="font-medium text-[#2d2a26] group-hover:text-[#c0a280] transition-colors">
+                  <p className="font-medium text-aifm-charcoal group-hover:text-aifm-gold transition-colors">
                     {company.shortName || company.name}
                   </p>
-                  <p className="text-xs text-gray-500">{company.type}</p>
+                  <p className="text-xs text-aifm-charcoal/40">{company.type}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`text-xs font-semibold px-2 py-1 rounded ${
+                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
                   compliance.status === 'ok' ? 'bg-emerald-100 text-emerald-700' :
                   compliance.status === 'warning' ? 'bg-amber-100 text-amber-700' :
                   'bg-red-100 text-red-700'
                 }`}>
                   {compliance.score}%
                 </span>
-                <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-[#c0a280]" />
+                <ExternalLink className="w-4 h-4 text-aifm-charcoal/30 group-hover:text-aifm-gold" />
               </div>
             </Link>
           );
@@ -100,7 +100,7 @@ function LinkedManagedCompaniesSection({ linkedIds }: { linkedIds?: string[] }) 
       <div className="mt-4 pt-4 border-t border-gray-100">
         <Link
           href="/?view=compliance"
-          className="inline-flex items-center gap-2 text-sm text-[#c0a280] hover:underline"
+          className="inline-flex items-center gap-2 text-sm text-aifm-gold hover:underline"
         >
           <Scale className="w-4 h-4" />
           Öppna Compliance Manager
@@ -274,7 +274,7 @@ export default function CustomerDetailPage() {
 
   const getStatusColor = (status: CrmCompany['status']) => {
     const colors = {
-      lead: 'bg-gray-100 text-gray-700',
+      lead: 'bg-gray-100 text-aifm-charcoal/60',
       prospect: 'bg-blue-100 text-blue-700',
       customer: 'bg-emerald-100 text-emerald-700',
       partner: 'bg-purple-100 text-purple-700',
@@ -285,7 +285,7 @@ export default function CustomerDetailPage() {
 
   const getKycStatusColor = (status?: string) => {
     const colors: Record<string, string> = {
-      not_started: 'bg-gray-100 text-gray-600',
+      not_started: 'bg-gray-100 text-aifm-charcoal/60',
       in_progress: 'bg-blue-100 text-blue-700',
       pending_review: 'bg-amber-100 text-amber-700',
       approved: 'bg-emerald-100 text-emerald-700',
@@ -311,7 +311,7 @@ export default function CustomerDetailPage() {
     return (
       <CrmLayout>
         <div className="flex items-center justify-center py-20">
-          <div className="w-8 h-8 border-2 border-[#c0a280] border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-aifm-gold border-t-transparent rounded-full animate-spin" />
         </div>
       </CrmLayout>
     );
@@ -322,10 +322,10 @@ export default function CustomerDetailPage() {
       <CrmLayout>
         <div className="flex flex-col items-center justify-center py-20">
           <Building2 className="w-12 h-12 text-gray-300 mb-4" />
-          <h2 className="text-lg font-medium text-gray-900 mb-2">Kund hittades inte</h2>
+          <h2 className="text-lg font-semibold text-aifm-charcoal tracking-tight mb-2">Kund hittades inte</h2>
           <button
             onClick={() => router.push('/crm/companies')}
-            className="text-[#c0a280] hover:underline"
+            className="text-aifm-gold hover:underline"
           >
             Tillbaka till kundlista
           </button>
@@ -343,7 +343,7 @@ export default function CustomerDetailPage() {
         </div>
 
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#2d2a26] to-[#3d3a36] text-white">
+        <div className="bg-gradient-to-r from-aifm-charcoal to-[#3d3a36] text-white">
           <div className="px-4 sm:px-6 lg:px-8 py-6">
             
             {/* Customer header */}
@@ -360,7 +360,7 @@ export default function CustomerDetailPage() {
                 
                 <div>
                   <div className="flex items-center gap-3 mb-1">
-                    <h1 className="text-xl sm:text-2xl font-semibold">{customer.name}</h1>
+                    <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{customer.name}</h1>
                     <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${getStatusColor(customer.status)}`}>
                       {customer.status === 'lead' ? 'Lead' : 
                        customer.status === 'prospect' ? 'Prospekt' :
@@ -401,12 +401,12 @@ export default function CustomerDetailPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => router.push(`/crm/companies?edit=${customer.id}`)}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-medium transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-sm font-medium transition-all"
                 >
                   <Edit2 className="w-4 h-4" />
                   <span className="hidden sm:inline">Redigera</span>
                 </button>
-                <button className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors">
+                <button className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-all">
                   <MoreHorizontal className="w-5 h-5" />
                 </button>
               </div>
@@ -416,18 +416,18 @@ export default function CustomerDetailPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
               <div className="bg-white/10 rounded-xl p-3">
                 <div className="text-xs text-white/50 uppercase tracking-wider mb-1">Öppna affärer</div>
-                <div className="text-xl font-semibold">{stats?.openDeals || 0}</div>
+                <div className="text-xl font-semibold tracking-tight">{stats?.openDeals || 0}</div>
               </div>
               <div className="bg-white/10 rounded-xl p-3">
                 <div className="text-xs text-white/50 uppercase tracking-wider mb-1">Pipeline-värde</div>
-                <div className="text-xl font-semibold">
+                <div className="text-xl font-semibold tracking-tight">
                   {(stats?.totalDealValue || 0).toLocaleString('sv-SE')} kr
                 </div>
               </div>
               <div className="bg-white/10 rounded-xl p-3">
                 <div className="text-xs text-white/50 uppercase tracking-wider mb-1">KYC</div>
                 <div className="flex items-center gap-2">
-                  <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getKycStatusColor(customer.kycStatus)}`}>
+                  <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${getKycStatusColor(customer.kycStatus)}`}>
                     {getKycStatusLabel(customer.kycStatus)}
                   </span>
                 </div>
@@ -455,7 +455,7 @@ export default function CustomerDetailPage() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
                       isActive
-                        ? 'border-[#c0a280] text-white'
+                        ? 'border-aifm-gold text-white'
                         : 'border-transparent text-white/60 hover:text-white/80'
                     }`}
                   >
@@ -521,37 +521,37 @@ function OverviewTab({
       {/* Left column */}
       <div className="lg:col-span-2 space-y-6">
         {/* Contact info */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
-          <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Kontaktuppgifter</h3>
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+          <h3 className="text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider mb-4">Kontaktuppgifter</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {customer.email && (
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                <Mail className="w-5 h-5 text-gray-400" />
+              <div className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl">
+                <Mail className="w-5 h-5 text-aifm-charcoal/30" />
                 <div>
-                  <div className="text-xs text-gray-500">E-post</div>
-                  <a href={`mailto:${customer.email}`} className="text-sm text-[#c0a280] hover:underline">
+                  <div className="text-xs text-aifm-charcoal/40">E-post</div>
+                  <a href={`mailto:${customer.email}`} className="text-sm text-aifm-gold hover:underline">
                     {customer.email}
                   </a>
                 </div>
               </div>
             )}
             {customer.phone && (
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                <Phone className="w-5 h-5 text-gray-400" />
+              <div className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl">
+                <Phone className="w-5 h-5 text-aifm-charcoal/30" />
                 <div>
-                  <div className="text-xs text-gray-500">Telefon</div>
-                  <a href={`tel:${customer.phone}`} className="text-sm text-gray-900">
+                  <div className="text-xs text-aifm-charcoal/40">Telefon</div>
+                  <a href={`tel:${customer.phone}`} className="text-sm text-aifm-charcoal">
                     {customer.phone}
                   </a>
                 </div>
               </div>
             )}
             {customer.website && (
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                <Globe className="w-5 h-5 text-gray-400" />
+              <div className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl">
+                <Globe className="w-5 h-5 text-aifm-charcoal/30" />
                 <div>
-                  <div className="text-xs text-gray-500">Webbplats</div>
-                  <a href={customer.website} target="_blank" rel="noopener noreferrer" className="text-sm text-[#c0a280] hover:underline flex items-center gap-1">
+                  <div className="text-xs text-aifm-charcoal/40">Webbplats</div>
+                  <a href={customer.website} target="_blank" rel="noopener noreferrer" className="text-sm text-aifm-gold hover:underline flex items-center gap-1">
                     {customer.website.replace(/^https?:\/\//, '')}
                     <ExternalLink className="w-3 h-3" />
                   </a>
@@ -559,11 +559,11 @@ function OverviewTab({
               </div>
             )}
             {customer.address && (
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                <MapPin className="w-5 h-5 text-gray-400" />
+              <div className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl">
+                <MapPin className="w-5 h-5 text-aifm-charcoal/30" />
                 <div>
-                  <div className="text-xs text-gray-500">Adress</div>
-                  <div className="text-sm text-gray-900">
+                  <div className="text-xs text-aifm-charcoal/40">Adress</div>
+                  <div className="text-sm text-aifm-charcoal">
                     {[customer.address.street, customer.address.postalCode, customer.address.city].filter(Boolean).join(', ')}
                   </div>
                 </div>
@@ -572,32 +572,32 @@ function OverviewTab({
           </div>
           {customer.description && (
             <div className="mt-4 pt-4 border-t border-gray-100">
-              <div className="text-xs text-gray-500 mb-2">Beskrivning</div>
-              <p className="text-sm text-gray-700">{customer.description}</p>
+              <div className="text-xs text-aifm-charcoal/40 mb-2">Beskrivning</div>
+              <p className="text-sm text-aifm-charcoal/60">{customer.description}</p>
             </div>
           )}
         </div>
         
         {/* Recent activities */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Senaste aktiviteter</h3>
-            <span className="text-xs text-gray-500">{activities.length} totalt</span>
+            <h3 className="text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Senaste aktiviteter</h3>
+            <span className="text-xs text-aifm-charcoal/40">{activities.length} totalt</span>
           </div>
           {activities.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-aifm-charcoal/40">
               <MessageSquare className="w-8 h-8 mx-auto mb-2 text-gray-300" />
               <p className="text-sm">Inga aktiviteter ännu</p>
             </div>
           ) : (
             <div className="space-y-3">
               {activities.slice(0, 5).map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                <div key={activity.id} className="flex items-start gap-3 p-3 bg-white border border-gray-100 rounded-xl">
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
                     activity.type === 'meeting' ? 'bg-blue-100 text-blue-600' :
                     activity.type === 'call' ? 'bg-green-100 text-green-600' :
                     activity.type === 'email' ? 'bg-amber-100 text-amber-600' :
-                    'bg-gray-100 text-gray-600'
+                    'bg-aifm-charcoal/[0.03] text-aifm-charcoal/60'
                   }`}>
                     {activity.type === 'meeting' ? <Calendar className="w-4 h-4" /> :
                      activity.type === 'call' ? <Phone className="w-4 h-4" /> :
@@ -605,8 +605,8 @@ function OverviewTab({
                      <MessageSquare className="w-4 h-4" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 truncate">{activity.title}</div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-sm font-medium text-aifm-charcoal truncate">{activity.title}</div>
+                    <div className="text-xs text-aifm-charcoal/40">
                       {formatDistanceToNow(parseISO(activity.createdAt), { addSuffix: true, locale: sv })}
                     </div>
                   </div>
@@ -620,28 +620,28 @@ function OverviewTab({
       {/* Right column */}
       <div className="space-y-6">
         {/* Key contacts */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Kontaktpersoner</h3>
-            <span className="text-xs text-gray-500">{contacts.length} st</span>
+            <h3 className="text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Kontaktpersoner</h3>
+            <span className="text-xs text-aifm-charcoal/40">{contacts.length} st</span>
           </div>
           {contacts.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">
+            <div className="text-center py-6 text-aifm-charcoal/40">
               <Users className="w-8 h-8 mx-auto mb-2 text-gray-300" />
               <p className="text-sm">Inga kontakter</p>
             </div>
           ) : (
             <div className="space-y-2">
               {contacts.slice(0, 4).map((contact) => (
-                <div key={contact.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#c0a280] to-[#a08060] flex items-center justify-center text-white text-sm font-medium">
+                <div key={contact.id} className="flex items-center gap-3 p-2 hover:bg-aifm-charcoal/[0.03] rounded-xl transition-colors">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-aifm-gold to-[#a08060] flex items-center justify-center text-white text-sm font-medium">
                     {contact.firstName[0]}{contact.lastName[0]}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 truncate">
+                    <div className="text-sm font-medium text-aifm-charcoal truncate">
                       {contact.firstName} {contact.lastName}
                     </div>
-                    <div className="text-xs text-gray-500 truncate">{contact.title || contact.email}</div>
+                    <div className="text-xs text-aifm-charcoal/40 truncate">{contact.title || contact.email}</div>
                   </div>
                 </div>
               ))}
@@ -650,24 +650,24 @@ function OverviewTab({
         </div>
         
         {/* Open deals */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Öppna affärer</h3>
-            <span className="text-xs text-gray-500">{stats?.openDeals || 0} st</span>
+            <h3 className="text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Öppna affärer</h3>
+            <span className="text-xs text-aifm-charcoal/40">{stats?.openDeals || 0} st</span>
           </div>
           {deals.filter(d => d.status === 'open').length === 0 ? (
-            <div className="text-center py-6 text-gray-500">
+            <div className="text-center py-6 text-aifm-charcoal/40">
               <Briefcase className="w-8 h-8 mx-auto mb-2 text-gray-300" />
               <p className="text-sm">Inga öppna affärer</p>
             </div>
           ) : (
             <div className="space-y-2">
               {deals.filter(d => d.status === 'open').slice(0, 4).map((deal) => (
-                <div key={deal.id} className="p-3 bg-gray-50 rounded-xl">
-                  <div className="text-sm font-medium text-gray-900 truncate">{deal.name}</div>
+                <div key={deal.id} className="p-3 bg-white border border-gray-100 rounded-xl">
+                  <div className="text-sm font-medium text-aifm-charcoal truncate">{deal.name}</div>
                   <div className="flex items-center justify-between mt-1">
-                    <span className="text-xs text-gray-500">{deal.stage}</span>
-                    <span className="text-sm font-semibold text-gray-900">
+                    <span className="text-xs text-aifm-charcoal/40">{deal.stage}</span>
+                    <span className="text-sm font-semibold text-aifm-charcoal tracking-tight">
                       {(deal.value || 0).toLocaleString('sv-SE')} {deal.currency || 'SEK'}
                     </span>
                   </div>
@@ -679,11 +679,11 @@ function OverviewTab({
         
         {/* Tags */}
         {customer.tags && customer.tags.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-6">
-            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Taggar</h3>
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+            <h3 className="text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider mb-4">Taggar</h3>
             <div className="flex flex-wrap gap-2">
               {customer.tags.map((tag, idx) => (
-                <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+                <span key={idx} className="px-2.5 py-0.5 bg-aifm-gold/15 text-aifm-charcoal text-xs font-medium rounded-full">
                   {tag}
                 </span>
               ))}
@@ -708,8 +708,8 @@ function ContactsTab({
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold text-gray-900">Kontaktpersoner</h2>
-        <button className="flex items-center gap-2 px-4 py-2 bg-[#2d2a26] text-white rounded-xl text-sm font-medium hover:bg-[#3d3a36] transition-colors">
+        <h2 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Kontaktpersoner</h2>
+        <button className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm">
           <Plus className="w-4 h-4" />
           Lägg till kontakt
         </button>
@@ -718,8 +718,8 @@ function ContactsTab({
       {contacts.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
           <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Inga kontaktpersoner</h3>
-          <p className="text-gray-500 mb-4">Lägg till kontaktpersoner för denna kund</p>
+          <h3 className="text-lg font-semibold text-aifm-charcoal tracking-tight mb-2">Inga kontaktpersoner</h3>
+          <p className="text-aifm-charcoal/40 mb-4">Lägg till kontaktpersoner för denna kund</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -727,27 +727,27 @@ function ContactsTab({
             <Link 
               key={contact.id} 
               href={`/crm/contacts/${contact.id}`}
-              className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:border-gray-200 transition-all cursor-pointer block"
+              className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300 cursor-pointer block"
             >
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#c0a280] to-[#a08060] flex items-center justify-center text-white font-medium">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-aifm-gold to-[#a08060] flex items-center justify-center text-white font-medium">
                   {contact.firstName[0]}{contact.lastName[0]}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-gray-900">{contact.firstName} {contact.lastName}</h3>
-                  {contact.title && <p className="text-sm text-gray-500">{contact.title}</p>}
+                  <h3 className="font-medium text-aifm-charcoal">{contact.firstName} {contact.lastName}</h3>
+                  {contact.title && <p className="text-sm text-aifm-charcoal/40">{contact.title}</p>}
                 </div>
-                <ExternalLink className="w-4 h-4 text-gray-400" />
+                <ExternalLink className="w-4 h-4 text-aifm-charcoal/30" />
               </div>
               <div className="mt-4 space-y-2">
                 {contact.email && (
-                  <span className="flex items-center gap-2 text-sm text-gray-600">
+                  <span className="flex items-center gap-2 text-sm text-aifm-charcoal/60">
                     <Mail className="w-4 h-4" />
                     {contact.email}
                   </span>
                 )}
                 {contact.phone && (
-                  <span className="flex items-center gap-2 text-sm text-gray-600">
+                  <span className="flex items-center gap-2 text-sm text-aifm-charcoal/60">
                     <Phone className="w-4 h-4" />
                     {contact.phone}
                   </span>
@@ -777,7 +777,7 @@ function DealsTab({
   
   const getStageColor = (stage: string) => {
     const colors: Record<string, string> = {
-      lead: 'bg-gray-100 text-gray-700',
+      lead: 'bg-gray-100 text-aifm-charcoal/60',
       qualified: 'bg-blue-100 text-blue-700',
       proposal: 'bg-purple-100 text-purple-700',
       negotiation: 'bg-amber-100 text-amber-700',
@@ -790,10 +790,10 @@ function DealsTab({
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold text-gray-900">Affärer</h2>
+        <h2 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Affärer</h2>
         <button 
           onClick={() => router.push(`/crm/pipeline?new=true&company=${customerId}&companyName=${encodeURIComponent(customerName)}`)}
-          className="flex items-center gap-2 px-4 py-2 bg-[#2d2a26] text-white rounded-xl text-sm font-medium hover:bg-[#3d3a36] transition-colors"
+          className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm"
         >
           <Plus className="w-4 h-4" />
           Ny affär
@@ -803,31 +803,31 @@ function DealsTab({
       {deals.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
           <Briefcase className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Inga affärer</h3>
-          <p className="text-gray-500 mb-4">Skapa din första affär för denna kund</p>
+          <h3 className="text-lg font-semibold text-aifm-charcoal tracking-tight mb-2">Inga affärer</h3>
+          <p className="text-aifm-charcoal/40 mb-4">Skapa din första affär för denna kund</p>
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Affär</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Stadium</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Värde</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Förväntat avslut</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">Status</th>
+                <tr className="bg-aifm-charcoal/[0.03] border-b border-gray-100">
+                  <th className="text-left text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider px-6 py-4">Affär</th>
+                  <th className="text-left text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider px-6 py-4">Stadium</th>
+                  <th className="text-left text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider px-6 py-4">Värde</th>
+                  <th className="text-left text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider px-6 py-4">Förväntat avslut</th>
+                  <th className="text-left text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider px-6 py-4">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-100">
                 {deals.map((deal) => (
-                  <tr key={deal.id} className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => router.push(`/crm/pipeline?deal=${deal.id}`)}>
+                  <tr key={deal.id} className="hover:bg-aifm-charcoal/[0.02] transition-colors cursor-pointer" onClick={() => router.push(`/crm/pipeline?deal=${deal.id}`)}>
                     <td className="px-6 py-4">
-                      <div className="font-medium text-gray-900">{deal.name}</div>
-                      {deal.description && <div className="text-sm text-gray-500 truncate max-w-xs">{deal.description}</div>}
+                      <div className="font-medium text-aifm-charcoal">{deal.name}</div>
+                      {deal.description && <div className="text-sm text-aifm-charcoal/40 truncate max-w-xs">{deal.description}</div>}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStageColor(deal.stage)}`}>
+                      <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${getStageColor(deal.stage)}`}>
                         {deal.stage === 'lead' ? 'Lead' :
                          deal.stage === 'qualified' ? 'Kvalificerad' :
                          deal.stage === 'proposal' ? 'Offert' :
@@ -836,11 +836,11 @@ function DealsTab({
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="font-semibold text-gray-900">
+                      <span className="font-semibold text-aifm-charcoal tracking-tight">
                         {(deal.value || 0).toLocaleString('sv-SE')} {deal.currency || 'SEK'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                    <td className="px-6 py-4 text-sm text-aifm-charcoal/60">
                       {deal.expectedCloseDate ? format(parseISO(deal.expectedCloseDate), 'd MMM yyyy', { locale: sv }) : '—'}
                     </td>
                     <td className="px-6 py-4">
@@ -848,7 +848,7 @@ function DealsTab({
                         deal.status === 'open' ? 'bg-blue-500' :
                         deal.status === 'won' ? 'bg-emerald-500' : 'bg-red-500'
                       }`} />
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-aifm-charcoal/60">
                         {deal.status === 'open' ? 'Öppen' : deal.status === 'won' ? 'Vunnen' : 'Förlorad'}
                       </span>
                     </td>
@@ -887,15 +887,15 @@ function JournalTab({ timeline }: { timeline: TimelineEntry[] }) {
       case 'note': return 'bg-purple-100 text-purple-600';
       case 'task_completed': return 'bg-emerald-100 text-emerald-600';
       case 'deal_created': return 'bg-indigo-100 text-indigo-600';
-      default: return 'bg-gray-100 text-gray-600';
+      default: return 'bg-aifm-charcoal/[0.03] text-aifm-charcoal/60';
     }
   };
   
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold text-gray-900">Journal</h2>
-        <button className="flex items-center gap-2 px-4 py-2 bg-[#2d2a26] text-white rounded-xl text-sm font-medium hover:bg-[#3d3a36] transition-colors">
+        <h2 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Journal</h2>
+        <button className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm">
           <Plus className="w-4 h-4" />
           Lägg till notering
         </button>
@@ -904,8 +904,8 @@ function JournalTab({ timeline }: { timeline: TimelineEntry[] }) {
       {timeline.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
           <MessageSquare className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Ingen historik</h3>
-          <p className="text-gray-500">Aktiviteter och händelser kommer visas här</p>
+          <h3 className="text-lg font-semibold text-aifm-charcoal tracking-tight mb-2">Ingen historik</h3>
+          <p className="text-aifm-charcoal/40">Aktiviteter och händelser kommer visas här</p>
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-100 p-6">
@@ -919,23 +919,23 @@ function JournalTab({ timeline }: { timeline: TimelineEntry[] }) {
                       <Icon className="w-5 h-5" />
                     </div>
                     {idx < timeline.length - 1 && (
-                      <div className="w-px h-full bg-gray-200 my-2" />
+                      <div className="w-px h-full bg-gray-100 my-2" />
                     )}
                   </div>
                   <div className="flex-1 pb-6">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h4 className="font-medium text-gray-900">{entry.title}</h4>
+                        <h4 className="font-medium text-aifm-charcoal">{entry.title}</h4>
                         {entry.description && (
-                          <p className="text-sm text-gray-600 mt-1">{entry.description}</p>
+                          <p className="text-sm text-aifm-charcoal/60 mt-1">{entry.description}</p>
                         )}
                       </div>
-                      <div className="text-xs text-gray-500 whitespace-nowrap ml-4">
+                      <div className="text-xs text-aifm-charcoal/40 whitespace-nowrap ml-4">
                         {formatDistanceToNow(parseISO(entry.timestamp), { addSuffix: true, locale: sv })}
                       </div>
                     </div>
                     {entry.user && (
-                      <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                      <div className="flex items-center gap-2 mt-2 text-xs text-aifm-charcoal/40">
                         <User className="w-3 h-3" />
                         {entry.user.name}
                       </div>
@@ -974,33 +974,33 @@ function KycTab({
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold text-gray-900">KYC - Kundkännedom</h2>
-        <button className="flex items-center gap-2 px-4 py-2 bg-[#2d2a26] text-white rounded-xl text-sm font-medium hover:bg-[#3d3a36] transition-colors">
+        <h2 className="text-lg font-semibold text-aifm-charcoal tracking-tight">KYC - Kundkännedom</h2>
+        <button className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm">
           Starta KYC-process
         </button>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Status card */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
-          <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Status</h3>
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+          <h3 className="text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider mb-4">Status</h3>
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600">Framsteg</span>
-                <span className="text-sm font-medium text-gray-900">{completedItems}/{kycChecklist.length}</span>
+                <span className="text-sm text-aifm-charcoal/60">Framsteg</span>
+                <span className="text-sm font-medium text-aifm-charcoal">{completedItems}/{kycChecklist.length}</span>
               </div>
               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-[#c0a280] rounded-full transition-all" style={{ width: `${progress}%` }} />
+                <div className="h-full bg-aifm-gold rounded-full transition-all" style={{ width: `${progress}%` }} />
               </div>
             </div>
             <div className="pt-4 border-t border-gray-100">
-              <div className="text-xs text-gray-500 mb-1">Risknivå</div>
-              <span className={`px-3 py-1 text-sm font-medium rounded-full ${
+              <div className="text-xs text-aifm-charcoal/40 mb-1">Risknivå</div>
+              <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${
                 customer.kycRiskLevel === 'low' ? 'bg-emerald-100 text-emerald-700' :
                 customer.kycRiskLevel === 'medium' ? 'bg-amber-100 text-amber-700' :
                 customer.kycRiskLevel === 'high' ? 'bg-red-100 text-red-700' :
-                'bg-gray-100 text-gray-600'
+                'bg-gray-100 text-aifm-charcoal/60'
               }`}>
                 {customer.kycRiskLevel === 'low' ? 'Låg' :
                  customer.kycRiskLevel === 'medium' ? 'Medel' :
@@ -1009,8 +1009,8 @@ function KycTab({
             </div>
             {customer.kycNextReviewAt && (
               <div className="pt-4 border-t border-gray-100">
-                <div className="text-xs text-gray-500 mb-1">Nästa granskning</div>
-                <div className="text-sm text-gray-900">
+                <div className="text-xs text-aifm-charcoal/40 mb-1">Nästa granskning</div>
+                <div className="text-sm text-aifm-charcoal">
                   {format(parseISO(customer.kycNextReviewAt), 'd MMMM yyyy', { locale: sv })}
                 </div>
               </div>
@@ -1019,12 +1019,12 @@ function KycTab({
         </div>
         
         {/* Checklist */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-6">
-          <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Checklista</h3>
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+          <h3 className="text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider mb-4">Checklista</h3>
           <div className="space-y-3">
             {kycChecklist.map((item) => (
               <div key={item.id} className={`flex items-start gap-4 p-4 rounded-xl border transition-colors ${
-                item.completed ? 'bg-emerald-50 border-emerald-200' : 'bg-gray-50 border-gray-100 hover:border-gray-200'
+                item.completed ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-gray-100 hover:border-gray-200'
               }`}>
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
                   item.completed ? 'bg-emerald-500 text-white' : 'bg-white border-2 border-gray-300'
@@ -1033,12 +1033,12 @@ function KycTab({
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-gray-900">{item.name}</span>
+                    <span className="font-medium text-aifm-charcoal">{item.name}</span>
                     {item.required && <span className="text-xs text-red-500">Obligatorisk</span>}
                   </div>
-                  <p className="text-sm text-gray-500 mt-0.5">{item.description}</p>
+                  <p className="text-sm text-aifm-charcoal/40 mt-0.5">{item.description}</p>
                 </div>
-                <button className="text-sm text-[#c0a280] hover:underline">
+                <button className="text-sm text-aifm-gold hover:underline">
                   {item.completed ? 'Visa' : 'Ladda upp'}
                 </button>
               </div>
@@ -1069,13 +1069,13 @@ function RevenueTab({
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold text-gray-900">Intäkter & Prognos</h2>
+        <h2 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Intäkter & Prognos</h2>
         <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm font-medium transition-all">
             <Download className="w-4 h-4" />
             Exportera
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-[#2d2a26] text-white rounded-xl text-sm font-medium hover:bg-[#3d3a36] transition-colors">
+          <button className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm">
             <Plus className="w-4 h-4" />
             Registrera intäkt
           </button>
@@ -1084,57 +1084,57 @@ function RevenueTab({
       
       {/* Revenue KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
-          <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">MRR</div>
-          <div className="text-2xl font-semibold text-gray-900">
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+          <div className="text-xs text-aifm-charcoal/40 uppercase tracking-wider mb-1">MRR</div>
+          <div className="text-2xl font-semibold text-aifm-charcoal tracking-tight">
             {(customer.currentMRR || 0).toLocaleString('sv-SE')} kr
           </div>
-          <div className="text-xs text-gray-500 mt-1">Månatlig återkommande</div>
+          <div className="text-xs text-aifm-charcoal/40 mt-1">Månatlig återkommande</div>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
-          <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">ARR</div>
-          <div className="text-2xl font-semibold text-gray-900">
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+          <div className="text-xs text-aifm-charcoal/40 uppercase tracking-wider mb-1">ARR</div>
+          <div className="text-2xl font-semibold text-aifm-charcoal tracking-tight">
             {(customer.currentARR || 0).toLocaleString('sv-SE')} kr
           </div>
-          <div className="text-xs text-gray-500 mt-1">Årlig återkommande</div>
+          <div className="text-xs text-aifm-charcoal/40 mt-1">Årlig återkommande</div>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
-          <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Vunna affärer</div>
-          <div className="text-2xl font-semibold text-emerald-600">
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+          <div className="text-xs text-aifm-charcoal/40 uppercase tracking-wider mb-1">Vunna affärer</div>
+          <div className="text-2xl font-semibold text-emerald-600 tracking-tight">
             {(stats?.wonDealValue || 0).toLocaleString('sv-SE')} kr
           </div>
-          <div className="text-xs text-gray-500 mt-1">{wonDeals.length} affärer</div>
+          <div className="text-xs text-aifm-charcoal/40 mt-1">{wonDeals.length} affärer</div>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
-          <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Viktad pipeline</div>
-          <div className="text-2xl font-semibold text-blue-600">
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+          <div className="text-xs text-aifm-charcoal/40 uppercase tracking-wider mb-1">Viktad pipeline</div>
+          <div className="text-2xl font-semibold text-blue-600 tracking-tight">
             {weightedPipeline.toLocaleString('sv-SE', { maximumFractionDigits: 0 })} kr
           </div>
-          <div className="text-xs text-gray-500 mt-1">{openDeals.length} öppna affärer</div>
+          <div className="text-xs text-aifm-charcoal/40 mt-1">{openDeals.length} öppna affärer</div>
         </div>
       </div>
       
       {/* Forecast scenarios */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
-        <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Prognos (12 månader)</h3>
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+        <h3 className="text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider mb-4">Prognos (12 månader)</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-4 bg-gray-50 rounded-xl">
-            <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">Konservativ</div>
-            <div className="text-xl font-semibold text-gray-900">
+          <div className="p-4 bg-white border border-gray-100 rounded-xl">
+            <div className="text-xs text-aifm-charcoal/40 uppercase tracking-wider mb-2">Konservativ</div>
+            <div className="text-xl font-semibold text-aifm-charcoal tracking-tight">
               {(stats?.wonDealValue || 0).toLocaleString('sv-SE')} kr
             </div>
-            <div className="text-xs text-gray-500 mt-1">Endast vunna affärer</div>
+            <div className="text-xs text-aifm-charcoal/40 mt-1">Endast vunna affärer</div>
           </div>
           <div className="p-4 bg-blue-50 rounded-xl">
             <div className="text-xs text-blue-600 uppercase tracking-wider mb-2">Realistisk</div>
-            <div className="text-xl font-semibold text-blue-700">
+            <div className="text-xl font-semibold text-blue-700 tracking-tight">
               {((stats?.wonDealValue || 0) + weightedPipeline).toLocaleString('sv-SE', { maximumFractionDigits: 0 })} kr
             </div>
             <div className="text-xs text-blue-600 mt-1">Vunna + viktad pipeline</div>
           </div>
           <div className="p-4 bg-emerald-50 rounded-xl">
             <div className="text-xs text-emerald-600 uppercase tracking-wider mb-2">Optimistisk</div>
-            <div className="text-xl font-semibold text-emerald-700">
+            <div className="text-xl font-semibold text-emerald-700 tracking-tight">
               {((stats?.wonDealValue || 0) + (stats?.totalDealValue || 0) - (stats?.wonDealValue || 0)).toLocaleString('sv-SE')} kr
             </div>
             <div className="text-xs text-emerald-600 mt-1">Vunna + all pipeline</div>
@@ -1143,9 +1143,9 @@ function RevenueTab({
       </div>
       
       {/* Revenue history placeholder */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6">
-        <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Intäktshistorik</h3>
-        <div className="h-64 flex items-center justify-center text-gray-400">
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+        <h3 className="text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider mb-4">Intäktshistorik</h3>
+        <div className="h-64 flex items-center justify-center text-aifm-charcoal/30">
           <div className="text-center">
             <TrendingUp className="w-12 h-12 mx-auto mb-3 text-gray-300" />
             <p className="text-sm">Intäktsdata visas här när den registreras</p>
@@ -1163,18 +1163,18 @@ function DocumentsTab({ customer }: { customer: CrmCompany }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold text-gray-900">Dokument</h2>
+        <h2 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Dokument</h2>
         <div className="flex items-center gap-2">
           {customer.dataroomId ? (
             <button 
               onClick={() => router.push(`/data-rooms/${customer.dataroomId}`)}
-              className="flex items-center gap-2 px-4 py-2 bg-[#2d2a26] text-white rounded-xl text-sm font-medium hover:bg-[#3d3a36] transition-colors"
+              className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm"
             >
               <ExternalLink className="w-4 h-4" />
               Öppna datarum
             </button>
           ) : (
-            <button className="flex items-center gap-2 px-4 py-2 bg-[#2d2a26] text-white rounded-xl text-sm font-medium hover:bg-[#3d3a36] transition-colors">
+            <button className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm">
               <Plus className="w-4 h-4" />
               Skapa datarum
             </button>
@@ -1183,18 +1183,18 @@ function DocumentsTab({ customer }: { customer: CrmCompany }) {
       </div>
       
       {customer.dataroomId ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
-          <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-            <div className="w-12 h-12 bg-[#c0a280]/10 rounded-xl flex items-center justify-center">
-              <FileText className="w-6 h-6 text-[#c0a280]" />
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
+          <div className="flex items-center gap-4 p-4 bg-white border border-gray-100 rounded-xl">
+            <div className="w-12 h-12 bg-aifm-gold/10 rounded-xl flex items-center justify-center">
+              <FileText className="w-6 h-6 text-aifm-gold" />
             </div>
             <div className="flex-1">
-              <h4 className="font-medium text-gray-900">{customer.dataroomName || 'Datarum'}</h4>
-              <p className="text-sm text-gray-500">Kopplat datarum med dokument, avtal och offerter</p>
+              <h4 className="font-medium text-aifm-charcoal">{customer.dataroomName || 'Datarum'}</h4>
+              <p className="text-sm text-aifm-charcoal/40">Kopplat datarum med dokument, avtal och offerter</p>
             </div>
             <button 
               onClick={() => router.push(`/data-rooms/${customer.dataroomId}`)}
-              className="flex items-center gap-2 text-[#c0a280] hover:underline"
+              className="flex items-center gap-2 text-aifm-gold hover:underline"
             >
               Visa <ChevronRight className="w-4 h-4" />
             </button>
@@ -1203,9 +1203,9 @@ function DocumentsTab({ customer }: { customer: CrmCompany }) {
       ) : (
         <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
           <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Inget kopplat datarum</h3>
-          <p className="text-gray-500 mb-4">Skapa ett datarum för att hantera dokument, avtal och offerter för denna kund</p>
-          <button className="px-6 py-2 bg-[#2d2a26] text-white rounded-xl text-sm font-medium hover:bg-[#3d3a36] transition-colors">
+          <h3 className="text-lg font-semibold text-aifm-charcoal tracking-tight mb-2">Inget kopplat datarum</h3>
+          <p className="text-aifm-charcoal/40 mb-4">Skapa ett datarum för att hantera dokument, avtal och offerter för denna kund</p>
+          <button className="px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm">
             Skapa datarum
           </button>
         </div>
@@ -1213,4 +1213,3 @@ function DocumentsTab({ customer }: { customer: CrmCompany }) {
     </div>
   );
 }
-

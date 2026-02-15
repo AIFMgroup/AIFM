@@ -10,7 +10,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
-import { processSwedBankPDF, saveProcessedReport } from '@/lib/integrations/bank/swedbank-pdf-processor';
+import { processSwedBankPDF, saveProcessedReport, type SwedBankCustodyReport } from '@/lib/integrations/bank/swedbank-pdf-processor';
+import { getFundRegistry } from '@/lib/fund-registry';
+import type { DataSource, InstrumentType, Currency } from '@/lib/fund-registry/types';
 
 // SES SNS notification format
 interface SESNotification {
@@ -130,12 +132,15 @@ export async function POST(request: NextRequest) {
         const result = await processSwedBankPDF(pdf.data);
         
         if (result.success && result.report && result.excelBuffer) {
-          // Spara processad rapport
+          // Spara processad rapport till S3
           const saved = await saveProcessedReport(
             result.report,
             result.excelBuffer,
             process.env.DATA_BUCKET || 'aifm-data'
           );
+
+          // Spara positioner och kassa till Fund Registry
+          const registrySaved = await saveToFundRegistry(result.report);
           
           results.push({
             filename: pdf.filename,
@@ -143,10 +148,8 @@ export async function POST(request: NextRequest) {
             reportDate: result.report.reportDate,
             positions: result.report.positions.length,
             savedFiles: saved,
+            registrySaved,
           });
-          
-          // TODO: Skicka notifikation om lyckad processing
-          // await sendProcessingNotification(result.report);
         } else {
           results.push({
             filename: pdf.filename,
@@ -180,6 +183,80 @@ export async function POST(request: NextRequest) {
       { error: 'Processing failed', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * Sparar extraherade positioner och kassa till Fund Registry (DynamoDB).
+ * Matchar fond via fundName i rapporten mot registrerade fonder.
+ */
+async function saveToFundRegistry(
+  report: SwedBankCustodyReport
+): Promise<{ fundId: string | null; positions: number; cash: boolean }> {
+  try {
+    const registry = getFundRegistry();
+    const funds = await registry.listFunds();
+
+    // Try to match fund by name (fuzzy)
+    const fundNameLower = (report.fundName ?? '').toLowerCase();
+    const matchedFund = funds.find(f =>
+      fundNameLower.includes(f.name.toLowerCase()) ||
+      f.name.toLowerCase().includes(fundNameLower)
+    );
+
+    if (!matchedFund) {
+      console.warn('[SwedBank → Registry] No matching fund for:', report.fundName);
+      return { fundId: null, positions: 0, cash: false };
+    }
+
+    const date = report.reportDate || new Date().toISOString().split('T')[0];
+    const currency = (report.currency || 'SEK') as Currency;
+
+    // Save positions
+    if (report.positions && report.positions.length > 0) {
+      await registry.setPositions(
+        matchedFund.id,
+        date,
+        report.positions.map(p => ({
+          fundId: matchedFund.id,
+          date,
+          instrumentId: p.isin || p.instrumentName.replace(/\s/g, '_'),
+          instrumentName: p.instrumentName,
+          instrumentType: 'equity' as InstrumentType,
+          isin: p.isin,
+          quantity: p.quantity,
+          currency: (p.currency || currency) as Currency,
+          marketPrice: p.marketPrice,
+          marketValue: p.marketValue,
+          marketValueBase: p.marketValue,
+          source: 'custodian' as DataSource,
+          priceSource: 'Swedbank',
+        }))
+      );
+    }
+
+    // Save cash balance
+    if (typeof report.cashBalance === 'number') {
+      await registry.setCashBalance({
+        fundId: matchedFund.id,
+        date,
+        currency,
+        balance: report.cashBalance,
+        balanceBase: report.cashBalance,
+        availableBalance: report.cashBalance,
+        pendingInflows: 0,
+        pendingOutflows: 0,
+        reservedAmount: 0,
+        bankName: 'Swedbank',
+        source: 'custodian' as DataSource,
+      });
+    }
+
+    console.log(`[SwedBank → Registry] Saved ${report.positions?.length ?? 0} positions + cash for fund ${matchedFund.name}`);
+    return { fundId: matchedFund.id, positions: report.positions?.length ?? 0, cash: typeof report.cashBalance === 'number' };
+  } catch (err) {
+    console.error('[SwedBank → Registry] Error saving to Fund Registry:', err);
+    return { fundId: null, positions: 0, cash: false };
   }
 }
 

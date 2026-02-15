@@ -43,9 +43,9 @@ function SearchPageContent() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-aifm-charcoal">Sök</h1>
-        <p className="text-sm text-aifm-charcoal/50 mt-1">
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-10 -mx-4 px-4 py-4 mb-6">
+        <h1 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Sök</h1>
+        <p className="text-sm text-aifm-charcoal/40">
           Resultat för <span className="font-medium text-aifm-charcoal">“{q || '—'}”</span>
         </p>
       </div>
@@ -68,7 +68,7 @@ function SearchPageContent() {
         <div className="space-y-4">
           {groups.map((g) => (
             <div key={g.label} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-              <div className="px-5 py-3 border-b border-gray-100 bg-gray-50/50">
+              <div className="px-5 py-3 border-b border-gray-100 bg-aifm-charcoal/[0.03]">
                 <p className="text-xs font-semibold text-aifm-charcoal/50 uppercase tracking-wider">{g.label}</p>
               </div>
               <div className="p-2">

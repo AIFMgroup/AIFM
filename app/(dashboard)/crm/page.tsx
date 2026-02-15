@@ -86,7 +86,7 @@ export default function CrmDashboardPage() {
             <h1 className="text-2xl font-semibold text-[#2d2a26] tracking-tight">CRM</h1>
             <div className="flex items-center gap-2 mt-1">
               <Globe className="w-4 h-4 text-[#c0a280]" />
-              <p className="text-gray-500">Alla kunder, affärer och aktiviteter</p>
+              <p className="text-sm text-aifm-charcoal/40">Alla kunder, affärer och aktiviteter</p>
             </div>
           </div>
         </div>
@@ -147,7 +147,7 @@ export default function CrmDashboardPage() {
               </div>
             </div>
             <div className="flex items-baseline gap-2 mb-6">
-              <span className="text-4xl font-bold tracking-tight">
+              <span className="text-4xl font-semibold tracking-tight">
                 {(stats?.totalValue ?? 0).toLocaleString('sv-SE')}
               </span>
               <span className="text-lg text-white/60">SEK</span>
@@ -155,7 +155,7 @@ export default function CrmDashboardPage() {
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
               <div>
                 <p className="text-sm text-white/50 mb-1">Vunna affärer</p>
-                <p className="text-xl font-semibold text-emerald-400">
+                <p className="text-xl font-semibold text-aifm-gold">
                   {(stats?.wonValue ?? 0).toLocaleString('sv-SE')}
                   <span className="text-sm text-white/40 ml-1">SEK</span>
                 </p>
@@ -203,9 +203,9 @@ export default function CrmDashboardPage() {
                   <div key={task.id} className="px-5 py-3 hover:bg-gray-50/50 transition-colors">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{task.title}</p>
+                        <p className="text-sm font-medium text-aifm-charcoal truncate">{task.title}</p>
                         {task.contactName && (
-                          <p className="text-xs text-gray-500 mt-0.5">{task.contactName}</p>
+                          <p className="text-xs text-aifm-charcoal/40 mt-0.5">{task.contactName}</p>
                         )}
                       </div>
                       {task.dueDate && (
@@ -241,13 +241,13 @@ export default function CrmDashboardPage() {
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{deal.name}</p>
+                        <p className="text-sm font-medium text-aifm-charcoal truncate">{deal.name}</p>
                         {deal.crmCompanyName && (
-                          <p className="text-xs text-gray-500 mt-0.5">{deal.crmCompanyName}</p>
+                          <p className="text-xs text-aifm-charcoal/40 mt-0.5">{deal.crmCompanyName}</p>
                         )}
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-sm font-semibold text-gray-900">
+                        <p className="text-sm font-semibold tracking-tight text-aifm-charcoal">
                           {(deal.value ?? 0).toLocaleString('sv-SE')}
                         </p>
                         <StatusPill status={deal.stage} size="sm" />
@@ -279,13 +279,13 @@ export default function CrmDashboardPage() {
                     <div className="flex items-start gap-3">
                       <ActivityIcon type={activity.type} />
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-gray-900 truncate">{activity.title}</p>
+                        <p className="text-sm font-medium text-aifm-charcoal truncate">{activity.title}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           {activity.contactName && (
-                            <span className="text-xs text-gray-500">{activity.contactName}</span>
+                            <span className="text-xs text-aifm-charcoal/40">{activity.contactName}</span>
                           )}
                           {activity.startTime && (
-                            <span className="text-xs text-gray-400">
+                            <span className="text-xs text-aifm-charcoal/30">
                               {format(parseISO(activity.startTime), 'd MMM HH:mm', { locale: sv })}
                             </span>
                           )}
@@ -314,12 +314,12 @@ interface StatCardProps {
 
 function StatCard({ label, value, icon: Icon, href, color }: StatCardProps) {
   const colorClasses = {
-    blue: 'bg-blue-50 text-blue-600',
-    purple: 'bg-purple-50 text-purple-600',
-    amber: 'bg-amber-50 text-amber-600',
-    green: 'bg-emerald-50 text-emerald-600',
+    blue: 'bg-aifm-charcoal/5 text-aifm-charcoal',
+    purple: 'bg-aifm-charcoal/5 text-aifm-charcoal',
+    amber: 'bg-aifm-gold/10 text-aifm-gold',
+    green: 'bg-aifm-gold/10 text-aifm-gold',
     red: 'bg-red-50 text-red-600',
-    gold: 'bg-[#c0a280]/10 text-[#c0a280]',
+    gold: 'bg-aifm-gold/10 text-aifm-gold',
   };
 
   const content = (
@@ -333,8 +333,8 @@ function StatCard({ label, value, icon: Icon, href, color }: StatCardProps) {
         </div>
         {href && <ArrowUpRight className="w-4 h-4 text-gray-300" />}
       </div>
-      <p className="text-2xl font-bold text-[#2d2a26]">{value}</p>
-      <p className="text-sm text-gray-500 mt-0.5">{label}</p>
+      <p className="text-2xl font-semibold tracking-tight text-aifm-charcoal">{value}</p>
+      <p className="text-sm text-aifm-charcoal/40 mt-0.5">{label}</p>
     </Card>
   );
 
@@ -354,21 +354,21 @@ function QuickAction({
   color: 'blue' | 'purple' | 'amber' | 'green'; 
 }) {
   const colorClasses = {
-    blue: 'bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white',
-    purple: 'bg-purple-50 text-purple-600 group-hover:bg-purple-600 group-hover:text-white',
-    amber: 'bg-amber-50 text-amber-600 group-hover:bg-amber-600 group-hover:text-white',
-    green: 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white',
+    blue: 'bg-aifm-charcoal/5 text-aifm-charcoal group-hover:bg-aifm-charcoal group-hover:text-white',
+    purple: 'bg-aifm-charcoal/5 text-aifm-charcoal group-hover:bg-aifm-charcoal group-hover:text-white',
+    amber: 'bg-aifm-gold/10 text-aifm-gold group-hover:bg-aifm-gold group-hover:text-white',
+    green: 'bg-aifm-gold/10 text-aifm-gold group-hover:bg-aifm-gold group-hover:text-white',
   };
 
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 p-3 bg-gray-50/80 rounded-xl hover:bg-gray-100 active:scale-[0.98] transition-all group"
+      className="flex items-center gap-3 p-3 bg-aifm-charcoal/[0.03] rounded-xl hover:bg-aifm-charcoal/[0.06] active:scale-[0.98] transition-all group"
     >
       <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center transition-colors', colorClasses[color])}>
         <Icon className="w-5 h-5" />
       </div>
-      <span className="text-sm font-medium text-gray-700">{label}</span>
+      <span className="text-sm font-medium text-aifm-charcoal">{label}</span>
     </Link>
   );
 }
@@ -381,17 +381,17 @@ function DueDateBadge({ date }: { date: string }) {
   const isOverdue = d < today;
   
   let label = format(d, 'd MMM', { locale: sv });
-  let className = 'bg-gray-100 text-gray-600';
+  let className = 'bg-aifm-charcoal/5 text-aifm-charcoal/60';
   
   if (isOverdue) {
     label = 'Försenad';
     className = 'bg-red-100 text-red-700';
   } else if (isToday(d)) {
     label = 'Idag';
-    className = 'bg-amber-100 text-amber-700';
+    className = 'bg-aifm-gold/15 text-aifm-charcoal';
   } else if (isTomorrow(d)) {
     label = 'Imorgon';
-    className = 'bg-blue-100 text-blue-700';
+    className = 'bg-aifm-charcoal/10 text-aifm-charcoal';
   }
 
   return (
@@ -404,11 +404,11 @@ function DueDateBadge({ date }: { date: string }) {
 // Activity Icon Component
 function ActivityIcon({ type }: { type: Activity['type'] }) {
   const config = {
-    meeting: { icon: Calendar, bg: 'bg-blue-100 text-blue-600' },
-    call: { icon: Phone, bg: 'bg-green-100 text-green-600' },
-    email: { icon: Mail, bg: 'bg-amber-100 text-amber-600' },
-    note: { icon: MessageSquare, bg: 'bg-purple-100 text-purple-600' },
-    task_completed: { icon: CheckSquare, bg: 'bg-emerald-100 text-emerald-600' },
+    meeting: { icon: Calendar, bg: 'bg-aifm-charcoal/5 text-aifm-charcoal' },
+    call: { icon: Phone, bg: 'bg-aifm-gold/10 text-aifm-gold' },
+    email: { icon: Mail, bg: 'bg-aifm-gold/10 text-aifm-charcoal' },
+    note: { icon: MessageSquare, bg: 'bg-aifm-charcoal/5 text-aifm-charcoal/60' },
+    task_completed: { icon: CheckSquare, bg: 'bg-aifm-gold/10 text-aifm-gold' },
   };
   
   const { icon: Icon, bg } = config[type] || config.note;

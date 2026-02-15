@@ -9,9 +9,8 @@ import {
 } from 'lucide-react';
 
 import { useCompany } from '@/components/CompanyContext';
-import { 
-  getFundByCompanyId, formatCurrency, formatPercentage
-} from '@/lib/fundData';
+import { formatCurrency, formatPercentage } from '@/lib/fundData';
+import { useFundsData, getFundByCompanyId } from '@/lib/fundsApi';
 import { PageHeader, SecondaryButton } from '@/components/shared/PageHeader';
 
 // NAV data per company
@@ -634,18 +633,34 @@ function InteractiveCalculator({
 
 export default function NAVCalculationPage() {
   const { selectedCompany } = useCompany();
+  const { data: fundsData, loading, error } = useFundsData();
   const [activeTab, setActiveTab] = useState<'overview' | 'calculator' | 'investors'>('overview');
   const [calculatedNAV, setCalculatedNAV] = useState<number | null>(null);
 
   // Get NAV data for selected company
   const navData = navDataByCompany[selectedCompany.id] || navDataByCompany['company-1'];
-  const fund = getFundByCompanyId(selectedCompany.id);
+  const fund = fundsData ? getFundByCompanyId(fundsData, selectedCompany.id) : undefined;
 
   const navChange = navData.currentNAV - navData.previousNAV;
   const navChangePct = (navChange / navData.previousNAV) * 100;
 
   const totalAssets = Object.values(navData.assets).reduce((a, b) => a + b, 0);
   const totalLiabilities = Object.values(navData.liabilities).reduce((a, b) => a + b, 0);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[40vh]">
+        <div className="animate-spin w-8 h-8 border-2 border-aifm-gold border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="p-4 text-center text-red-600">
+        {error.message ?? 'Kunde inte ladda fonddata'}
+      </div>
+    );
+  }
 
   return (
     <>

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { verifyIdToken } from "@/lib/auth/tokens";
 import { getRoleFromGroups } from "@/lib/accounting/authz";
+import { getClientIdFromRequest, checkRateLimit } from "@/lib/security/rateLimiter";
 
 const PUBLIC_PATHS = [
   "/auth/login",
@@ -71,6 +72,35 @@ function isAuthorizedCron(request: NextRequest): boolean {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Rate limit API routes (skip public and cron)
+  if (pathname.startsWith("/api/") && !pathname.startsWith("/api/public") && !CRON_ALLOWED_PATHS.includes(pathname)) {
+    try {
+      const clientId = getClientIdFromRequest(request);
+      const endpoint = ["POST", "PUT", "PATCH", "DELETE"].includes(request.method) ? "api-write" : "api-read";
+      const result = await checkRateLimit(clientId, endpoint);
+      if (!result.allowed) {
+        const resp = NextResponse.json(
+          {
+            error: "Too Many Requests",
+            message: "Du har gjort för många förfrågningar. Vänta innan du försöker igen.",
+            retryAfter: result.retryAfter,
+          },
+          {
+            status: 429,
+            headers: {
+              "Retry-After": String(result.retryAfter ?? 60),
+              "X-RateLimit-Limit": "100",
+              "X-RateLimit-Remaining": "0",
+            },
+          }
+        );
+        return addSecurityHeaders(resp);
+      }
+    } catch (_) {
+      // Fail open if rate limiter errors (e.g. DynamoDB unavailable in Edge)
+    }
+  }
+
   if (isPublicPath(pathname)) {
     return addSecurityHeaders(NextResponse.next());
   }
@@ -78,7 +108,7 @@ export async function middleware(request: NextRequest) {
   const token = request.cookies.get("__Host-aifm_id_token")?.value;
   const lastActive = request.cookies.get("__Host-aifm_last_active")?.value;
   const now = Date.now();
-  const MAX_IDLE_MS = 15 * 60 * 1000; // 15 min
+  const MAX_IDLE_MS = 30 * 60 * 1000; // 30 min
 
   if (!token) {
     // Allow cron-triggered ops endpoints without session cookies

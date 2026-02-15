@@ -143,7 +143,7 @@ export interface RateLimitResult {
 }
 
 /**
- * Get client identifier (user ID or IP)
+ * Get client identifier (user ID or IP) from Next.js headers (use in route handlers)
  */
 export async function getClientId(): Promise<string> {
   try {
@@ -163,6 +163,21 @@ export async function getClientId(): Promise<string> {
   } catch {
     return `ip:unknown-${Date.now()}`;
   }
+}
+
+/** Request type for middleware (has headers and optional ip) */
+type RequestLike = { headers: Headers; ip?: string };
+
+/**
+ * Get client identifier from a request (use in middleware where headers() is not available)
+ */
+export function getClientIdFromRequest(request: RequestLike): string {
+  const forwarded = request.headers.get('x-forwarded-for');
+  const ip = forwarded?.split(',')[0]?.trim() || 
+             request.headers.get('x-real-ip') || 
+             (request as { ip?: string }).ip || 
+             'unknown';
+  return `ip:${ip}`;
 }
 
 /**

@@ -7,11 +7,15 @@ import {
   AlertCircle, Clock, ChevronRight, Plus, Eye,
   Wallet, FileText, Send, CreditCard
 } from 'lucide-react';
+import { formatCurrency, formatDate } from '@/lib/fundData';
+import type { BankAccount } from '@/lib/fundData';
 import {
-  getFundByCompanyId, getBankAccountsByCompanyId, getTransactionsByAccount, getInvoicesByCompanyId,
-  formatCurrency, formatDate, BankAccount
-} from '@/lib/fundData';
-
+  useFundsData,
+  getFundByCompanyId,
+  getBankAccountsByCompanyId,
+  getTransactionsByAccount,
+  getInvoicesByCompanyId,
+} from '@/lib/fundsApi';
 import { useCompany } from '@/components/CompanyContext';
 import { PageHeader, SecondaryButton } from '@/components/shared/PageHeader';
 
@@ -191,14 +195,15 @@ function TabButton({
 
 export default function TreasuryPage() {
   const { selectedCompany } = useCompany();
+  const { data: fundsData, loading, error } = useFundsData();
   const [selectedAccount, setSelectedAccount] = useState<BankAccount | null>(null);
   const [activeTab, setActiveTab] = useState<'accounts' | 'transactions' | 'invoices' | 'payments'>('accounts');
   const [refreshing, setRefreshing] = useState(false);
 
-  const selectedFund = getFundByCompanyId(selectedCompany.id);
-  const accounts = getBankAccountsByCompanyId(selectedCompany.id);
-  const allTransactions = accounts.flatMap(acc => getTransactionsByAccount(acc.id));
-  const invoices = getInvoicesByCompanyId(selectedCompany.id);
+  const selectedFund = fundsData ? getFundByCompanyId(fundsData, selectedCompany.id) : undefined;
+  const accounts = fundsData ? getBankAccountsByCompanyId(fundsData, selectedCompany.id) : [];
+  const allTransactions = fundsData ? accounts.flatMap((acc) => getTransactionsByAccount(fundsData, acc.id)) : [];
+  const invoices = fundsData ? getInvoicesByCompanyId(fundsData, selectedCompany.id) : [];
   const currency = selectedFund?.currency || 'SEK';
 
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
@@ -210,6 +215,21 @@ export default function TreasuryPage() {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 1500);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[40vh]">
+        <div className="animate-spin w-8 h-8 border-2 border-aifm-gold border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="p-4 text-center text-red-600">
+        {error.message ?? 'Kunde inte ladda likviditetsdata'}
+      </div>
+    );
+  }
 
   return (
     <>

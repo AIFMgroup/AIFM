@@ -294,6 +294,64 @@ export const mockFunds: Fund[] = [
     carriedInterest: 20,
     createdAt: new Date('2022-09-01'),
   },
+  // ── Testfonder för ESG Pre-Trade (Artikel 6 / 8 / 9) ──
+  {
+    id: 'fund-test-6',
+    name: 'AIFM Testfond Bas',
+    type: 'HEDGE_FUND',
+    currency: 'SEK',
+    vintage: 2025,
+    status: 'INVESTING',
+    targetSize: 200000000,
+    committedCapital: 150000000,
+    calledCapital: 100000000,
+    distributedCapital: 0,
+    nav: 120000000,
+    irr: 8.0,
+    tvpi: 1.20,
+    dpi: 0,
+    managementFee: 1.5,
+    carriedInterest: 20,
+    createdAt: new Date('2025-01-01'),
+  },
+  {
+    id: 'fund-test-8',
+    name: 'AIFM Testfond ESG',
+    type: 'HEDGE_FUND',
+    currency: 'SEK',
+    vintage: 2025,
+    status: 'INVESTING',
+    targetSize: 500000000,
+    committedCapital: 350000000,
+    calledCapital: 200000000,
+    distributedCapital: 0,
+    nav: 250000000,
+    irr: 12.0,
+    tvpi: 1.25,
+    dpi: 0,
+    managementFee: 1.5,
+    carriedInterest: 20,
+    createdAt: new Date('2025-01-01'),
+  },
+  {
+    id: 'fund-test-9',
+    name: 'AIFM Testfond Hållbar',
+    type: 'HEDGE_FUND',
+    currency: 'SEK',
+    vintage: 2025,
+    status: 'INVESTING',
+    targetSize: 300000000,
+    committedCapital: 200000000,
+    calledCapital: 120000000,
+    distributedCapital: 0,
+    nav: 180000000,
+    irr: 10.0,
+    tvpi: 1.50,
+    dpi: 0,
+    managementFee: 1.5,
+    carriedInterest: 20,
+    createdAt: new Date('2025-01-01'),
+  },
 ];
 
 export const mockInvestors: Investor[] = [
@@ -1062,12 +1120,14 @@ export function formatPercentage(value: number): string {
   return `${value.toFixed(1)}%`;
 }
 
-export function formatDate(date: Date): string {
+export function formatDate(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(d.getTime())) return '–';
   return new Intl.DateTimeFormat('sv-SE', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
-  }).format(date);
+  }).format(d);
 }
 
 // Calculate total stats

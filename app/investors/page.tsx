@@ -7,11 +7,10 @@ import {
   Download, Search, Plus, Eye, Mail, Phone, Globe, Building2, User,
   FileText, AlertTriangle, XCircle, TrendingUp
 } from 'lucide-react';
-import {
-  getInvestorsByCompanyId, getCommitmentsByInvestor,
-  formatCurrency, formatPercentage, formatDate, Investor
-} from '@/lib/fundData';
-
+import { formatCurrency, formatPercentage, formatDate } from '@/lib/fundData';
+import type { Investor } from '@/lib/fundData';
+import { useFundsData, getInvestorsByCompanyId, getCommitmentsByInvestor } from '@/lib/fundsApi';
+import type { FundsApiResponse } from '@/lib/fundsApi';
 import { useCompany } from '@/components/CompanyContext';
 import { PageHeader, PrimaryButton, SecondaryButton } from '@/components/shared/PageHeader';
 
@@ -103,10 +102,10 @@ function InvestorRow({
 }
 
 // Selected Investor Detail Panel
-function InvestorDetail({ investor }: { investor: Investor }) {
+function InvestorDetail({ investor, fundsData }: { investor: Investor; fundsData: FundsApiResponse }) {
   const kycStyles = getKYCStatusStyles(investor.kycStatus);
   const KYCIcon = kycStyles.icon;
-  const commitments = getCommitmentsByInvestor(investor.id);
+  const commitments = getCommitmentsByInvestor(fundsData, investor.id);
 
   const detailItems = [
     { label: 'Email', value: investor.email, icon: Mail },
@@ -219,11 +218,12 @@ function InvestorDetail({ investor }: { investor: Investor }) {
 
 export default function InvestorsPage() {
   const { selectedCompany } = useCompany();
+  const { data: fundsData, loading, error } = useFundsData();
   const [activeTab, setActiveTab] = useState('all');
   const [selectedInvestorId, setSelectedInvestorId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const companyInvestors = getInvestorsByCompanyId(selectedCompany.id);
+  const companyInvestors = fundsData ? getInvestorsByCompanyId(fundsData, selectedCompany.id) : [];
 
   const filteredInvestors = companyInvestors.filter(investor => {
     const matchesSearch = investor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -245,13 +245,28 @@ export default function InvestorsPage() {
     approved: companyInvestors.filter(i => i.kycStatus === 'APPROVED').length,
     pending: companyInvestors.filter(i => i.kycStatus === 'PENDING' || i.kycStatus === 'IN_PROGRESS').length,
     flagged: companyInvestors.filter(i => i.amlStatus === 'FLAGGED' || i.riskRating === 'HIGH').length,
-    totalCommitted: companyInvestors.reduce((sum, inv) => {
-      const commitments = getCommitmentsByInvestor(inv.id);
+    totalCommitted: fundsData ? companyInvestors.reduce((sum, inv) => {
+      const commitments = getCommitmentsByInvestor(fundsData, inv.id);
       return sum + commitments.reduce((s, c) => s + c.committedAmount, 0);
-    }, 0),
+    }, 0) : 0,
   };
 
   const kycPercentage = stats.total > 0 ? Math.round((stats.approved / stats.total) * 100) : 0;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[40vh]">
+        <div className="animate-spin w-8 h-8 border-2 border-aifm-gold border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="p-4 text-center text-red-600">
+        {error.message ?? 'Kunde inte ladda investerardata'}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -355,7 +370,7 @@ export default function InvestorsPage() {
         {/* Detail Panel */}
         <div className="lg:col-span-1">
           {selectedInvestor ? (
-            <InvestorDetail investor={selectedInvestor} />
+            fundsData && <InvestorDetail investor={selectedInvestor} fundsData={fundsData} />
           ) : (
             <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center h-fit">
               <div className="w-16 h-16 rounded-full bg-aifm-charcoal/5 flex items-center justify-center mx-auto mb-4">

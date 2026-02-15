@@ -1,6 +1,6 @@
 /**
  * Price Data Provider System
- * 
+ *
  * Pluggbar arkitektur för prisdata:
  * - Mock: Testdata för utveckling
  * - CSV: Manuell uppladdning av CSV-filer
@@ -10,6 +10,11 @@
  */
 
 import { getFundRegistry } from '@/lib/fund-registry';
+import {
+  getLSEGAccessToken,
+  getLSEGBaseUrl,
+  isLSEGConfigured,
+} from '@/lib/integrations/lseg/lseg-auth';
 
 // ============================================================================
 // Types
@@ -469,63 +474,210 @@ class FundRegistryPriceDataProvider implements PriceDataProvider {
 }
 
 // ============================================================================
-// LSEG Provider (Stub - kräver licens)
+// LSEG Provider (LSEG/Refinitiv Data Platform - priser, referensdata)
 // ============================================================================
 
-interface LSEGConfig {
-  apiKey?: string;
-  apiSecret?: string;
-  environment: 'sandbox' | 'production';
+/** LSEG pricing/quote response shape (flexible for different API versions) */
+interface LSEGQuoteResponse {
+  data?: Array<{
+    Instrument?: string;
+    ISIN?: string;
+    TradePrice?: number;
+    LastPrice?: number;
+    ClosePrice?: number;
+    Last?: number;
+    Close?: number;
+    Currency?: string;
+    PriceDate?: string;
+    TradeDate?: string;
+    DisplayName?: string;
+    RIC?: string;
+  }>;
+  TradePrice?: number;
+  LastPrice?: number;
+  ClosePrice?: number;
+  Currency?: string;
+  PriceDate?: string;
+  DisplayName?: string;
+}
+
+/** LSEG reference data response (sector, industry, country, market cap) */
+interface LSEGRefDataResponse {
+  data?: Array<Record<string, unknown>>;
 }
 
 class LSEGPriceDataProvider implements PriceDataProvider {
   readonly source: PriceDataSource = 'lseg';
-  private config: LSEGConfig;
 
-  constructor() {
-    this.config = {
-      apiKey: process.env.LSEG_API_KEY,
-      apiSecret: process.env.LSEG_API_SECRET,
-      environment: (process.env.LSEG_ENVIRONMENT as 'sandbox' | 'production') || 'sandbox',
+  private async apiGet<T>(path: string): Promise<T> {
+    const token = await getLSEGAccessToken();
+    const baseUrl = getLSEGBaseUrl();
+    const res = await fetch(`${baseUrl}${path}`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    if (!res.ok) throw new Error(`LSEG API ${path}: ${res.status} ${await res.text()}`);
+    return res.json() as Promise<T>;
+  }
+
+  private mapQuoteToInstrumentPrice(
+    isin: string,
+    raw: LSEGQuoteResponse,
+    date: string
+  ): InstrumentPrice {
+    const price =
+      raw.TradePrice ??
+      raw.LastPrice ??
+      raw.ClosePrice ??
+      (Array.isArray(raw.data) && raw.data[0]
+        ? (raw.data[0].TradePrice ??
+          raw.data[0].LastPrice ??
+          raw.data[0].ClosePrice ??
+          raw.data[0].Last ??
+          raw.data[0].Close)
+        : undefined);
+    const currency =
+      raw.Currency ??
+      (Array.isArray(raw.data) && raw.data[0] ? (raw.data[0].Currency as string) : 'USD');
+    const priceDate =
+      raw.PriceDate ??
+      raw.TradeDate ??
+      (Array.isArray(raw.data) && raw.data[0]
+        ? ((raw.data[0].PriceDate ?? raw.data[0].TradeDate) as string)
+        : date);
+    const name =
+      raw.DisplayName ??
+      (Array.isArray(raw.data) && raw.data[0] ? (raw.data[0].DisplayName as string) : isin);
+    const ric = Array.isArray(raw.data) && raw.data[0] ? (raw.data[0].RIC as string) : undefined;
+
+    if (typeof price !== 'number') {
+      throw new Error(`LSEG: no price in response for ${isin}`);
+    }
+
+    return {
+      isin,
+      ric,
+      name: String(name ?? isin),
+      price,
+      currency: String(currency ?? 'USD'),
+      priceDate: String(priceDate ?? date),
+      source: 'lseg',
+      lastUpdated: new Date().toISOString(),
     };
+  }
+
+  async getInstrumentPrice(isin: string, date?: string): Promise<InstrumentPrice> {
+    if (!this.isConfigured()) {
+      throw new Error('LSEG provider not configured. Set LSEG_API_KEY and LSEG_API_SECRET.');
+    }
+    const effectiveDate = date ?? new Date().toISOString().split('T')[0];
+    const path = `/data/pricing/v1/views/quote?identifier=ISIN:${encodeURIComponent(isin)}&date=${effectiveDate}`;
+    try {
+      const raw = await this.apiGet<LSEGQuoteResponse>(path);
+      return this.mapQuoteToInstrumentPrice(isin, raw, effectiveDate);
+    } catch (err) {
+      const altPath = `/data/datagrid/v1/views/quote/data?identifier=ISIN:${encodeURIComponent(isin)}&date=${effectiveDate}`;
+      try {
+        const raw = await this.apiGet<LSEGQuoteResponse>(altPath);
+        return this.mapQuoteToInstrumentPrice(isin, raw, effectiveDate);
+      } catch {
+        throw err;
+      }
+    }
+  }
+
+  async getInstrumentPrices(isins: string[], date?: string): Promise<InstrumentPrice[]> {
+    const results: InstrumentPrice[] = [];
+    for (const isin of isins) {
+      try {
+        results.push(await this.getInstrumentPrice(isin, date));
+      } catch {
+        // Skip failed; caller can check length vs input
+      }
+    }
+    return results;
   }
 
   async getPriceData(fundId: string, date?: string): Promise<PriceDataRecord> {
     if (!this.isConfigured()) {
-      throw new Error('LSEG provider not configured. Set environment variables LSEG_API_KEY and LSEG_API_SECRET.');
+      throw new Error('LSEG provider not configured.');
     }
-    throw new Error('LSEG API not yet implemented. Use mock or CSV provider in the meantime.');
+    const effectiveDate = date ?? new Date().toISOString().split('T')[0];
+    const instrument = await this.getInstrumentPrice(fundId, effectiveDate);
+    return {
+      fundId,
+      fundName: instrument.name,
+      isin: fundId,
+      date: effectiveDate,
+      nav: instrument.price,
+      aum: 0,
+      outstandingShares: 0,
+      currency: instrument.currency,
+      source: 'lseg',
+      lastUpdated: instrument.lastUpdated,
+    };
   }
 
   async getAllPriceData(date?: string): Promise<PriceDataRecord[]> {
     if (!this.isConfigured()) {
-      throw new Error('LSEG provider not configured');
+      throw new Error('LSEG provider not configured.');
     }
-    throw new Error('LSEG API not yet implemented');
+    try {
+      const registry = getFundRegistry();
+      const funds = await registry.listFunds();
+      const shareClasses = await registry.listShareClasses();
+      const isins = new Set<string>();
+      for (const sc of shareClasses) {
+        isins.add(sc.isin);
+      }
+      for (const f of funds) {
+        isins.add(f.isin);
+      }
+      const results: PriceDataRecord[] = [];
+      for (const isin of isins) {
+        try {
+          results.push(await this.getPriceData(isin, date));
+        } catch {
+          // skip
+        }
+      }
+      return results;
+    } catch {
+      return [];
+    }
   }
 
   /**
-   * Hämta instrumentpris från LSEG (för enskilda värdepapper)
+   * Referensdata (sektor, industri, land, market cap) för ett instrument
    */
-  async getInstrumentPrice(isin: string, date?: string): Promise<InstrumentPrice> {
-    if (!this.isConfigured()) {
-      throw new Error('LSEG provider not configured');
+  async getReferenceData(isin: string): Promise<LSEGRefDataResponse | null> {
+    if (!this.isConfigured()) return null;
+    try {
+      const path = `/data/datagrid/v1/views/reference/data?identifier=ISIN:${encodeURIComponent(isin)}`;
+      return await this.apiGet<LSEGRefDataResponse>(path);
+    } catch {
+      return null;
     }
-    throw new Error('LSEG instrument pricing not yet implemented');
   }
 
   /**
-   * Hämta flera instrumentpriser (batch)
+   * Corporate actions för ett instrument i ett datumintervall
    */
-  async getInstrumentPrices(isins: string[], date?: string): Promise<InstrumentPrice[]> {
-    if (!this.isConfigured()) {
-      throw new Error('LSEG provider not configured');
+  async getCorporateActions(
+    isin: string,
+    fromDate: string,
+    toDate: string
+  ): Promise<LSEGRefDataResponse | null> {
+    if (!this.isConfigured()) return null;
+    try {
+      const path = `/data/datagrid/v1/views/corporate-actions/data?identifier=ISIN:${encodeURIComponent(isin)}&from=${fromDate}&to=${toDate}`;
+      return await this.apiGet<LSEGRefDataResponse>(path);
+    } catch {
+      return null;
     }
-    throw new Error('LSEG batch pricing not yet implemented');
   }
 
   isConfigured(): boolean {
-    return !!(this.config.apiKey && this.config.apiSecret);
+    return isLSEGConfigured();
   }
 
   async getStatus(): Promise<ProviderStatus> {
@@ -533,23 +685,26 @@ class LSEGPriceDataProvider implements PriceDataProvider {
       return {
         available: false,
         lastCheck: new Date().toISOString(),
-        message: 'LSEG not configured. Set LSEG_API_KEY and LSEG_API_SECRET environment variables.',
-        details: {
-          apiKeySet: !!this.config.apiKey,
-          apiSecretSet: !!this.config.apiSecret,
-          environment: this.config.environment,
-        },
+        message: 'LSEG not configured. Set LSEG_API_KEY and LSEG_API_SECRET.',
+        details: { configured: false },
       };
     }
-
-    return {
-      available: false,
-      lastCheck: new Date().toISOString(),
-      message: 'LSEG configured but connection test not implemented yet',
-      details: {
-        environment: this.config.environment,
-      },
-    };
+    try {
+      await getLSEGAccessToken();
+      return {
+        available: true,
+        lastCheck: new Date().toISOString(),
+        message: 'LSEG connected',
+        details: { baseUrl: getLSEGBaseUrl() },
+      };
+    } catch (err) {
+      return {
+        available: false,
+        lastCheck: new Date().toISOString(),
+        message: err instanceof Error ? err.message : 'LSEG connection failed',
+        details: { configured: true },
+      };
+    }
   }
 }
 

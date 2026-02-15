@@ -677,19 +677,13 @@ function MessageBubble({ message, onRegenerate, onFeedback, isLastAssistantMessa
   
   return (
     <div className="flex gap-3 animate-fade-in">
-      <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 shadow-md ${
-        message.mode === 'regelverksassistent' 
-          ? 'bg-gradient-to-br from-emerald-500 to-emerald-700' 
-          : message.mode === 'chatgpt'
-          ? 'bg-gradient-to-br from-green-500 to-teal-600'
-          : 'bg-gradient-to-br from-violet-500 to-purple-700'
-      }`}>
+      <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm bg-aifm-charcoal">
         {message.mode === 'regelverksassistent' ? (
-          <BookOpen className="w-3.5 h-3.5 text-white" />
+          <BookOpen className="w-3.5 h-3.5 text-aifm-gold" />
         ) : message.mode === 'chatgpt' ? (
-          <Zap className="w-3.5 h-3.5 text-white" />
+          <Zap className="w-3.5 h-3.5 text-aifm-gold" />
         ) : (
-          <Sparkles className="w-3.5 h-3.5 text-white" />
+          <Sparkles className="w-3.5 h-3.5 text-aifm-gold" />
         )}
       </div>
       <div className="max-w-[80%]">
@@ -762,10 +756,10 @@ function MessageBubble({ message, onRegenerate, onFeedback, isLastAssistantMessa
               <div className="flex items-center gap-0.5 border-l border-gray-100 pl-2 ml-1">
                 <button 
                   onClick={() => handleFeedback('positive')}
-                  className={`p-1.5 rounded-md transition-colors ${
+                  className={`p-1.5 rounded-full transition-all ${
                     localFeedback === 'positive' 
-                      ? 'text-green-600 bg-green-50' 
-                      : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
+                      ? 'text-aifm-gold bg-aifm-gold/10' 
+                      : 'text-aifm-charcoal/30 hover:text-aifm-gold hover:bg-aifm-gold/10'
                   }`}
                   title="Bra svar"
                 >
@@ -773,10 +767,10 @@ function MessageBubble({ message, onRegenerate, onFeedback, isLastAssistantMessa
                 </button>
                 <button 
                   onClick={() => handleFeedback('negative')}
-                  className={`p-1.5 rounded-md transition-colors ${
+                  className={`p-1.5 rounded-full transition-all ${
                     localFeedback === 'negative' 
-                      ? 'text-red-600 bg-red-50' 
-                      : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+                      ? 'text-red-500 bg-red-50' 
+                      : 'text-aifm-charcoal/30 hover:text-red-500 hover:bg-red-50'
                   }`}
                   title="Dåligt svar"
                 >
@@ -784,12 +778,12 @@ function MessageBubble({ message, onRegenerate, onFeedback, isLastAssistantMessa
                 </button>
               </div>
               
-              <div className="border-l border-gray-100 pl-2 ml-1 flex items-center gap-2">
+              <div className="border-l border-gray-100 pl-2 ml-1 flex items-center gap-1">
                 <button 
                   onClick={exportToPDF}
                   disabled={exporting !== null}
-                  className="flex items-center gap-1 px-2 py-1 text-[10px] text-gray-500 hover:text-red-600 
-                           hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1 px-2 py-1 text-[10px] text-aifm-charcoal/40 hover:text-aifm-charcoal 
+                           hover:bg-aifm-charcoal/5 rounded-full transition-all disabled:opacity-50"
                   title="Exportera till PDF"
                 >
                   {exporting === 'pdf' ? (
@@ -802,8 +796,8 @@ function MessageBubble({ message, onRegenerate, onFeedback, isLastAssistantMessa
                 <button 
                   onClick={exportToExcel}
                   disabled={exporting !== null}
-                  className="flex items-center gap-1 px-2 py-1 text-[10px] text-gray-500 hover:text-green-600 
-                           hover:bg-green-50 rounded-md transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1 px-2 py-1 text-[10px] text-aifm-charcoal/40 hover:text-aifm-charcoal 
+                           hover:bg-aifm-charcoal/5 rounded-full transition-all disabled:opacity-50"
                   title="Exportera till Excel"
                 >
                   {exporting === 'excel' ? (
@@ -847,19 +841,13 @@ function MessageBubble({ message, onRegenerate, onFeedback, isLastAssistantMessa
 function LoadingIndicator({ mode }: { mode: AgentMode }) {
   return (
     <div className="flex gap-3 animate-fade-in">
-      <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 shadow-md ${
-        mode === 'regelverksassistent' 
-          ? 'bg-gradient-to-br from-emerald-500 to-emerald-700' 
-          : mode === 'chatgpt'
-          ? 'bg-gradient-to-br from-green-500 to-teal-600'
-          : 'bg-gradient-to-br from-violet-500 to-purple-700'
-      }`}>
+      <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm bg-aifm-charcoal">
         {mode === 'regelverksassistent' ? (
-          <BookOpen className="w-3.5 h-3.5 text-white" />
+          <BookOpen className="w-3.5 h-3.5 text-aifm-gold" />
         ) : mode === 'chatgpt' ? (
-          <Zap className="w-3.5 h-3.5 text-white" />
+          <Zap className="w-3.5 h-3.5 text-aifm-gold" />
         ) : (
-          <Sparkles className="w-3.5 h-3.5 text-white" />
+          <Sparkles className="w-3.5 h-3.5 text-aifm-gold" />
         )}
       </div>
       <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
@@ -880,38 +868,38 @@ function LoadingIndicator({ mode }: { mode: AgentMode }) {
 
 function ModeToggle({ mode, onChange }: { mode: AgentMode; onChange: (mode: AgentMode) => void }) {
   return (
-    <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-xl">
+    <div className="flex items-center gap-1 p-1 bg-aifm-charcoal/[0.04] rounded-full border border-gray-100">
       <button
         onClick={() => onChange('regelverksassistent')}
-        className={`flex items-center gap-2 px-2 sm:px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+        className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
           mode === 'regelverksassistent'
-            ? 'bg-white text-[#2d2a26] shadow-sm'
-            : 'text-gray-500 hover:text-gray-700'
+            ? 'bg-aifm-charcoal text-white shadow-sm'
+            : 'text-aifm-charcoal/50 hover:text-aifm-charcoal hover:bg-white/60'
         }`}
       >
-        <BookOpen className="w-4 h-4" />
+        <BookOpen className="w-3.5 h-3.5" />
         <span className="hidden sm:inline">Regelverk</span>
       </button>
       <button
         onClick={() => onChange('claude')}
-        className={`flex items-center gap-2 px-2 sm:px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+        className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
           mode === 'claude'
-            ? 'bg-white text-[#2d2a26] shadow-sm'
-            : 'text-gray-500 hover:text-gray-700'
+            ? 'bg-aifm-charcoal text-white shadow-sm'
+            : 'text-aifm-charcoal/50 hover:text-aifm-charcoal hover:bg-white/60'
         }`}
       >
-        <Sparkles className="w-4 h-4" />
+        <Sparkles className="w-3.5 h-3.5" />
         <span className="hidden sm:inline">Claude 4.6</span>
       </button>
       <button
         onClick={() => onChange('chatgpt')}
-        className={`flex items-center gap-2 px-2 sm:px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+        className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
           mode === 'chatgpt'
-            ? 'bg-white text-[#2d2a26] shadow-sm'
-            : 'text-gray-500 hover:text-gray-700'
+            ? 'bg-aifm-charcoal text-white shadow-sm'
+            : 'text-aifm-charcoal/50 hover:text-aifm-charcoal hover:bg-white/60'
         }`}
       >
-        <Zap className="w-4 h-4" />
+        <Zap className="w-3.5 h-3.5" />
         <span className="hidden sm:inline">ChatGPT</span>
       </button>
     </div>
@@ -1906,10 +1894,10 @@ export default function AIFMAgentPage() {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Security Banner */}
-        <div className="flex-shrink-0 bg-emerald-50 border-b border-emerald-100">
+        <div className="flex-shrink-0 bg-aifm-gold/5 border-b border-aifm-gold/10">
           <div className="max-w-3xl mx-auto px-4 py-2 flex items-center justify-center gap-2">
-            <Shield className="w-4 h-4 text-emerald-600" />
-            <span className="text-xs text-emerald-700 font-medium">
+            <Shield className="w-4 h-4 text-aifm-gold" />
+            <span className="text-xs text-aifm-charcoal/70 font-medium">
               Säker miljö – All data stannar inom ert AWS-konto och lämnar aldrig EU
             </span>
           </div>
@@ -1924,19 +1912,13 @@ export default function AIFMAgentPage() {
           {messages.length === 0 ? (
             /* Empty State - Compact */
             <div className="flex flex-col items-center justify-center pt-8 pb-4">
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 shadow-lg ${
-                mode === 'regelverksassistent'
-                  ? 'bg-gradient-to-br from-emerald-500 to-emerald-700'
-                  : mode === 'chatgpt'
-                  ? 'bg-gradient-to-br from-green-500 to-teal-600'
-                  : 'bg-gradient-to-br from-violet-500 to-purple-700'
-              }`}>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 shadow-lg bg-aifm-charcoal">
                 {mode === 'regelverksassistent' ? (
-                  <BookOpen className="w-7 h-7 text-white" />
+                  <BookOpen className="w-7 h-7 text-aifm-gold" />
                 ) : mode === 'chatgpt' ? (
-                  <Zap className="w-7 h-7 text-white" />
+                  <Zap className="w-7 h-7 text-aifm-gold" />
                 ) : (
-                  <Sparkles className="w-7 h-7 text-white" />
+                  <Sparkles className="w-7 h-7 text-aifm-gold" />
                 )}
               </div>
               
@@ -1991,8 +1973,6 @@ export default function AIFMAgentPage() {
                 );
               })}
               
-              {isLoading && <LoadingIndicator mode={mode} />}
-              
               <div ref={messagesEndRef} />
             </div>
           )}
@@ -2000,7 +1980,7 @@ export default function AIFMAgentPage() {
       </div>
 
       {/* Fixed Bottom Input Area */}
-      <div className="flex-shrink-0 border-t border-gray-100 bg-gray-50/80 backdrop-blur-sm">
+      <div className="flex-shrink-0 border-t border-gray-100 bg-white/80 backdrop-blur-sm">
         <div className="max-w-3xl mx-auto px-4 py-3">
           {/* Mode Toggle + Clear */}
           <div className="flex items-center justify-between mb-3">
@@ -2009,8 +1989,8 @@ export default function AIFMAgentPage() {
             {messages.length > 0 && (
               <button
                 onClick={clearChat}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-400 hover:text-gray-600 
-                           hover:bg-gray-100 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-aifm-charcoal/40 hover:text-aifm-charcoal 
+                           hover:bg-aifm-charcoal/5 rounded-full transition-all"
               >
                 <Trash2 className="w-3 h-3" />
                 Rensa
@@ -2018,6 +1998,20 @@ export default function AIFMAgentPage() {
             )}
           </div>
           
+          {/* Thinking Indicator - subtle, above input */}
+          {isLoading && (
+            <div className="flex items-center gap-2 mb-2 px-1">
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-aifm-gold animate-pulse" />
+                <span className="w-1.5 h-1.5 rounded-full bg-aifm-gold/60 animate-pulse" style={{ animationDelay: '0.2s' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-aifm-gold/30 animate-pulse" style={{ animationDelay: '0.4s' }} />
+              </div>
+              <span className="text-xs text-aifm-charcoal/30">
+                {mode === 'regelverksassistent' ? 'Söker i regelverk...' : mode === 'chatgpt' ? 'ChatGPT tänker...' : 'Tänker...'}
+              </span>
+            </div>
+          )}
+
           {/* Attached Files Preview */}
           {attachedFiles.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-2">
@@ -2163,15 +2157,15 @@ export default function AIFMAgentPage() {
       </div>
 
       {/* Chat History Sidebar */}
-      <div className="w-72 border-l border-gray-200 bg-gray-50/50 flex-shrink-0 hidden lg:flex flex-col">
+      <div className="w-72 border-l border-gray-100 bg-white flex-shrink-0 hidden lg:flex flex-col">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b border-gray-100">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-medium text-sm text-[#2d2a26]">Chatthistorik</h3>
+            <h3 className="font-medium text-sm text-aifm-charcoal tracking-tight">Chatthistorik</h3>
             <button
               onClick={startNewChat}
-              className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#c0a280] 
-                         hover:bg-[#c0a280]/10 rounded-lg transition-colors"
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white 
+                         bg-aifm-charcoal hover:bg-aifm-charcoal/90 rounded-full transition-all shadow-sm"
               title="Ny chatt (⌘K)"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -2181,20 +2175,20 @@ export default function AIFMAgentPage() {
           
           {/* Search input */}
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-aifm-charcoal/30" />
             <input
               type="text"
               value={historySearch}
               onChange={(e) => setHistorySearch(e.target.value)}
               placeholder="Sök i chattar..."
-              className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-gray-200 rounded-lg
-                       focus:outline-none focus:border-[#c0a280] focus:ring-1 focus:ring-[#c0a280]/20
-                       placeholder:text-gray-400"
+              className="w-full pl-9 pr-3 py-2 text-xs bg-aifm-charcoal/[0.03] border border-gray-100 rounded-xl
+                       focus:outline-none focus:border-aifm-gold focus:ring-2 focus:ring-aifm-gold/20
+                       placeholder:text-aifm-charcoal/30 transition-colors"
             />
             {historySearch && (
               <button
                 onClick={() => setHistorySearch('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-aifm-charcoal/30 hover:text-aifm-charcoal"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -2220,20 +2214,14 @@ export default function AIFMAgentPage() {
                 <button
                   key={session.sessionId}
                   onClick={() => loadSession(session.sessionId)}
-                  className={`w-full text-left p-3 rounded-lg transition-all group relative ${
+                  className={`w-full text-left p-3 rounded-xl transition-all group relative ${
                     currentSessionId === session.sessionId
-                      ? 'bg-[#c0a280]/15 border border-[#c0a280]/30'
-                      : 'hover:bg-white hover:shadow-sm border border-transparent'
+                      ? 'bg-aifm-charcoal/5 border border-aifm-charcoal/10 shadow-sm'
+                      : 'hover:bg-aifm-charcoal/[0.02] border border-transparent'
                   }`}
                 >
                   <div className="flex items-start gap-2">
-                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      session.mode === 'regelverksassistent'
-                        ? 'bg-emerald-100 text-emerald-600'
-                        : session.mode === 'chatgpt'
-                        ? 'bg-green-100 text-green-600'
-                        : 'bg-violet-100 text-violet-600'
-                    }`}>
+                    <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 bg-aifm-gold/10 text-aifm-charcoal">
                       {session.mode === 'regelverksassistent' ? (
                         <BookOpen className="w-3 h-3" />
                       ) : session.mode === 'chatgpt' ? (
@@ -2282,18 +2270,18 @@ export default function AIFMAgentPage() {
         </div>
         
         {/* Footer info */}
-        <div className="p-3 border-t border-gray-200 bg-gray-100/50">
-          <p className="text-[10px] text-gray-400 text-center mb-2">
+        <div className="p-3 border-t border-gray-100 bg-aifm-charcoal/[0.02]">
+          <p className="text-[10px] text-aifm-charcoal/40 text-center mb-2">
             Chattar sparas säkert i ditt konto
           </p>
           {/* Keyboard shortcuts hint */}
-          <div className="flex items-center justify-center gap-3 text-[9px] text-gray-400">
+          <div className="flex items-center justify-center gap-3 text-[9px] text-aifm-charcoal/30">
             <span className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 bg-gray-200 rounded text-[8px] font-mono">⌘K</kbd>
+              <kbd className="px-1.5 py-0.5 bg-aifm-charcoal/5 border border-aifm-charcoal/10 rounded text-[8px] font-mono">⌘K</kbd>
               Ny chatt
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 bg-gray-200 rounded text-[8px] font-mono">⌘↵</kbd>
+              <kbd className="px-1.5 py-0.5 bg-aifm-charcoal/5 border border-aifm-charcoal/10 rounded text-[8px] font-mono">⌘↵</kbd>
               Skicka
             </span>
           </div>

@@ -247,23 +247,25 @@ export default function DropboxAdminPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Link
-            href="/admin/knowledge-base"
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-aifm-charcoal/60" />
-          </Link>
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-              <Cloud className="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-aifm-charcoal">Dropbox Integration</h1>
-              <p className="text-aifm-charcoal/60 mt-1">
-                Synka företagets dokument till AI-kunskapsbasen
-              </p>
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/admin/knowledge-base"
+              className="p-2 hover:bg-aifm-charcoal/[0.03] rounded-xl transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-aifm-charcoal/40" />
+            </Link>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <Cloud className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Dropbox Integration</h1>
+                <p className="text-sm text-aifm-charcoal/40">
+                  Synka företagets dokument till AI-kunskapsbasen
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -326,10 +328,10 @@ export default function DropboxAdminPage() {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={handleToggleSync}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-colors ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-all ${
                       status.connection?.syncEnabled
                         ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                        : 'border-gray-200 bg-gray-50 text-gray-600'
+                        : 'border-gray-200 bg-white text-aifm-charcoal/50'
                     }`}
                   >
                     {status.connection?.syncEnabled ? (
@@ -346,7 +348,7 @@ export default function DropboxAdminPage() {
                   </button>
                   <button
                     onClick={handleDisconnect}
-                    className="flex items-center gap-2 px-4 py-2 border border-red-200 text-red-600 rounded-xl hover:bg-red-50 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 border border-red-200 text-red-600 rounded-full text-sm font-medium hover:bg-red-50 transition-all"
                   >
                     <Unlink className="w-4 h-4" />
                     Koppla bort
@@ -355,7 +357,7 @@ export default function DropboxAdminPage() {
               ) : (
                 <button
                   onClick={handleConnect}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                  className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm"
                 >
                   <Link2 className="w-4 h-4" />
                   Koppla Dropbox
@@ -365,7 +367,7 @@ export default function DropboxAdminPage() {
           </div>
 
           {status.connection && (
-            <div className="p-6 bg-gray-50/50">
+            <div className="p-6 bg-white">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <StatCard
                   icon={Files}
@@ -402,14 +404,14 @@ export default function DropboxAdminPage() {
         <div className="bg-white rounded-2xl border border-gray-100 p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="font-semibold text-aifm-charcoal">Mappar att synkronisera</h3>
+              <h3 className="font-semibold text-aifm-charcoal tracking-tight">Mappar att synkronisera</h3>
               <p className="text-sm text-aifm-charcoal/60 mt-1">
                 Välj vilka Dropbox-mappar som ska indexeras
               </p>
             </div>
             <button
               onClick={() => setShowFolderInput(true)}
-              className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm transition-all"
             >
               <FolderPlus className="w-4 h-4" />
               Lägg till mapp
@@ -424,11 +426,11 @@ export default function DropboxAdminPage() {
                 value={newFolder}
                 onChange={(e) => setNewFolder(e.target.value)}
                 placeholder="/Dokument/Compliance"
-                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-aifm-gold"
+                className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold focus:outline-none transition-colors"
               />
               <button
                 onClick={handleAddFolder}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm"
               >
                 Lägg till
               </button>
@@ -437,7 +439,7 @@ export default function DropboxAdminPage() {
                   setShowFolderInput(false);
                   setNewFolder('');
                 }}
-                className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm transition-all"
               >
                 Avbryt
               </button>
@@ -459,7 +461,7 @@ export default function DropboxAdminPage() {
               {selectedFolders.map((folder) => (
                 <div
                   key={folder}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-xl"
+                  className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl"
                 >
                   <div className="flex items-center gap-3">
                     <FolderOpen className="w-5 h-5 text-amber-500" />
@@ -467,7 +469,7 @@ export default function DropboxAdminPage() {
                   </div>
                   <button
                     onClick={() => handleRemoveFolder(folder)}
-                    className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-1.5 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -481,7 +483,7 @@ export default function DropboxAdminPage() {
             <button
               onClick={handleSync}
               disabled={isSyncing || isJobRunning}
-              className="flex items-center justify-center gap-2 w-full py-3 bg-aifm-gold text-white rounded-xl hover:bg-aifm-gold/90 transition-colors disabled:opacity-50"
+              className="flex items-center justify-center gap-2 w-full py-3 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm disabled:opacity-50"
             >
               {isJobRunning ? (
                 <>
@@ -502,26 +504,26 @@ export default function DropboxAdminPage() {
       {/* Sync Job Status */}
       {status?.latestJob && (
         <div className="bg-white rounded-2xl border border-gray-100 p-6">
-          <h3 className="font-semibold text-aifm-charcoal mb-4">Senaste synkronisering</h3>
+          <h3 className="font-semibold text-aifm-charcoal tracking-tight mb-4">Senaste synkronisering</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
             <div>
-              <p className="text-xs text-aifm-charcoal/50 mb-1">Status</p>
+              <p className="text-xs text-aifm-charcoal/40 mb-1">Status</p>
               <StatusBadge status={status.latestJob.status} />
             </div>
             <div>
-              <p className="text-xs text-aifm-charcoal/50 mb-1">Startad</p>
+              <p className="text-xs text-aifm-charcoal/40 mb-1">Startad</p>
               <p className="text-sm font-medium">
                 {new Date(status.latestJob.startedAt).toLocaleString('sv-SE')}
               </p>
             </div>
             <div>
-              <p className="text-xs text-aifm-charcoal/50 mb-1">Filer</p>
+              <p className="text-xs text-aifm-charcoal/40 mb-1">Filer</p>
               <p className="text-sm font-medium">
                 {status.latestJob.processedFiles} / {status.latestJob.totalFiles}
               </p>
             </div>
             <div>
-              <p className="text-xs text-aifm-charcoal/50 mb-1">Tillagda</p>
+              <p className="text-xs text-aifm-charcoal/40 mb-1">Tillagda</p>
               <p className="text-sm font-medium text-emerald-600">
                 +{status.latestJob.addedFiles}
               </p>
@@ -564,18 +566,18 @@ export default function DropboxAdminPage() {
       {files.length > 0 && (
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
-            <h3 className="font-semibold text-aifm-charcoal">Senast synkade filer</h3>
+            <h3 className="font-semibold text-aifm-charcoal tracking-tight">Senast synkade filer</h3>
           </div>
           <div className="divide-y divide-gray-50">
             {files.slice(0, 10).map((file) => (
-              <div key={file.dropboxPath} className="px-6 py-3 flex items-center gap-4 hover:bg-gray-50/50">
+              <div key={file.dropboxPath} className="px-6 py-3 flex items-center gap-4 hover:bg-aifm-charcoal/[0.02] transition-colors">
                 <FileText className="w-5 h-5 text-blue-500 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-aifm-charcoal truncate">{file.name}</p>
-                  <p className="text-xs text-aifm-charcoal/50 truncate">{file.dropboxPath}</p>
+                  <p className="text-xs text-aifm-charcoal/40 truncate">{file.dropboxPath}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-aifm-charcoal/50">
+                  <span className="text-xs text-aifm-charcoal/40">
                     {(file.size / 1024).toFixed(1)} KB
                   </span>
                   <StatusBadge status={file.status} />
@@ -617,7 +619,7 @@ function StatCard({
         <Icon className="w-4 h-4" />
         <span className="text-xs font-medium opacity-80">{label}</span>
       </div>
-      <p className="text-xl font-bold">{value.toLocaleString('sv-SE')}</p>
+      <p className="text-xl font-semibold tracking-tight">{value.toLocaleString('sv-SE')}</p>
     </div>
   );
 }

@@ -1,10 +1,12 @@
 /**
  * Fund Registry Module
- * 
+ *
  * Modern fondregister som ersätter externa system
  */
 
 export { FundRegistry, getFundRegistry } from './fund-registry';
+export { DynamoDBStorage } from './dynamo-storage';
+export type { StorageAdapter } from './storage-types';
 
 export type {
   // Core entities

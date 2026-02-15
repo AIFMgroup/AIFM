@@ -30,10 +30,27 @@ function generateQRCodeUrl(approvalId: string, baseUrl: string): string {
 /**
  * Generate PDF content as HTML (will be converted to PDF)
  */
+/** Optional live ESG data to enrich the PDF */
+export interface PDFESGLiveData {
+  totalScore?: number | null;
+  environmentScore?: number | null;
+  socialScore?: number | null;
+  governanceScore?: number | null;
+  sfdrAlignment?: string;
+  taxonomyAlignmentPercent?: number | null;
+  carbonIntensity?: number | null;
+  carbonIntensityUnit?: string;
+  meetsExclusionCriteria?: boolean;
+  exclusionFlags?: Array<{ category: string; categoryDescription: string; revenuePercent: number }>;
+  provider?: string;
+  fetchedAt?: string;
+}
+
 export function generateApprovalPDFContent(
   approval: SecurityApprovalRequest,
   sources?: Record<string, { source: string; url?: string; confidence?: string }>,
-  baseUrl: string = 'https://app.aifm.se'
+  baseUrl: string = 'https://app.aifm.se',
+  esgLiveData?: PDFESGLiveData
 ): string {
   const documentId = generateDocumentId(approval);
   const qrCodeUrl = generateQRCodeUrl(approval.id, baseUrl);
@@ -517,12 +534,108 @@ export function generateApprovalPDFContent(
       ${renderCheckbox('Artikel 9 - God styrning', approval.esgInfo.article9GoodGovernance)}
       ${renderCheckbox('Artikel 9 - OECD-riktlinjer', approval.esgInfo.article9OECDCompliant)}
       ${renderCheckbox('Artikel 9 - FN:s vägledande principer', approval.esgInfo.article9UNGPCompliant)}
+
+      ${approval.esgInfo.fundArticle ? `<div class="info" style="margin-top: 10px;">Fondens artikelklassificering: <strong>Artikel ${approval.esgInfo.fundArticle}</strong></div>` : ''}
+      ${approval.esgInfo.normScreening && Object.keys(approval.esgInfo.normScreening).length > 0 ? `
+        <div class="field" style="margin-top: 15px;">
+          <div class="field-label">Normbaserad screening</div>
+          <div class="text-block">${Object.entries(approval.esgInfo.normScreening).filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join('; ')}</div>
+        </div>
+      ` : ''}
+      ${approval.esgInfo.exclusionResults && Object.keys(approval.esgInfo.exclusionResults).length > 0 ? `
+        <div class="field" style="margin-top: 10px;">
+          <div class="field-label">Exkluderingskontroll</div>
+          <div class="text-block">${Object.entries(approval.esgInfo.exclusionResults).map(([cat, r]) => `${cat}: ${r.approved ? 'Godkänd' : 'Ej godkänd'}${r.comment ? ' – ' + r.comment : ''}`).join('; ')}</div>
+        </div>
+      ` : ''}
+      ${approval.esgInfo.governance && Object.keys(approval.esgInfo.governance).length > 0 ? `
+        <div class="field" style="margin-top: 10px;">
+          <div class="field-label">Good Governance</div>
+          <div class="text-block">${Object.entries(approval.esgInfo.governance).filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join('; ')}</div>
+        </div>
+      ` : ''}
+      ${(approval.esgInfo.envRiskLevel || approval.esgInfo.socialRiskLevel || approval.esgInfo.govRiskLevel) ? `
+        <div class="field" style="margin-top: 10px;">
+          <div class="field-label">ESG-risknivåer</div>
+          <div class="text-block">Miljö: ${approval.esgInfo.envRiskLevel || '–'}; Social: ${approval.esgInfo.socialRiskLevel || '–'}; Styrning: ${approval.esgInfo.govRiskLevel || '–'}</div>
+        </div>
+      ` : ''}
+      ${approval.esgInfo.ghgData ? `<div class="field" style="margin-top: 10px;"><div class="field-label">GHG-data</div><div class="text-block">${approval.esgInfo.ghgData}</div></div>` : ''}
+      ${approval.esgInfo.pai && Object.keys(approval.esgInfo.pai).length > 0 ? `
+        <div class="field" style="margin-top: 10px;">
+          <div class="field-label">PAI-indikatorer</div>
+          <div class="text-block">${Object.entries(approval.esgInfo.pai).filter(([, v]) => v !== undefined && v !== null && v !== '').map(([k, v]) => `${k}: ${String(v)}`).join('; ')}</div>
+        </div>
+      ` : ''}
+      ${approval.esgInfo.sustainableGoalCategory ? `<div class="field" style="margin-top: 10px;"><div class="field-label">Hållbarhetsmålskategori</div><div class="text-block">${approval.esgInfo.sustainableGoalCategory}${approval.esgInfo.revenueCapExFromSustainable ? ' – Omsättning/CAPEX: ' + approval.esgInfo.revenueCapExFromSustainable : ''}</div></div>` : ''}
+      ${(approval.esgInfo.taxonomyQualifiedPercent != null && approval.esgInfo.taxonomyQualifiedPercent !== '') || (approval.esgInfo.taxonomyAlignedPercent != null && approval.esgInfo.taxonomyAlignedPercent !== '') ? `
+        <div class="field" style="margin-top: 10px;">
+          <div class="field-label">EU Taxonomi</div>
+          <div class="text-block">Kvalificerad: ${approval.esgInfo.taxonomyQualifiedPercent ?? '–'}%; Anpassad: ${approval.esgInfo.taxonomyAlignedPercent ?? '–'}%</div>
+        </div>
+      ` : ''}
+      ${(approval.esgInfo.allocationBeforePercent != null && approval.esgInfo.allocationBeforePercent !== '') || (approval.esgInfo.allocationAfterPercent != null && approval.esgInfo.allocationAfterPercent !== '') ? `
+        <div class="field" style="margin-top: 10px;">
+          <div class="field-label">Allokeringskontroll</div>
+          <div class="text-block">Före affär: ${approval.esgInfo.allocationBeforePercent ?? '–'}%; Efter affär: ${approval.esgInfo.allocationAfterPercent ?? '–'}%</div>
+        </div>
+      ` : ''}
+      ${approval.esgInfo.promotedCharacteristicsResult ? `<div class="field" style="margin-top: 10px;"><div class="field-label">Främjade egenskaper</div><div class="text-block">${approval.esgInfo.promotedCharacteristicsResult}</div></div>` : ''}
+      ${approval.esgInfo.esgDecision ? `
+        <div class="field" style="margin-top: 15px; padding: 10px; background: ${approval.esgInfo.esgDecision === 'approved' ? '#dcfce7' : '#fee2e2'}; border-radius: 6px;">
+          <div class="field-label">Slutgiltigt ESG-beslut</div>
+          <div class="text-block"><strong>${approval.esgInfo.esgDecision === 'approved' ? 'Godkänns' : 'Avslås'}</strong>${approval.esgInfo.esgDecisionMotivation ? ' – ' + approval.esgInfo.esgDecisionMotivation : ''}</div>
+        </div>
+      ` : ''}
+      ${approval.esgInfo.engagementRequired != null || approval.esgInfo.engagementComment ? `
+        <div class="field" style="margin-top: 10px;">
+          <div class="field-label">Engagemangsprocess</div>
+          <div class="text-block">${approval.esgInfo.engagementRequired === true ? 'Engagemang krävs' : approval.esgInfo.engagementRequired === false ? 'Engagemang krävs inte' : ''}${approval.esgInfo.engagementComment ? ' – ' + approval.esgInfo.engagementComment : ''}</div>
+        </div>
+      ` : ''}
     ` : `
       <div class="info">
         Fonden är klassificerad som <strong>Artikel 6</strong> - Inga specifika ESG-krav gäller, 
         men hållbarhetsrisker ska beaktas i investeringsbeslutet.
       </div>
     `}
+
+    ${esgLiveData ? `
+      <div style="margin-top: 20px; padding: 15px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;">
+        <h3 style="font-size: 14px; color: #15803d; margin-bottom: 10px;">ESG-data från ${esgLiveData.provider || 'extern leverantör'} (realtid)</h3>
+        <div class="grid">
+          ${esgLiveData.totalScore != null ? renderField('Total ESG-poäng', `${esgLiveData.totalScore}/100`) : ''}
+          ${esgLiveData.environmentScore != null ? renderField('Miljö (E)', `${esgLiveData.environmentScore}/100`) : ''}
+          ${esgLiveData.socialScore != null ? renderField('Social (S)', `${esgLiveData.socialScore}/100`) : ''}
+          ${esgLiveData.governanceScore != null ? renderField('Styrning (G)', `${esgLiveData.governanceScore}/100`) : ''}
+          ${esgLiveData.sfdrAlignment ? renderField('SFDR-klassificering', esgLiveData.sfdrAlignment.replace('article_', 'Artikel ').replace('not_disclosed', 'Ej angiven')) : ''}
+          ${esgLiveData.taxonomyAlignmentPercent != null ? renderField('EU Taxonomi-anpassning', `${esgLiveData.taxonomyAlignmentPercent}%`) : ''}
+          ${esgLiveData.carbonIntensity != null ? renderField('Koldioxidintensitet', `${esgLiveData.carbonIntensity} ${esgLiveData.carbonIntensityUnit || ''}`) : ''}
+        </div>
+        ${esgLiveData.exclusionFlags && esgLiveData.exclusionFlags.length > 0 ? `
+          <div style="margin-top: 10px;">
+            <div class="field-label">Affärsengagemang (Exkluderingsscreening)</div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 5px;">
+              <thead>
+                <tr style="background: #dcfce7;">
+                  <th style="text-align: left; padding: 4px 8px; border: 1px solid #bbf7d0;">Kategori</th>
+                  <th style="text-align: right; padding: 4px 8px; border: 1px solid #bbf7d0;">Intäktsandel</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${esgLiveData.exclusionFlags.filter(f => f.revenuePercent > 0).map(f => `
+                  <tr>
+                    <td style="padding: 4px 8px; border: 1px solid #bbf7d0;">${f.categoryDescription || f.category}</td>
+                    <td style="text-align: right; padding: 4px 8px; border: 1px solid #bbf7d0; ${f.revenuePercent >= 5 ? 'color: #dc2626; font-weight: bold;' : ''}">${f.revenuePercent.toFixed(1)}%</td>
+                  </tr>
+                `).join('') || '<tr><td colspan="2" style="padding: 4px 8px; border: 1px solid #bbf7d0; color: #15803d;">Inga flaggade engagemang</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        ` : ''}
+        <p style="font-size: 10px; color: #6b7280; margin-top: 10px;">Data hämtad: ${esgLiveData.fetchedAt ? new Date(esgLiveData.fetchedAt).toLocaleString('sv-SE') : 'N/A'}</p>
+      </div>
+    ` : ''}
   </div>
 
   <!-- Signatures -->

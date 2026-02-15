@@ -167,7 +167,7 @@ cookieHeader: ${cookieHeader || "none"}</pre>
   };
 
   // Short-lived access/ID tokens; refresh rotates less often
-  const idAccessMaxAge = Math.min(tokens.expires_in, 15 * 60); // cap at 15m
+  const idAccessMaxAge = Math.min(tokens.expires_in, 30 * 60); // cap at 30m
   setCookie("__Host-aifm_id_token", tokens.id_token, idAccessMaxAge);
   setCookie("__Host-aifm_access_token", tokens.access_token, idAccessMaxAge);
 

@@ -57,6 +57,7 @@ import {
   GitBranch,
   Pencil,
   Bell,
+  Database,
 } from 'lucide-react';
 import { ShareToKnowledgeBase } from '@/components/chat/ShareToKnowledgeBase';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
@@ -64,6 +65,7 @@ import { usePrefersDarkMode, useIsStandalone, useIsMobile } from '@/hooks/useMed
 import { MobileBottomNav } from '@/components/MobileNav';
 import { TemplateSelector, type TemplateId } from '@/components/chat/TemplateSelector';
 import { MermaidDiagram } from '@/components/chat/MermaidDiagram';
+import { ActionDropdown } from '@/components/chat/ActionDropdown';
 
 // ============================================================================
 // Focus trap hook for modal dialogs
@@ -111,6 +113,12 @@ interface InternalKnowledgeSource {
   sharedAt: string;
 }
 
+interface ReviewedDocxAttachment {
+  fileBase64: string;
+  fileName: string;
+  summary: string;
+}
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -123,6 +131,16 @@ interface Message {
   attachments?: AttachedFile[];
   feedback?: 'positive' | 'negative' | null;
   senderName?: string; // For shared sessions - who sent this message
+  reviewedDocx?: ReviewedDocxAttachment; // Granskad Word-fil med spårändringar (nedladdning)
+  progress?: string; // Live status under tool calling (e.g. "Söker i regelverk...")
+  toolCalls?: ToolCallInfo[]; // Details about which tools were called during this response
+}
+
+interface ToolCallInfo {
+  name: string;
+  label: string;
+  input: string;
+  durationMs?: number;
 }
 
 interface AttachedFile {
@@ -131,6 +149,8 @@ interface AttachedFile {
   size: number;
   content?: string;
   preview?: string; // Base64 image preview for images
+  rawBase64?: string;  // Original DOCX buffer for review-docx
+  paragraphs?: string[]; // Numbered paragraphs for DOCX
 }
 
 interface Citation {
@@ -186,6 +206,7 @@ const EXAMPLE_QUESTIONS: string[] = [
 
 const SUPPORTED_FILE_TYPES = [
   'application/pdf',
+  'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'application/vnd.ms-excel',
@@ -197,7 +218,7 @@ const SUPPORTED_FILE_TYPES = [
 ];
 
 /** Process a single file into an attachment: validates, creates preview, parses via API. Throws on failure. */
-async function processFileAttachment(file: File): Promise<{ name: string; type: string; size: number; content: string; preview?: string }> {
+async function processFileAttachment(file: File): Promise<{ name: string; type: string; size: number; content: string; preview?: string; rawBase64?: string; paragraphs?: string[] }> {
   // Create base64 preview for images
   let previewDataUrl: string | undefined;
   if (file.type.startsWith('image/')) {
@@ -232,6 +253,8 @@ async function processFileAttachment(file: File): Promise<{ name: string; type: 
     size: file.size,
     content: data.content || '[Bild för visuell analys]',
     preview: previewDataUrl,
+    ...(data.rawBase64 != null && { rawBase64: data.rawBase64 }),
+    ...(Array.isArray(data.paragraphs) && { paragraphs: data.paragraphs }),
   };
 }
 
@@ -244,6 +267,7 @@ function isFileTypeSupported(file: File): boolean {
     file.name.endsWith('.xls') ||
     file.name.endsWith('.csv') ||
     file.name.endsWith('.pdf') ||
+    file.name.endsWith('.doc') ||
     file.name.endsWith('.docx') ||
     file.name.endsWith('.png') ||
     file.name.endsWith('.jpg') ||
@@ -265,22 +289,69 @@ function friendlyApiError(status: number, fallback = 'Något gick fel. Försök 
 }
 
 /** Shared SSE stream reader for /api/ai/chat. Calls onChunk for each text update; returns final content and metadata. */
-const STREAM_TIMEOUT_MS = 90_000; // 90s total timeout
-const STREAM_IDLE_MS = 30_000;    // 30s no-chunk timeout
+const STREAM_TIMEOUT_MS = 300_000; // 5 min total timeout (document review can take >90s)
+const STREAM_IDLE_MS = 120_000;   // 2 min idle timeout (tool execution may pause stream)
 
 async function streamAssistantResponse(
   response: Response,
-  onChunk: (params: { fullContent: string; citations: Citation[]; internalSources: InternalKnowledgeSource[] }) => void
-): Promise<{ fullContent: string; citations: Citation[]; internalSources: InternalKnowledgeSource[]; timedOut?: boolean }> {
+  onChunk: (params: { fullContent: string; citations: Citation[]; internalSources: InternalKnowledgeSource[]; progress?: string; toolCalls?: ToolCallInfo[] }) => void
+): Promise<{ fullContent: string; citations: Citation[]; internalSources: InternalKnowledgeSource[]; reviewedDocx?: ReviewedDocxAttachment; toolCalls?: ToolCallInfo[]; timedOut?: boolean }> {
   const reader = response.body?.getReader();
   const decoder = new TextDecoder();
   let fullContent = '';
   let citations: Citation[] = [];
   let internalSources: InternalKnowledgeSource[] = [];
-  if (!reader) return { fullContent, citations, internalSources };
+  let reviewedDocx: ReviewedDocxAttachment | undefined;
+  const toolCalls: ToolCallInfo[] = [];
+  if (!reader) return { fullContent, citations, internalSources, toolCalls };
 
   const startTime = Date.now();
   let lastChunkTime = Date.now();
+  let lineBuf = ''; // Buffer for partial SSE lines split across TCP chunks
+
+  const processLine = (line: string) => {
+    if (!line.startsWith('data: ')) return;
+    const data = line.slice(6);
+    if (data === '[DONE]') return;
+    try {
+      const parsed = JSON.parse(data);
+      if (parsed.meta) {
+        if (parsed.citations) citations = parsed.citations;
+        if (parsed.internalSources) internalSources = parsed.internalSources;
+        if (parsed.reviewedDocx && parsed.reviewedDocx.fileBase64) reviewedDocx = parsed.reviewedDocx;
+      }
+      if (parsed.clearText) {
+        // Server signals that previous text was mid-thought (before tool call)
+        // and should be discarded – the real answer comes in the next round.
+        fullContent = '';
+        onChunk({ fullContent, citations, internalSources, progress: parsed.progress });
+      }
+      if (parsed.toolCall) {
+        toolCalls.push({ name: parsed.toolCall.name, label: parsed.toolCall.label, input: parsed.toolCall.input });
+        onChunk({ fullContent, citations, internalSources, progress: parsed.progress, toolCalls: [...toolCalls] });
+      }
+      if (parsed.toolCallDone) {
+        const existing = toolCalls.find(t => t.name === parsed.toolCallDone.name && !t.durationMs);
+        if (existing) existing.durationMs = parsed.toolCallDone.durationMs;
+        onChunk({ fullContent, citations, internalSources, toolCalls: [...toolCalls] });
+      }
+      if (parsed.progress) {
+        onChunk({ fullContent, citations, internalSources, progress: parsed.progress, toolCalls: [...toolCalls] });
+      }
+      if (parsed.done && parsed.citations) citations = parsed.citations;
+      const textChunk = parsed.text ?? parsed.content;
+      if (textChunk) {
+        fullContent += textChunk;
+        onChunk({ fullContent, citations, internalSources });
+      }
+      if (parsed.error) throw new Error(parsed.error);
+    } catch (e) {
+      // Only re-throw actual API errors (parsed.error above). All JSON parse
+      // errors (incomplete chunks, etc.) are silently ignored – the data will
+      // arrive in the next chunk via lineBuf.
+      if (e instanceof Error && e.message.startsWith('data: ')) throw e; // API-level error
+    }
+  };
 
   while (true) {
     // Race between the next chunk and timeouts
@@ -288,7 +359,7 @@ async function streamAssistantResponse(
     const idle = Date.now() - lastChunkTime;
     if (elapsed > STREAM_TIMEOUT_MS || idle > STREAM_IDLE_MS) {
       reader.cancel();
-      return { fullContent, citations, internalSources, timedOut: true };
+      return { fullContent, citations, internalSources, toolCalls, timedOut: true };
     }
 
     const remaining = Math.min(STREAM_TIMEOUT_MS - elapsed, STREAM_IDLE_MS - idle);
@@ -302,7 +373,7 @@ async function streamAssistantResponse(
     } catch (e) {
       if (e instanceof Error && e.message === '__STREAM_TIMEOUT__') {
         reader.cancel();
-        return { fullContent, citations, internalSources, timedOut: true };
+        return { fullContent, citations, internalSources, toolCalls, timedOut: true };
       }
       throw e;
     }
@@ -311,35 +382,65 @@ async function streamAssistantResponse(
     if (done) break;
     lastChunkTime = Date.now();
     const chunk = decoder.decode(value, { stream: true });
-    for (const line of chunk.split('\n')) {
-      if (line.startsWith('data: ')) {
-        const data = line.slice(6);
-        if (data === '[DONE]') break;
-        try {
-          const parsed = JSON.parse(data);
-          if (parsed.meta) {
-            if (parsed.citations) citations = parsed.citations;
-            if (parsed.internalSources) internalSources = parsed.internalSources;
-          }
-          if (parsed.done && parsed.citations) citations = parsed.citations;
-          const textChunk = parsed.text ?? parsed.content;
-          if (textChunk) {
-            fullContent += textChunk;
-            onChunk({ fullContent, citations, internalSources });
-          }
-          if (parsed.error) throw new Error(parsed.error);
-        } catch (e) {
-          if (e instanceof Error && e.message !== 'Unexpected') throw e;
-        }
-      }
+
+    // Prepend any leftover partial line from the previous chunk
+    const combined = lineBuf + chunk;
+    const parts = combined.split('\n');
+    // The last element may be an incomplete line – save it for the next iteration
+    lineBuf = parts.pop() || '';
+    for (const line of parts) {
+      processLine(line);
     }
   }
-  return { fullContent, citations, internalSources };
+  // Process any remaining buffered data
+  if (lineBuf.trim()) processLine(lineBuf);
+
+  return { fullContent, citations, internalSources, reviewedDocx, toolCalls };
 }
 
 // ============================================================================
 // Code Block with Copy Button
 // ============================================================================
+
+// ============================================================================
+// Expandable Tool Call Details
+// ============================================================================
+
+function ToolCallDetails({ toolCalls, isDarkMode }: { toolCalls: ToolCallInfo[]; isDarkMode: boolean }) {
+  const [expanded, setExpanded] = useState(false);
+  if (toolCalls.length === 0) return null;
+  const label = toolCalls.length === 1
+    ? toolCalls[0].label
+    : `${toolCalls.length} verktygsanrop`;
+  return (
+    <div className={`mb-2 text-xs rounded-lg ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+      <button
+        onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+        className={`w-full flex items-center gap-1.5 px-2.5 py-1.5 text-left transition-colors rounded-lg hover:${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}
+      >
+        <svg className={`w-3.5 h-3.5 flex-shrink-0 transition-transform ${expanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+        <span className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>{label}</span>
+      </button>
+      {expanded && (
+        <div className="px-2.5 pb-2 space-y-1">
+          {toolCalls.map((tc, i) => (
+            <div key={i} className={`flex flex-col gap-0.5 px-2 py-1 rounded ${isDarkMode ? 'bg-gray-700/80' : 'bg-white border border-gray-100'}`}>
+              <div className="flex items-center gap-1.5">
+                <span className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{tc.label}</span>
+                {tc.durationMs != null && (
+                  <span className={isDarkMode ? 'text-gray-500' : 'text-gray-400'}>({(tc.durationMs / 1000).toFixed(1)}s)</span>
+                )}
+              </div>
+              {tc.input && (
+                <span className={isDarkMode ? 'text-gray-500' : 'text-gray-400'}>→ {tc.input}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function CodeBlockWithCopy({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
@@ -661,189 +762,6 @@ function formatInlineMarkdown(text: string): React.ReactNode[] {
   }
   
   return parts;
-}
-
-// ============================================================================
-// Action Dropdown Menu Component
-// ============================================================================
-
-interface ActionDropdownProps {
-  onRegenerate?: () => void;
-  onReformulate?: (type: 'simplify' | 'expand' | 'formal') => void;
-  onExportPDF: () => void;
-  onExportExcel: () => void;
-  isExporting: 'pdf' | 'excel' | null;
-  isDarkMode?: boolean;
-}
-
-function ActionDropdown({ onRegenerate, onReformulate, onExportPDF, onExportExcel, isExporting, isDarkMode = false }: ActionDropdownProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close on click outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
-
-  const handleAction = (action: () => void) => {
-    action();
-    setIsOpen(false);
-  };
-
-  return (
-    <div className="relative ml-auto" ref={dropdownRef}>
-      <button
-        onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
-        className={`p-1.5 rounded-lg transition-all duration-200 ${
-          isOpen 
-            ? 'text-[#c0a280] bg-[#c0a280]/10' 
-            : isDarkMode
-              ? 'text-gray-500 hover:text-gray-300 hover:bg-gray-700'
-              : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-        }`}
-        title="Fler åtgärder"
-        aria-label="Fler åtgärder"
-      >
-        <MoreHorizontal className="w-4 h-4" />
-      </button>
-
-      {/* Dropdown Menu */}
-      {isOpen && (
-        <div 
-          className={`absolute right-0 bottom-full mb-2 w-56 rounded-xl shadow-xl border 
-                     overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 ${
-            isDarkMode 
-              ? 'bg-gray-800 border-gray-700' 
-              : 'bg-white border-gray-100'
-          }`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Share moved to quick-access button outside dropdown */}
-
-          {/* Reformulate Section */}
-          {onReformulate && (
-            <>
-              <div className={`px-4 py-2 ${isDarkMode ? 'bg-gray-900/50' : 'bg-gray-50'}`}>
-                <span className={`text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 ${
-                  isDarkMode ? 'text-gray-500' : 'text-gray-400'
-                }`}>
-                  <Wand2 className="w-3 h-3" />
-                  Omformulera
-                </span>
-              </div>
-              <div className="py-1">
-                <button
-                  onClick={() => handleAction(() => onReformulate('simplify'))}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
-                    isDarkMode 
-                      ? 'text-gray-300 hover:bg-blue-900/30 hover:text-blue-300'
-                      : 'text-gray-600 hover:bg-blue-50 hover:text-blue-700'
-                  }`}
-                >
-                  <Minimize2 className={`w-4 h-4 ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`} />
-                  <span>Förenkla svaret</span>
-                </button>
-                <button
-                  onClick={() => handleAction(() => onReformulate('expand'))}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
-                    isDarkMode 
-                      ? 'text-gray-300 hover:bg-purple-900/30 hover:text-purple-300'
-                      : 'text-gray-600 hover:bg-purple-50 hover:text-purple-700'
-                  }`}
-                >
-                  <Maximize2 className={`w-4 h-4 ${isDarkMode ? 'text-purple-400' : 'text-purple-500'}`} />
-                  <span>Utveckla svaret</span>
-                </button>
-                <button
-                  onClick={() => handleAction(() => onReformulate('formal'))}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
-                    isDarkMode 
-                      ? 'text-gray-300 hover:bg-amber-900/30 hover:text-amber-300'
-                      : 'text-gray-600 hover:bg-amber-50 hover:text-amber-700'
-                  }`}
-                >
-                  <Briefcase className={`w-4 h-4 ${isDarkMode ? 'text-amber-400' : 'text-amber-500'}`} />
-                  <span>Gör formellt</span>
-                </button>
-              </div>
-              <div className={`h-px ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`} />
-            </>
-          )}
-
-          {/* Export Section */}
-          <div className={`px-4 py-2 ${isDarkMode ? 'bg-gray-900/50' : 'bg-gray-50'}`}>
-            <span className={`text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 ${
-              isDarkMode ? 'text-gray-500' : 'text-gray-400'
-            }`}>
-              <Download className="w-3 h-3" />
-              Exportera
-            </span>
-          </div>
-          <div className="py-1">
-            <button
-              onClick={() => handleAction(onExportPDF)}
-              disabled={isExporting !== null}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors disabled:opacity-50 ${
-                isDarkMode 
-                  ? 'text-gray-300 hover:bg-red-900/30 hover:text-red-300'
-                  : 'text-gray-600 hover:bg-red-50 hover:text-red-700'
-              }`}
-            >
-              {isExporting === 'pdf' ? (
-                <Loader2 className={`w-4 h-4 animate-spin ${isDarkMode ? 'text-red-400' : 'text-red-500'}`} />
-              ) : (
-                <FileText className={`w-4 h-4 ${isDarkMode ? 'text-red-400' : 'text-red-500'}`} />
-              )}
-              <span>Ladda ner som PDF</span>
-            </button>
-            <button
-              onClick={() => handleAction(onExportExcel)}
-              disabled={isExporting !== null}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors disabled:opacity-50 ${
-                isDarkMode 
-                  ? 'text-gray-300 hover:bg-green-900/30 hover:text-green-300'
-                  : 'text-gray-600 hover:bg-green-50 hover:text-green-700'
-              }`}
-            >
-              {isExporting === 'excel' ? (
-                <Loader2 className={`w-4 h-4 animate-spin ${isDarkMode ? 'text-green-400' : 'text-green-500'}`} />
-              ) : (
-                <FileSpreadsheet className={`w-4 h-4 ${isDarkMode ? 'text-green-400' : 'text-green-500'}`} />
-              )}
-              <span>Ladda ner som Excel</span>
-            </button>
-          </div>
-
-          {/* Regenerate */}
-          {onRegenerate && (
-            <>
-              <div className={`h-px ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`} />
-              <button
-                onClick={() => handleAction(onRegenerate)}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors ${
-                  isDarkMode 
-                    ? 'text-gray-300 hover:bg-[#c0a280]/20 hover:text-[#d4b896]'
-                    : 'text-gray-600 hover:bg-[#c0a280]/10 hover:text-[#c0a280]'
-                }`}
-              >
-                <RefreshCw className="w-4 h-4" />
-                <span>Generera nytt svar</span>
-              </button>
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  );
 }
 
 // ============================================================================
@@ -1216,6 +1134,14 @@ const MessageBubble = memo(function MessageBubble({ message, onRegenerate, onFee
           }`}
           onClick={() => setShowActions(!showActions)}
         >
+          {message.progress && !message.content && (
+            <div className={`text-xs mb-1.5 ${isDarkMode ? 'text-gray-400' : 'text-aifm-charcoal/50'}`}>
+              {message.progress}
+            </div>
+          )}
+          {message.toolCalls && message.toolCalls.length > 0 && (
+            <ToolCallDetails toolCalls={message.toolCalls} isDarkMode={isDarkMode} />
+          )}
           <div className={`text-sm leading-relaxed ${
             isDarkMode ? 'text-gray-100' : 'text-[#2d2a26]'
           }`}>{formatMarkdown(mainContent)}</div>
@@ -1275,6 +1201,42 @@ const MessageBubble = memo(function MessageBubble({ message, onRegenerate, onFee
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Granskad Word-fil med spårändringar – nedladdning */}
+          {message.role === 'assistant' && message.reviewedDocx && (
+            <div className={`mt-3 p-3 rounded-2xl border ${isDarkMode ? 'bg-aifm-charcoal/10 border-aifm-charcoal/20' : 'bg-aifm-gold/5 border-aifm-gold/20'}`}>
+              <p className={`text-xs font-medium mb-1 ${isDarkMode ? 'text-aifm-gold' : 'text-aifm-charcoal/80'}`}>
+                Granskad Word-fil med spårändringar
+              </p>
+              {message.reviewedDocx.summary && (
+                <p className={`text-xs mb-2 ${isDarkMode ? 'text-gray-400' : 'text-aifm-charcoal/60'}`}>
+                  {message.reviewedDocx.summary}
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  const bin = atob(message.reviewedDocx!.fileBase64);
+                  const arr = new Uint8Array(bin.length);
+                  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+                  const blob = new Blob([arr], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = message.reviewedDocx!.fileName || 'document_reviewed.docx';
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                className={`px-3 py-2 rounded-full text-xs font-medium transition-all ${
+                  isDarkMode
+                    ? 'bg-aifm-gold/20 text-aifm-gold hover:bg-aifm-gold/30'
+                    : 'bg-aifm-charcoal text-white hover:bg-aifm-charcoal/90'
+                }`}
+              >
+                Ladda ner {message.reviewedDocx.fileName || 'document_reviewed.docx'}
+              </button>
             </div>
           )}
           
@@ -1886,6 +1848,8 @@ function ChatPageContent() {
   const [messageSearchIndex, setMessageSearchIndex] = useState(0);
   const [showInputPreview, setShowInputPreview] = useState(false);
   const [quotedMessage, setQuotedMessage] = useState<Message | null>(null);
+  const [responseLength, setResponseLength] = useState<'short' | 'medium' | 'long' | null>(null);
+  const [historySidebarCollapsed, setHistorySidebarCollapsed] = useState(false);
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryText, setSummaryText] = useState('');
@@ -2733,7 +2697,7 @@ function ChatPageContent() {
       const messageWithContext = trimmed.includes('📎 Bifogade filer:')
         ? trimmed.split('📎 Bifogade filer:')[0].trim()
         : trimmed;
-      const response = await fetch('/api/ai/chat', {
+      const response = await fetchWithRetry('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -2744,7 +2708,10 @@ function ChatPageContent() {
           stream: true,
         }),
       });
-      if (!response.ok) throw new Error(friendlyApiError(response.status));
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => ({}));
+        throw new Error(friendlyApiError(response.status, 'Kunde inte skicka.', errBody.response ?? errBody.error));
+      }
 
       if (response.headers.get('content-type')?.includes('text/event-stream')) {
         const { fullContent, timedOut } = await streamAssistantResponse(response, ({ fullContent: content }) => {
@@ -2838,7 +2805,7 @@ function ChatPageContent() {
     setMessages(prev => [...prev, newAssistantMessage]);
 
     try {
-      const response = await fetch('/api/ai/chat', {
+      const response = await fetchWithRetry('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -2849,6 +2816,11 @@ function ChatPageContent() {
           skipKnowledgeBase: true, // No need to search KB for reformulation
         }),
       });
+
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => ({}));
+        throw new Error(friendlyApiError(response.status, 'Kunde inte omformulera.', errBody.response ?? errBody.error));
+      }
 
       if (response.body && response.headers.get('content-type')?.includes('text/event-stream')) {
         const { fullContent, timedOut } = await streamAssistantResponse(response, ({ fullContent: content }) => {
@@ -3279,7 +3251,14 @@ function ChatPageContent() {
       const endpoint = '/api/ai/chat';
       const useStreaming = true;
       
-      const response = await fetch(endpoint, {
+      const firstDocx = attachedFiles.find(
+        f => f.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || (f.name && f.name.toLowerCase().endsWith('.docx'))
+      );
+      const docxAttachment = firstDocx?.rawBase64 && firstDocx?.content
+        ? { rawBase64: firstDocx.rawBase64, fileName: firstDocx.name, documentText: firstDocx.content, paragraphs: firstDocx.paragraphs }
+        : undefined;
+
+      const response = await fetchWithRetry(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -3290,16 +3269,24 @@ function ChatPageContent() {
           hasAttachments: attachedFiles.length > 0,
           images: imageAttachments, // Send image data for vision API
           stream: useStreaming,
+          ...(docxAttachment ? { docxAttachment } : {}),
           ...(templateIdForRequest ? { templateId: templateIdForRequest } : {}),
+          ...(responseLength ? { responseLength } : {}),
         }),
       });
-      
-      if (!response.ok) throw new Error(friendlyApiError(response.status));
-      
+
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => ({}));
+        const serverMsg = errBody.response ?? errBody.error ?? errBody.details;
+        throw new Error(friendlyApiError(response.status, 'Något gick fel. Försök igen.', serverMsg));
+      }
+
       if (useStreaming && response.headers.get('content-type')?.includes('text/event-stream')) {
-        const { fullContent, citations: streamCitations, internalSources: streamInternalSources, timedOut } = await streamAssistantResponse(response, ({ fullContent: content, citations: c, internalSources: s }) => {
+        const { fullContent, citations: streamCitations, internalSources: streamInternalSources, reviewedDocx: streamReviewedDocx, toolCalls: streamToolCalls, timedOut } = await streamAssistantResponse(response, ({ fullContent: content, citations: c, internalSources: s, progress: p, toolCalls: tc }) => {
           setMessages(prev => prev.map(m => 
-            m.id === assistantMessageId ? { ...m, content, citations: c, internalSources: s } : m
+            m.id === assistantMessageId
+              ? { ...m, content, citations: c, internalSources: s, progress: p !== undefined ? p : (content ? undefined : m.progress), toolCalls: tc }
+              : m
           ));
         });
         if (timedOut && fullContent) showToast('Svaret kan vara ofullständigt (timeout)');
@@ -3309,6 +3296,8 @@ function ChatPageContent() {
           content: fullContent, 
           citations: streamCitations,
           internalSources: streamInternalSources,
+          ...(streamReviewedDocx ? { reviewedDocx: streamReviewedDocx } : {}),
+          ...(streamToolCalls && streamToolCalls.length > 0 ? { toolCalls: streamToolCalls } : {}),
         }];
         setMessages(finalMessages);
         persistMessages(finalMessages);
@@ -3341,9 +3330,9 @@ function ChatPageContent() {
       console.error('Chat error:', error);
       const errMsg = error instanceof Error && error.message !== 'Stream timed out'
         ? error.message
-        : 'Kunde inte svara just nu. Försök igen.';
-      setMessages(prev => prev.map(m => 
-        m.id === assistantMessageId 
+        : 'Kunde inte svara just nu. Kontrollera nätverket och försök igen.';
+      setMessages(prev => prev.map(m =>
+        m.id === assistantMessageId
           ? { ...m, content: errMsg }
           : m
       ));
@@ -3442,6 +3431,37 @@ function ChatPageContent() {
     } catch (error) {
       console.error('Word export error:', error);
       showToast('Kunde inte exportera konversationen till Word');
+    }
+  };
+
+  // Export conversation as JSON
+  const exportConversationAsJSON = () => {
+    if (messages.length === 0) return;
+    try {
+      const title = chatSessions.find(s => s.sessionId === currentSessionId)?.title || 'AIFM Konversation';
+      const exportData = {
+        title,
+        exportedAt: new Date().toISOString(),
+        messageCount: messages.length,
+        messages: messages.map(m => ({
+          role: m.role,
+          content: m.content,
+          timestamp: m.timestamp,
+          ...(m.citations ? { citations: m.citations } : {}),
+          ...(m.toolCalls ? { toolCalls: m.toolCalls } : {}),
+        })),
+      };
+      const json = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${title.replace(/[^a-zA-Z0-9åäöÅÄÖ\s]/g, '_')}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('JSON export error:', error);
+      showToast('Kunde inte exportera konversationen');
     }
   };
 
@@ -3919,6 +3939,21 @@ function ChatPageContent() {
                 <FileText className="w-4 h-4" />
               </button>
             )}
+            {/* Export conversation as JSON */}
+            {messages.length > 0 && (
+              <button
+                onClick={exportConversationAsJSON}
+                className={`p-2 rounded-lg transition-colors touch-manipulation ${
+                  isDarkMode
+                    ? 'text-gray-400 hover:text-white hover:bg-gray-700'
+                    : 'text-gray-500 hover:text-[#2d2a26] hover:bg-gray-100'
+                }`}
+                title="Exportera som JSON"
+                aria-label="Exportera som JSON"
+              >
+                <Database className="w-4 h-4" />
+              </button>
+            )}
             
             {/* Invitation notification bell */}
             <div className="relative" ref={invitationPanelRef}>
@@ -4376,7 +4411,7 @@ function ChatPageContent() {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-3 sm:space-y-4">
+                <div className="space-y-3 sm:space-y-4" role="log" aria-live="polite" aria-label="Chattmeddelanden">
                   {showMessageSearch && (
                     <div className={`sticky top-0 z-10 flex items-center gap-2 p-2 rounded-xl border mb-2 ${
                       isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
@@ -4477,14 +4512,6 @@ function ChatPageContent() {
                     );
                   })}
                   
-                  {isLoading && (
-                    <LoadingIndicator
-                      characterCount={messages.filter(m => m.role === 'assistant').pop()?.content?.length ?? 0}
-                      startTime={streamingStartTimeRef.current}
-                      isDarkMode={isDarkMode}
-                    />
-                  )}
-                  
                   <div ref={messagesEndRef} />
                 </div>
               )}
@@ -4515,6 +4542,20 @@ function ChatPageContent() {
                 </div>
               )}
               
+              {/* Thinking Indicator - subtle, above input */}
+              {isLoading && (
+                <div className="flex items-center gap-2 mb-2 px-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isDarkMode ? 'bg-[#c0a280]' : 'bg-aifm-gold'}`} />
+                    <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isDarkMode ? 'bg-[#c0a280]/60' : 'bg-aifm-gold/60'}`} style={{ animationDelay: '0.2s' }} />
+                    <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isDarkMode ? 'bg-[#c0a280]/30' : 'bg-aifm-gold/30'}`} style={{ animationDelay: '0.4s' }} />
+                  </div>
+                  <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-aifm-charcoal/30'}`}>
+                    {mode === 'regelverksassistent' ? 'Söker i regelverk...' : mode === 'chatgpt' ? 'ChatGPT tänker...' : 'Tänker...'}
+                  </span>
+                </div>
+              )}
+
               {/* Attached Files Preview */}
               {attachedFiles.length > 0 && (
                 <div className="mb-2 flex flex-wrap gap-1.5 sm:gap-2">
@@ -4577,10 +4618,33 @@ function ChatPageContent() {
                     ref={fileInputRef}
                     type="file"
                     multiple
-                    accept=".pdf,.docx,.xlsx,.xls,.txt,.csv,.png,.jpg,.jpeg,.webp"
+                    accept=".pdf,.doc,.docx,.xlsx,.xls,.txt,.csv,.png,.jpg,.jpeg,.webp"
                     onChange={handleFileSelect}
                     className="hidden"
                   />
+                  {/* Svarslängd: kort / medel / långt – innanför rutan så de alltid syns */}
+                  <div className="flex justify-center gap-1.5 sm:gap-2 px-2 pt-2 pb-1 border-b border-transparent" data-chat-ui-version="2">
+                    {(['short', 'medium', 'long'] as const).map((len) => (
+                      <button
+                        key={len}
+                        type="button"
+                        onClick={() => setResponseLength(prev => prev === len ? null : len)}
+                        className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs font-medium transition-all ${
+                          responseLength === len
+                            ? isDarkMode
+                              ? 'bg-aifm-charcoal text-white'
+                              : 'bg-aifm-charcoal text-white'
+                            : isDarkMode
+                              ? 'text-gray-500 hover:text-gray-300 hover:bg-gray-700/60'
+                              : 'text-aifm-charcoal/50 hover:text-aifm-charcoal/70 hover:bg-gray-100'
+                        }`}
+                        title={len === 'short' ? 'Begär ett kortare svar' : len === 'medium' ? 'Begär ett medellångt svar' : 'Begär ett längre svar'}
+                        aria-label={len === 'short' ? 'Kort svar' : len === 'medium' ? 'Medel svar' : 'Långt svar'}
+                      >
+                        {len === 'short' ? 'Kort' : len === 'medium' ? 'Medel' : 'Långt'}
+                      </button>
+                    ))}
+                  </div>
                   
                   {/* Quote chip - show when user has quoted an assistant message */}
                   {quotedMessage && (
@@ -4741,34 +4805,54 @@ function ChatPageContent() {
         </div>
 
         {/* Desktop Chat History Sidebar */}
-        <div className={`w-72 border-l flex-shrink-0 hidden lg:flex flex-col transition-colors duration-200 ${
+        <div className={`border-l flex-shrink-0 hidden lg:flex flex-col transition-all duration-200 ${
+          historySidebarCollapsed ? 'w-10' : 'w-72'
+        } ${
           isDarkMode 
             ? 'border-gray-700 bg-gray-800' 
             : 'border-gray-200 bg-white'
         }`}>
           <div className={`p-4 border-b transition-colors ${
             isDarkMode ? 'border-gray-700' : 'border-gray-200'
-          }`}>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className={`font-medium text-sm transition-colors ${
-                isDarkMode ? 'text-white' : 'text-[#2d2a26]'
-              }`}>Chatthistorik</h3>
-              <button
-                onClick={startNewChat}
-                className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
-                  isDarkMode
-                    ? 'text-[#d4b896] hover:bg-[#c0a280]/20'
-                    : 'text-[#c0a280] hover:bg-[#c0a280]/10'
-                }`}
-                title="Ny chatt (⌘K)"
-                aria-label="Ny chatt"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Ny chatt
-              </button>
+          } ${historySidebarCollapsed ? '!px-1.5 !py-3 flex justify-center' : ''}`}>
+            <div className={`flex items-center ${historySidebarCollapsed ? 'justify-center' : 'justify-between mb-3'}`}>
+              {!historySidebarCollapsed && (
+                <h3 className={`font-medium text-sm transition-colors ${
+                  isDarkMode ? 'text-white' : 'text-[#2d2a26]'
+                }`}>Chatthistorik</h3>
+              )}
+              <div className="flex items-center gap-1">
+                {!historySidebarCollapsed && (
+                  <button
+                    onClick={startNewChat}
+                    className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
+                      isDarkMode
+                        ? 'text-[#d4b896] hover:bg-[#c0a280]/20'
+                        : 'text-[#c0a280] hover:bg-[#c0a280]/10'
+                    }`}
+                    title="Ny chatt (⌘K)"
+                    aria-label="Ny chatt"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Ny chatt
+                  </button>
+                )}
+                <button
+                  onClick={() => setHistorySidebarCollapsed(prev => !prev)}
+                  className={`p-1 rounded-md transition-colors ${
+                    isDarkMode
+                      ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'
+                      : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                  }`}
+                  title={historySidebarCollapsed ? 'Visa chatthistorik' : 'Dölj chatthistorik'}
+                  aria-label={historySidebarCollapsed ? 'Visa chatthistorik' : 'Dölj chatthistorik'}
+                >
+                  <ChevronRight className={`w-4 h-4 transition-transform duration-200 ${historySidebarCollapsed ? 'rotate-180' : ''}`} />
+                </button>
+              </div>
             </div>
             
-            <div className="relative">
+            {!historySidebarCollapsed && <div className="relative">
               <Search className={`absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 ${
                 isDarkMode ? 'text-gray-500' : 'text-gray-400'
               }`} />
@@ -4794,10 +4878,10 @@ function ChatPageContent() {
                   <X className="w-3 h-3" />
                 </button>
               )}
-            </div>
+            </div>}
           </div>
           
-          <div className="flex-1 overflow-y-auto p-2">
+          {!historySidebarCollapsed && <div className="flex-1 overflow-y-auto p-2">
             {isLoadingSessions ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className={`w-5 h-5 animate-spin ${
@@ -5046,9 +5130,9 @@ function ChatPageContent() {
                 <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAllSessions ? 'rotate-90' : ''}`} />
               </button>
             )}
-          </div>
+          </div>}
           
-          <div className={`p-3 border-t transition-colors ${
+          {!historySidebarCollapsed && <div className={`p-3 border-t transition-colors ${
             isDarkMode 
               ? 'border-gray-700 bg-gray-900/50' 
               : 'border-gray-200 bg-gray-50'
@@ -5058,7 +5142,7 @@ function ChatPageContent() {
             }`}>
               Chattar sparas säkert i ditt konto
             </p>
-          </div>
+          </div>}
         </div>
       </div>
 

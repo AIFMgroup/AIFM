@@ -1,7 +1,7 @@
 /**
  * API: Bank Reconciliation
  * 
- * Utför NAV-avstämning mellan Secura och bank (SEB/Swedbank)
+ * Utför NAV-avstämning mellan Fund Registry och bank (SEB/Swedbank)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -35,7 +35,7 @@ interface ReconciliationResponse {
  * POST /api/bank/reconciliation
  * 
  * Body:
- * - fundId: Fund ID in Secura
+ * - fundId: Fund ID in Fund Registry
  * - bankType: 'SEB' or 'SWEDBANK'
  * - date: Date for reconciliation (YYYY-MM-DD)
  * - sebAccountId: SEB custody account ID (required for SEB)
@@ -126,7 +126,7 @@ export async function GET() {
     usage: {
       method: 'POST',
       body: {
-        fundId: 'Fund ID in Secura (required)',
+        fundId: 'Fund ID in Fund Registry (required)',
         bankType: 'SEB or SWEDBANK (required)',
         date: 'Date for reconciliation, YYYY-MM-DD (optional, defaults to today)',
         sebAccountId: 'SEB custody account ID (required for SEB)',

@@ -85,14 +85,14 @@ function formatPercent(value: number): string {
 
 function InvestorTypeBadge({ type }: { type: OwnerRecord['investorType'] }) {
   const config = {
-    institution: { label: 'Institution', color: 'bg-blue-50 text-blue-600' },
-    individual: { label: 'Privatperson', color: 'bg-gray-100 text-gray-600' },
-    nominee: { label: 'Förvaltare', color: 'bg-purple-50 text-purple-600' },
+    institution: { label: 'Institution', color: 'bg-aifm-charcoal/[0.06] text-aifm-charcoal' },
+    individual: { label: 'Privatperson', color: 'bg-gray-100 text-aifm-charcoal/60' },
+    nominee: { label: 'Förvaltare', color: 'bg-aifm-gold/15 text-aifm-charcoal' },
     clearstream: { label: 'Clearstream', color: 'bg-amber-50 text-amber-600' },
   };
 
   return (
-    <span className={`px-2 py-0.5 rounded text-xs font-medium ${config[type].color}`}>
+    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${config[type].color}`}>
       {config[type].label}
     </span>
   );
@@ -108,7 +108,7 @@ function StatusBadge({ status }: { status: 'sent' | 'pending' | 'error' }) {
   const { label, color, icon: Icon } = config[status];
 
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${color}`}>
+    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${color}`}>
       <Icon className="w-3 h-3" />
       {label}
     </span>
@@ -117,7 +117,7 @@ function StatusBadge({ status }: { status: 'sent' | 'pending' | 'error' }) {
 
 function ClearstreamClientCard({ client }: { client: ClearstreamClient }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-4">
+    <div className="bg-white rounded-2xl border border-gray-100 p-4 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
       <div className="flex items-start justify-between mb-3">
         <div>
           <h4 className="font-medium text-aifm-charcoal">{client.name}</h4>
@@ -173,63 +173,65 @@ export default function OwnerDataPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/nav-admin"
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 text-aifm-charcoal/60" />
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-aifm-charcoal">Ägardata</h1>
-          <p className="text-aifm-charcoal/60 mt-1">
-            Hantera och exportera ägaruppgifter, inklusive Clearstream-data
-          </p>
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-10 -mx-6 -mt-6 px-6 py-4 mb-2">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/nav-admin"
+            className="p-2 hover:bg-aifm-charcoal/[0.04] rounded-xl transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-aifm-charcoal/60" />
+          </Link>
+          <div className="flex-1">
+            <h1 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Ägardata</h1>
+            <p className="text-sm text-aifm-charcoal/40">
+              Hantera och exportera ägaruppgifter, inklusive Clearstream-data
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
           <div className="flex items-center gap-2 mb-2">
-            <Users className="w-5 h-5 text-blue-500" />
-            <span className="text-sm text-aifm-charcoal/60">Totalt ägare</span>
+            <div className="p-1.5 rounded-lg bg-aifm-charcoal/[0.06]"><Users className="w-4 h-4 text-aifm-charcoal/60" /></div>
+            <span className="text-sm text-aifm-charcoal/40">Totalt ägare</span>
           </div>
-          <p className="text-2xl font-bold text-aifm-charcoal">{mockOwnerData.length}</p>
+          <p className="text-2xl font-semibold tracking-tight text-aifm-charcoal">{mockOwnerData.length}</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
           <div className="flex items-center gap-2 mb-2">
-            <Building2 className="w-5 h-5 text-purple-500" />
-            <span className="text-sm text-aifm-charcoal/60">Institutioner</span>
+            <div className="p-1.5 rounded-lg bg-aifm-gold/10"><Building2 className="w-4 h-4 text-aifm-gold" /></div>
+            <span className="text-sm text-aifm-charcoal/40">Institutioner</span>
           </div>
-          <p className="text-2xl font-bold text-aifm-charcoal">{mockOwnerData.filter(o => o.investorType === 'institution').length}</p>
+          <p className="text-2xl font-semibold tracking-tight text-aifm-charcoal">{mockOwnerData.filter(o => o.investorType === 'institution').length}</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
           <div className="flex items-center gap-2 mb-2">
-            <AlertCircle className="w-5 h-5 text-amber-500" />
-            <span className="text-sm text-aifm-charcoal/60">Clearstream</span>
+            <div className="p-1.5 rounded-lg bg-amber-50"><AlertCircle className="w-4 h-4 text-amber-500" /></div>
+            <span className="text-sm text-aifm-charcoal/40">Clearstream</span>
           </div>
-          <p className="text-2xl font-bold text-aifm-charcoal">{clearstreamOwners.length}</p>
+          <p className="text-2xl font-semibold tracking-tight text-aifm-charcoal">{clearstreamOwners.length}</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300">
           <div className="flex items-center gap-2 mb-2">
-            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-            <span className="text-sm text-aifm-charcoal/60">Utskick klara</span>
+            <div className="p-1.5 rounded-lg bg-emerald-50"><CheckCircle2 className="w-4 h-4 text-emerald-500" /></div>
+            <span className="text-sm text-aifm-charcoal/40">Utskick klara</span>
           </div>
-          <p className="text-2xl font-bold text-emerald-600">{mockClearstreamClients.filter(c => c.status === 'sent').length}/{mockClearstreamClients.length}</p>
+          <p className="text-2xl font-semibold tracking-tight text-emerald-600">{mockClearstreamClients.filter(c => c.status === 'sent').length}/{mockClearstreamClients.length}</p>
         </div>
       </div>
 
       {/* Clearstream Section */}
-      <div className="bg-gradient-to-r from-amber-50 to-amber-100/50 rounded-2xl p-6 border border-amber-200/50">
+      <div className="bg-aifm-charcoal/[0.03] rounded-2xl p-6 border border-gray-100">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h2 className="text-lg font-semibold text-amber-900">Clearstream-utskick</h2>
-            <p className="text-sm text-amber-700 mt-1">
+            <h2 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Clearstream-utskick</h2>
+            <p className="text-sm text-aifm-charcoal/40 mt-1">
               Extrahera och skicka ägardata för Clearstream-konton till respektive kund
             </p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium">
+          <button className="flex items-center gap-2 px-6 py-2.5 bg-aifm-charcoal text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm">
             <Send className="w-4 h-4" />
             Skicka till alla
           </button>
@@ -252,14 +254,14 @@ export default function OwnerDataPage() {
               placeholder="Sök ägare..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold/50 w-64"
+              className="pl-10 pr-4 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors w-64"
             />
           </div>
           
           <select
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
-            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold/50"
+            className="px-4 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
           >
             <option value="all">Alla typer</option>
             <option value="institution">Institutioner</option>
@@ -271,7 +273,7 @@ export default function OwnerDataPage() {
           <select
             value={selectedFund}
             onChange={(e) => setSelectedFund(e.target.value)}
-            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold/50"
+            className="px-4 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
           >
             <option value="all">Alla fonder</option>
             {uniqueFunds.map((fund) => (
@@ -281,13 +283,13 @@ export default function OwnerDataPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
-            <RefreshCw className="w-4 h-4 text-aifm-charcoal/60" />
-            <span className="text-sm">Uppdatera</span>
+          <button className="flex items-center gap-2 px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm transition-all">
+            <RefreshCw className="w-4 h-4" />
+            <span>Uppdatera</span>
           </button>
-          <button className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
-            <FileSpreadsheet className="w-4 h-4 text-aifm-charcoal/60" />
-            <span className="text-sm">Exportera Excel</span>
+          <button className="flex items-center gap-2 px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm transition-all">
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>Exportera Excel</span>
           </button>
         </div>
       </div>
@@ -295,7 +297,7 @@ export default function OwnerDataPage() {
       {/* Owner Data Table */}
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100">
-          <h2 className="font-semibold text-aifm-charcoal">Ägarförteckning</h2>
+          <h2 className="font-semibold text-aifm-charcoal tracking-tight">Ägarförteckning</h2>
           <p className="text-sm text-aifm-charcoal/50 mt-0.5">
             Visar {filteredOwners.length} av {mockOwnerData.length} ägare
           </p>
@@ -304,23 +306,23 @@ export default function OwnerDataPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-gray-50/50">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/70 uppercase">Ägare</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/70 uppercase">Typ</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/70 uppercase">Fond</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase">Andelar</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase">Andel %</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase">Marknadsvärde</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-aifm-charcoal/70 uppercase">Kontotyp</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/70 uppercase">Åtgärder</th>
+              <tr className="bg-aifm-charcoal/[0.03]">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Ägare</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Typ</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Fond</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Andelar</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Andel %</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Marknadsvärde</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Kontotyp</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-aifm-charcoal/60 uppercase tracking-wider">Åtgärder</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredOwners.map((owner) => (
-                <tr key={owner.id} className="hover:bg-gray-50/50 transition-colors">
+                <tr key={owner.id} className="hover:bg-aifm-charcoal/[0.02] transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                      <div className="w-8 h-8 bg-aifm-charcoal/[0.06] rounded-full flex items-center justify-center">
                         <Users className="w-4 h-4 text-aifm-charcoal/40" />
                       </div>
                       <span className="font-medium text-aifm-charcoal">{owner.investorName}</span>

@@ -83,10 +83,10 @@ const reportTemplatesList: ReportTemplate[] = [
 
 const getCategoryColor = (category: string) => {
   const colors: Record<string, { bg: string; text: string; border: string }> = {
-    compliance: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
-    financial: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
-    operational: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
-    custom: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' },
+    compliance: { bg: 'bg-aifm-gold/10', text: 'text-aifm-charcoal', border: 'border-aifm-gold/20' },
+    financial: { bg: 'bg-aifm-charcoal/[0.06]', text: 'text-aifm-charcoal', border: 'border-aifm-charcoal/10' },
+    operational: { bg: 'bg-aifm-gold/[0.06]', text: 'text-aifm-charcoal', border: 'border-aifm-gold/15' },
+    custom: { bg: 'bg-aifm-charcoal/[0.04]', text: 'text-aifm-charcoal', border: 'border-gray-100' },
   };
   return colors[category] || colors.custom;
 };
@@ -186,36 +186,38 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Rapporter</h1>
-            <p className="text-gray-500 mt-1">Generera och ladda ner rapporter för {selectedCompany?.name || 'ditt bolag'}</p>
+        <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-lg font-semibold text-aifm-charcoal tracking-tight">Rapporter</h1>
+              <p className="text-sm text-aifm-charcoal/40">Generera och ladda ner rapporter för {selectedCompany?.name || 'ditt bolag'}</p>
+            </div>
           </div>
         </div>
 
         {/* Date Range Selector */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="flex items-center gap-2 text-gray-700">
+            <div className="flex items-center gap-2 text-aifm-charcoal/70">
               <Calendar className="w-4 h-4" />
-              <span className="font-medium">Rapportperiod:</span>
+              <span className="font-medium text-sm">Rapportperiod:</span>
             </div>
             <div className="flex items-center gap-2">
               <input
                 type="date"
                 value={dateRange.from}
                 onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
               />
-              <span className="text-gray-400">till</span>
+              <span className="text-aifm-charcoal/30">till</span>
               <input
                 type="date"
                 value={dateRange.to}
                 onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
               />
             </div>
           </div>
@@ -227,10 +229,10 @@ export default function ReportsPage() {
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                 selectedCategory === cat
-                  ? 'bg-[#2d2a26] text-white'
-                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                  ? 'bg-aifm-charcoal text-white shadow-sm'
+                  : 'text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300'
               }`}
             >
               {cat === 'all' ? 'Alla rapporter' : getCategoryLabel(cat)}
@@ -247,22 +249,22 @@ export default function ReportsPage() {
             return (
               <div
                 key={template.id}
-                className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow"
+                className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300"
               >
                 <div className="flex items-start justify-between mb-4">
-                  <div className={`w-10 h-10 rounded-lg ${catStyle.bg} ${catStyle.text} flex items-center justify-center`}>
+                  <div className={`w-10 h-10 rounded-xl ${catStyle.bg} ${catStyle.text} flex items-center justify-center`}>
                     {template.icon}
                   </div>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${catStyle.bg} ${catStyle.text}`}>
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${catStyle.bg} ${catStyle.text}`}>
                     {getCategoryLabel(template.category)}
                   </span>
                 </div>
                 
-                <h3 className="font-semibold text-gray-900 mb-2">{template.name}</h3>
-                <p className="text-sm text-gray-500 mb-4 line-clamp-2">{template.description}</p>
+                <h3 className="font-semibold text-aifm-charcoal tracking-tight mb-2">{template.name}</h3>
+                <p className="text-sm text-aifm-charcoal/40 mb-4 line-clamp-2">{template.description}</p>
                 
                 {template.lastGenerated && (
-                  <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-4">
+                  <div className="flex items-center gap-1.5 text-xs text-aifm-charcoal/30 mb-4">
                     <Clock className="w-3.5 h-3.5" />
                     <span>Senast: {new Date(template.lastGenerated).toLocaleDateString('sv-SE')}</span>
                   </div>
@@ -271,8 +273,8 @@ export default function ReportsPage() {
                 <button
                   onClick={() => handleGenerateReport(template)}
                   disabled={isGenerating}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-50 hover:bg-gray-100 
-                           text-gray-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-aifm-charcoal 
+                           text-white rounded-full text-sm font-medium hover:bg-aifm-charcoal/90 transition-all shadow-sm disabled:opacity-50"
                 >
                   {isGenerating ? (
                     <>
@@ -292,38 +294,38 @@ export default function ReportsPage() {
         </div>
 
         {/* Quick Links */}
-        <div className="mt-8 bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">Relaterat</h2>
+        <div className="mt-8 bg-white rounded-2xl border border-gray-100 p-6">
+          <h2 className="font-semibold text-aifm-charcoal tracking-tight mb-4">Relaterat</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <a
               href="/audit"
-              className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300"
             >
               <div className="flex items-center gap-3">
-                <FileText className="w-5 h-5 text-gray-400" />
-                <span className="font-medium text-gray-700">Audit Trail</span>
+                <FileText className="w-5 h-5 text-aifm-charcoal/40" />
+                <span className="font-medium text-aifm-charcoal">Audit Trail</span>
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <ChevronRight className="w-4 h-4 text-aifm-charcoal/30" />
             </a>
             <a
               href="/compliance/documents"
-              className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300"
             >
               <div className="flex items-center gap-3">
-                <Shield className="w-5 h-5 text-gray-400" />
-                <span className="font-medium text-gray-700">Compliance Dokument</span>
+                <Shield className="w-5 h-5 text-aifm-charcoal/40" />
+                <span className="font-medium text-aifm-charcoal">Compliance Dokument</span>
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <ChevronRight className="w-4 h-4 text-aifm-charcoal/30" />
             </a>
             <a
               href="/data-rooms"
-              className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-lg hover:shadow-aifm-charcoal/[0.03] transition-all duration-300"
             >
               <div className="flex items-center gap-3">
-                <Building2 className="w-5 h-5 text-gray-400" />
-                <span className="font-medium text-gray-700">Data Rooms</span>
+                <Building2 className="w-5 h-5 text-aifm-charcoal/40" />
+                <span className="font-medium text-aifm-charcoal">Data Rooms</span>
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <ChevronRight className="w-4 h-4 text-aifm-charcoal/30" />
             </a>
           </div>
         </div>

@@ -133,7 +133,7 @@ function CompaniesContent() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl font-semibold text-[#2d2a26] tracking-tight">Företag</h1>
-            <p className="text-gray-500 mt-1">
+            <p className="text-sm text-aifm-charcoal/40 mt-1">
               {loading ? '...' : `${companies.length} företag totalt`}
             </p>
           </div>
@@ -205,11 +205,11 @@ function CompaniesContent() {
                             <Building2 className="w-5 h-5 text-[#c0a280]" />
                           </div>
                           <div className="min-w-0">
-                            <h3 className="font-semibold text-gray-900 truncate group-hover:text-[#c0a280] transition-colors">
+                            <h3 className="font-semibold text-aifm-charcoal truncate group-hover:text-aifm-gold transition-colors">
                               {company.name}
                             </h3>
                             {company.industry && (
-                              <p className="text-sm text-gray-500 truncate">{company.industry}</p>
+                              <p className="text-sm text-aifm-charcoal/40 truncate">{company.industry}</p>
                             )}
                           </div>
                         </div>
@@ -218,20 +218,20 @@ function CompaniesContent() {
 
                       <div className="space-y-2 text-sm mb-4">
                         {company.website && (
-                          <div className="flex items-center gap-2 text-gray-600">
-                            <Globe className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <div className="flex items-center gap-2 text-aifm-charcoal/50">
+                            <Globe className="w-4 h-4 text-aifm-charcoal/30 flex-shrink-0" />
                             <span className="truncate">{company.website.replace(/^https?:\/\//, '')}</span>
                           </div>
                         )}
                         {company.email && (
-                          <div className="flex items-center gap-2 text-gray-600">
-                            <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <div className="flex items-center gap-2 text-aifm-charcoal/50">
+                            <Mail className="w-4 h-4 text-aifm-charcoal/30 flex-shrink-0" />
                             <span className="truncate">{company.email}</span>
                           </div>
                         )}
                         {company.phone && (
-                          <div className="flex items-center gap-2 text-gray-600">
-                            <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <div className="flex items-center gap-2 text-aifm-charcoal/50">
+                            <Phone className="w-4 h-4 text-aifm-charcoal/30 flex-shrink-0" />
                             {company.phone}
                           </div>
                         )}
@@ -240,13 +240,13 @@ function CompaniesContent() {
                       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                         <div className="flex items-center gap-4">
                           {company.employeeCount && (
-                            <span className="inline-flex items-center gap-1.5 text-xs text-gray-500">
+                            <span className="inline-flex items-center gap-1.5 text-xs text-aifm-charcoal/40">
                               <Users className="w-3.5 h-3.5" />
                               {company.employeeCount}
                             </span>
                           )}
                           {company.annualRevenue && (
-                            <span className="inline-flex items-center gap-1.5 text-xs text-gray-500">
+                            <span className="inline-flex items-center gap-1.5 text-xs text-aifm-charcoal/40">
                               <DollarSign className="w-3.5 h-3.5" />
                               {(company.annualRevenue / 1000000).toFixed(1)}M
                             </span>
@@ -279,7 +279,7 @@ function CompaniesContent() {
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </IconButton>
-                          <ChevronRight className="w-5 h-5 text-gray-300 ml-1 group-hover:text-[#c0a280] transition-colors" />
+                          <ChevronRight className="w-5 h-5 text-gray-300 ml-1 group-hover:text-aifm-gold transition-colors" />
                         </div>
                       </div>
                     </Card>
@@ -411,7 +411,7 @@ function CompanyForm({
             <h2 className="text-lg font-semibold text-[#2d2a26]">
               {company ? 'Redigera företag' : 'Nytt företag'}
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-aifm-charcoal/40">
               {company ? company.name : 'Lägg till ett nytt företag'}
             </p>
           </div>
@@ -419,7 +419,7 @@ function CompanyForm({
         <button 
           type="button" 
           onClick={onCancel}
-          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+          className="p-2 text-aifm-charcoal/30 hover:text-aifm-charcoal hover:bg-aifm-charcoal/5 rounded-xl transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -429,8 +429,8 @@ function CompanyForm({
 
       {/* Basic Info */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <Building2 className="w-4 h-4 text-[#c0a280]" />
+        <div className="flex items-center gap-2 text-sm font-semibold text-aifm-charcoal">
+          <Building2 className="w-4 h-4 text-aifm-gold" />
           Företagsinformation
         </div>
         <Input
@@ -459,8 +459,8 @@ function CompanyForm({
 
       {/* Contact */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <Mail className="w-4 h-4 text-[#c0a280]" />
+        <div className="flex items-center gap-2 text-sm font-semibold text-aifm-charcoal">
+          <Mail className="w-4 h-4 text-aifm-gold" />
           Kontaktuppgifter
         </div>
         <Input
@@ -492,8 +492,8 @@ function CompanyForm({
 
       {/* Business Info */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <Briefcase className="w-4 h-4 text-[#c0a280]" />
+        <div className="flex items-center gap-2 text-sm font-semibold text-aifm-charcoal">
+          <Briefcase className="w-4 h-4 text-aifm-gold" />
           Affärsinformation
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -527,8 +527,8 @@ function CompanyForm({
 
       {/* Address */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <MapPin className="w-4 h-4 text-[#c0a280]" />
+        <div className="flex items-center gap-2 text-sm font-semibold text-aifm-charcoal">
+          <MapPin className="w-4 h-4 text-aifm-gold" />
           Adress
         </div>
         <Input

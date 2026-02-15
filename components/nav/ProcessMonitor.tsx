@@ -42,7 +42,7 @@ const DEFAULT_JOBS: ProcessJob[] = [
   {
     id: 'data-fetch',
     name: 'Hämta NAV-data',
-    description: 'Hämtar data från Secura Fund & Portfolio',
+    description: 'Hämtar data från LSEG, SEB och Fund Registry',
     jobType: 'DATA_FETCH',
     status: 'completed',
     enabled: true,

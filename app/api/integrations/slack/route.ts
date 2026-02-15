@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SlackClient, getSlackConfig, isSlackConfigured } from '@/lib/integrations/slack';
 import { getSlackToken, deleteSlackToken } from '@/lib/integrations/slack/token-store';
+import { getUserIdFromSession } from '@/lib/auth/session';
+import { parseOr400, slackPostBodySchema } from '@/lib/api/validate';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action') || 'status';
-    const userId = 'default-user';
+    const userId = await getUserIdFromSession();
+    if (!userId && action !== 'auth-url') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const effectiveUserId = userId ?? 'default-user';
 
     if (action === 'status') {
-      const tokens = getSlackToken(userId);
+      const tokens = getSlackToken(effectiveUserId);
       
       return NextResponse.json({
         configured: isSlackConfigured(),
@@ -33,7 +39,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (action === 'channels') {
-      const tokens = getSlackToken(userId);
+      const tokens = getSlackToken(effectiveUserId);
       if (!tokens) {
         return NextResponse.json({ error: 'Not connected' }, { status: 401 });
       }
@@ -46,7 +52,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (action === 'users') {
-      const tokens = getSlackToken(userId);
+      const tokens = getSlackToken(effectiveUserId);
       if (!tokens) {
         return NextResponse.json({ error: 'Not connected' }, { status: 401 });
       }
@@ -68,11 +74,17 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { action } = body;
-    const userId = 'default-user';
+    const raw = await request.json();
+    const parsed = parseOr400(slackPostBodySchema, raw);
+    if (!parsed.ok) return parsed.response;
+    const body = parsed.data;
 
-    if (action === 'send-message') {
+    const userId = await getUserIdFromSession();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (body.action === 'send-message') {
       const tokens = getSlackToken(userId);
       if (!tokens) {
         return NextResponse.json({ error: 'Not connected' }, { status: 401 });
@@ -90,7 +102,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message });
     }
 
-    if (action === 'send-dm') {
+    if (body.action === 'send-dm') {
       const tokens = getSlackToken(userId);
       if (!tokens) {
         return NextResponse.json({ error: 'Not connected' }, { status: 401 });
@@ -104,7 +116,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message });
     }
 
-    if (action === 'get-history') {
+    if (body.action === 'get-history') {
       const tokens = getSlackToken(userId);
       if (!tokens) {
         return NextResponse.json({ error: 'Not connected' }, { status: 401 });
@@ -113,7 +125,7 @@ export async function POST(request: NextRequest) {
       const config = getSlackConfig()!;
       const client = new SlackClient(config, tokens);
 
-      const messages = await client.getChannelHistory(body.channel, body.limit || 50);
+      const messages = await client.getChannelHistory(body.channel, body.limit ?? 50);
 
       return NextResponse.json({ messages });
     }
@@ -128,7 +140,10 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const userId = 'default-user';
+    const userId = await getUserIdFromSession();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     deleteSlackToken(userId);
     return NextResponse.json({ message: 'Disconnected' });
   } catch (error) {

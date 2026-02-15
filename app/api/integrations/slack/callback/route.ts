@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SlackClient, getSlackConfig } from '@/lib/integrations/slack';
 import { setSlackToken } from '@/lib/integrations/slack/token-store';
+import { getUserIdFromSession } from '@/lib/auth/session';
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,11 +29,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const userId = await getUserIdFromSession();
+    if (!userId) {
+      return NextResponse.redirect(
+        new URL('/admin/integrations?error=Session+expired+please+log+in', request.url)
+      );
+    }
+
     const client = new SlackClient(config);
     const tokens = await client.exchangeCodeForTokens(code);
 
-    // Store tokens
-    const userId = 'default-user';
     setSlackToken(userId, tokens);
 
     console.log('[Slack Callback] Connected to:', tokens.teamName);

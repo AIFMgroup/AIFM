@@ -189,6 +189,34 @@ else
 fi
 
 # -----------------------------------------------------------------------------
+# Table 5: aifm-fund-registry
+# Fund Registry (fonder, andelsklasser, positioner, kassa, transaktioner, NAV)
+# PK: key prefix (fund, shareclass, nav, position, cash, tx, investor, holding)
+# SK: key suffix (id or composite)
+# -----------------------------------------------------------------------------
+
+echo ""
+echo "Creating table: aifm-fund-registry..."
+
+aws dynamodb create-table \
+    --table-name aifm-fund-registry \
+    --attribute-definitions \
+        AttributeName=pk,AttributeType=S \
+        AttributeName=sk,AttributeType=S \
+    --key-schema \
+        AttributeName=pk,KeyType=HASH \
+        AttributeName=sk,KeyType=RANGE \
+    --billing-mode $BILLING_MODE \
+    --region $AWS_REGION \
+    2>/dev/null
+
+if [ $? -eq 0 ]; then
+    echo "✓ Table aifm-fund-registry created successfully"
+else
+    echo "! Table aifm-fund-registry may already exist or failed to create"
+fi
+
+# -----------------------------------------------------------------------------
 # Summary
 # -----------------------------------------------------------------------------
 
@@ -201,6 +229,7 @@ echo "  - aifm-nav-records     (NAV history)"
 echo "  - aifm-nav-approvals   (Approval workflow)"
 echo "  - aifm-nav-runs        (Run logs)"
 echo "  - aifm-fund-config     (Fund configuration)"
+echo "  - aifm-fund-registry   (Fund Registry: funds, positions, cash, NAV)"
 echo ""
 echo "Global Secondary Indexes created on each table:"
 echo "  - navDate-index        (Query by date)"

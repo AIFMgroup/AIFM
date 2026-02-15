@@ -29,3 +29,9 @@ export const getSession = async (): Promise<Session | null> => {
   }
 };
 
+/** Returns a stable user id from the current session (Cognito). Use for integration token stores. */
+export async function getUserIdFromSession(): Promise<string | null> {
+  const session = await getSession();
+  if (!session?.email) return null;
+  return session.email;
+}

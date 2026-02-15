@@ -18,6 +18,12 @@ import {
   setCachedExclusion,
 } from './esg-cache';
 
+// Static imports (webpack-safe; no dynamic require)
+import { YahooFinanceESGProvider } from './providers/yahoo-finance';
+import { DatiaESGProvider } from './providers/datia-provider';
+import { GenericESGProvider } from './providers/generic-provider';
+import { LSEGESGProvider } from './providers/lseg-provider';
+
 /** Singleton service client */
 let _instance: ESGServiceClient | null = null;
 
@@ -206,30 +212,52 @@ export function getESGServiceClient(): ESGServiceClient {
   if (!_instance) {
     _instance = new ESGServiceClient();
 
-    // Auto-register available providers
-    // These imports are deferred to avoid circular dependencies
+    // Auto-register available providers (static imports, webpack-safe)
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { YahooFinanceESGProvider } = require('./providers/yahoo-finance');
       const yahoo = new YahooFinanceESGProvider();
       if (yahoo.isAvailable()) {
         _instance.registerProvider(yahoo);
       }
-    } catch {
-      // Yahoo adapter not available
+    } catch (e) {
+      console.warn('[ESG Service] Failed to register Yahoo provider:', e);
     }
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { GenericESGProvider } = require('./providers/generic-provider');
+      const datia = new DatiaESGProvider();
+      console.log(`[ESG Service] Datia available: ${datia.isAvailable()}, apiKey present: ${Boolean(process.env.DATIA_API_KEY)}`);
+      if (datia.isAvailable()) {
+        _instance.registerProvider(datia);
+        // Datia is the preferred provider when configured
+        _instance.setDefaultProvider(datia.name);
+      }
+    } catch (e) {
+      console.warn('[ESG Service] Failed to register Datia provider:', e);
+    }
+
+    try {
+      const lseg = new LSEGESGProvider();
+      if (lseg.isAvailable()) {
+        _instance.registerProvider(lseg);
+        // LSEG is high-priority: set as default if Datia is not active
+        if (!_instance.getActiveProviderName() || _instance.getActiveProviderName() === 'Yahoo Finance') {
+          _instance.setDefaultProvider(lseg.name);
+        }
+      }
+    } catch (e) {
+      console.warn('[ESG Service] Failed to register LSEG provider:', e);
+    }
+
+    try {
       const generic = new GenericESGProvider();
       if (generic.isAvailable()) {
         _instance.registerProvider(generic);
-        // If a dedicated provider is configured, make it default over Yahoo
-        _instance.setDefaultProvider(generic.name);
+        // Only set as default if no higher-priority provider is active
+        if (!_instance.getActiveProviderName()) {
+          _instance.setDefaultProvider(generic.name);
+        }
       }
-    } catch {
-      // Generic adapter not available
+    } catch (e) {
+      console.warn('[ESG Service] Failed to register Generic provider:', e);
     }
 
     const available = _instance.getAvailableProviders();
