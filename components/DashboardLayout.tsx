@@ -184,7 +184,7 @@ function OnboardingWizard({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
                   type="text"
                   value={formData.companyName}
                   onChange={(e) => handleInputChange('companyName', e.target.value)}
-                  placeholder="Nordic Ventures I AB"
+                  placeholder="AIFM Group AB"
                   className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-aifm-charcoal/10 transition-all"
                 />
               </div>
@@ -199,7 +199,7 @@ function OnboardingWizard({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
                     type="text"
                     value={formData.shortName}
                     onChange={(e) => handleInputChange('shortName', e.target.value)}
-                    placeholder="Nordic Ventures I"
+                    placeholder="AIFM Group"
                     className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-aifm-charcoal/10 transition-all"
                   />
                 </div>

@@ -1,0 +1,744 @@
+
+========== RIO TINTO PLC ==========
+
+--- Resolving: RIO TINTO PLC
+  Resolved: RIO TINTO PLC | ticker:  | website: https://www.riotinto.com/invest
+  Discovering IR documents...
+  Found 5 document(s)
+  Downloading: 2025-annual-results.pdf
+  Size: 318 KB
+  Uploaded S3: holding-documents/rio-tinto-plc/dc474530-fb50-4863-840e-2eb5b1882b36-2025-annual-results.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: dc474530-fb50-4863-840e-2eb5b1882b36
+  Downloading: 2025-annual-report.pdf
+  Size: 11861 KB
+  Uploaded S3: holding-documents/rio-tinto-plc/b7379ec9-b22d-44d4-8c0b-18f1c8d792e6-2025-annual-report.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: b7379ec9-b22d-44d4-8c0b-18f1c8d792e6
+  Downloading: 2025-fourth-qor.pdf
+  Size: 345 KB
+  Uploaded S3: holding-documents/rio-tinto-plc/38c66d62-3390-40d6-92a2-5d3a71d9600f-2025-fourth-qor.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 38c66d62-3390-40d6-92a2-5d3a71d9600f
+  Downloading: 2025-hy-results.pdf
+  Size: 601 KB
+  Uploaded S3: holding-documents/rio-tinto-plc/780b502f-1087-4f5d-ad38-7e4d9d659481-2025-hy-results.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 780b502f-1087-4f5d-ad38-7e4d9d659481
+  Downloading: corporate-governance-rio-tinto.pdf
+  Size: 2104 KB
+  Uploaded S3: holding-documents/rio-tinto-plc/24003ea6-513f-4b79-b369-c4d16b797fac-corporate-governance-rio-tinto.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 24003ea6-513f-4b79-b369-c4d16b797fac
+
+Done. Saved: 5 Skip: 0 Errors: 0
+
+========== IMPALA PLATINUM ==========
+
+--- Resolving: IMPALA PLATINUM
+  Resolved: IMPALA PLATINUM | ticker:  | website: https://www.implats.co.za/
+  Discovering IR documents...
+  Found 3 document(s)
+  Downloading: fraud-and-corruption-policy.pdf
+  Size: 749 KB
+  Uploaded S3: holding-documents/impala-platinum/39444972-1770-43d4-a686-5c50c49561ac-fraud-and-corruption-policy.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 39444972-1770-43d4-a686-5c50c49561ac
+  Downloading: SENS_20260203_S516548.pdf
+  Size: 134 KB
+  Uploaded S3: holding-documents/impala-platinum/ad3159fa-4f68-4d68-9a2b-17717dd1b8ea-SENS_20260203_S516548.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: ad3159fa-4f68-4d68-9a2b-17717dd1b8ea
+  Downloading: SENS_20260130_S516359.pdf
+  Size: 270 KB
+  Uploaded S3: holding-documents/impala-platinum/0fa4a0bd-c0c2-4489-b45a-00f717247198-SENS_20260130_S516359.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 0fa4a0bd-c0c2-4489-b45a-00f717247198
+
+Done. Saved: 3 Skip: 0 Errors: 0
+
+========== BHP GROUP LTD ==========
+
+--- Resolving: BHP GROUP LTD
+  Resolved: BHP GROUP LTD | ticker:  | website: https://www.bhp.com/investors
+  Discovering IR documents...
+  Found 9 document(s)
+  Downloading: 250819_bhpannualreport2025.pdf
+  Size: 16668 KB
+  Uploaded S3: holding-documents/bhp-group-ltd/9dcf06f8-c682-47bf-ac8c-37c0d18e3862-250819_bhpannualreport2025.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 9dcf06f8-c682-47bf-ac8c-37c0d18e3862
+  Downloading: 250819_sustainabilityreportingorganisationalboundarydefinitionsanddisclaimers.pdf
+  Size: 166 KB
+  Uploaded S3: holding-documents/bhp-group-ltd/f7953c91-a458-4b24-8d1c-c73245d65d23-250819_sustainabilityreportingorganisationalboundarydefinitionsanddisclaimers.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: f7953c91-a458-4b24-8d1c-c73245d65d23
+  Downloading: 250919_limiteorganizativodelosinformesdesostenibilidad.pdf
+  Size: 229 KB
+  Uploaded S3: holding-documents/bhp-group-ltd/c8c48323-f427-4225-a41f-e0fd067a7de5-250919_limiteorganizativodelosinformesdesostenibilidad.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: c8c48323-f427-4225-a41f-e0fd067a7de5
+  Downloading: 250819_bhpmodernslaverystatement2025.pdf
+  Size: 7137 KB
+  Uploaded S3: holding-documents/bhp-group-ltd/0eac0cd7-3e1f-4252-8714-cbf00576e8f7-250819_bhpmodernslaverystatement2025.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 0eac0cd7-3e1f-4252-8714-cbf00576e8f7
+  Downloading: 250819_bhpghgemissionscalculationmethodology2025.pdf
+  Size: 1098 KB
+  Uploaded S3: holding-documents/bhp-group-ltd/d104a619-156c-4316-9f03-82f00b2be17d-250819_bhpghgemissionscalculationmethodology2025.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: d104a619-156c-4316-9f03-82f00b2be17d
+  Downloading: 240827_bhpclimatetransitionactionplan2024.pdf
+  Size: 8281 KB
+  Uploaded S3: holding-documents/bhp-group-ltd/c0d7e94e-e1ee-4a9f-9c6a-b6f9ef96818c-240827_bhpclimatetransitionactionplan2024.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: c0d7e94e-e1ee-4a9f-9c6a-b6f9ef96818c
+  Downloading: 250805_bhpgistmconformancestatementandpublicdisclosure2025.pdf
+  Size: 24939 KB
+  Uploaded S3: holding-documents/bhp-group-ltd/872c32e7-b5f4-4c60-8317-5afac5c947f5-250805_bhpgistmconformancestatementandpublicdisclosure2025.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 872c32e7-b5f4-4c60-8317-5afac5c947f5
+  Downloading: 230804_tsfpolicystatement2023.pdf
+  Size: 72 KB
+  Uploaded S3: holding-documents/bhp-group-ltd/01863007-04be-41c2-a7e7-31e041031fb2-230804_tsfpolicystatement2023.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 01863007-04be-41c2-a7e7-31e041031fb2
+  Downloading: 250819_bhpeconomiccontributionreport2025.pdf
+  Size: 5972 KB
+  Uploaded S3: holding-documents/bhp-group-ltd/3e5944fb-5ef3-48ff-b0a2-afd9bc57a6d3-250819_bhpeconomiccontributionreport2025.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 3e5944fb-5ef3-48ff-b0a2-afd9bc57a6d3
+
+Done. Saved: 9 Skip: 0 Errors: 0
+
+========== AGNICO EAGLE MINES ==========
+
+--- Resolving: AGNICO EAGLE MINES
+  Resolved: AGNICO EAGLE MINES | ticker:  | website: https://www.agnicoeagle.com/English/investor-relations/default.aspx
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0
+
+========== ALBEMARLE CORP ==========
+
+--- Resolving: ALBEMARLE CORP
+  Resolved: ALBEMARLE CORP | ticker:  | website: https://investors.albemarle.com
+  Discovering IR documents...
+  Found 1 document(s)
+  Downloading: test.pdf
+  Size: 4 KB
+  Uploaded S3: holding-documents/albemarle-corp/aa72ef23-ea02-47cb-b613-e75ce65cb28b-test.pdf
+  Textract: 108 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: aa72ef23-ea02-47cb-b613-e75ce65cb28b
+
+Done. Saved: 1 Skip: 0 Errors: 0
+
+========== ALCOA UPSTREAM CORP ==========
+
+--- Resolving: ALCOA UPSTREAM CORP
+  Resolved: ALCOA UPSTREAM CORP | ticker:  | website: (none)
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0
+
+========== ARCONIC ==========
+
+--- Resolving: ARCONIC
+  Resolved: ARCONIC | ticker:  | website: (none)
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0
+
+========== CAMECO ==========
+
+--- Resolving: CAMECO
+[Cache] DynamoDB table available: aifm-securities-cache
+[Cache] DynamoDB HIT: gleif:search:CAMECO CORP:any
+[GLEIF] Cache hit for: CAMECO CORP
+[Company Resolver] Enriched lookup failed: TypeError: Cannot read properties of undefined (reading 'substring')
+    at YahooFinanceClient.mapISINToTicker (/Users/christophergenberg/Desktop/AIFM/aifm-frontend/lib/integrations/securities/yahoo-finance-client.ts:65:26)
+    at YahooFinanceClient.getQuoteByISIN (/Users/christophergenberg/Desktop/AIFM/aifm-frontend/lib/integrations/securities/yahoo-finance-client.ts:304:27)
+    at performEnrichedLookup (/Users/christophergenberg/Desktop/AIFM/aifm-frontend/lib/integrations/securities/enriched-lookup.ts:212:41)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async resolveCompany (/Users/christophergenberg/Desktop/AIFM/aifm-frontend/lib/holding-documents/company-resolver.ts:92:26)
+    at async processOneCompany (/Users/christophergenberg/Desktop/AIFM/aifm-frontend/scripts/scrape-holding-docs.ts:142:20)
+    at async main (/Users/christophergenberg/Desktop/AIFM/aifm-frontend/scripts/scrape-holding-docs.ts:292:29)
+  Resolved: CAMECO | ticker:  | website: https://www.cameco.com/invest
+  Discovering IR documents...
+  Found 6 document(s)
+  Downloading: Cameco-2024-Sustainability-Report.pdf
+  Size: 13110 KB
+  Uploaded S3: holding-documents/cameco/0ddd69f2-218f-44fa-ad7d-971f2321d01d-Cameco-2024-Sustainability-Report.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 0ddd69f2-218f-44fa-ad7d-971f2321d01d
+  Downloading: CCO-2025-Q4-MDA-FS-Notes.pdf
+  Size: 2360 KB
+  Uploaded S3: holding-documents/cameco/5f97d43b-ef31-4f2f-b626-85e2cdba3677-CCO-2025-Q4-MDA-FS-Notes.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 5f97d43b-ef31-4f2f-b626-85e2cdba3677
+  Downloading: Cameco-Investor-Presentation.pdf
+  Size: 8959 KB
+  Uploaded S3: holding-documents/cameco/c192ccd7-9a65-4756-ac6f-319b86476dd8-Cameco-Investor-Presentation.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: c192ccd7-9a65-4756-ac6f-319b86476dd8
+  Downloading: Cameco-2024-Sustainability-Report_0.pdf
+  Size: 13110 KB
+  Uploaded S3: holding-documents/cameco/b4930b67-6d70-4651-b18b-c629edf66939-Cameco-2024-Sustainability-Report_0.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: b4930b67-6d70-4651-b18b-c629edf66939
+  Downloading: cameco-2025-management-proxy-circular_0.pdf
+  Size: 3294 KB
+  Uploaded S3: holding-documents/cameco/30a84c04-fb66-4ef1-843e-f443054c7623-cameco-2025-management-proxy-circular_0.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 30a84c04-fb66-4ef1-843e-f443054c7623
+  Downloading: cameco-2024-annual-report.pdf
+  Size: 3659 KB
+  Uploaded S3: holding-documents/cameco/b15139f1-90d9-4885-b143-9b2a49bb6e17-cameco-2024-annual-report.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: b15139f1-90d9-4885-b143-9b2a49bb6e17
+
+Done. Saved: 6 Skip: 0 Errors: 0
+
+========== FRANCO NEVADA CORP ==========
+
+--- Resolving: FRANCO NEVADA CORP
+  Resolved: FRANCO NEVADA CORP | ticker:  | website: https://www.franco-nevada.com/investors/
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0
+
+========== FREEPORT-MCMORAN ==========
+
+--- Resolving: FREEPORT-MCMORAN
+  Resolved: FREEPORT-MCMORAN | ticker:  | website: https://investors.fcx.com
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0
+
+========== LIVENT CORP ==========
+
+--- Resolving: LIVENT CORP
+  Resolved: LIVENT CORP | ticker:  | website: (none)
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0
+
+========== LUNDIN MINING ==========
+
+--- Resolving: LUNDIN MINING
+  Resolved: LUNDIN MINING | ticker:  | website: https://www.lundinmining.com/investors/
+  Discovering IR documents...
+  Found 8 document(s)
+  Downloading: 2025-q4.pdf
+  Size: 795 KB
+  Uploaded S3: holding-documents/lundin-mining/76fd0932-a76e-434f-a94a-fafa394ad5a1-2025-q4.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 76fd0932-a76e-434f-a94a-fafa394ad5a1
+  Downloading: 2025q4_presentation.pdf
+  Size: 6161 KB
+  Uploaded S3: holding-documents/lundin-mining/853d6b55-68fb-49f9-8475-28ba8db5c2e8-2025q4_presentation.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 853d6b55-68fb-49f9-8475-28ba8db5c2e8
+  Downloading: q1_2025_fs_combined_-_swe_and_print.pdf
+  Size: 909 KB
+  Uploaded S3: holding-documents/lundin-mining/ac03e130-d2e5-4ca9-926a-67a435047864-q1_2025_fs_combined_-_swe_and_print.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: ac03e130-d2e5-4ca9-926a-67a435047864
+  Downloading: 2025-q2-lun-fs.pdf
+  Size: 468 KB
+  Uploaded S3: holding-documents/lundin-mining/2684332f-960b-40c4-8514-abd96c27fcc0-2025-q2-lun-fs.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 2684332f-960b-40c4-8514-abd96c27fcc0
+  Downloading: 2025-q3.pdf
+  Size: 472 KB
+  Uploaded S3: holding-documents/lundin-mining/970c1426-1c5d-47e3-bf06-732119bbf6ab-2025-q3.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 970c1426-1c5d-47e3-bf06-732119bbf6ab
+  Downloading: 2025-q4.pdf
+  Size: 795 KB
+  Uploaded S3: holding-documents/lundin-mining/7d7079d5-59f6-42b3-aeef-3697e7ae278a-2025-q4.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 7d7079d5-59f6-42b3-aeef-3697e7ae278a
+  Downloading: 2025q4_presentation.pdf
+  Size: 6161 KB
+  Uploaded S3: holding-documents/lundin-mining/671b43fb-1db2-46d0-a44b-2bd24ad6ad1b-2025q4_presentation.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 671b43fb-1db2-46d0-a44b-2bd24ad6ad1b
+  Downloading: lundin_cmd_master_final.pdf
+  Size: 19777 KB
+  Uploaded S3: holding-documents/lundin-mining/1304697b-0e75-4ed6-a771-b5d864f814fe-lundin_cmd_master_final.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 1304697b-0e75-4ed6-a771-b5d864f814fe
+
+Done. Saved: 8 Skip: 0 Errors: 0
+
+========== NEWMONT GOLDCORP ==========
+
+--- Resolving: NEWMONT GOLDCORP
+  Resolved: NEWMONT GOLDCORP | ticker:  | website: https://www.newmont.com/investors/
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0
+
+========== NUCOR CORP ==========
+
+--- Resolving: NUCOR CORP
+  Resolved: NUCOR CORP | ticker:  | website: https://www.nucor.com/investors/
+  Discovering IR documents...
+  Found 20 document(s)
+  Downloading: Net_Zero_by_2050_Additional_Information.pdf
+  Size: 2104 KB
+  Uploaded S3: holding-documents/nucor-corp/32da28f4-350b-400d-9998-54cb258392c8-Net_Zero_by_2050_Additional_Information.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 32da28f4-350b-400d-9998-54cb258392c8
+  Downloading: 2024_Sustainability_Report.pdf
+  Size: 12754 KB
+  Uploaded S3: holding-documents/nucor-corp/b09d357e-01c0-4f0c-80db-8bc3b3b63118-2024_Sustainability_Report.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: b09d357e-01c0-4f0c-80db-8bc3b3b63118
+  Downloading: Recycled_Content_2024_LEED.pdf
+  Size: 181 KB
+  Uploaded S3: holding-documents/nucor-corp/ef82013e-9582-45ce-9ead-582fc8d5c839-Recycled_Content_2024_LEED.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: ef82013e-9582-45ce-9ead-582fc8d5c839
+  Downloading: Recycled_content_LEED_2024_-_Downsteam_Steel_Products.pdf
+  Size: 183 KB
+  Uploaded S3: holding-documents/nucor-corp/be7cccc2-b59f-4a43-9837-443607115670-Recycled_content_LEED_2024_-_Downsteam_Steel_Products.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: be7cccc2-b59f-4a43-9837-443607115670
+  Downloading: California_Specific_Disclosures_-_Nucor.pdf
+  Size: 143 KB
+  Uploaded S3: holding-documents/nucor-corp/1a6dcf2e-0130-4f9e-b225-9de358c7e7ae-California_Specific_Disclosures_-_Nucor.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 1a6dcf2e-0130-4f9e-b225-9de358c7e7ae
+  Downloading: Nucor_Environmental_Policy_2024.pdf
+  Size: 107 KB
+  Uploaded S3: holding-documents/nucor-corp/1ddf95ee-f9da-4477-be02-be6d7a073d39-Nucor_Environmental_Policy_2024.pdf
+  Textract: 2292 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 1ddf95ee-f9da-4477-be02-be6d7a073d39
+  Downloading: Nucor_Biodiversity_Policy.pdf
+  Size: 90 KB
+  Uploaded S3: holding-documents/nucor-corp/8bb24ea6-74cb-4644-9dbf-05fbcb4b8361-Nucor_Biodiversity_Policy.pdf
+  Textract: 2743 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 8bb24ea6-74cb-4644-9dbf-05fbcb4b8361
+  Downloading: Nucor_WRI_EY2024_VerificationStatement_V1-1_S123_032525.pdf
+  Size: 751 KB
+  Uploaded S3: holding-documents/nucor-corp/115f1470-2033-4888-981b-ffc5a80c8ac4-Nucor_WRI_EY2024_VerificationStatement_V1-1_S123_032525.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 115f1470-2033-4888-981b-ffc5a80c8ac4
+  Downloading: 2024.12.18_SBET_Certification_-_Nucor.pdf
+  Size: 278 KB
+  Uploaded S3: holding-documents/nucor-corp/50c818be-f69f-4a1f-828b-f9e459eba6ce-2024.12.18_SBET_Certification_-_Nucor.pdf
+  Textract: 1653 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 50c818be-f69f-4a1f-828b-f9e459eba6ce
+  Downloading: Nucor_Product_Certification_Arkansas.pdf
+  Size: 267 KB
+  Uploaded S3: holding-documents/nucor-corp/cbc793e1-2e20-45f0-960d-a41395d869b0-Nucor_Product_Certification_Arkansas.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: cbc793e1-2e20-45f0-960d-a41395d869b0
+  Downloading: Nucor_Product_Certification_Berkley.pdf
+  Size: 253 KB
+  Uploaded S3: holding-documents/nucor-corp/f746d67c-6231-4ff2-a6cc-fbf179855dc9-Nucor_Product_Certification_Berkley.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: f746d67c-6231-4ff2-a6cc-fbf179855dc9
+  Downloading: Nucor_Product_Certification_Decatur.pdf
+  Size: 267 KB
+  Uploaded S3: holding-documents/nucor-corp/55b737ad-f083-4987-a8cd-5dd76b0a6361-Nucor_Product_Certification_Decatur.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 55b737ad-f083-4987-a8cd-5dd76b0a6361
+
+Done. Saved: 12 Skip: 0 Errors: 0
+
+========== PAN AMERICAN SILVER ==========
+
+--- Resolving: PAN AMERICAN SILVER
+  Resolved: PAN AMERICAN SILVER | ticker:  | website: https://www.panamericansilver.com/investors/
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0
+
+========== TECK RESOURCES ==========
+
+--- Resolving: TECK RESOURCES
+  Resolved: TECK RESOURCES | ticker:  | website: https://www.teck.com/investors/
+  Discovering IR documents...
+  Found 20 document(s)
+  Downloading: Management-Approach-to-Sustainability.pdf
+  Size: 7713 KB
+  Uploaded S3: holding-documents/teck-resources/7b4578b6-9f24-4aa0-ab4b-435378a1d2b8-Management-Approach-to-Sustainability.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 7b4578b6-9f24-4aa0-ab4b-435378a1d2b8
+  Downloading: 2024-Sustainability-Report.pdf
+  Size: 14864 KB
+  Uploaded S3: holding-documents/teck-resources/37f8dcc1-9365-44a4-b739-46fd1f383ab9-2024-Sustainability-Report.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 37f8dcc1-9365-44a4-b739-46fd1f383ab9
+  Downloading: Multi-Year-Accessibility-Plan-2023-12-11.pdf
+  Size: 147 KB
+  Uploaded S3: holding-documents/teck-resources/ee64dd51-df0d-4d97-bdc5-1f4e73fa0c82-Multi-Year-Accessibility-Plan-2023-12-11.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: ee64dd51-df0d-4d97-bdc5-1f4e73fa0c82
+  Downloading: Teck-2025-Q4-Financial-Report.pdf
+  Size: 490 KB
+  Uploaded S3: holding-documents/teck-resources/7940c9a7-5796-430f-8966-2ec1c9a932dd-Teck-2025-Q4-Financial-Report.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 7940c9a7-5796-430f-8966-2ec1c9a932dd
+  Downloading: Teck-Q4-2025-Conference-Call-Presentation.pdf
+  Size: 6188 KB
+  Uploaded S3: holding-documents/teck-resources/b217c247-7fac-4c4b-a6c1-4eff6b2a1eba-Teck-Q4-2025-Conference-Call-Presentation.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: b217c247-7fac-4c4b-a6c1-4eff6b2a1eba
+  Downloading: Teck-Q4-2025-Appendix.pdf
+  Size: 10150 KB
+  Uploaded S3: holding-documents/teck-resources/9ca5353c-22af-48c4-a7ac-0c2a66e4b5d7-Teck-Q4-2025-Appendix.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 9ca5353c-22af-48c4-a7ac-0c2a66e4b5d7
+  Downloading: Q4-2025-Conference-Transcript.pdf
+  Size: 10140 KB
+  Uploaded S3: holding-documents/teck-resources/ecdca542-1fbb-4e13-a6a6-68709998f6c4-Q4-2025-Conference-Transcript.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: ecdca542-1fbb-4e13-a6a6-68709998f6c4
+  Downloading: InvestorPresentation111425.pdf
+  Size: 4119 KB
+  Uploaded S3: holding-documents/teck-resources/7084f7bb-c70a-4918-87fb-4bbd0206ba90-InvestorPresentation111425.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 7084f7bb-c70a-4918-87fb-4bbd0206ba90
+  Downloading: 26-04-TR.pdf
+  Size: 95 KB
+  Uploaded S3: holding-documents/teck-resources/a83ba720-4d20-4e01-82e7-c84c5c68b4a5-26-04-TR.pdf
+  Textract: 1402 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: a83ba720-4d20-4e01-82e7-c84c5c68b4a5
+  Downloading: 26-03-TR.pdf
+  Size: 88 KB
+  Uploaded S3: holding-documents/teck-resources/b83c0254-c441-4ada-baeb-51ede68d1bb7-26-03-TR.pdf
+  Textract: 1745 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: b83c0254-c441-4ada-baeb-51ede68d1bb7
+  Downloading: 2025-Teck-QB-Operations-Site-Visit.pdf
+  Size: 16497 KB
+  Uploaded S3: holding-documents/teck-resources/ebdc2d52-d8e2-4cb6-8891-8efa462355e4-2025-Teck-QB-Operations-Site-Visit.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: ebdc2d52-d8e2-4cb6-8891-8efa462355e4
+  Downloading: Teck-QB-Operations-Site-Visit-Presentation-Transcript.pdf
+  Size: 226 KB
+  Uploaded S3: holding-documents/teck-resources/86c8ed9a-13c3-42f3-b5d9-253a3a181067-Teck-QB-Operations-Site-Visit-Presentation-Transcript.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 86c8ed9a-13c3-42f3-b5d9-253a3a181067
+
+Done. Saved: 12 Skip: 0 Errors: 0
+
+========== WHEATON PRECIOUS MET ==========
+
+--- Resolving: WHEATON PRECIOUS MET
+  Resolved: WHEATON PRECIOUS MET | ticker:  | website: https://www.wheatonpm.com/investors/
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0
+
+========== ANGLO AMERICAN PLC ==========
+
+--- Resolving: ANGLO AMERICAN PLC
+  Resolved: ANGLO AMERICAN PLC | ticker:  | website: https://www.angloamerican.com/investors
+  Discovering IR documents...
+  Found 1 document(s)
+  Downloading: modern-slavery-statement-2024.pdf
+  Size: 13716 KB
+  Uploaded S3: holding-documents/anglo-american-plc/7590e2fe-fab4-47e0-9921-c28c40c34d13-modern-slavery-statement-2024.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 7590e2fe-fab4-47e0-9921-c28c40c34d13
+
+Done. Saved: 1 Skip: 0 Errors: 0
+
+========== ANTOFAGASTA PLC ==========
+
+--- Resolving: ANTOFAGASTA PLC
+  Resolved: ANTOFAGASTA PLC | ticker:  | website: https://www.antofagasta.co.uk/investors/
+  Discovering IR documents...
+  Found 3 document(s)
+  Downloading: antofagasta-annual-report-2024-web-version-26-march-compressed_1.pdf
+  Size: 9346 KB
+  Uploaded S3: holding-documents/antofagasta-plc/6df01e4c-95ab-41ee-9119-749e241cf8ab-antofagasta-annual-report-2024-web-version-26-march-compressed_1.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 6df01e4c-95ab-41ee-9119-749e241cf8ab
+  Downloading: antofagasta-sustainability-report-2024.pdf
+  Size: 4703 KB
+  Uploaded S3: holding-documents/antofagasta-plc/4ca55bc3-c7ad-4dd9-ae06-589cfa35352b-antofagasta-sustainability-report-2024.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 4ca55bc3-c7ad-4dd9-ae06-589cfa35352b
+  Downloading: Antofagasta-Minerals-Sustainability-Report-2024.pdf
+  Failed to download
+
+Done. Saved: 2 Skip: 0 Errors: 1
+
+========== BOLIDEN ==========
+
+--- Resolving: BOLIDEN
+  Resolved: BOLIDEN | ticker:  | website: https://www.boliden.com/investors
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0
+
+========== NORSK HYDRO ==========
+
+--- Resolving: NORSK HYDRO
+  Resolved: NORSK HYDRO | ticker:  | website: https://www.hydro.com/en/investors/
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0
+
+========== SSAB SVENSKT STÅL B ==========
+
+--- Resolving: SSAB SVENSKT STÅL B
+  Resolved: SSAB SVENSKT STÅL B | ticker:  | website: https://www.ssab.com/investors
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0
+
+========== ALLKEM LIMITED ==========
+
+--- Resolving: ALLKEM LIMITED
+  Resolved: ALLKEM LIMITED | ticker:  | website: https://www.allkem.co/
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0
+
+========== LYNAS RARE EARTHS ==========
+
+--- Resolving: LYNAS RARE EARTHS
+  Resolved: LYNAS RARE EARTHS | ticker:  | website: https://www.lynasrareearths.com/investors
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0
+
+========== ILUKA RESOURCES ==========
+
+--- Resolving: ILUKA RESOURCES
+  Resolved: ILUKA RESOURCES | ticker:  | website: https://www.iluka.com/investors-media
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0
+
+========== BOLIDEN RED. SHARE ==========
+
+--- Resolving: BOLIDEN RED. SHARE
+  Resolved: BOLIDEN RED. SHARE | ticker:  | website: https://www.boliden.com/investors
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0
+
+========== IVANHOE MINES LTD ==========
+
+--- Resolving: IVANHOE MINES LTD
+  Resolved: IVANHOE MINES LTD | ticker:  | website: https://www.ivanhoemines.com/investors/
+  Discovering IR documents...
+  Found 6 document(s)
+  Downloading: 2024_Sustainability_Report.pdf
+  Size: 16749 KB
+  Uploaded S3: holding-documents/ivanhoe-mines-ltd/730e7157-1d99-46e3-9bba-2a56129e2417-2024_Sustainability_Report.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 730e7157-1d99-46e3-9bba-2a56129e2417
+  Downloading: 20260219-FY-2025-Results-Presentation-VF.pdf
+  Size: 26286 KB
+  Uploaded S3: holding-documents/ivanhoe-mines-ltd/2a2195fb-a04f-4006-a806-264117c78ed5-20260219-FY-2025-Results-Presentation-VF.pdf
+  Textract: 40 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 2a2195fb-a04f-4006-a806-264117c78ed5
+  Downloading: 2022-08-04_-_ivn_share_unit_award_plan_v2.pdf
+  Size: 424 KB
+  Uploaded S3: holding-documents/ivanhoe-mines-ltd/0aeef138-3f59-4585-ba25-2c9856ff38d4-2022-08-04_-_ivn_share_unit_award_plan_v2.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 0aeef138-3f59-4585-ba25-2c9856ff38d4
+  Downloading: 2023-06-22-ivn-dsu-plan-amended.pdf
+  Size: 330 KB
+  Uploaded S3: holding-documents/ivanhoe-mines-ltd/fd295b1c-8129-40c9-a023-26f32db522b9-2023-06-22-ivn-dsu-plan-amended.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: fd295b1c-8129-40c9-a023-26f32db522b9
+  Downloading: 2023-06-22-amended-and-restated-equity-incentive-plan.pdf
+  Size: 273 KB
+  Uploaded S3: holding-documents/ivanhoe-mines-ltd/19132c66-15f4-463d-82f6-91f66b0faada-2023-06-22-amended-and-restated-equity-incentive-plan.pdf
+  Textract failed: Request has unsupported document format
+  Textract: 0 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: 19132c66-15f4-463d-82f6-91f66b0faada
+  Downloading: 2019-03-27_nr.pdf
+  Size: 384 KB
+  Uploaded S3: holding-documents/ivanhoe-mines-ltd/f15987ed-0e8d-4202-86cc-c2345a0d2c1a-2019-03-27_nr.pdf
+  Textract: 951 chars
+[HoldingDocumentStore] Table aifm-holding-documents not found; skipping DynamoDB save. Deploy the table (e.g. aifm-holding-documents) to persist metadata.
+  Saved DynamoDB: f15987ed-0e8d-4202-86cc-c2345a0d2c1a
+
+Done. Saved: 6 Skip: 0 Errors: 0
+
+========== NEXGEN ENERGY LTD ==========
+
+--- Resolving: NEXGEN ENERGY LTD
+  Resolved: NEXGEN ENERGY LTD | ticker:  | website: https://www.nexgenenergy.ca/investors/
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0
+
+========== ARCADIUM LITHIUM PLC ==========
+
+--- Resolving: ARCADIUM LITHIUM PLC
+  Resolved: ARCADIUM LITHIUM PLC | ticker:  | website: https://www.arcadiumlithium.com/investors/
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0
+
+========== Southern Copper Corp ==========
+
+--- Resolving: Southern Copper Corp
+  Resolved: Southern Copper Corp | ticker:  | website: https://www.southernperu.com/investor-relations/
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0
+
+========== ROYAL GOLD ==========
+
+--- Resolving: ROYAL GOLD
+  Resolved: ROYAL GOLD | ticker:  | website: https://www.royalgold.com/investors/
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0
+
+========== TRIPLE FLAG PRECIOUS ==========
+
+--- Resolving: TRIPLE FLAG PRECIOUS
+  Resolved: TRIPLE FLAG PRECIOUS | ticker:  | website: (none)
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0
+
+========== Hudbay Minerals ==========
+
+--- Resolving: Hudbay Minerals
+  Resolved: Hudbay Minerals | ticker:  | website: https://www.hudbayminerals.com/investors/default.aspx
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0
+
+========== Valterra Platinum ==========
+
+--- Resolving: Valterra Platinum
+  Resolved: Valterra Platinum | ticker:  | website: (none)
+  Discovering IR documents...
+  Found 0 document(s)
+
+Done. Saved: 0 Skip: 0 Errors: 0

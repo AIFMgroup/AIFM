@@ -10,6 +10,7 @@ import {
   AdminRemoveUserFromGroupCommand,
   AdminListGroupsForUserCommand,
   ListGroupsCommand,
+  CreateGroupCommand,
   AdminGetUserCommand,
   AdminUpdateUserAttributesCommand,
   AdminSetUserPasswordCommand,
@@ -34,6 +35,19 @@ function getUserAttribute(user: any, attrName: string): string | undefined {
   return attr?.Value;
 }
 
+async function ensureGroupExists(groupName: string) {
+  try {
+    await cognitoClient.send(new CreateGroupCommand({
+      UserPoolId: USER_POOL_ID,
+      GroupName: groupName,
+    }));
+  } catch (err: any) {
+    if (err.name !== 'GroupExistsException') {
+      throw err;
+    }
+  }
+}
+
 function formatUser(user: any, groups?: string[]) {
   return {
     username: user.Username,
@@ -53,56 +67,102 @@ function formatUser(user: any, groups?: string[]) {
 // ============================================================================
 
 export async function GET(request: NextRequest) {
-  // Check admin role
   const role = request.headers.get('x-aifm-role');
   if (role !== 'admin') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  try {
-    // List all users
-    const listCommand = new ListUsersCommand({
-      UserPoolId: USER_POOL_ID,
-      Limit: 60,
-    });
-    
-    const usersResponse = await cognitoClient.send(listCommand);
-    
-    // Get groups for each user
-    const usersWithGroups = await Promise.all(
-      (usersResponse.Users || []).map(async (user) => {
-        try {
-          const groupsCommand = new AdminListGroupsForUserCommand({
-            UserPoolId: USER_POOL_ID,
-            Username: user.Username!,
-          });
-          const groupsResponse = await cognitoClient.send(groupsCommand);
-          const groups = groupsResponse.Groups?.map(g => g.GroupName!) || [];
-          return formatUser(user, groups);
-        } catch {
-          return formatUser(user, []);
-        }
-      })
-    );
+  if (!USER_POOL_ID) {
+    console.error('COGNITO_USER_POOL_ID is not set');
+    return NextResponse.json({ error: 'Server misconfiguration: User Pool ID missing' }, { status: 500 });
+  }
 
-    // Also get available groups
-    const groupsCommand = new ListGroupsCommand({
-      UserPoolId: USER_POOL_ID,
-    });
-    const groupsResponse = await cognitoClient.send(groupsCommand);
-    const availableGroups = groupsResponse.Groups?.map(g => ({
-      name: g.GroupName,
-      description: g.Description,
-    })) || [];
+  try {
+    // List all users (paginate if needed)
+    let allUsers: any[] = [];
+    let paginationToken: string | undefined;
+
+    do {
+      const listCommand = new ListUsersCommand({
+        UserPoolId: USER_POOL_ID,
+        Limit: 60,
+        PaginationToken: paginationToken,
+      });
+      const usersResponse = await cognitoClient.send(listCommand);
+      allUsers = allUsers.concat(usersResponse.Users || []);
+      paginationToken = usersResponse.PaginationToken;
+    } while (paginationToken);
+
+    // Get groups for each user (parallel batches of 10 for rate-limit safety)
+    const usersWithGroups: ReturnType<typeof formatUser>[] = [];
+    const BATCH_SIZE = 10;
+    for (let i = 0; i < allUsers.length; i += BATCH_SIZE) {
+      const batch = allUsers.slice(i, i + BATCH_SIZE);
+      const batchResults = await Promise.all(
+        batch.map(async (user) => {
+          try {
+            const groupsCommand = new AdminListGroupsForUserCommand({
+              UserPoolId: USER_POOL_ID,
+              Username: user.Username!,
+            });
+            const groupsResponse = await cognitoClient.send(groupsCommand);
+            const groups = groupsResponse.Groups?.map(g => g.GroupName!) || [];
+            return formatUser(user, groups);
+          } catch (err: any) {
+            console.warn(`Failed to get groups for ${user.Username}: ${err?.name} ${err?.message}`);
+            return formatUser(user, []);
+          }
+        })
+      );
+      usersWithGroups.push(...batchResults);
+    }
+
+    // Also get available groups from Cognito
+    let cognitoGroups: { name: string; description: string | undefined }[] = [];
+    try {
+      const groupsCommand = new ListGroupsCommand({
+        UserPoolId: USER_POOL_ID,
+      });
+      const groupsResponse = await cognitoClient.send(groupsCommand);
+      cognitoGroups = (groupsResponse.Groups || []).map(g => ({
+        name: g.GroupName || '',
+        description: g.Description,
+      }));
+    } catch (err) {
+      console.warn('Failed to list groups:', err);
+    }
+
+    // Merge with standard roles to ensure they always appear
+    const STANDARD_GROUPS = [
+      { name: 'admin', description: 'Fullständig åtkomst' },
+      { name: 'executive', description: 'VD/Ledning' },
+      { name: 'manager', description: 'Avdelningschef' },
+      { name: 'operation', description: 'Operations - fondadministration' },
+      { name: 'forvaltare', description: 'Fondförvaltare' },
+      { name: 'accountant', description: 'Redovisning' },
+      { name: 'compliance', description: 'Complianceansvarig' },
+      { name: 'auditor', description: 'Revisor' },
+      { name: 'customer', description: 'Extern kund' },
+    ];
+
+    const existingNames = new Set(cognitoGroups.map(g => g.name.toLowerCase()));
+    const mergedGroups = [...cognitoGroups];
+    for (const std of STANDARD_GROUPS) {
+      if (!existingNames.has(std.name.toLowerCase())) {
+        mergedGroups.push(std);
+      }
+    }
 
     return NextResponse.json({
       users: usersWithGroups,
-      groups: availableGroups,
+      groups: mergedGroups,
     });
   } catch (error: any) {
-    console.error('Failed to list users:', error);
+    const msg = error?.message || 'Failed to list users';
+    const name = error?.name || 'UnknownError';
+    console.error('Failed to list users:', name, msg);
     return NextResponse.json(
-      { error: error.message || 'Failed to list users' },
+      { error: `${name}: ${msg}` },
       { status: 500 }
     );
   }
@@ -141,15 +201,15 @@ export async function POST(request: NextRequest) {
 
     const createResponse = await cognitoClient.send(createCommand);
 
-    // Add to groups if specified
+    // Add to groups if specified (auto-create group if it doesn't exist)
     if (groups && groups.length > 0) {
       for (const groupName of groups) {
-        const addGroupCommand = new AdminAddUserToGroupCommand({
+        await ensureGroupExists(groupName);
+        await cognitoClient.send(new AdminAddUserToGroupCommand({
           UserPoolId: USER_POOL_ID,
           Username: email,
           GroupName: groupName,
-        });
-        await cognitoClient.send(addGroupCommand);
+        }));
       }
     }
 
@@ -223,9 +283,10 @@ export async function PATCH(request: NextRequest) {
         }
       }
 
-      // Add to new groups
+      // Add to new groups (auto-create if needed)
       for (const group of groups) {
         if (!currentGroups.includes(group)) {
+          await ensureGroupExists(group);
           await cognitoClient.send(new AdminAddUserToGroupCommand({
             UserPoolId: USER_POOL_ID,
             Username: username,

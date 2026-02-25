@@ -17,18 +17,19 @@ import {
   History,
   Settings,
   LogOut,
-  HelpCircle,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Banknote,
   Building2,
-  LineChart,
   Search,
   Check,
   Plus,
   AlertTriangle,
-  Sparkles
+  ClipboardCheck,
+  ShieldCheck,
+  Eye,
+  BarChart3,
 } from 'lucide-react';
 import { useSidebar } from '../SidebarContext';
 import { FavoritesSidebarSection, FavoriteButton } from '../FavoritesManager';
@@ -60,52 +61,55 @@ const mainNavItems: NavItem[] = [
     icon: LayoutDashboard, 
     href: '/overview' 
   },
-  { 
-    id: 'fund-capital', 
-    label: 'Fond & Kapital', 
-    icon: Briefcase,
-    children: [
-      { id: 'portfolio', label: 'Portfölj', href: '/portfolio' },
-      { id: 'investors', label: 'Investerare', href: '/investors' },
-      { id: 'nav-calculation', label: 'NAV-beräkning', href: '/nav-calculation' },
-      { id: 'capital-calls', label: 'Kapitalanrop', href: '/capital-calls' },
-      { id: 'distributions', label: 'Utdelningar', href: '/distributions' },
-      { id: 'treasury', label: 'Likviditet', href: '/treasury' },
-    ]
-  },
-  { 
-    id: 'accounting', 
-    label: 'Bokföring', 
-    icon: Calculator,
-    children: [
-      { id: 'accounting-dashboard', label: 'Dashboard', href: '/accounting/dashboard' },
-      { id: 'accounting-inbox', label: 'Inkorg', href: '/accounting/inbox' },
-      { id: 'accounting-upload', label: 'Ladda upp', href: '/accounting/upload' },
-      { id: 'accounting-bookkeeping', label: 'Löpande bokföring', href: '/accounting/bookkeeping' },
-      { id: 'accounting-bank', label: 'Bankavstämning', href: '/accounting/bank-reconciliation' },
-      { id: 'accounting-reports', label: 'Rapporter', href: '/accounting/reports' },
-      { id: 'accounting-assets', label: 'Anläggningsregister', href: '/accounting/assets' },
-      { id: 'accounting-periodizations', label: 'Periodiseringar', href: '/accounting/periodizations' },
-      { id: 'accounting-closing', label: 'Bokslut', href: '/accounting/closing' },
-      { id: 'accounting-annual', label: 'Årsredovisning', href: '/accounting/annual-report' },
-      { id: 'accounting-tax', label: 'Moms & Skatt', href: '/accounting/tax-declaration' },
-      { id: 'accounting-payments', label: 'Betalningar', href: '/accounting/payments' },
-    ]
-  },
-  { 
-    id: 'crm', 
-    label: 'CRM', 
-    icon: Users,
-    children: [
-      { id: 'crm-dashboard', label: 'Dashboard', href: '/crm' },
-      { id: 'crm-contacts', label: 'Kontakter', href: '/crm/contacts' },
-      { id: 'crm-companies', label: 'Företag', href: '/crm/companies' },
-      { id: 'crm-pipeline', label: 'Pipeline', href: '/crm/pipeline' },
-      { id: 'crm-calendar', label: 'Kalender', href: '/crm/calendar' },
-      { id: 'crm-tasks', label: 'Uppgifter', href: '/crm/tasks' },
-      { id: 'crm-activities', label: 'Aktiviteter', href: '/crm/activities' },
-    ]
-  },
+  // Hidden per request
+  // { 
+  //   id: 'fund-capital', 
+  //   label: 'Fond & Kapital', 
+  //   icon: Briefcase,
+  //   children: [
+  //     { id: 'portfolio', label: 'Portfölj', href: '/portfolio' },
+  //     { id: 'investors', label: 'Investerare', href: '/investors' },
+  //     { id: 'nav-calculation', label: 'NAV-beräkning', href: '/nav-calculation' },
+  //     { id: 'capital-calls', label: 'Kapitalanrop', href: '/capital-calls' },
+  //     { id: 'distributions', label: 'Utdelningar', href: '/distributions' },
+  //     { id: 'treasury', label: 'Likviditet', href: '/treasury' },
+  //   ]
+  // },
+  // Hidden per request – Bokföring temporarily disabled
+  // { 
+  //   id: 'accounting', 
+  //   label: 'Bokföring', 
+  //   icon: Calculator,
+  //   children: [
+  //     { id: 'accounting-dashboard', label: 'Dashboard', href: '/accounting/dashboard' },
+  //     { id: 'accounting-inbox', label: 'Inkorg', href: '/accounting/inbox' },
+  //     { id: 'accounting-upload', label: 'Ladda upp', href: '/accounting/upload' },
+  //     { id: 'accounting-bookkeeping', label: 'Löpande bokföring', href: '/accounting/bookkeeping' },
+  //     { id: 'accounting-bank', label: 'Bankavstämning', href: '/accounting/bank-reconciliation' },
+  //     { id: 'accounting-reports', label: 'Rapporter', href: '/accounting/reports' },
+  //     { id: 'accounting-assets', label: 'Anläggningsregister', href: '/accounting/assets' },
+  //     { id: 'accounting-periodizations', label: 'Periodiseringar', href: '/accounting/periodizations' },
+  //     { id: 'accounting-closing', label: 'Bokslut', href: '/accounting/closing' },
+  //     { id: 'accounting-annual', label: 'Årsredovisning', href: '/accounting/annual-report' },
+  //     { id: 'accounting-tax', label: 'Moms & Skatt', href: '/accounting/tax-declaration' },
+  //     { id: 'accounting-payments', label: 'Betalningar', href: '/accounting/payments' },
+  //   ]
+  // },
+  // Hidden per request
+  // { 
+  //   id: 'crm', 
+  //   label: 'CRM', 
+  //   icon: Users,
+  //   children: [
+  //     { id: 'crm-dashboard', label: 'Dashboard', href: '/crm' },
+  //     { id: 'crm-contacts', label: 'Kontakter', href: '/crm/contacts' },
+  //     { id: 'crm-companies', label: 'Företag', href: '/crm/companies' },
+  //     { id: 'crm-pipeline', label: 'Pipeline', href: '/crm/pipeline' },
+  //     { id: 'crm-calendar', label: 'Kalender', href: '/crm/calendar' },
+  //     { id: 'crm-tasks', label: 'Uppgifter', href: '/crm/tasks' },
+  //     { id: 'crm-activities', label: 'Aktiviteter', href: '/crm/activities' },
+  //   ]
+  // },
   { 
     id: 'documents', 
     label: 'Dokument', 
@@ -129,19 +133,17 @@ const mainNavItems: NavItem[] = [
     ]
   },
   { 
-    id: 'securities', 
-    label: 'Värdepapper', 
-    icon: LineChart,
+    id: 'forvaltning', 
+    label: 'Förvaltningsfunktionen', 
+    icon: ClipboardCheck,
     children: [
-      { id: 'securities-list', label: 'Godkännanden', href: '/securities' },
-      { id: 'securities-new', label: 'Ny ansökan', href: '/securities/new-approval' },
+      { id: 'helhetsanalys', label: 'Helhetsanalys', href: '/forvaltning/helhetsanalys' },
+      { id: 'securities-new-forvaltning', label: 'Nytt värdepapper', href: '/securities/new-approval' },
+      { id: 'investment-scout', label: 'Investeringsscout', href: '/forvaltning/investeringsscout' },
+      { id: 'investment-analysis', label: 'Investeringsanalys', href: '/forvaltning/investeringsanalys' },
+      { id: 'esg', label: 'ESG', href: '/forvaltning/esg' },
+      { id: 'delegation-monitoring', label: 'Delegationsövervakning', href: '/forvaltning/delegationsovervakning' },
     ]
-  },
-  { 
-    id: 'aifm-agent', 
-    label: 'AIFM Agent', 
-    icon: Sparkles,
-    href: '/aifm-agent'
   },
   { 
     id: 'compliance', 
@@ -152,14 +154,40 @@ const mainNavItems: NavItem[] = [
       { id: 'compliance-docs', label: 'Ladda upp dokument', href: '/compliance/documents' },
     ]
   },
-  { 
-    id: 'tasks', 
-    label: 'Uppgifter', 
-    icon: CheckSquare,
+  // Hidden per request
+  // { 
+  //   id: 'tasks', 
+  //   label: 'Uppgifter', 
+  //   icon: CheckSquare,
+  //   children: [
+  //     { id: 'all-tasks', label: 'Alla uppgifter', href: '/tasks' },
+  //     { id: 'my-tasks', label: 'Mina uppgifter', href: '/my-tasks' },
+  //   ]
+  // },
+];
+
+// Forvaltare: limited nav
+const forvaltareNavItems: NavItem[] = [
+  { id: 'securities-new', label: 'Ansök om nytt värdepapper', icon: ClipboardCheck, href: '/securities/new-approval' },
+  { id: 'esg', label: 'ESG', icon: Scale, href: '/forvaltning/esg' },
+  { id: 'securities-approved', label: 'Godkända värdepapper', icon: CheckSquare, href: '/securities/approved' },
+  { id: 'investment-analysis', label: 'Investeringsanalys', icon: TrendingUp, href: '/forvaltning/investeringsanalys' },
+  { id: 'investment-scout', label: 'Investeringsscout', icon: Search, href: '/forvaltning/investeringsscout' },
+  { id: 'delegation-monitoring', label: 'Delegationsövervakning', icon: Eye, href: '/forvaltning/delegationsovervakning' },
+  { id: 'helhetsanalys', label: 'Helhetsanalys', icon: BarChart3, href: '/forvaltning/helhetsanalys' },
+];
+
+// Operation: full nav + Risk group (Granska värdepapper, Alla godkända)
+const operationNavItems: NavItem[] = [
+  ...mainNavItems,
+  {
+    id: 'risk',
+    label: 'Risk',
+    icon: ShieldCheck,
     children: [
-      { id: 'all-tasks', label: 'Alla uppgifter', href: '/tasks' },
-      { id: 'my-tasks', label: 'Mina uppgifter', href: '/my-tasks' },
-    ]
+      { id: 'risk-review', label: 'Granska värdepapper', href: '/risk/review-securities' },
+      { id: 'risk-approved', label: 'Alla godkända värdepapper', href: '/risk/approved-securities' },
+    ],
   },
 ];
 
@@ -189,12 +217,12 @@ const adminNavItem: NavItem = {
     { id: 'admin-users', label: 'Användare', href: '/admin/users' },
     { id: 'admin-integrations', label: 'Integrationer (AI)', href: '/admin/integrations' },
     { id: 'admin-knowledge-base', label: 'Kunskapsbas', href: '/admin/knowledge-base' },
-    { id: 'admin-dropbox', label: 'Dropbox-synk', href: '/admin/dropbox' },
     { id: 'admin-security', label: 'Säkerhet', href: '/admin/security' },
     { id: 'admin-permissions', label: 'Behörigheter', href: '/admin/permissions' },
     { id: 'admin-workflows', label: 'Arbetsflöden', href: '/admin/workflows' },
     { id: 'admin-bulk', label: 'Bulk-operationer', href: '/admin/bulk-operations' },
     { id: 'admin-audit', label: 'Granskningslogg', href: '/audit/logs' },
+    { id: 'admin-fund-docs', label: 'Fonddokument', href: '/admin/fund-documents' },
     { id: 'admin-documents', label: 'Dokument', href: '/admin/documents' },
     { id: 'admin-policies', label: 'Policies', href: '/admin/policies' },
   ],
@@ -398,12 +426,28 @@ function UnifiedSidebarContent() {
     return () => { cancelled = true; };
   }, []);
 
-  // Build final nav items based on role
+  // Build final nav items based on role — return empty array until role is loaded
+  // to prevent restricted roles from briefly seeing full navigation
   const navItems = useMemo<NavItem[]>(() => {
-    const items = [...mainNavItems, ...utilityNavItems];
-    if (role === 'admin') {
-      items.push(adminNavItem);
+    if (role === null) return [];
+    if (role === 'forvaltare') {
+      return [...forvaltareNavItems];
     }
+    if (role === 'operation') {
+      const items = [...operationNavItems, ...utilityNavItems];
+      return items;
+    }
+    const riskNav: NavItem = {
+      id: 'risk',
+      label: 'Risk',
+      icon: ShieldCheck,
+      children: [
+        { id: 'risk-review', label: 'Granska värdepapper', href: '/risk/review-securities' },
+        { id: 'risk-approved', label: 'Alla godkända värdepapper', href: '/risk/approved-securities' },
+      ],
+    };
+    const items = [...mainNavItems, riskNav, ...utilityNavItems];
+    if (role === 'admin') items.push(adminNavItem);
     return items;
   }, [role]);
 
@@ -448,10 +492,6 @@ function UnifiedSidebarContent() {
     window.location.href = '/auth/logout';
   };
 
-  const startOnboarding = () => {
-    setOnboardingMode('overview');
-    setShowOnboarding(true);
-  };
 
   return (
     <aside 
@@ -583,8 +623,8 @@ function UnifiedSidebarContent() {
                                          ? 'bg-[#c0a280]/20 text-[#c0a280] font-medium' 
                                          : 'text-white/50 hover:text-white hover:bg-white/5'}`}
                           >
-                            <div className={`w-1.5 h-1.5 rounded-full transition-colors
-                                           ${childActive ? 'bg-[#c0a280]' : 'bg-white/30 group-hover:bg-white/50'}`} />
+                            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors
+                                           ${childActive ? 'bg-[#c0a280]' : 'bg-white/40 group-hover:bg-white/60'}`} />
                             <span className="flex-1">{child.label}</span>
                             <FavoriteButton href={child.href} label={child.label} />
                           </Link>
@@ -597,49 +637,32 @@ function UnifiedSidebarContent() {
             );
           })}
         </div>
-      </nav>
 
-      {/* System Status */}
-      {!collapsed && (
-        <div className="px-3 pb-2">
-          <SystemStatusCompact />
-        </div>
-      )}
+        {/* Bottom section: System status + actions */}
+        <div className={`pb-4 mt-4 ${collapsed ? 'px-2' : 'px-3'}`}>
+        {/* Divider */}
+        <div className={`border-t border-white/10 mb-3 ${collapsed ? 'mx-0' : ''}`} />
 
-      {/* Bottom Actions */}
-      <div className={`border-t border-white/5 py-3 ${collapsed ? 'px-2' : 'px-3'}`}>
+        {/* System Status */}
+        {!collapsed && (
+          <div className="mb-2">
+            <SystemStatusCompact />
+          </div>
+        )}
+
         <div className="space-y-0.5">
-          {/* Start Guide */}
-          <button
-            onClick={startOnboarding}
-            className={`w-full flex items-center ${collapsed ? 'justify-center' : 'gap-3'} 
-                       px-3 py-2 rounded-xl text-white/60 hover:bg-[#c0a280]/20 hover:text-[#c0a280] 
-                       transition-all duration-200 group relative`}
-            title={collapsed ? 'Starta guide' : undefined}
-          >
-            <HelpCircle className="w-5 h-5 flex-shrink-0" />
-            {!collapsed && <span className="text-sm">Starta guide</span>}
-            {collapsed && (
-              <div className="absolute left-full ml-2 px-3 py-1.5 bg-[#1a1a1a] text-white text-xs rounded-lg 
-                              opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 
-                              shadow-xl border border-white/10">
-                Starta guide
-              </div>
-            )}
-          </button>
-
           {/* Settings */}
           <Link
             href="/settings"
             className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'} 
-                       px-3 py-2 rounded-xl transition-all duration-200 group relative
+                       px-3 py-2.5 rounded-xl transition-all duration-200 group relative
                        ${pathname === '/settings' || pathname.startsWith('/settings/')
                          ? 'bg-[#c0a280] text-white' 
                          : 'text-white/60 hover:bg-white/5 hover:text-white'}`}
             title={collapsed ? 'Inställningar' : undefined}
           >
             <Settings className="w-5 h-5 flex-shrink-0" />
-            {!collapsed && <span className="text-sm">Inställningar</span>}
+            {!collapsed && <span className="text-sm font-medium">Inställningar</span>}
             {collapsed && (
               <div className="absolute left-full ml-2 px-3 py-1.5 bg-[#1a1a1a] text-white text-xs rounded-lg 
                               opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 
@@ -653,12 +676,12 @@ function UnifiedSidebarContent() {
           <button
             onClick={handleLogout}
             className={`w-full flex items-center ${collapsed ? 'justify-center' : 'gap-3'} 
-                       px-3 py-2 rounded-xl text-white/60 hover:text-red-400 hover:bg-red-500/10 
+                       px-3 py-2.5 rounded-xl text-white/60 hover:text-red-400 hover:bg-red-500/10 
                        transition-all duration-200 group relative`}
             title={collapsed ? 'Logga ut' : undefined}
           >
             <LogOut className="w-5 h-5 flex-shrink-0" />
-            {!collapsed && <span className="text-sm">Logga ut</span>}
+            {!collapsed && <span className="text-sm font-medium">Logga ut</span>}
             {collapsed && (
               <div className="absolute left-full ml-2 px-3 py-1.5 bg-[#1a1a1a] text-white text-xs rounded-lg 
                               opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 
@@ -669,6 +692,7 @@ function UnifiedSidebarContent() {
           </button>
         </div>
       </div>
+      </nav>
 
       {/* Interactive Onboarding Wizard */}
       <InteractiveOnboardingWizard

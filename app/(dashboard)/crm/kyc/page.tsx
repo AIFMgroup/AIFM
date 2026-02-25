@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Shield, Search, Plus, Filter, ChevronRight, AlertTriangle,
   CheckCircle2, Clock, XCircle, RefreshCw, FileText, User,
   Building2, Calendar, ArrowUpDown, MoreHorizontal, Eye,
-  Download, Trash2, Edit
+  Download, Trash2, Edit, Upload, Sparkles
 } from 'lucide-react';
-import { KycRecord, KycStatus, CrmCompany } from '@/lib/crm/types';
+import { KycRecord, KycStatus, KycChecklistItem } from '@/lib/crm/types';
+import { useBackgroundAnalysis } from '@/lib/analysis/useBackgroundAnalysis';
+import AnalysisProgressBar from '@/components/ui/AnalysisProgressBar';
 
 // ============================================================================
 // Mock Data
@@ -224,7 +226,7 @@ function KycDetailModal({ record, companyName, onClose, onApprove, onReject }: K
                       <div className="w-2 h-2 bg-white rounded-full" />
                     )}
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <p className={`text-sm font-medium ${
                       item.completed ? 'text-green-900' : 'text-gray-700'
                     }`}>
@@ -233,6 +235,9 @@ function KycDetailModal({ record, companyName, onClose, onApprove, onReject }: K
                     </p>
                     {item.completedAt && (
                       <p className="text-xs text-gray-500">Slutförd {item.completedAt}</p>
+                    )}
+                    {item.notes && (
+                      <p className="text-xs text-gray-600 mt-1">{item.notes}</p>
                     )}
                   </div>
                   {item.documentId && (
@@ -280,12 +285,22 @@ function KycDetailModal({ record, companyName, onClose, onApprove, onReject }: K
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800"
-          >
-            Stäng
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800"
+            >
+              Stäng
+            </button>
+            <button
+              onClick={handleExportPdf}
+              disabled={exportingPdf}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg disabled:opacity-50"
+            >
+              <Download className="w-4 h-4" />
+              {exportingPdf ? 'Skapar...' : 'Exportera PDF'}
+            </button>
+          </div>
           
           {record.status === 'pending_review' && (
             <div className="flex items-center gap-2">
@@ -324,7 +339,7 @@ interface NewKycModalProps {
   onSave: (data: Partial<KycRecord>) => void;
 }
 
-const DEFAULT_CHECKLIST = [
+const DEFAULT_CHECKLIST: KycChecklistItem[] = [
   { id: 'c1', name: 'Verklig huvudman identifierad', required: true, completed: false },
   { id: 'c2', name: 'ID-verifiering', required: true, completed: false },
   { id: 'c3', name: 'Adressverifiering', required: true, completed: false },
@@ -334,25 +349,69 @@ const DEFAULT_CHECKLIST = [
   { id: 'c7', name: 'Kapitalets ursprung verifierat', required: false, completed: false },
 ];
 
+const KYC_ACCEPTED_TYPES = '.pdf,.doc,.docx,.xls,.xlsx';
+const KYC_MAX_FILE_SIZE_MB = 25;
+
 function NewKycModal({ onClose, onSave }: NewKycModalProps) {
   const [selectedCompany, setSelectedCompany] = useState('');
   const [riskLevel, setRiskLevel] = useState<'low' | 'medium' | 'high'>('medium');
-  const [checklist, setChecklist] = useState(DEFAULT_CHECKLIST);
+  const [checklist, setChecklist] = useState<KycChecklistItem[]>(() => [...DEFAULT_CHECKLIST]);
   const [showEdd, setShowEdd] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
+  const [aiFilled, setAiFilled] = useState<Set<string>>(new Set());
+  const analysis = useBackgroundAnalysis('kyc');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (analysis.isDone) {
+      const result = analysis.consumeResult();
+      if (result?.answers && result?.details) {
+        setChecklist((prev) =>
+          prev.map((item) => ({
+            ...item,
+            notes: result.details![item.id] ?? item.notes,
+            completed: result.answers![item.id] === 'yes' ? true : result.answers![item.id] === 'no' ? false : item.completed,
+          }))
+        );
+        setAiFilled(new Set(Object.keys(result.details)));
+      }
+    }
+  }, [analysis.isDone, analysis.consumeResult]);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    const items = Array.from(e.dataTransfer.files).filter((f) =>
+      /\.(pdf|docx?|xlsx?)$/i.test(f.name)
+    );
+    if (items.some((f) => f.size > KYC_MAX_FILE_SIZE_MB * 1024 * 1024)) return;
+    setFiles((prev) => [...prev, ...items].slice(0, 10));
+  }, []);
+
+  const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const items = Array.from(e.target.files || []).filter((f) =>
+      /\.(pdf|docx?|xlsx?)$/i.test(f.name)
+    );
+    setFiles((prev) => [...prev, ...items].slice(0, 10));
+    e.target.value = '';
+  }, []);
+
+  const handleAnalyze = useCallback(() => {
+    if (files.length === 0) return;
+    analysis.startAnalysis('/api/kyc/analyze', files);
+  }, [files, analysis.startAnalysis]);
 
   const handleSave = () => {
     if (!selectedCompany) return;
-    
+    const finalChecklist = showEdd
+      ? [...checklist, { id: 'edd', name: 'Förstärkt kundkännedom (EDD)', required: true, completed: false } as KycChecklistItem]
+      : checklist;
     const newRecord: Partial<KycRecord> = {
       crmCompanyId: selectedCompany,
       status: 'in_progress',
       riskLevel,
-      checklist: showEdd 
-        ? [...checklist, { id: 'edd', name: 'Förstärkt kundkännedom (EDD)', required: true, completed: false }]
-        : checklist,
+      checklist: finalChecklist,
       startedAt: new Date().toISOString().split('T')[0],
     };
-    
     onSave(newRecord);
     onClose();
   };
@@ -361,13 +420,78 @@ function NewKycModal({ onClose, onSave }: NewKycModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full">
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col">
         <div className="px-6 py-4 border-b border-gray-100">
           <h2 className="text-lg font-semibold text-gray-900">Ny KYC-granskning</h2>
           <p className="text-sm text-gray-500">Starta en ny kundkännedomskontroll</p>
         </div>
 
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4 overflow-y-auto flex-1">
+          {/* Document upload & AI analysis */}
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-2">Dokument (valfritt – för AI-ifyllning)</p>
+            <div
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleDrop}
+              className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center hover:border-[#c0a280]/50 transition-colors"
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={KYC_ACCEPTED_TYPES}
+                multiple
+                className="hidden"
+                onChange={handleFileInput}
+              />
+              <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+              <p className="text-sm text-gray-600 mb-1">Dra hit PDF, Word eller Excel (t.ex. årsredovisning, UBO)</p>
+              <p className="text-xs text-gray-500 mb-2">Max {KYC_MAX_FILE_SIZE_MB} MB per fil, upp till 10 filer</p>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="text-sm font-medium text-[#c0a280] hover:underline"
+              >
+                Välj filer
+              </button>
+              {files.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {files.map((f, i) => (
+                    <span key={i} className="text-xs bg-gray-100 px-2 py-0.5 rounded">
+                      {f.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            {analysis.isRunning && (
+              <div className="mt-3">
+                <AnalysisProgressBar
+                  isActive
+                  progress={analysis.progress}
+                  message={analysis.message}
+                  totalChunks={analysis.totalChunks}
+                  completedChunks={analysis.completedChunks}
+                />
+              </div>
+            )}
+            {files.length > 0 && !analysis.isRunning && (
+              <button
+                type="button"
+                onClick={handleAnalyze}
+                className="mt-2 flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-[#c0a280] hover:bg-[#b09270] rounded-lg transition-colors"
+              >
+                <Sparkles className="w-4 h-4" />
+                Analysera med agent
+              </button>
+            )}
+            {aiFilled.size > 0 && (
+              <p className="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5" />
+                {aiFilled.size} punkter ifyllda av agenten. Granska nedan.
+              </p>
+            )}
+          </div>
+
           {/* Company Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -439,16 +563,29 @@ function NewKycModal({ onClose, onSave }: NewKycModalProps) {
           {/* Checklist Preview */}
           <div>
             <p className="text-sm font-medium text-gray-700 mb-2">Inkluderade kontroller</p>
-            <div className="space-y-1 max-h-40 overflow-y-auto">
-              {checklist.map((item) => (
-                <div key={item.id} className="flex items-center gap-2 text-sm text-gray-600">
-                  <div className="w-1.5 h-1.5 bg-gray-300 rounded-full" />
-                  {item.name}
-                  {item.required && <span className="text-red-500">*</span>}
-                </div>
-              ))}
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {checklist.map((item) => {
+                const isAgentFilled = aiFilled.has(item.id) && (item.notes ?? '').trim() !== '';
+                return (
+                  <div key={item.id} className="p-2 rounded-lg border border-gray-100 bg-gray-50/50">
+                    <div className="flex items-center gap-2 text-sm text-gray-700">
+                      <div className={`w-1.5 h-1.5 rounded-full ${item.completed ? 'bg-green-500' : 'bg-gray-300'}`} />
+                      {item.name}
+                      {item.required && <span className="text-red-500">*</span>}
+                      {isAgentFilled && (
+                        <span className="ml-1 px-1.5 py-0.5 text-xs font-medium rounded bg-[#c0a280]/20 text-[#2d2a26]">
+                          Agent-ifyllt
+                        </span>
+                      )}
+                    </div>
+                    {item.notes && (
+                      <p className="mt-1 text-xs text-gray-500 pl-3.5">{item.notes}</p>
+                    )}
+                  </div>
+                );
+              })}
               {showEdd && (
-                <div className="flex items-center gap-2 text-sm text-amber-700">
+                <div className="flex items-center gap-2 text-sm text-amber-700 p-2 rounded-lg bg-amber-50/50 border border-amber-100">
                   <div className="w-1.5 h-1.5 bg-amber-400 rounded-full" />
                   Förstärkt kundkännedom (EDD)
                   <span className="text-red-500">*</span>

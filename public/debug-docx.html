@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head><title>Debug DOCX</title></head>
+<body style="font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 20px;">
+  <h2>Debug DOCX Editor</h2>
+  <p>Upload a .docx file to test the editor. It will add a comment and return the modified file.</p>
+  
+  <input type="file" id="fileInput" accept=".docx" style="margin: 20px 0; display: block;">
+  
+  <div style="display: flex; gap: 10px;">
+    <button onclick="testDocx(false)" style="padding: 10px 20px; cursor: pointer;">Test Modified</button>
+    <button onclick="testDocx(true)" style="padding: 10px 20px; cursor: pointer;">Test Original (passthrough)</button>
+  </div>
+  
+  <div id="status" style="margin-top: 20px; padding: 10px; background: #f5f5f5; border-radius: 8px; display: none;"></div>
+
+  <hr style="margin: 30px 0;">
+  <h3>Test Base64 Round-trip</h3>
+  <p>This tests the exact same flow as the chat: file -> base64 -> server -> base64 -> download</p>
+  <button onclick="testBase64Roundtrip()" style="padding: 10px 20px; cursor: pointer;">Test Base64 Round-trip</button>
+
+  <script>
+    function showStatus(msg) {
+      const el = document.getElementById('status');
+      el.style.display = 'block';
+      el.textContent = msg;
+    }
+
+    async function testDocx(original) {
+      const file = document.getElementById('fileInput').files[0];
+      if (!file) { alert('Select a file first'); return; }
+      
+      showStatus('Uploading...');
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const url = '/api/debug/test-docx' + (original ? '?original=true' : '');
+      const resp = await fetch(url, { method: 'POST', body: formData });
+      
+      if (!resp.ok) {
+        const err = await resp.json();
+        showStatus('Error: ' + JSON.stringify(err));
+        return;
+      }
+      
+      const blob = await resp.blob();
+      showStatus(`Success! File size: ${blob.size} bytes. Downloading...`);
+      
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = file.name.replace('.docx', original ? '_original.docx' : '_reviewed.docx');
+      a.click();
+    }
+
+    async function testBase64Roundtrip() {
+      const file = document.getElementById('fileInput').files[0];
+      if (!file) { alert('Select a file first'); return; }
+      
+      showStatus('Reading file as base64...');
+      const arrayBuffer = await file.arrayBuffer();
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+      showStatus(`Base64 length: ${base64.length}. Sending to server...`);
+      
+      const resp = await fetch('/api/debug/test-docx', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ base64, fileName: file.name }),
+      });
+      
+      if (!resp.ok) {
+        const err = await resp.json();
+        showStatus('Error: ' + JSON.stringify(err));
+        return;
+      }
+      
+      const blob = await resp.blob();
+      showStatus(`Success! Output: ${blob.size} bytes (input base64: ${base64.length} chars). Downloading...`);
+      
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = file.name.replace('.docx', '_base64_test.docx');
+      a.click();
+    }
+  </script>
+</body>
+</html>

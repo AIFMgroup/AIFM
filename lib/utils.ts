@@ -58,3 +58,33 @@ export function getInitials(name: string | null | undefined): string {
     .toUpperCase()
     .slice(0, 2);
 }
+
+/**
+ * Returns today's date as YYYY-MM-DD in Europe/Stockholm timezone.
+ * Use this instead of `new Date().toISOString().split('T')[0]` on the server
+ * to avoid off-by-one date errors around midnight.
+ */
+export function todayStockholm(date?: Date): string {
+  const d = date ?? new Date();
+  const parts = new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'Europe/Stockholm',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(d);
+  const get = (t: string) => parts.find(p => p.type === t)?.value || '';
+  return `${get('year')}-${get('month')}-${get('day')}`;
+}
+
+/**
+ * Returns current time as HH:MM in Europe/Stockholm timezone.
+ */
+export function nowStockholm(date?: Date): string {
+  const d = date ?? new Date();
+  return d.toLocaleTimeString('sv-SE', {
+    timeZone: 'Europe/Stockholm',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+}

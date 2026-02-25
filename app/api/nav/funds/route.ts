@@ -1,8 +1,8 @@
 /**
  * NAV Funds API
  *
- * Hämtar fonddata och NAV-värden från Fund Registry.
- * Faller tillbaka på mock-data om registret är tomt.
+ * Hämtar fonddata och NAV-värden.
+ * Prioritetsordning: ISEC SECURA → Fund Registry → Database → Mock
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -33,13 +33,85 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const navDate = searchParams.get('date') || new Date().toISOString().split('T')[0];
     const fundId = searchParams.get('fundId');
-    const source = searchParams.get('source') || 'auto'; // 'fund_registry', 'database', 'mock', 'auto'
+    const source = searchParams.get('source') || 'auto';
 
     let navData: typeof MOCK_FUND_NAVS = [];
     let dataSource = 'mock';
 
-    // Try Fund Registry first
-    if (source === 'fund_registry' || source === 'auto') {
+    // 1) ISEC SECURA — primary source
+    if (source === 'isec' || source === 'auto') {
+      try {
+        const { getAllISECNAVData } = await import('@/lib/integrations/isec/isec-data-service');
+        const isecFunds = await getAllISECNAVData();
+
+        if (isecFunds.length > 0) {
+          const results: typeof MOCK_FUND_NAVS = [];
+          for (const fund of isecFunds) {
+            if (fund.shareClasses.length > 0) {
+              for (const sc of fund.shareClasses) {
+                const positionsTotal = fund.positions.reduce((s, p) => s + p.marketValue, 0);
+                const cashTotal = fund.cashBalances.reduce((s, c) => s + c.balance, 0);
+                const feesTotal = fund.accruedFees.reduce((s, f) => s + f.accruedAmount, 0);
+                const grossAssets = positionsTotal + cashTotal;
+                const netAssetValue = sc.totalNav || (grossAssets - feesTotal);
+
+                results.push({
+                  fundId: fund.fundId,
+                  shareClassId: sc.id,
+                  isin: sc.isin,
+                  fundName: fund.fundName,
+                  shareClassName: sc.name,
+                  currency: sc.currency,
+                  navPerShare: sc.navPerShare || 0,
+                  previousNav: undefined as unknown as number,
+                  navChange: 0,
+                  navChangePercent: 0,
+                  navDate: fund.navDate,
+                  netAssetValue,
+                  grossAssets,
+                  totalLiabilities: feesTotal,
+                  sharesOutstanding: sc.outstandingShares || 0,
+                  status: 'PRELIMINARY' as const,
+                });
+              }
+            } else {
+              const positionsTotal = fund.positions.reduce((s, p) => s + p.marketValue, 0);
+              const cashTotal = fund.cashBalances.reduce((s, c) => s + c.balance, 0);
+              const feesTotal = fund.accruedFees.reduce((s, f) => s + f.accruedAmount, 0);
+              const grossAssets = positionsTotal + cashTotal;
+
+              results.push({
+                fundId: fund.fundId,
+                shareClassId: `${fund.fundId}-default`,
+                isin: '',
+                fundName: fund.fundName,
+                shareClassName: 'A',
+                currency: fund.currency,
+                navPerShare: 0,
+                previousNav: undefined as unknown as number,
+                navChange: 0,
+                navChangePercent: 0,
+                navDate: fund.navDate,
+                netAssetValue: grossAssets - feesTotal,
+                grossAssets,
+                totalLiabilities: feesTotal,
+                sharesOutstanding: 0,
+                status: 'PRELIMINARY' as const,
+              });
+            }
+          }
+          if (results.length > 0) {
+            navData = results;
+            dataSource = 'isec';
+          }
+        }
+      } catch (err) {
+        console.warn('[NAV Funds API] ISEC fetch failed, falling back:', err);
+      }
+    }
+
+    // 2) Fund Registry
+    if (navData.length === 0 && (source === 'fund_registry' || source === 'auto')) {
       try {
         const registry = getFundRegistry();
         const funds = await registry.listFunds();
@@ -82,7 +154,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Try database if Fund Registry had no data
+    // 3) Database
     if (navData.length === 0 && (source === 'database' || source === 'auto')) {
       try {
         const navStore = getNAVRecordStore();
@@ -121,7 +193,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Fall back to mock data
+    // 4) Mock fallback
     if (navData.length === 0) {
       navData = MOCK_FUND_NAVS;
       dataSource = 'mock';

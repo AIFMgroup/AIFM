@@ -56,10 +56,7 @@ interface Company {
 
 const MOCK_COMPANIES: Company[] = [
   { id: 'all', name: 'Alla bolag', shortName: 'Alla' },
-  { id: 'company-1', name: 'AIFM Kapital AB', shortName: 'AIFM Kapital', orgNumber: '556789-0123' },
-  { id: 'company-2', name: 'Nordic Fund Management', shortName: 'Nordic Fund', orgNumber: '556123-4567' },
-  { id: 'company-3', name: 'Swedish Venture Partners', shortName: 'SVP', orgNumber: '556987-6543' },
-  { id: 'company-4', name: 'Baltic Investment Group', shortName: 'BIG', orgNumber: '556456-7890' },
+  { id: 'aifm-group', name: 'AIFM Group AB', shortName: 'AIFM Group', orgNumber: '559123-4567' },
 ];
 
 // ============================================================================

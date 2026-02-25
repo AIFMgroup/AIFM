@@ -3,14 +3,27 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { 
-  Bell, X, Check, Clock, AlertCircle, CheckCircle2, 
-  DollarSign, FileText, Shield, Calendar,
+  Bell, X, Check, Clock, AlertCircle, CheckCircle2, XCircle,
+  DollarSign, FileText, Shield, Calendar, MessageSquare,
   ArrowRight, Trash2, CheckCheck
 } from 'lucide-react';
 import { useCompany } from './CompanyContext';
 
 // Notification types
-type NotificationType = 'approval' | 'capital_call' | 'distribution' | 'compliance' | 'task' | 'document' | 'system';
+type NotificationType =
+  | 'approval'
+  | 'capital_call'
+  | 'distribution'
+  | 'compliance'
+  | 'task'
+  | 'document'
+  | 'system'
+  | 'security_expiring'
+  | 'approval_completed'
+  | 'approval_rejected'
+  | 'info_requested'
+  | 'info_responded'
+  | 'approval_comment';
 
 interface Notification {
   id: string;
@@ -24,143 +37,7 @@ interface Notification {
   fundId?: string;
 }
 
-// Mock notifications data per fund
-const mockNotificationsPerFund: Record<string, Notification[]> = {
-  'company-1': [
-    {
-      id: 'n1',
-      type: 'approval',
-      title: 'Godkännande krävs',
-      message: 'Utdelning på 2.5 MSEK väntar på ditt godkännande',
-      timestamp: new Date(Date.now() - 1000 * 60 * 5), // 5 min ago
-      read: false,
-      link: '/approvals',
-      priority: 'high',
-    },
-    {
-      id: 'n2',
-      type: 'capital_call',
-      title: 'Kapitalanrop skickat',
-      message: 'Kapitalanrop #2024-Q4 har skickats till 12 investerare',
-      timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 min ago
-      read: false,
-      link: '/capital-calls',
-      priority: 'medium',
-    },
-    {
-      id: 'n3',
-      type: 'compliance',
-      title: 'KYC-uppdatering',
-      message: 'Investerare "Pension Fund AB" behöver uppdaterad KYC',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-      read: true,
-      link: '/investors',
-      priority: 'high',
-    },
-    {
-      id: 'n4',
-      type: 'task',
-      title: 'Ny uppgift tilldelad',
-      message: 'Förbered Q4 styrelsemöte - deadline 10 dec',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4), // 4 hours ago
-      read: true,
-      link: '/tasks',
-    },
-    {
-      id: 'n5',
-      type: 'document',
-      title: 'Dokument laddat upp',
-      message: 'Kvartalsrapport Q3 har laddats upp till datarummet',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-      read: true,
-      link: '/data-rooms',
-    },
-  ],
-  'company-2': [
-    {
-      id: 'n6',
-      type: 'distribution',
-      title: 'Utdelning godkänd',
-      message: 'Exit-utdelning på 8.5 MEUR har godkänts av alla parter',
-      timestamp: new Date(Date.now() - 1000 * 60 * 15),
-      read: false,
-      link: '/distributions',
-      priority: 'medium',
-    },
-    {
-      id: 'n7',
-      type: 'compliance',
-      title: 'Due Diligence-påminnelse',
-      message: 'CloudTech DD ska slutföras senast 5 december',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60),
-      read: false,
-      link: '/tasks',
-      priority: 'high',
-    },
-  ],
-  'company-3': [
-    {
-      id: 'n8',
-      type: 'capital_call',
-      title: 'Delbetalning mottagen',
-      message: '15 MSEK mottaget från Malmö Kommun Pension',
-      timestamp: new Date(Date.now() - 1000 * 60 * 45),
-      read: false,
-      link: '/capital-calls',
-    },
-    {
-      id: 'n9',
-      type: 'document',
-      title: 'Fastighetsvärdering klar',
-      message: 'Nya värderingar för 4 fastigheter har laddats upp',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3),
-      read: true,
-      link: '/data-rooms',
-    },
-  ],
-  'company-4': [
-    {
-      id: 'n10',
-      type: 'approval',
-      title: 'Investering väntar',
-      message: 'Serie A i GreenPower (5 MEUR) väntar på godkännande',
-      timestamp: new Date(Date.now() - 1000 * 60 * 10),
-      read: false,
-      link: '/approvals',
-      priority: 'high',
-    },
-    {
-      id: 'n11',
-      type: 'task',
-      title: 'Impact-rapport',
-      message: 'Kvartalsvis påverkansrapport ska lämnas in',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5),
-      read: false,
-      link: '/tasks',
-      priority: 'medium',
-    },
-  ],
-  'company-5': [
-    {
-      id: 'n12',
-      type: 'compliance',
-      title: 'PEP-flagga',
-      message: 'Ny investerare flaggad som PEP - kräver extra granskning',
-      timestamp: new Date(Date.now() - 1000 * 60 * 20),
-      read: false,
-      link: '/investors',
-      priority: 'high',
-    },
-    {
-      id: 'n13',
-      type: 'system',
-      title: 'LP-uppdatering skickad',
-      message: 'Kvartalsuppdatering har skickats till alla LPs',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6),
-      read: true,
-    },
-  ],
-};
+const mockNotificationsPerFund: Record<string, Notification[]> = {};
 
 // Icon mapping
 const typeIcons: Record<NotificationType, typeof Bell> = {
@@ -171,6 +48,11 @@ const typeIcons: Record<NotificationType, typeof Bell> = {
   task: Calendar,
   document: FileText,
   system: Bell,
+  security_expiring: AlertCircle,
+  approval_completed: CheckCircle2,
+  approval_rejected: XCircle,
+  info_requested: AlertCircle,
+  info_responded: CheckCircle2,
 };
 
 const typeColors: Record<NotificationType, string> = {
@@ -181,6 +63,11 @@ const typeColors: Record<NotificationType, string> = {
   task: 'text-indigo-600 bg-indigo-50',
   document: 'text-gray-600 bg-gray-50',
   system: 'text-gray-600 bg-gray-50',
+  security_expiring: 'text-amber-600 bg-amber-50',
+  approval_completed: 'text-green-600 bg-green-50',
+  approval_rejected: 'text-red-600 bg-red-50',
+  info_requested: 'text-amber-600 bg-amber-50',
+  info_responded: 'text-green-600 bg-green-50',
 };
 
 // Time formatting
@@ -204,10 +91,50 @@ export function NotificationPanel() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Load notifications for selected company
+  // Load notifications: merge mock data with real API notifications
   useEffect(() => {
     const fundNotifications = mockNotificationsPerFund[selectedCompany.id] || [];
     setNotifications(fundNotifications);
+
+    fetch('/api/auth/role', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((authData: { email?: string | null }) => {
+        if (!authData.email) return;
+        return fetch(`/api/notifications?email=${encodeURIComponent(authData.email)}`);
+      })
+      .then((r) => r?.json())
+      .then((data: { notifications?: Array<{
+        id: string; type: string; title: string; message: string;
+        link?: string; priority?: string; read: boolean; createdAt: string;
+      }> } | undefined) => {
+        if (!data?.notifications?.length) return;
+        const apiNotifs: Notification[] = data.notifications.map((n) => ({
+          id: n.id,
+          type: (n.type === 'security_review_alert' ? 'compliance' :
+                 n.type === 'security_expiring' ? 'security_expiring' :
+                 n.type === 'approval_completed' ? 'approval_completed' :
+                 n.type === 'approval_rejected' ? 'approval_rejected' :
+                 n.type === 'info_requested' ? 'info_requested' :
+                 n.type === 'info_responded' ? 'info_responded' :
+                 n.type === 'approval_comment' ? 'approval_comment' :
+                 n.type) as NotificationType,
+          title: n.title,
+          message: n.message,
+          timestamp: new Date(n.createdAt),
+          read: n.read,
+          link: n.link,
+          priority: (n.priority || 'medium') as 'high' | 'medium' | 'low',
+        }));
+        setNotifications((prev) => {
+          const existingIds = new Set(prev.map((p) => p.id));
+          const newOnes = apiNotifs.filter((n) => !existingIds.has(n.id));
+          if (newOnes.length === 0) return prev;
+          return [...newOnes, ...prev].sort(
+            (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+          );
+        });
+      })
+      .catch(() => {});
   }, [selectedCompany.id]);
 
   // Close panel when clicking outside

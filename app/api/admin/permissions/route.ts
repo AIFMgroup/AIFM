@@ -139,6 +139,32 @@ const DEFAULT_ROLES: Role[] = [
     precedence: 3,
   },
   {
+    name: 'operation',
+    description: 'Operations - daglig fondadministration och NAV',
+    permissions: [
+      'dashboard.view',
+      'accounting.view', 'accounting.edit',
+      'compliance.view',
+      'crm.view', 'crm.edit',
+      'documents.view', 'documents.upload',
+      'workflows.view', 'workflows.execute',
+    ],
+    isSystemRole: true,
+    precedence: 3,
+  },
+  {
+    name: 'forvaltare',
+    description: 'Förvaltare - fondförvaltning och investeringsanalys',
+    permissions: [
+      'dashboard.view',
+      'compliance.view',
+      'documents.view', 'documents.upload',
+      'workflows.view', 'workflows.execute',
+    ],
+    isSystemRole: true,
+    precedence: 4,
+  },
+  {
     name: 'accountant',
     description: 'Redovisningskonsult - bokföring och rapporter',
     permissions: [
@@ -149,7 +175,7 @@ const DEFAULT_ROLES: Role[] = [
       'workflows.view', 'workflows.execute',
     ],
     isSystemRole: true,
-    precedence: 4,
+    precedence: 5,
   },
   {
     name: 'compliance',
@@ -163,7 +189,7 @@ const DEFAULT_ROLES: Role[] = [
       'admin.audit',
     ],
     isSystemRole: true,
-    precedence: 4,
+    precedence: 5,
   },
   {
     name: 'customer',
@@ -186,7 +212,7 @@ const DEFAULT_ROLES: Role[] = [
       'admin.audit',
     ],
     isSystemRole: true,
-    precedence: 5,
+    precedence: 6,
   },
 ];
 

@@ -1,0 +1,33 @@
+node_modules
+npm-debug.log
+.git
+.DS_Store
+
+# Env / secrets
+.env
+.env.*
+
+# Logs & caches
+*.log
+.turbo
+.swc
+.cache
+
+# Tests / coverage
+coverage
+test
+
+# Build metadata
+tsconfig.tsbuildinfo
+
+# Keep .next/standalone and .next/static (needed for pre-built deploy)
+# .next/cache is large and not needed in the image
+.next/cache
+
+
+
+
+
+
+
+

@@ -1,21 +1,21 @@
 /**
  * NAV Approvals API
- * 
- * Hanterar NAV-godkännanden med 4-ögon-principen
- * Sparar till DynamoDB
+ *
+ * Hanterar NAV-godkännanden med 4-ögon-principen.
+ * Använder DynamoDB när NAV_APPROVALS_TABLE är satt; annars mock för demo.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { 
-  getNAVApprovalStore, 
+import {
+  getNAVApprovalStore,
   getNAVRecordStore,
   NAVApproval,
 } from '@/lib/nav-engine/nav-store';
+import { triggerDistributionAfterApproval } from '@/lib/nav-engine/distribution';
 
-// ============================================================================
-// Mock Approval Data (for demo when DB not available)
-// ============================================================================
+const USE_DYNAMODB = !!process.env.NAV_APPROVALS_TABLE;
 
+// Mock data only when DynamoDB is not configured
 const MOCK_PENDING_APPROVAL: NAVApproval = {
   approvalId: 'APR-2026-02-04-001',
   navDate: new Date().toISOString().split('T')[0],
@@ -32,8 +32,6 @@ const MOCK_PENDING_APPROVAL: NAVApproval = {
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };
-
-// In-memory store for demo (when DynamoDB not available)
 let mockApprovals: NAVApproval[] = [MOCK_PENDING_APPROVAL];
 
 // ============================================================================
@@ -48,51 +46,49 @@ export async function GET(request: NextRequest) {
     const navDate = searchParams.get('date');
 
     let approvals: NAVApproval[] = [];
-    let source = 'mock';
+    let source: 'database' | 'mock' = 'mock';
 
-    // Try DynamoDB first
-    try {
+    if (USE_DYNAMODB) {
       const approvalStore = getNAVApprovalStore();
-      
-      if (approvalId) {
-        const approval = await approvalStore.getApproval(approvalId);
-        if (approval) {
-          approvals = [approval];
-          source = 'database';
+      try {
+        if (approvalId) {
+          const approval = await approvalStore.getApproval(approvalId);
+          if (approval) {
+            approvals = [approval];
+            source = 'database';
+          }
+        } else {
+          const pending = await approvalStore.getPendingApprovals();
+          if (status) {
+            approvals = pending.filter((a) => a.status === status);
+          } else if (navDate) {
+            approvals = pending.filter((a) => a.navDate === navDate);
+          } else {
+            approvals = pending;
+          }
+          if (approvals.length > 0) source = 'database';
         }
-      } else if (status === 'PENDING_FIRST' || status === 'PENDING_SECOND') {
-        approvals = await approvalStore.getPendingApprovals();
-        source = 'database';
-      }
-    } catch (dbError) {
-      console.warn('[NAV Approvals API] DynamoDB query failed, using mock:', dbError);
-    }
-
-    // Fall back to mock data
-    if (approvals.length === 0 && source === 'mock') {
-      if (approvalId) {
-        approvals = mockApprovals.filter(a => a.approvalId === approvalId);
-      } else if (status) {
-        approvals = mockApprovals.filter(a => a.status === status);
-      } else if (navDate) {
-        approvals = mockApprovals.filter(a => a.navDate === navDate);
-      } else {
-        // Return pending approvals by default
-        approvals = mockApprovals.filter(a => 
-          a.status === 'PENDING_FIRST' || a.status === 'PENDING_SECOND'
+      } catch (dbError) {
+        console.error('[NAV Approvals API] DynamoDB query failed:', dbError);
+        return NextResponse.json(
+          { success: false, error: 'Failed to fetch approvals from database' },
+          { status: 500 }
         );
       }
+    }
+
+    if (approvals.length === 0 && !USE_DYNAMODB) {
+      if (approvalId) approvals = mockApprovals.filter((a) => a.approvalId === approvalId);
+      else if (status) approvals = mockApprovals.filter((a) => a.status === status);
+      else if (navDate) approvals = mockApprovals.filter((a) => a.navDate === navDate);
+      else approvals = mockApprovals.filter((a) => a.status === 'PENDING_FIRST' || a.status === 'PENDING_SECOND');
     }
 
     return NextResponse.json({
       success: true,
       data: approvals,
-      meta: {
-        source,
-        timestamp: new Date().toISOString(),
-      },
+      meta: { source, timestamp: new Date().toISOString() },
     });
-
   } catch (error) {
     console.error('[NAV Approvals API] GET error:', error);
     return NextResponse.json(
@@ -127,21 +123,25 @@ export async function POST(request: NextRequest) {
 
     switch (action) {
       case 'create': {
-        // Create new approval request
         const { runId, navDate, navSummary } = body;
-        
         if (!runId || !navDate || !navSummary) {
           return NextResponse.json(
             { success: false, error: 'runId, navDate, and navSummary are required' },
             { status: 400 }
           );
         }
-
-        try {
-          result = await approvalStore.createApproval(runId, navDate, navSummary);
-          source = 'database';
-        } catch {
-          // Fall back to mock
+        if (USE_DYNAMODB) {
+          try {
+            result = await approvalStore.createApproval(runId, navDate, navSummary as Parameters<typeof approvalStore.createApproval>[2]);
+            source = 'database';
+          } catch (err) {
+            console.error('[NAV Approvals API] create failed:', err);
+            return NextResponse.json(
+              { success: false, error: 'Failed to create approval' },
+              { status: 500 }
+            );
+          }
+        } else {
           const newApproval: NAVApproval = {
             approvalId: `APR-${navDate}-${Date.now()}`,
             navDate,
@@ -165,23 +165,24 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           );
         }
-
-        try {
-          result = await approvalStore.approveFirst(approvalId, userId, userName, comment);
-          source = 'database';
-        } catch {
-          // Fall back to mock
-          const idx = mockApprovals.findIndex(a => a.approvalId === approvalId);
+        if (USE_DYNAMODB) {
+          try {
+            result = await approvalStore.approveFirst(approvalId, userId, userName, comment);
+            source = 'database';
+          } catch (err) {
+            console.error('[NAV Approvals API] approve_first failed:', err);
+            return NextResponse.json(
+              { success: false, error: 'Failed to record first approval' },
+              { status: 500 }
+            );
+          }
+        } else {
+          const idx = mockApprovals.findIndex((a) => a.approvalId === approvalId);
           if (idx >= 0) {
             mockApprovals[idx] = {
               ...mockApprovals[idx],
               status: 'PENDING_SECOND',
-              firstApprover: {
-                userId,
-                name: userName,
-                approvedAt: new Date().toISOString(),
-                comment,
-              },
+              firstApprover: { userId, name: userName, approvedAt: new Date().toISOString(), comment },
               updatedAt: new Date().toISOString(),
             };
             result = mockApprovals[idx];
@@ -197,47 +198,47 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           );
         }
-
-        try {
-          result = await approvalStore.approveSecond(approvalId, userId, userName, comment);
-          source = 'database';
-
-          // Update NAV records status to APPROVED
-          if (result) {
-            for (const nav of result.navSummary) {
-              try {
-                await navRecordStore.updateNAVStatus(
-                  nav.fundId,
-                  nav.shareClassId,
-                  result.navDate,
-                  'APPROVED',
-                  {
-                    approvalId: result.approvalId,
-                    approvedBy: [
-                      result.firstApprover?.userId || '',
-                      result.secondApprover?.userId || '',
-                    ].filter(Boolean),
-                    approvedAt: new Date().toISOString(),
-                  }
-                );
-              } catch (updateError) {
-                console.warn('[NAV Approvals API] Failed to update NAV record status:', updateError);
+        if (USE_DYNAMODB) {
+          try {
+            result = await approvalStore.approveSecond(approvalId, userId, userName, comment);
+            source = 'database';
+            if (result) {
+              for (const nav of result.navSummary) {
+                try {
+                  await navRecordStore.updateNAVStatus(
+                    nav.fundId,
+                    nav.shareClassId,
+                    result.navDate,
+                    'APPROVED',
+                    {
+                      approvalId: result.approvalId,
+                      approvedBy: [
+                        result.firstApprover?.userId || '',
+                        result.secondApprover?.userId || '',
+                      ].filter(Boolean),
+                      approvedAt: new Date().toISOString(),
+                    }
+                  );
+                } catch (updateError) {
+                  console.warn('[NAV Approvals API] Failed to update NAV record status:', updateError);
+                }
               }
+              await triggerDistributionAfterApproval(result);
             }
+          } catch (err) {
+            console.error('[NAV Approvals API] approve_second failed:', err);
+            return NextResponse.json(
+              { success: false, error: 'Failed to record second approval' },
+              { status: 500 }
+            );
           }
-        } catch {
-          // Fall back to mock
-          const idx = mockApprovals.findIndex(a => a.approvalId === approvalId);
+        } else {
+          const idx = mockApprovals.findIndex((a) => a.approvalId === approvalId);
           if (idx >= 0) {
             mockApprovals[idx] = {
               ...mockApprovals[idx],
               status: 'APPROVED',
-              secondApprover: {
-                userId,
-                name: userName,
-                approvedAt: new Date().toISOString(),
-                comment,
-              },
+              secondApprover: { userId, name: userName, approvedAt: new Date().toISOString(), comment },
               updatedAt: new Date().toISOString(),
             };
             result = mockApprovals[idx];
@@ -253,23 +254,24 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           );
         }
-
-        try {
-          result = await approvalStore.reject(approvalId, userId, userName, reason);
-          source = 'database';
-        } catch {
-          // Fall back to mock
-          const idx = mockApprovals.findIndex(a => a.approvalId === approvalId);
+        if (USE_DYNAMODB) {
+          try {
+            result = await approvalStore.reject(approvalId, userId, userName, reason);
+            source = 'database';
+          } catch (err) {
+            console.error('[NAV Approvals API] reject failed:', err);
+            return NextResponse.json(
+              { success: false, error: 'Failed to record rejection' },
+              { status: 500 }
+            );
+          }
+        } else {
+          const idx = mockApprovals.findIndex((a) => a.approvalId === approvalId);
           if (idx >= 0) {
             mockApprovals[idx] = {
               ...mockApprovals[idx],
               status: 'REJECTED',
-              rejectedBy: {
-                userId,
-                name: userName,
-                rejectedAt: new Date().toISOString(),
-                reason,
-              },
+              rejectedBy: { userId, name: userName, rejectedAt: new Date().toISOString(), reason },
               updatedAt: new Date().toISOString(),
             };
             result = mockApprovals[idx];

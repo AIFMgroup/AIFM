@@ -41,6 +41,30 @@ export interface YahooQuoteResult {
   sourceUrl: string;
 }
 
+/** Financial ratios and statistics from quoteSummary (financialData, defaultKeyStatistics, summaryDetail) */
+export interface YahooFinancials {
+  success: boolean;
+  data?: {
+    peRatio?: number;
+    forwardPE?: number;
+    pbRatio?: number;
+    evToEbitda?: number;
+    dividendYield?: number;
+    returnOnEquity?: number;
+    profitMargin?: number;
+    operatingMargin?: number;
+    debtToEquity?: number;
+    revenueGrowth?: number;
+    earningsGrowth?: number;
+    beta?: number;
+    fiftyDayMA?: number;
+    twoHundredDayMA?: number;
+  };
+  error?: string;
+  source: 'yahoo_finance';
+  sourceUrl: string;
+}
+
 export interface LiquidityAnalysis {
   success: boolean;
   data?: {
@@ -287,6 +311,82 @@ export class YahooFinanceClient {
       return {
         success: false,
         error: 'Kunde inte hämta marknadsdata',
+        source: 'yahoo_finance',
+        sourceUrl: `https://finance.yahoo.com/quote/${symbol}`,
+      };
+    }
+  }
+
+  /**
+   * Get financial ratios and statistics (P/E, ROE, margins, beta, etc.) for a symbol
+   */
+  async getFinancials(symbol: string): Promise<YahooFinancials> {
+    const cacheKey = `financials:${symbol.toUpperCase()}`;
+    const cached = await getCached<YahooFinancials>(cacheKey, { prefix: CACHE_PREFIX });
+    if (cached !== null && cached.success) {
+      return cached;
+    }
+    try {
+      const url = `${YAHOO_QUOTESUMMARY_URL}/${symbol}?modules=summaryDetail,financialData,defaultKeyStatistics`;
+      const response = await fetch(url, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AIFM/1.0)' },
+      });
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Kunde inte hämta nyckeltal',
+          source: 'yahoo_finance',
+          sourceUrl: `https://finance.yahoo.com/quote/${symbol}`,
+        };
+      }
+      const data = await response.json();
+      const result = data.quoteSummary?.result?.[0];
+      if (!result) {
+        return {
+          success: false,
+          error: 'Ingen data',
+          source: 'yahoo_finance',
+          sourceUrl: `https://finance.yahoo.com/quote/${symbol}`,
+        };
+      }
+      const summary = result.summaryDetail || {};
+      const financial = result.financialData || {};
+      const stats = result.defaultKeyStatistics || {};
+
+      const raw = (x: unknown) => (x != null && typeof x === 'object' && 'raw' in x ? (x as { raw: number }).raw : undefined);
+      const trailingPE = raw(stats.trailingPE) ?? raw(summary.trailingPE);
+      const forwardPE = raw(stats.forwardPE) ?? raw(summary.forwardPE);
+      const enterpriseValue = raw(summary.enterpriseValue);
+      const ebitda = financial.ebitda?.raw;
+      const evToEbitda = enterpriseValue != null && ebitda != null && ebitda > 0 ? enterpriseValue / ebitda : undefined;
+
+      const out: YahooFinancials = {
+        success: true,
+        data: {
+          peRatio: trailingPE ?? undefined,
+          forwardPE: forwardPE ?? undefined,
+          pbRatio: raw(stats.priceToBook) ?? undefined,
+          evToEbitda,
+          dividendYield: raw(summary.dividendYield) != null ? (raw(summary.dividendYield) as number) * 100 : undefined,
+          returnOnEquity: financial.returnOnEquity?.raw != null ? (financial.returnOnEquity.raw as number) * 100 : undefined,
+          profitMargin: financial.profitMargins?.raw != null ? (financial.profitMargins.raw as number) * 100 : undefined,
+          operatingMargin: financial.operatingMargins?.raw != null ? (financial.operatingMargins.raw as number) * 100 : undefined,
+          debtToEquity: financial.debtToEquity?.raw ?? undefined,
+          revenueGrowth: financial.revenueGrowth?.raw != null ? (financial.revenueGrowth.raw as number) * 100 : undefined,
+          earningsGrowth: financial.earningsGrowth?.raw != null ? (financial.earningsGrowth.raw as number) * 100 : undefined,
+          beta: raw(stats.beta) ?? undefined,
+          fiftyDayMA: raw(stats.fiftyDayAverage) ?? raw(summary.fiftyDayAverage) ?? undefined,
+          twoHundredDayMA: raw(stats.twoHundredDayAverage) ?? raw(summary.twoHundredDayAverage) ?? undefined,
+        },
+        source: 'yahoo_finance',
+        sourceUrl: `https://finance.yahoo.com/quote/${symbol}`,
+      };
+      await setCached(cacheKey, out, { prefix: CACHE_PREFIX, ttlSeconds: QUOTE_CACHE_TTL });
+      return out;
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : 'Failed to fetch financials',
         source: 'yahoo_finance',
         sourceUrl: `https://finance.yahoo.com/quote/${symbol}`,
       };

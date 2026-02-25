@@ -26,6 +26,8 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import type { SecurityApprovalRequest, SecurityApprovalSummary } from '@/lib/integrations/securities';
+import { ApprovalDiscussion } from '@/components/securities/ApprovalDiscussion';
+import { AuditTrailPanel } from '@/components/securities/AuditTrailPanel';
 
 const STATUS_CONFIG = {
   draft: { label: 'Utkast', color: 'bg-gray-100 text-gray-700', icon: FileText },
@@ -62,6 +64,12 @@ export default function SecuritiesPage() {
   const [copySearchResults, setCopySearchResults] = useState<any[]>([]);
   const [isSearchingCopy, setIsSearchingCopy] = useState(false);
   const [showCopyModal, setShowCopyModal] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [revisingId, setRevisingId] = useState<string | null>(null);
+  const [respondingId, setRespondingId] = useState<string | null>(null);
+  const [infoResponseText, setInfoResponseText] = useState<Record<string, string>>({});
+  const [currentUserEmail, setCurrentUserEmail] = useState('');
+  const [currentUserName, setCurrentUserName] = useState('Förvaltare');
 
   useEffect(() => {
     if (searchParams.get('submitted') === 'true') {
@@ -71,13 +79,25 @@ export default function SecuritiesPage() {
   }, [searchParams]);
 
   useEffect(() => {
-    loadApprovals();
-    loadDrafts();
-  }, [statusFilter]);
+    fetch('/api/auth/role', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((data: { name?: string; email?: string }) => {
+        setCurrentUserEmail(data.email ?? '');
+        setCurrentUserName(data.name ?? data.email?.split('@')[0] ?? 'Förvaltare');
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (currentUserEmail) {
+      loadApprovals();
+      loadDrafts();
+    }
+  }, [statusFilter, currentUserEmail]);
 
   const loadDrafts = async () => {
     try {
-      const res = await fetch('/api/securities/drafts?userEmail=user@aifm.se');
+      const res = await fetch(`/api/securities/drafts?userEmail=${encodeURIComponent(currentUserEmail)}`);
       if (res.ok) {
         const data = await res.json();
         setDrafts(data.drafts || []);
@@ -98,7 +118,7 @@ export default function SecuritiesPage() {
       }
 
       // Load approvals with filter
-      let url = '/api/securities/approvals?userEmail=user@aifm.se';
+      let url = `/api/securities/approvals?userEmail=${encodeURIComponent(currentUserEmail)}`;
       if (statusFilter !== 'all') {
         url = `/api/securities/approvals?status=${statusFilter}`;
       }
@@ -140,10 +160,10 @@ export default function SecuritiesPage() {
         body: JSON.stringify({
           action: 'copy',
           sourceId,
-          targetFundId: 'fund-1', // Would be selected by user
-          targetFundName: 'Nordic Ventures I',
-          createdBy: 'Current User',
-          createdByEmail: 'user@aifm.se',
+          targetFundId: '',
+          targetFundName: '',
+          createdBy: currentUserName,
+          createdByEmail: currentUserEmail,
         }),
       });
       if (res.ok) {
@@ -173,7 +193,74 @@ export default function SecuritiesPage() {
 
   const handleDownloadPDF = async (approvalId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    window.open(`/api/securities/pdf?id=${approvalId}&format=download`, '_blank');
+    window.open(`/api/securities/pdf?id=${approvalId}&format=pdf`, '_blank');
+  };
+
+  const handleReviseRejected = async (approval: SecurityApprovalRequest, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRevisingId(approval.id);
+    try {
+      const authRes = await fetch('/api/auth/role', { cache: 'no-store' });
+      const authData = await authRes.json().catch(() => ({}));
+      const createdBy = authData.name ?? approval.createdBy ?? 'Current User';
+      const createdByEmail = authData.email ?? approval.createdByEmail ?? currentUserEmail;
+      const res = await fetch('/api/securities/drafts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'copy',
+          sourceId: approval.id,
+          targetFundId: approval.fundId,
+          targetFundName: approval.fundName,
+          createdBy,
+          createdByEmail,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.draftId) {
+          router.push(`/securities/new-approval?draftId=${data.draftId}`);
+          return;
+        }
+      }
+    } catch (err) {
+      console.error('Revise rejected error:', err);
+    }
+    setRevisingId(null);
+  };
+
+  const handleRespondToInfoRequest = async (approval: SecurityApprovalRequest, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const response = infoResponseText[approval.id]?.trim();
+    if (!response) return;
+    setRespondingId(approval.id);
+    try {
+      const res = await fetch('/api/securities/approvals', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: approval.id,
+          action: 'respond_info',
+          response,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Kunde inte skicka svar');
+      }
+      setInfoResponseText((prev) => {
+        const next = { ...prev };
+        delete next[approval.id];
+        return next;
+      });
+      setExpandedId(null);
+      loadApprovals();
+    } catch (err) {
+      console.error('Respond to info error:', err);
+      alert(err instanceof Error ? err.message : 'Något gick fel');
+    } finally {
+      setRespondingId(null);
+    }
   };
 
   const filteredApprovals = approvals.filter(approval => {
@@ -444,6 +531,7 @@ export default function SecuritiesPage() {
               <option value="all">Alla status</option>
               <option value="draft">Utkast</option>
               <option value="submitted">Inskickade</option>
+              <option value="needs_info">Komplettering begärd</option>
               <option value="approved">Godkända</option>
               <option value="rejected">Avvisade</option>
             </select>
@@ -477,84 +565,183 @@ export default function SecuritiesPage() {
           ) : (
             <div className="divide-y divide-gray-100">
               {filteredApprovals.map((approval) => {
-                const statusConfig = STATUS_CONFIG[approval.status];
-                const StatusIcon = statusConfig.icon;
+                const statusConfig = STATUS_CONFIG[approval.status as keyof typeof STATUS_CONFIG];
+                const StatusIcon = statusConfig?.icon ?? FileText;
                 const daysUntilExpiry = approval.expiresAt ? getDaysUntilExpiry(approval.expiresAt) : null;
+                const isRejected = approval.status === 'rejected';
+                const isNeedsInfo = approval.status === 'needs_info';
+                const isExpanded = expandedId === approval.id;
+                const canExpand = isRejected || isNeedsInfo;
 
                 return (
-                  <div
-                    key={approval.id}
-                    onClick={() => router.push(`/securities/${approval.id}`)}
-                    className="flex items-center gap-4 p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-aifm-charcoal/5 flex items-center justify-center flex-shrink-0">
-                      <TrendingUp className="w-5 h-5 text-aifm-charcoal/60" />
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-aifm-charcoal truncate">
-                          {approval.basicInfo.name}
-                        </p>
-                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${statusConfig.color}`}>
-                          {statusConfig.label}
-                        </span>
+                  <div key={approval.id} className={isExpanded ? 'bg-gray-50/80' : ''}>
+                    <div
+                      onClick={() => {
+                        if (canExpand) {
+                          setExpandedId(isExpanded ? null : approval.id);
+                        } else {
+                          router.push(`/securities/${approval.id}`);
+                        }
+                      }}
+                      className="flex items-center gap-4 p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-aifm-charcoal/5 flex items-center justify-center flex-shrink-0">
+                        <TrendingUp className="w-5 h-5 text-aifm-charcoal/60" />
                       </div>
-                      <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
-                        <span>{approval.basicInfo.ticker}</span>
-                        <span>•</span>
-                        <span>{approval.basicInfo.isin}</span>
-                        <span>•</span>
-                        <span className="flex items-center gap-1">
-                          <Building2 className="w-3 h-3" />
-                          {approval.fundName}
-                        </span>
-                        {approval.esgInfo && (
-                          <>
-                            <span>•</span>
-                            {approval.esgInfo.meetsExclusionCriteria ? (
-                              <span className="flex items-center gap-1 text-green-600">
-                                <Leaf className="w-3 h-3" />
-                                ESG OK
-                              </span>
-                            ) : (
-                              <span className="flex items-center gap-1 text-amber-600">
-                                <ShieldAlert className="w-3 h-3" />
-                                ESG-varning
-                              </span>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="hidden sm:block text-right">
-                      <p className="text-sm text-gray-500">
-                        {approval.status === 'approved' && daysUntilExpiry !== null ? (
-                          <span className={daysUntilExpiry < 30 ? 'text-amber-600' : ''}>
-                            Utgår om {daysUntilExpiry} dagar
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-aifm-charcoal truncate">
+                            {approval.basicInfo.name}
+                          </p>
+                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${statusConfig?.color ?? 'bg-gray-100 text-gray-700'}`}>
+                            {statusConfig?.label ?? approval.status}
                           </span>
-                        ) : (
-                          formatDate(approval.updatedAt)
-                        )}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {approval.createdBy}
-                      </p>
-                    </div>
+                        </div>
+                        <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
+                          <span>{approval.basicInfo.ticker}</span>
+                          <span>•</span>
+                          <span>{approval.basicInfo.isin}</span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1">
+                            <Building2 className="w-3 h-3" />
+                            {approval.fundName}
+                          </span>
+                          {approval.esgInfo && (
+                            <>
+                              <span>•</span>
+                              {approval.esgInfo.meetsExclusionCriteria ? (
+                                <span className="flex items-center gap-1 text-green-600">
+                                  <Leaf className="w-3 h-3" />
+                                  ESG OK
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-1 text-amber-600">
+                                  <ShieldAlert className="w-3 h-3" />
+                                  ESG-varning
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
 
-                    <div className="flex items-center gap-1">
-                      {(approval.status === 'approved' || approval.status === 'submitted') && (
-                        <button
-                          onClick={(e) => handleDownloadPDF(approval.id, e)}
-                          className="p-1.5 text-gray-400 hover:text-aifm-gold hover:bg-gray-100 rounded"
-                          title="Ladda ner PDF"
-                        >
-                          <Download className="w-4 h-4" />
-                        </button>
-                      )}
-                      <ChevronRight className="w-5 h-5 text-gray-400" />
+                      <div className="hidden sm:block text-right">
+                        <p className="text-sm text-gray-500">
+                          {approval.status === 'approved' && daysUntilExpiry !== null ? (
+                            <span className={daysUntilExpiry < 30 ? 'text-amber-600' : ''}>
+                              Utgår om {daysUntilExpiry} dagar
+                            </span>
+                          ) : (
+                            formatDate(approval.updatedAt)
+                          )}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {approval.createdBy}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        {(approval.status === 'approved' || approval.status === 'submitted') && (
+                          <button
+                            onClick={(e) => handleDownloadPDF(approval.id, e)}
+                            className="p-1.5 text-gray-400 hover:text-aifm-gold hover:bg-gray-100 rounded"
+                            title="Ladda ner PDF"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                        )}
+                        {(isRejected || isNeedsInfo) && (
+                          <ChevronRight
+                            className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                          />
+                        )}
+                        {!canExpand && <ChevronRight className="w-5 h-5 text-gray-400" />}
+                      </div>
                     </div>
+                    {isRejected && isExpanded && (
+                      <div
+                        className="px-4 pb-4 pt-0"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="rounded-xl border border-red-200 bg-red-50/80 p-4">
+                          <p className="text-sm font-medium text-red-800 mb-1">Avslagsorsak</p>
+                          <p className="text-sm text-red-900/90 whitespace-pre-wrap">
+                            {approval.rejectionReason ?? 'Ingen orsak angiven.'}
+                          </p>
+                          {approval.reviewedBy && (
+                            <p className="text-xs text-red-700/70 mt-2">
+                              Avvisad av {approval.reviewedBy}
+                              {approval.reviewedAt && ` • ${formatDate(approval.reviewedAt)}`}
+                            </p>
+                          )}
+                          <button
+                            onClick={(e) => handleReviseRejected(approval, e)}
+                            disabled={revisingId === approval.id}
+                            className="mt-3 flex items-center gap-2 px-4 py-2 bg-aifm-charcoal text-white rounded-lg text-sm font-medium hover:bg-aifm-charcoal/90 disabled:opacity-50"
+                          >
+                            {revisingId === approval.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Edit3 className="w-4 h-4" />
+                            )}
+                            Revidera och skicka igen
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {isNeedsInfo && isExpanded && (
+                      <div
+                        className="px-4 pb-4 pt-0"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-4">
+                          <p className="text-sm font-medium text-amber-900 mb-1">Operations begär komplettering</p>
+                          <p className="text-sm text-amber-900/90 whitespace-pre-wrap">
+                            {approval.infoRequest ?? 'Ingen fråga angiven.'}
+                          </p>
+                          {approval.reviewedBy && (
+                            <p className="text-xs text-amber-700/70 mt-2">
+                              Fråga från {approval.reviewedBy}
+                              {approval.reviewedAt && ` • ${formatDate(approval.reviewedAt)}`}
+                            </p>
+                          )}
+                          <label className="block text-sm font-medium text-gray-700 mt-3 mb-1">Ditt svar</label>
+                          <textarea
+                            value={infoResponseText[approval.id] ?? ''}
+                            onChange={(e) =>
+                              setInfoResponseText((prev) => ({ ...prev, [approval.id]: e.target.value }))
+                            }
+                            rows={3}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-aifm-gold"
+                            placeholder="Skriv ditt svar här..."
+                          />
+                          <button
+                            onClick={(e) => handleRespondToInfoRequest(approval, e)}
+                            disabled={!infoResponseText[approval.id]?.trim() || respondingId === approval.id}
+                            className="mt-3 flex items-center gap-2 px-4 py-2 bg-aifm-charcoal text-white rounded-lg text-sm font-medium hover:bg-aifm-charcoal/90 disabled:opacity-50"
+                          >
+                            {respondingId === approval.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : null}
+                            Skicka svar
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {canExpand && isExpanded && (
+                      <div className="px-4 pb-4 pt-2 space-y-4" onClick={(e) => e.stopPropagation()}>
+                        <AuditTrailPanel auditTrail={approval.auditTrail} />
+                        <ApprovalDiscussion
+                          approvalId={approval.id}
+                          comments={approval.comments}
+                          currentUserName={currentUserName}
+                          currentUserEmail={currentUserEmail}
+                          currentUserRole="forvaltare"
+                          onCommentAdded={loadApprovals}
+                        />
+                      </div>
+                    )}
                   </div>
                 );
               })}

@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { 
   Users, Search, Plus, MoreHorizontal, Shield, Mail, 
   CheckCircle2, XCircle, Clock, Trash2, Edit, Key,
-  UserPlus, UserMinus, RefreshCw, AlertTriangle, Eye, EyeOff
+  UserPlus, UserMinus, RefreshCw, AlertTriangle, Eye, EyeOff,
+  Building2
 } from 'lucide-react';
 
 // ============================================================================
@@ -63,6 +64,22 @@ function StatusBadge({ status, enabled }: { status: string; enabled: boolean }) 
 // Role Badges
 // ============================================================================
 
+const ROLE_CONFIG: Record<string, { label: string; color: string }> = {
+  admin: { label: 'Admin', color: 'bg-purple-100 text-purple-700' },
+  executive: { label: 'Ledning', color: 'bg-indigo-100 text-indigo-700' },
+  manager: { label: 'Manager', color: 'bg-blue-100 text-blue-700' },
+  operation: { label: 'Operations', color: 'bg-teal-100 text-teal-700' },
+  accountant: { label: 'Ekonomi', color: 'bg-cyan-100 text-cyan-700' },
+  forvaltare: { label: 'Förvaltare', color: 'bg-amber-100 text-amber-700' },
+  auditor: { label: 'Revisor', color: 'bg-gray-100 text-gray-600' },
+  customer: { label: 'Kund', color: 'bg-green-100 text-green-700' },
+};
+
+function getRoleDisplay(group: string): { label: string; color: string } {
+  const normalized = group.toLowerCase().replace('aifm-', '');
+  return ROLE_CONFIG[normalized] || { label: group, color: 'bg-blue-100 text-blue-700' };
+}
+
 function RoleBadges({ groups }: { groups: string[] }) {
   if (groups.length === 0) {
     return <span className="text-xs text-gray-400">Inga roller</span>;
@@ -70,18 +87,17 @@ function RoleBadges({ groups }: { groups: string[] }) {
 
   return (
     <div className="flex flex-wrap gap-1">
-      {groups.map((group) => (
-        <span 
-          key={group}
-          className={`px-2 py-0.5 rounded text-xs font-medium ${
-            group === 'admin' 
-              ? 'bg-purple-100 text-purple-700' 
-              : 'bg-blue-100 text-blue-700'
-          }`}
-        >
-          {group}
-        </span>
-      ))}
+      {groups.map((group) => {
+        const { label, color } = getRoleDisplay(group);
+        return (
+          <span 
+            key={group}
+            className={`px-2 py-0.5 rounded text-xs font-medium ${color}`}
+          >
+            {label}
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -223,26 +239,30 @@ function CreateUserModal({ groups, onClose, onCreate }: CreateUserModalProps) {
               Roller
             </label>
             <div className="space-y-2">
-              {groups.map((group) => (
-                <label key={group.name} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={selectedGroups.includes(group.name!)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedGroups([...selectedGroups, group.name!]);
-                      } else {
-                        setSelectedGroups(selectedGroups.filter(g => g !== group.name));
-                      }
-                    }}
-                    className="w-4 h-4 rounded border-gray-300 text-[#c0a280] focus:ring-[#c0a280]"
-                  />
-                  <span className="text-sm text-gray-700">{group.name}</span>
-                  {group.description && (
-                    <span className="text-xs text-gray-400">({group.description})</span>
-                  )}
-                </label>
-              ))}
+              {groups.map((group) => {
+                const display = getRoleDisplay(group.name || '');
+                return (
+                  <label key={group.name} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50">
+                    <input
+                      type="checkbox"
+                      checked={selectedGroups.includes(group.name!)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedGroups([...selectedGroups, group.name!]);
+                        } else {
+                          setSelectedGroups(selectedGroups.filter(g => g !== group.name));
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-gray-300 text-[#c0a280] focus:ring-[#c0a280]"
+                    />
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${display.color}`}>{display.label}</span>
+                    <span className="text-xs text-gray-400">{group.name}</span>
+                    {group.description && (
+                      <span className="text-xs text-gray-400">— {group.description}</span>
+                    )}
+                  </label>
+                );
+              })}
             </div>
           </div>
 
@@ -305,12 +325,28 @@ interface EditUserModalProps {
   onDelete: (username: string) => Promise<void>;
 }
 
+interface FundAssignmentRow {
+  email: string;
+  fundId: string;
+  fundName: string;
+  article: '6' | '8' | '9';
+  assignedAt: string;
+  assignedBy: string;
+}
+
 function EditUserModal({ user, groups, onClose, onUpdate, onDelete }: EditUserModalProps) {
   const [selectedGroups, setSelectedGroups] = useState<string[]>(user.groups);
   const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'info' | 'roles' | 'security'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'roles' | 'security' | 'fonder'>('info');
+  const [fundAssignments, setFundAssignments] = useState<FundAssignmentRow[]>([]);
+  const [funds, setFunds] = useState<{ id: string; name: string }[]>([]);
+  const [fundsLoading, setFundsLoading] = useState(false);
+  const [assignmentsLoading, setAssignmentsLoading] = useState(false);
+  const [addFundId, setAddFundId] = useState('');
+  const [addArticle, setAddArticle] = useState<'6' | '8' | '9'>('8');
+  const isForvaltare = user.groups.some((g) => g === 'aifm-forvaltare' || g.toLowerCase().includes('forvaltare'));
 
   const handleUpdateGroups = async () => {
     setIsLoading(true);
@@ -357,6 +393,73 @@ function EditUserModal({ user, groups, onClose, onUpdate, onDelete }: EditUserMo
     }
   };
 
+  // Load fund assignments when Fonder tab is shown
+  useEffect(() => {
+    if (!isForvaltare || activeTab !== 'fonder' || !user.email) return;
+    setAssignmentsLoading(true);
+    fetch(`/api/admin/fund-assignments?email=${encodeURIComponent(user.email)}`)
+      .then((r) => r.json())
+      .then((data) => setFundAssignments(data.assignments || []))
+      .catch(() => setFundAssignments([]))
+      .finally(() => setAssignmentsLoading(false));
+  }, [isForvaltare, activeTab, user.email]);
+
+  // Load funds list once for add dropdown
+  useEffect(() => {
+    if (!isForvaltare || activeTab !== 'fonder') return;
+    setFundsLoading(true);
+    fetch('/api/funds')
+      .then((r) => r.json())
+      .then((data) => setFunds(data.funds?.map((f: { id: string; name: string }) => ({ id: f.id, name: f.name })) || []))
+      .catch(() => setFunds([]))
+      .finally(() => setFundsLoading(false));
+  }, [isForvaltare, activeTab]);
+
+  const handleAddFundAssignment = async () => {
+    if (!addFundId || !user.email) return;
+    const fund = funds.find((f) => f.id === addFundId);
+    if (!fund) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/admin/fund-assignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: user.email,
+          fundId: fund.id,
+          fundName: fund.name,
+          article: addArticle,
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const added = await res.json();
+      setFundAssignments((prev) => [...prev, added]);
+      setAddFundId('');
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Kunde inte lägga till fond');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRemoveFundAssignment = async (fundId: string) => {
+    if (!user.email) return;
+    if (!confirm('Ta bort denna fondkoppling?')) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch(
+        `/api/admin/fund-assignments?email=${encodeURIComponent(user.email)}&fundId=${encodeURIComponent(fundId)}`,
+        { method: 'DELETE' }
+      );
+      if (!res.ok) throw new Error(await res.text());
+      setFundAssignments((prev) => prev.filter((a) => a.fundId !== fundId));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Kunde inte ta bort');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
@@ -382,6 +485,7 @@ function EditUserModal({ user, groups, onClose, onUpdate, onDelete }: EditUserMo
             { id: 'info', label: 'Information' },
             { id: 'roles', label: 'Roller' },
             { id: 'security', label: 'Säkerhet' },
+            ...(isForvaltare ? [{ id: 'fonder', label: 'Fonder' }] : []),
           ].map((tab) => (
             <button
               key={tab.id}
@@ -427,28 +531,34 @@ function EditUserModal({ user, groups, onClose, onUpdate, onDelete }: EditUserMo
             <div className="space-y-4">
               <p className="text-sm text-gray-500">Välj vilka roller användaren ska ha:</p>
               <div className="space-y-2">
-                {groups.map((group) => (
-                  <label key={group.name} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                    <input
-                      type="checkbox"
-                      checked={selectedGroups.includes(group.name!)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedGroups([...selectedGroups, group.name!]);
-                        } else {
-                          setSelectedGroups(selectedGroups.filter(g => g !== group.name));
-                        }
-                      }}
-                      className="w-4 h-4 rounded border-gray-300 text-[#c0a280] focus:ring-[#c0a280]"
-                    />
-                    <div>
-                      <span className="text-sm font-medium text-gray-900">{group.name}</span>
-                      {group.description && (
-                        <p className="text-xs text-gray-500">{group.description}</p>
-                      )}
-                    </div>
-                  </label>
-                ))}
+                {groups.map((group) => {
+                  const display = getRoleDisplay(group.name || '');
+                  return (
+                    <label key={group.name} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
+                      <input
+                        type="checkbox"
+                        checked={selectedGroups.includes(group.name!)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedGroups([...selectedGroups, group.name!]);
+                          } else {
+                            setSelectedGroups(selectedGroups.filter(g => g !== group.name));
+                          }
+                        }}
+                        className="w-4 h-4 rounded border-gray-300 text-[#c0a280] focus:ring-[#c0a280]"
+                      />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${display.color}`}>{display.label}</span>
+                          <span className="text-xs text-gray-400">{group.name}</span>
+                        </div>
+                        {group.description && (
+                          <p className="text-xs text-gray-500 mt-0.5">{group.description}</p>
+                        )}
+                      </div>
+                    </label>
+                  );
+                })}
               </div>
               <button
                 onClick={handleUpdateGroups}
@@ -530,6 +640,83 @@ function EditUserModal({ user, groups, onClose, onUpdate, onDelete }: EditUserMo
                   >
                     <Trash2 className="w-3 h-3" />
                     Ta bort
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'fonder' && isForvaltare && (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-500">Fonder som användaren (förvaltare) har tillgång till:</p>
+              {assignmentsLoading ? (
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  Laddar…
+                </div>
+              ) : (
+                <ul className="space-y-2">
+                  {fundAssignments.length === 0 ? (
+                    <li className="text-sm text-gray-400">Inga fonder kopplade</li>
+                  ) : (
+                    fundAssignments.map((a) => (
+                      <li
+                        key={a.fundId}
+                        className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm font-medium text-gray-900">{a.fundName}</span>
+                          <span className="text-xs text-gray-500">(Artikel {a.article})</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFundAssignment(a.fundId)}
+                          disabled={isLoading}
+                          className="p-1 text-red-500 hover:bg-red-50 rounded"
+                          title="Ta bort"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              )}
+              <div className="pt-3 border-t border-gray-100">
+                <p className="text-sm font-medium text-gray-700 mb-2">Lägg till fond</p>
+                <div className="flex flex-wrap gap-2">
+                  <select
+                    value={addFundId}
+                    onChange={(e) => setAddFundId(e.target.value)}
+                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#c0a280]"
+                  >
+                    <option value="">Välj fond…</option>
+                    {funds
+                      .filter((f) => !fundAssignments.some((a) => a.fundId === f.id))
+                      .map((f) => (
+                        <option key={f.id} value={f.id}>
+                          {f.name}
+                        </option>
+                      ))}
+                  </select>
+                  <select
+                    value={addArticle}
+                    onChange={(e) => setAddArticle(e.target.value as '6' | '8' | '9')}
+                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#c0a280]"
+                  >
+                    <option value="6">Artikel 6</option>
+                    <option value="8">Artikel 8</option>
+                    <option value="9">Artikel 9</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={handleAddFundAssignment}
+                    disabled={!addFundId || isLoading || fundsLoading}
+                    className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-[#2d2a26] rounded-lg hover:bg-[#3d3a36] disabled:opacity-50"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Lägg till
                   </button>
                 </div>
               </div>

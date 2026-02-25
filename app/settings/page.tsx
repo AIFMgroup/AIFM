@@ -9,12 +9,24 @@ import {
   RefreshCw, Trash2, Plus, AlertCircle, CheckCircle2,
   BarChart3, Fingerprint, Landmark, CreditCard, MessageSquare,
   FileSpreadsheet, ChevronRight, Lock, Mail, Phone, MapPin,
-  Smartphone, Monitor, Clock, Camera, User, Upload
+  Smartphone, Monitor, Clock, Camera, User, Upload,
+  FileText, FolderOpen, Download, Loader2
 } from 'lucide-react';
 
 import { useUserProfile } from '@/components/UserProfileContext';
 
-type SettingsTab = 'profile' | 'account' | 'company' | 'integrations' | 'notifications' | 'security' | 'team';
+type SettingsTab = 'profile' | 'account' | 'company' | 'integrations' | 'notifications' | 'security' | 'team' | 'fundconditions';
+
+interface FundDocInfo {
+  fundId: string;
+  documentId: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  category: string;
+  uploadedBy: string;
+  uploadedAt: string;
+}
 
 // Loading fallback
 function SettingsLoadingFallback() {
@@ -172,15 +184,138 @@ function SettingsPageContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { profile, avatarSrc, refresh: refreshProfile } = useUserProfile();
 
+  const [userRole, setUserRole] = useState<string>('');
+  const [userEmail, setUserEmail] = useState<string>('');
+  const [assignedFunds, setAssignedFunds] = useState<{ fundId: string; fundName: string }[]>([]);
+  const [fundDocuments, setFundDocuments] = useState<Record<string, FundDocInfo[]>>({});
+  const [selectedFundId, setSelectedFundId] = useState<string>('');
+  const [uploadCategory, setUploadCategory] = useState<string>('fondvillkor');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fundFileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsVisible(true);
   }, []);
 
+  useEffect(() => {
+    fetch('/api/auth/role')
+      .then((r) => r.json())
+      .then((data) => {
+        setUserRole(data.role || '');
+        setUserEmail(data.email || '');
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!userEmail || !userRole) return;
+    if (userRole === 'forvaltare') {
+      fetch(`/api/admin/fund-assignments?userEmail=${encodeURIComponent(userEmail)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          const funds = (data.assignments || []).map((a: { fundId: string; fundName: string }) => ({
+            fundId: a.fundId,
+            fundName: a.fundName,
+          }));
+          setAssignedFunds(funds);
+          if (funds.length > 0 && !selectedFundId) setSelectedFundId(funds[0].fundId);
+        })
+        .catch(() => {});
+    } else if (['admin', 'executive', 'operation'].includes(userRole)) {
+      fetch('/api/funds/list')
+        .then((r) => r.json())
+        .then((data) => {
+          const funds = (data.funds || []).map((f: { id: string; name: string }) => ({
+            fundId: f.id,
+            fundName: f.name,
+          }));
+          setAssignedFunds(funds);
+          if (funds.length > 0 && !selectedFundId) setSelectedFundId(funds[0].fundId);
+        })
+        .catch(() => {
+          setAssignedFunds([
+            { fundId: 'auag-essential-metals', fundName: 'AuAg Essential Metals' },
+            { fundId: 'auag-gold-rush', fundName: 'AuAg Gold Rush' },
+            { fundId: 'auag-precious-green', fundName: 'AuAg Precious Green' },
+            { fundId: 'auag-silver-bullet', fundName: 'AuAg Silver Bullet' },
+            { fundId: 'epoque', fundName: 'EPOQUE' },
+            { fundId: 'go-blockchain-fund', fundName: 'Go Blockchain Fund' },
+            { fundId: 'metaspace-fund', fundName: 'MetaSpace Fund' },
+            { fundId: 'plain-capital-bronx', fundName: 'Plain Capital BronX' },
+            { fundId: 'plain-capital-lunatix', fundName: 'Plain Capital LunatiX' },
+            { fundId: 'plain-capital-styx', fundName: 'Plain Capital StyX' },
+            { fundId: 'proethos-fond', fundName: 'Proethos Fond' },
+            { fundId: 'sam-aktiv-ranta', fundName: 'SAM Aktiv Ränta' },
+            { fundId: 'sensum-strategy-global', fundName: 'Sensum Strategy Global' },
+            { fundId: 'soic-dynamic-china', fundName: 'SOIC Dynamic China' },
+            { fundId: 'vinga-corporate-bond', fundName: 'Vinga Corporate Bond' },
+          ]);
+          if (!selectedFundId) setSelectedFundId('auag-essential-metals');
+        });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userEmail, userRole]);
+
+  const loadFundDocuments = async (fundId: string) => {
+    try {
+      const res = await fetch(`/api/funds/documents?fundId=${encodeURIComponent(fundId)}`);
+      const data = await res.json();
+      setFundDocuments((prev) => ({ ...prev, [fundId]: data.documents || [] }));
+    } catch {
+      /* ignore */
+    }
+  };
+
+  useEffect(() => {
+    if (selectedFundId) loadFundDocuments(selectedFundId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFundId]);
+
+  const handleFundDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedFundId) return;
+
+    setIsUploading(true);
+    setUploadError(null);
+    setUploadSuccess(null);
+
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('fundId', selectedFundId);
+      fd.append('category', uploadCategory);
+      const res = await fetch('/api/funds/documents/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Uppladdning misslyckades');
+      setUploadSuccess(`${file.name} uppladdad (${data.extractedTextLength || 0} tecken extraherade)`);
+      setTimeout(() => setUploadSuccess(null), 6000);
+      await loadFundDocuments(selectedFundId);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Uppladdning misslyckades');
+    } finally {
+      setIsUploading(false);
+      if (fundFileInputRef.current) fundFileInputRef.current.value = '';
+    }
+  };
+
+  const handleDeleteDoc = async (fundId: string, documentId: string) => {
+    try {
+      await fetch(`/api/funds/documents?fundId=${encodeURIComponent(fundId)}&documentId=${encodeURIComponent(documentId)}`, {
+        method: 'DELETE',
+      });
+      await loadFundDocuments(fundId);
+    } catch {
+      /* ignore */
+    }
+  };
+
   // Update tab when URL changes
   useEffect(() => {
     const tab = searchParams.get('tab') as SettingsTab;
-    if (tab && ['profile', 'account', 'company', 'integrations', 'notifications', 'security', 'team'].includes(tab)) {
+    if (tab && ['profile', 'account', 'company', 'integrations', 'notifications', 'security', 'team', 'fundconditions'].includes(tab)) {
       setActiveTab(tab);
     }
   }, [searchParams]);
@@ -239,6 +374,8 @@ function SettingsPageContent() {
     }
   };
 
+  const showFundConditions = ['admin', 'forvaltare', 'executive', 'operation'].includes(userRole);
+
   const tabs = [
     { id: 'profile' as SettingsTab, label: 'Profil', icon: User },
     { id: 'account' as SettingsTab, label: 'Konto', icon: Settings },
@@ -247,6 +384,7 @@ function SettingsPageContent() {
     { id: 'notifications' as SettingsTab, label: 'Notiser', icon: Bell },
     { id: 'security' as SettingsTab, label: 'Säkerhet', icon: Shield },
     { id: 'team' as SettingsTab, label: 'Team', icon: Users },
+    ...(showFundConditions ? [{ id: 'fundconditions' as SettingsTab, label: 'Fondvillkor', icon: FileText }] : []),
   ];
 
   const handleSave = () => {
@@ -698,6 +836,19 @@ function SettingsPageContent() {
                   title="Företagsinställningar" 
                   description="Hantera företagsinformation och adresser"
                 />
+
+                <div className="p-4 rounded-xl border border-aifm-gold/20 bg-aifm-gold/5">
+                  <p className="text-sm text-aifm-charcoal/80 mb-2">
+                    Styr hur AIFM Agenten pratar och skriver så att det matchar ert företag, era mallar och er brandbook.
+                  </p>
+                  <a
+                    href="/settings/company-profile"
+                    className="inline-flex items-center gap-2 text-sm font-medium text-aifm-gold hover:underline"
+                  >
+                    Öppna Företagsprofil
+                    <ChevronRight className="w-4 h-4" />
+                  </a>
+                </div>
 
                 <div className="space-y-6">
                   <h3 className="text-xs font-semibold text-aifm-charcoal/50 uppercase tracking-wider flex items-center gap-2">
@@ -1175,11 +1326,219 @@ function SettingsPageContent() {
                 </div>
               </div>
             )}
+
+            {activeTab === 'fundconditions' && showFundConditions && (
+              <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
+                <SectionHeader
+                  title="Fondvillkor & Dokument"
+                  description="Ladda upp fondvillkor, hållbarhetsrapporter och placeringspolicyer. Systemet analyserar dokumenten för att stödja AI-baserad granskning av värdepapper."
+                />
+
+                {/* Fund selector */}
+                {assignedFunds.length > 0 ? (
+                  <div className="space-y-4">
+                    <label className="block text-xs font-semibold text-aifm-charcoal/50 uppercase tracking-wider">
+                      Välj fond
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {assignedFunds.map((f) => (
+                        <button
+                          key={f.fundId}
+                          onClick={() => setSelectedFundId(f.fundId)}
+                          className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
+                            selectedFundId === f.fundId
+                              ? 'bg-aifm-charcoal text-white shadow-lg shadow-aifm-charcoal/20'
+                              : 'bg-gray-50 text-aifm-charcoal/60 hover:bg-gray-100 border border-gray-200'
+                          }`}
+                        >
+                          {f.fundName}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-6 bg-gray-50 rounded-xl border border-gray-100 text-center">
+                    <FolderOpen className="w-8 h-8 text-aifm-charcoal/30 mx-auto mb-3" />
+                    <p className="text-sm text-aifm-charcoal/50">
+                      {userRole === 'forvaltare'
+                        ? 'Inga fonder tilldelade. Kontakta administratören.'
+                        : 'Inga fonder hittades.'}
+                    </p>
+                  </div>
+                )}
+
+                {/* Upload area */}
+                {selectedFundId && (
+                  <div className="space-y-6">
+                    <div className="p-6 bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-100 space-y-5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-aifm-gold/10 flex items-center justify-center">
+                          <Upload className="w-5 h-5 text-aifm-gold" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-aifm-charcoal text-sm">Ladda upp dokument</h3>
+                          <p className="text-xs text-aifm-charcoal/50">PDF, Word eller textfiler (max 25 MB)</p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-end gap-4">
+                        <div className="space-y-2">
+                          <label className="block text-xs font-semibold text-aifm-charcoal/50 uppercase tracking-wider">
+                            Kategori
+                          </label>
+                          <select
+                            value={uploadCategory}
+                            onChange={(e) => setUploadCategory(e.target.value)}
+                            className="text-sm bg-white border border-gray-200 rounded-xl px-4 py-2.5 focus:border-aifm-gold focus:ring-4 focus:ring-aifm-gold/10 transition-all"
+                          >
+                            <option value="fondvillkor">Fondvillkor</option>
+                            <option value="hallbarhetsrapport">Hållbarhetsrapport</option>
+                            <option value="placeringspolicy">Placeringspolicy</option>
+                            <option value="ovrigt">Övrigt</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <input
+                            ref={fundFileInputRef}
+                            type="file"
+                            accept=".pdf,.doc,.docx,.txt,.csv"
+                            onChange={handleFundDocUpload}
+                            className="hidden"
+                          />
+                          <button
+                            onClick={() => fundFileInputRef.current?.click()}
+                            disabled={isUploading}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-aifm-charcoal text-white rounded-xl text-sm font-medium
+                                     hover:bg-aifm-charcoal/90 transition-all shadow-lg shadow-aifm-charcoal/20
+                                     disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isUploading ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Laddar upp...
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="w-4 h-4" />
+                                Välj fil
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      {uploadSuccess && (
+                        <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-100 rounded-xl">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                          <p className="text-sm text-emerald-700">{uploadSuccess}</p>
+                        </div>
+                      )}
+                      {uploadError && (
+                        <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-xl">
+                          <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                          <p className="text-sm text-red-600">{uploadError}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Document list */}
+                    <div className="space-y-3">
+                      <h3 className="text-xs font-semibold text-aifm-charcoal/50 uppercase tracking-wider flex items-center gap-2">
+                        <FolderOpen className="w-4 h-4" />
+                        Uppladdade dokument
+                      </h3>
+
+                      {(fundDocuments[selectedFundId] || []).length === 0 ? (
+                        <div className="p-8 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-center">
+                          <FileText className="w-8 h-8 text-aifm-charcoal/20 mx-auto mb-3" />
+                          <p className="text-sm text-aifm-charcoal/40">Inga dokument uppladdade för denna fond ännu.</p>
+                          <p className="text-xs text-aifm-charcoal/30 mt-1">
+                            Ladda upp fondvillkor och hållbarhetsrapporter så att AI:n kan analysera värdepapper korrekt.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {(fundDocuments[selectedFundId] || []).map((doc) => (
+                            <div
+                              key={doc.documentId}
+                              className="flex items-center justify-between p-4 bg-gradient-to-br from-gray-50 to-white
+                                       rounded-xl border border-gray-100 hover:shadow-lg hover:shadow-gray-200/50
+                                       transition-all duration-300 group"
+                            >
+                              <div className="flex items-center gap-4 min-w-0">
+                                <div className="w-10 h-10 rounded-xl bg-aifm-gold/10 flex items-center justify-center flex-shrink-0
+                                              group-hover:scale-110 transition-transform duration-300">
+                                  <FileText className="w-5 h-5 text-aifm-gold" />
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="font-medium text-aifm-charcoal text-sm truncate">{doc.fileName}</p>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <span className="text-xs px-2 py-0.5 rounded-full bg-aifm-charcoal/5 text-aifm-charcoal/50">
+                                      {categoryDisplayName(doc.category)}
+                                    </span>
+                                    <span className="text-xs text-aifm-charcoal/30">
+                                      {formatFileSize(doc.fileSize)}
+                                    </span>
+                                    <span className="text-xs text-aifm-charcoal/30">
+                                      {new Date(doc.uploadedAt).toLocaleDateString('sv-SE')}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => handleDeleteDoc(doc.fundId, doc.documentId)}
+                                className="p-2.5 hover:bg-red-50 rounded-xl text-aifm-charcoal/40
+                                         hover:text-red-500 transition-colors flex-shrink-0"
+                                title="Ta bort"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Info box */}
+                    <div className="p-5 bg-gradient-to-br from-aifm-gold/5 to-transparent rounded-xl border border-aifm-gold/10">
+                      <div className="flex gap-3">
+                        <AlertCircle className="w-5 h-5 text-aifm-gold flex-shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-aifm-charcoal">Hur används dokumenten?</p>
+                          <p className="text-xs text-aifm-charcoal/60 leading-relaxed">
+                            Uppladdade fondvillkor och hållbarhetsrapporter används av AI-analysen vid granskning av nya värdepapper.
+                            AI:n jämför värdepappersinformation mot de faktiska fondvillkoren för att ge mer träffsäkra rekommendationer.
+                            Text extraheras automatiskt från PDF-filer via AWS Textract.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
     </>
   );
+}
+
+function categoryDisplayName(cat: string): string {
+  const names: Record<string, string> = {
+    fondvillkor: 'Fondvillkor',
+    hallbarhetsrapport: 'Hållbarhetsrapport',
+    placeringspolicy: 'Placeringspolicy',
+    ovrigt: 'Övrigt',
+  };
+  return names[cat] || cat;
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 // Export with Suspense boundary for useSearchParams

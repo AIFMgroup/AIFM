@@ -84,11 +84,12 @@ const navItems: NavItem[] = [
       { label: "Inställningar", href: "/compliance/settings" },
     ],
   },
-  {
-    label: "Uppgifter",
-    href: "/tasks",
-    icon: <CheckSquare className="w-5 h-5 flex-shrink-0" />,
-  },
+  // Hidden per request
+  // {
+  //   label: "Uppgifter",
+  //   href: "/tasks",
+  //   icon: <CheckSquare className="w-5 h-5 flex-shrink-0" />,
+  // },
 ];
 
 const bottomNavItems: NavItem[] = [

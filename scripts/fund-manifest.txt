@@ -1,0 +1,18 @@
+AuAg Gold Mining	auag-gold-mining-holdings.txt	22
+AuAg Precious Metals	auag-precious-metals-holdings.txt	29
+AuAg Silver Bullet	auag-silver-bullet-holdings.txt	42
+Augmented Reality	augmented-reality-holdings.txt	37
+Gainbridge	gainbridge-holdings.txt	119
+Go Blockchain	go-blockchain-holdings.txt	80
+Lucy	lucy-holdings.txt	61
+SOIC	soic-holdings.txt	70
+Sensum	sensum-holdings.txt	96
+Space Fund	space-fund-holdings.txt	21
+World xFund	world-xfund-holdings.txt	304
+eSport Fund	esport-fund-holdings.txt	43
+Aktiehuset	aktiehuset-holdings.txt	174
+Arden xFund	arden-xfund-holdings.txt	489
+Epoque	epoque-holdings.txt	461
+BronX	bronx-holdings.txt	384
+LunatiX	lunatix-holdings.txt	28
+Proethos	proethos-holdings.txt	127

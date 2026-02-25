@@ -26,7 +26,7 @@ const mockResponses: { keywords: string[]; response: string; sources: string[] }
     keywords: ['nav', 'nettotillgångsvärde', 'värde'],
     response: `Baserat på de uppladdade dokumenten kan jag ge dig följande information om NAV (Nettotillgångsvärde):
 
-**Aktuellt NAV för Nordic Ventures I:**
+**Aktuellt NAV för AuAg Silver Bullet:**
 - NAV per 2024-11-30: **128,5 MSEK**
 - NAV per andel: **1 285 SEK**
 - Förändring sedan årsskiftet: **+12,4%**

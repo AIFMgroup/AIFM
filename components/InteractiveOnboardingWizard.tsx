@@ -105,8 +105,8 @@ const companySetupSteps: WizardStep[] = [
     icon: FileText,
     type: 'form',
     formFields: [
-      { id: 'companyName', label: 'Bolagsnamn', type: 'text', placeholder: 'Nordic Ventures I AB', required: true, helpText: 'Det fullständiga juridiska namnet' },
-      { id: 'shortName', label: 'Kortnamn', type: 'text', placeholder: 'Nordic Ventures I', helpText: 'Visas i gränssnittet' },
+      { id: 'companyName', label: 'Bolagsnamn', type: 'text', placeholder: 'AIFM Group AB', required: true, helpText: 'Det fullständiga juridiska namnet' },
+      { id: 'shortName', label: 'Kortnamn', type: 'text', placeholder: 'AIFM Group', helpText: 'Visas i gränssnittet' },
       { id: 'orgNumber', label: 'Organisationsnummer', type: 'text', placeholder: '559XXX-XXXX', required: true },
       { id: 'fundType', label: 'Fondtyp', type: 'select', required: true, options: [
         { value: '', label: 'Välj fondtyp...' },

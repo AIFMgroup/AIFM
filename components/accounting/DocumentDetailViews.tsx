@@ -153,8 +153,8 @@ const costCenterOptions = [
   { value: 'RESA', label: 'RESA – Resor & Logi' },
   { value: 'REP', label: 'REP – Representation' },
   { value: 'LOKAL', label: 'LOKAL – Lokalkostnader' },
-  { value: 'FUND1', label: 'FUND1 – Nordic Ventures I' },
-  { value: 'FUND2', label: 'FUND2 – Nordic Ventures II' },
+  { value: 'FUND1', label: 'FUND1 – AuAg Silver Bullet' },
+  { value: 'FUND2', label: 'FUND2 – AuAg Essential Metals' },
   { value: 'SALES', label: 'SALES – Försäljning' },
 ];
 

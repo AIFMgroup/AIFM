@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { knowledgeBase } from '@/lib/compliance/knowledge-base';
+import { generateDocumentSummary } from '@/lib/compliance/summarize';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { TextractClient, DetectDocumentTextCommand } from '@aws-sdk/client-textract';
 
@@ -120,7 +121,7 @@ export async function POST(request: NextRequest) {
     const sourceType = mimeType === 'application/pdf' ? 'pdf' : 
                        mimeType.includes('word') ? 'docx' : 'text';
 
-    // Add to knowledge base
+    // Add to knowledge base with summaryStatus so UI can show "Genererar sammanfattning..." immediately
     const document = await knowledgeBase.addDocument({
       title: title || filename.replace(/\.[^/.]+$/, ''),
       source: s3Url,
@@ -129,8 +130,20 @@ export async function POST(request: NextRequest) {
       metadata: {
         documentNumber: documentNumber || undefined,
         authority: authority || undefined,
+        summaryStatus: 'summarizing',
       },
     });
+
+    // Fire-and-forget: generate AI summary in background (do not block response)
+    (async () => {
+      try {
+        const summary = await generateDocumentSummary(content, document.title);
+        await knowledgeBase.updateDocumentSummary(document.id, summary);
+      } catch (err) {
+        console.error('[Compliance Upload] Background summarization failed:', err);
+        await knowledgeBase.setDocumentSummaryStatus(document.id, 'pending').catch(() => {});
+      }
+    })();
 
     return NextResponse.json({
       success: true,

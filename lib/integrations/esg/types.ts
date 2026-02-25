@@ -11,6 +11,23 @@ export interface PAIIndicator {
   description?: string;
 }
 
+/** Structured GHG scope emissions data */
+export interface GHGScopeData {
+  /** Scope 1: Direct emissions from owned/controlled sources (tonnes CO2e) */
+  scope1?: number | null;
+  /** Scope 2: Indirect emissions from purchased energy (tonnes CO2e) */
+  scope2?: number | null;
+  /** Scope 3: All other indirect emissions in the value chain (tonnes CO2e) */
+  scope3?: number | null;
+  /** Total GHG emissions (Scope 1+2+3) */
+  total?: number | null;
+  /** Carbon footprint (tonnes CO2e) */
+  carbonFootprint?: number | null;
+  /** Carbon intensity (e.g. tCO2e per M€ revenue) */
+  carbonIntensity?: number | null;
+  carbonIntensityUnit?: string;
+}
+
 /** Exclusion involvement from provider (e.g. revenue % in controversial activities) */
 export interface ExclusionInvolvement {
   category: string;
@@ -51,6 +68,9 @@ export interface NormalizedESGData {
 
   /** PAI indicators (SFDR) */
   paiIndicators?: PAIIndicator[];
+
+  /** Structured GHG scope emissions */
+  ghgScopes?: GHGScopeData;
 
   /** Provider metadata */
   provider: string;

@@ -9,7 +9,7 @@ import {
   Settings, LogOut, ChevronDown,
   ChevronLeft, ChevronRight, Banknote, FolderOpen, Bot, Calculator, Scale, Link2,
   Users, Building2, Kanban, Calendar, ClipboardList, Shield, GitBranch, Key, FileSearch,
-  HelpCircle, Star, Download, TrendingUp, FileText, Send, Activity
+  Star, Download, TrendingUp, FileText, Send, Activity
 } from 'lucide-react';
 import { useSidebar } from './SidebarContext';
 import { FavoritesSidebarSection, FavoriteButton } from './FavoritesManager';
@@ -380,25 +380,6 @@ export function DashboardSidebar() {
       {/* Bottom Navigation */}
       <div className={`border-t border-white/5 py-4 ${collapsed ? 'px-2' : 'px-3'}`}>
         <ul className="space-y-1">
-          <li>
-            <button 
-              onClick={() => {
-                localStorage.removeItem('aifm-onboarding-completed');
-                window.location.reload();
-              }}
-              className={`w-full flex items-center ${collapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-white hover:bg-aifm-gold/20 hover:text-aifm-gold transition-all duration-200 group relative`}
-              title={collapsed ? 'Starta guide' : undefined}
-            >
-              <HelpCircle className="w-5 h-5 flex-shrink-0" />
-              {!collapsed && <span className="text-sm">Starta guide</span>}
-              {collapsed && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-aifm-charcoal text-white text-xs rounded 
-                                opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-lg border border-white/10">
-                  Starta guide
-                </div>
-              )}
-            </button>
-          </li>
           <li>
             <Link 
               href="/settings"

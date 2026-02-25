@@ -28,6 +28,13 @@ VIKTIGT:
 - Ge korta, tydliga reason/comment som förklaring.
 - Svara ENDAST med giltig JSON. Inga markdown-kodblock, inga förklaringar utanför JSON.
 
+PRECISION FÖR REPLACEMENTS – MYCKET VIKTIGT:
+- originalText ska vara SÅ KORT SOM MÖJLIGT – bara det ord eller den fras som faktiskt ändras.
+- Inkludera INTE omgivande text som förblir oförändrad.
+- Exempel: Om du vill ändra "ansökan" till "anmälan" i meningen "i enlighet med denna ansökan", sätt originalText till "ansökan" och newText till "anmälan" – INTE hela meningen.
+- Om flera ord i rad ändras, inkludera bara de ändrade orden plus eventuellt mellanslag.
+- Samma princip gäller deletions: originalText ska bara vara den text som faktiskt ska strykas.
+
 JSON-format:
 {
   "summary": "Kort sammanfattning av alla ändringar (1-3 meningar).",
@@ -122,8 +129,48 @@ Returnera JSON med dina föreslagna ändringar (deletions, insertions, replaceme
         comments,
       };
 
+      const editCount = (deletions?.length ?? 0) + (insertions?.length ?? 0) + (replacements?.length ?? 0) + (comments?.length ?? 0);
+      console.log(`[ReviewDocx] Applying ${editCount} edits (${deletions?.length ?? 0} del, ${insertions?.length ?? 0} ins, ${replacements?.length ?? 0} rep, ${comments?.length ?? 0} com)`);
+
       editor.applyEdits(edits);
       const modifiedBuffer = await editor.toBuffer();
+
+      // Validate the output is a valid ZIP (DOCX) by trying to parse it
+      try {
+        const JSZipValidate = (await import('jszip')).default;
+        const validateZip = await JSZipValidate.loadAsync(modifiedBuffer);
+        const docXml = validateZip.file('word/document.xml');
+        if (!docXml) {
+          console.error('[ReviewDocx] VALIDATION FAILED: word/document.xml missing from output');
+          // Fall back to returning the original file unmodified
+          return {
+            success: true,
+            fileBase64: fileBufferBase64,
+            fileName: fileName || 'document_reviewed.docx',
+            summary: summary + ' (Varning: Kunde inte applicera ändringar i filen, originalfilen returneras.)',
+          };
+        }
+        const docContent = await docXml.async('string');
+        if (!docContent.includes('<w:body') || !docContent.includes('</w:body>')) {
+          console.error('[ReviewDocx] VALIDATION FAILED: document.xml missing body element');
+          return {
+            success: true,
+            fileBase64: fileBufferBase64,
+            fileName: fileName || 'document_reviewed.docx',
+            summary: summary + ' (Varning: Kunde inte applicera ändringar i filen, originalfilen returneras.)',
+          };
+        }
+        console.log(`[ReviewDocx] Output validated: ${modifiedBuffer.length} bytes, document.xml OK`);
+      } catch (valErr) {
+        console.error('[ReviewDocx] VALIDATION FAILED:', valErr);
+        return {
+          success: true,
+          fileBase64: fileBufferBase64,
+          fileName: fileName || 'document_reviewed.docx',
+          summary: summary + ' (Varning: Kunde inte applicera ändringar i filen, originalfilen returneras.)',
+        };
+      }
+
       const fileBase64 = modifiedBuffer.toString('base64');
 
       return {

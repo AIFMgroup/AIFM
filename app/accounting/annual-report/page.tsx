@@ -41,7 +41,7 @@ const defaultReportSections: ReportSection[] = [
     aiGenerated: true,
     content: `**Verksamheten**
 
-Nordic Ventures I AB är ett riskkapitalbolag med fokus på investeringar i nordiska tillväxtbolag inom tech-sektorn.
+AIFM Group AB är ett fondbolag med fokus på alternativ förvaltning av värdepappersfonder.
 
 **Väsentliga händelser under räkenskapsåret**
 

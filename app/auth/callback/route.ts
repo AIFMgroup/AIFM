@@ -166,8 +166,9 @@ cookieHeader: ${cookieHeader || "none"}</pre>
     });
   };
 
-  // Short-lived access/ID tokens; refresh rotates less often
-  const idAccessMaxAge = Math.min(tokens.expires_in, 30 * 60); // cap at 30m
+  // ID/access tokens live for the full Cognito-issued lifetime (typically 1h).
+  // The middleware will auto-refresh them using the refresh_token when they expire.
+  const idAccessMaxAge = tokens.expires_in || 3600;
   setCookie("__Host-aifm_id_token", tokens.id_token, idAccessMaxAge);
   setCookie("__Host-aifm_access_token", tokens.access_token, idAccessMaxAge);
 

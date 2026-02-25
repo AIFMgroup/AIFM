@@ -234,6 +234,16 @@ export class FundRegistry {
     );
   }
 
+  /**
+   * Remove all positions for a fund on a given date (e.g. before replacing with SEB sync).
+   */
+  async clearPositions(fundId: string, date: string): Promise<void> {
+    const existing = await this.getPositions(fundId, date);
+    for (const p of existing) {
+      await this.storage.delete(`position:${fundId}:${date}:${p.instrumentId}`);
+    }
+  }
+
   async setPositions(fundId: string, date: string, positions: Omit<Position, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<Position[]> {
     const created: Position[] = [];
     
@@ -263,6 +273,16 @@ export class FundRegistry {
       'cash:',
       (cash) => cash.fundId === fundId && cash.date === targetDate
     );
+  }
+
+  /**
+   * Remove all cash balances for a fund on a given date (e.g. before replacing with SEB sync).
+   */
+  async clearCashBalances(fundId: string, date: string): Promise<void> {
+    const existing = await this.getCashBalances(fundId, date);
+    for (const c of existing) {
+      await this.storage.delete(`cash:${fundId}:${date}:${c.currency}`);
+    }
   }
 
   async setCashBalance(cash: Omit<CashBalance, 'id' | 'createdAt' | 'updatedAt'>): Promise<CashBalance> {
@@ -471,68 +491,35 @@ export class FundRegistry {
 
     // Create demo funds and share classes
     const demoFunds = [
-      {
-        name: 'AuAg Silver Bullet',
-        shortName: 'Silver Bullet',
-        legalName: 'AuAg Silver Bullet Fund',
-        isin: 'SE0013358181',
-        currency: 'SEK' as Currency,
-        status: 'active' as const,
-        type: 'commodity' as const,
-        ucits: true,
-        aifmd: false,
-        countryOfDomicile: 'SE',
-        inceptionDate: '2020-03-15',
-        fiscalYearEnd: '12-31',
-      },
-      {
-        name: 'AuAg Gold Rush',
-        shortName: 'Gold Rush',
-        legalName: 'AuAg Gold Rush Fund',
-        isin: 'SE0020677946',
-        currency: 'SEK' as Currency,
-        status: 'active' as const,
-        type: 'commodity' as const,
-        ucits: true,
-        aifmd: false,
-        countryOfDomicile: 'SE',
-        inceptionDate: '2021-09-01',
-        fiscalYearEnd: '12-31',
-      },
-      {
-        name: 'AuAg Precious Green',
-        shortName: 'Precious Green',
-        legalName: 'AuAg Precious Green Fund',
-        isin: 'SE0014808440',
-        currency: 'SEK' as Currency,
-        status: 'active' as const,
-        type: 'commodity' as const,
-        ucits: true,
-        aifmd: false,
-        countryOfDomicile: 'SE',
-        inceptionDate: '2020-11-01',
-        fiscalYearEnd: '12-31',
-      },
-      {
-        name: 'AUAG Essential Metals',
-        shortName: 'Essential Metals',
-        legalName: 'AUAG Essential Metals Fund',
-        isin: 'SE0019175563',
-        currency: 'SEK' as Currency,
-        status: 'active' as const,
-        type: 'commodity' as const,
-        ucits: true,
-        aifmd: false,
-        countryOfDomicile: 'SE',
-        inceptionDate: '2022-06-01',
-        fiscalYearEnd: '12-31',
-      },
+      { name: 'AuAg Essential Metals', shortName: 'Essential Metals', legalName: 'AuAg Essential Metals Fund', isin: 'SE0019175563', currency: 'SEK' as Currency, status: 'active' as const, type: 'commodity' as const, ucits: true, aifmd: false, countryOfDomicile: 'SE', inceptionDate: '2022-06-01', fiscalYearEnd: '12-31' },
+      { name: 'AuAg Gold Rush', shortName: 'Gold Rush', legalName: 'AuAg Gold Rush Fund', isin: 'SE0020677946', currency: 'SEK' as Currency, status: 'active' as const, type: 'commodity' as const, ucits: true, aifmd: false, countryOfDomicile: 'SE', inceptionDate: '2021-09-01', fiscalYearEnd: '12-31' },
+      { name: 'AuAg Precious Green', shortName: 'Precious Green', legalName: 'AuAg Precious Green Fund', isin: 'SE0014808440', currency: 'SEK' as Currency, status: 'active' as const, type: 'commodity' as const, ucits: true, aifmd: false, countryOfDomicile: 'SE', inceptionDate: '2020-11-01', fiscalYearEnd: '12-31' },
+      { name: 'AuAg Silver Bullet', shortName: 'Silver Bullet', legalName: 'AuAg Silver Bullet Fund', isin: 'SE0013358181', currency: 'SEK' as Currency, status: 'active' as const, type: 'commodity' as const, ucits: true, aifmd: false, countryOfDomicile: 'SE', inceptionDate: '2020-03-15', fiscalYearEnd: '12-31' },
+      { name: 'EPOQUE', shortName: 'EPOQUE', legalName: 'EPOQUE Fund', isin: 'EPOQUE-ISIN', currency: 'SEK' as Currency, status: 'active' as const, type: 'equity' as const, ucits: true, aifmd: false, countryOfDomicile: 'SE', inceptionDate: '2023-01-15', fiscalYearEnd: '12-31' },
+      { name: 'Go Blockchain Fund', shortName: 'Go Blockchain', legalName: 'Go Blockchain Fund', isin: 'GOBLOCK-ISIN', currency: 'SEK' as Currency, status: 'active' as const, type: 'equity' as const, ucits: true, aifmd: false, countryOfDomicile: 'SE', inceptionDate: '2022-04-01', fiscalYearEnd: '12-31' },
+      { name: 'MetaSpace Fund', shortName: 'MetaSpace', legalName: 'MetaSpace Fund', isin: 'METASPACE-ISIN', currency: 'SEK' as Currency, status: 'active' as const, type: 'equity' as const, ucits: true, aifmd: false, countryOfDomicile: 'SE', inceptionDate: '2023-06-01', fiscalYearEnd: '12-31' },
+      { name: 'Plain Capital BronX', shortName: 'BronX', legalName: 'Plain Capital BronX Fund', isin: 'BRONX-ISIN', currency: 'SEK' as Currency, status: 'active' as const, type: 'equity' as const, ucits: true, aifmd: false, countryOfDomicile: 'SE', inceptionDate: '2018-01-15', fiscalYearEnd: '12-31' },
+      { name: 'Plain Capital LunatiX', shortName: 'LunatiX', legalName: 'Plain Capital LunatiX Fund', isin: 'LUNATIX-ISIN', currency: 'SEK' as Currency, status: 'active' as const, type: 'equity' as const, ucits: true, aifmd: false, countryOfDomicile: 'SE', inceptionDate: '2019-03-01', fiscalYearEnd: '12-31' },
+      { name: 'Plain Capital StyX', shortName: 'StyX', legalName: 'Plain Capital StyX Fund', isin: 'STYX-ISIN', currency: 'SEK' as Currency, status: 'active' as const, type: 'equity' as const, ucits: true, aifmd: false, countryOfDomicile: 'SE', inceptionDate: '2017-06-01', fiscalYearEnd: '12-31' },
+      { name: 'Proethos Fond', shortName: 'Proethos', legalName: 'Proethos Fond', isin: 'PROETHOS-ISIN', currency: 'SEK' as Currency, status: 'active' as const, type: 'equity' as const, ucits: true, aifmd: false, countryOfDomicile: 'SE', inceptionDate: '2016-09-01', fiscalYearEnd: '12-31' },
+      { name: 'SAM Aktiv Ränta', shortName: 'SAM Ränta', legalName: 'SAM Aktiv Ränta Fund', isin: 'SAMRANTA-ISIN', currency: 'SEK' as Currency, status: 'active' as const, type: 'fixed_income' as const, ucits: true, aifmd: false, countryOfDomicile: 'SE', inceptionDate: '2021-01-10', fiscalYearEnd: '12-31' },
+      { name: 'Sensum Strategy Global', shortName: 'Sensum Global', legalName: 'Sensum Strategy Global Fund', isin: 'SENSUM-ISIN', currency: 'SEK' as Currency, status: 'active' as const, type: 'equity' as const, ucits: true, aifmd: false, countryOfDomicile: 'SE', inceptionDate: '2020-05-01', fiscalYearEnd: '12-31' },
+      { name: 'SOIC Dynamic China', shortName: 'SOIC China', legalName: 'SOIC Dynamic China Fund', isin: 'SOIC-ISIN', currency: 'SEK' as Currency, status: 'active' as const, type: 'equity' as const, ucits: true, aifmd: false, countryOfDomicile: 'SE', inceptionDate: '2022-03-01', fiscalYearEnd: '12-31' },
+      { name: 'Vinga Corporate Bond', shortName: 'Vinga Bond', legalName: 'Vinga Corporate Bond Fund', isin: 'VINGA-ISIN', currency: 'SEK' as Currency, status: 'active' as const, type: 'fixed_income' as const, ucits: true, aifmd: false, countryOfDomicile: 'SE', inceptionDate: '2021-06-01', fiscalYearEnd: '12-31' },
+      { name: 'Arte Collectum I AB', shortName: 'Arte I', legalName: 'Arte Collectum I AB (publ)', isin: 'ARTE-I-ISIN', currency: 'SEK' as Currency, status: 'active' as const, type: 'equity' as const, ucits: false, aifmd: true, countryOfDomicile: 'SE', inceptionDate: '2022-03-01', fiscalYearEnd: '12-31' },
+      { name: 'Arte Collectum II AB', shortName: 'Arte II', legalName: 'Arte Collectum II AB (publ)', isin: 'ARTE-II-ISIN', currency: 'SEK' as Currency, status: 'active' as const, type: 'equity' as const, ucits: false, aifmd: true, countryOfDomicile: 'SE', inceptionDate: '2024-04-01', fiscalYearEnd: '12-31' },
+      { name: 'Estea Omsorgsfastigheter', shortName: 'Estea', legalName: 'Estea Omsorgsfastigheter AB (publ)', isin: 'ESTEA-ISIN', currency: 'SEK' as Currency, status: 'active' as const, type: 'equity' as const, ucits: false, aifmd: true, countryOfDomicile: 'SE', inceptionDate: '2024-01-01', fiscalYearEnd: '12-31' },
+      { name: 'Lucy Global Fund', shortName: 'Lucy', legalName: 'Lucy Global Fund', isin: 'LUCY-ISIN', currency: 'SEK' as Currency, status: 'active' as const, type: 'equity' as const, ucits: true, aifmd: false, countryOfDomicile: 'SE', inceptionDate: '2021-01-01', fiscalYearEnd: '12-31' },
+      { name: 'Arden xFund', shortName: 'Arden X', legalName: 'Arden xFund', isin: 'ARDEN-ISIN', currency: 'SEK' as Currency, status: 'active' as const, type: 'equity' as const, ucits: true, aifmd: false, countryOfDomicile: 'SE', inceptionDate: '2013-01-01', fiscalYearEnd: '12-31' },
+      { name: 'SBP Kredit', shortName: 'SBP', legalName: 'SBP Kredit AB (publ)', isin: 'SBP-ISIN', currency: 'SEK' as Currency, status: 'active' as const, type: 'fixed_income' as const, ucits: false, aifmd: true, countryOfDomicile: 'SE', inceptionDate: '2020-01-01', fiscalYearEnd: '12-31' },
+      { name: 'SSID Co-Invest Fund', shortName: 'SSID', legalName: 'SSID Co-Invest Fund', isin: 'SSID-ISIN', currency: 'SEK' as Currency, status: 'active' as const, type: 'equity' as const, ucits: false, aifmd: true, countryOfDomicile: 'SE', inceptionDate: '2024-01-01', fiscalYearEnd: '12-31' },
     ];
 
     const demoShareClasses = [
-      // Silver Bullet
-      { fundIsin: 'SE0013358181', name: 'A', isin: 'SE0013358181', currency: 'SEK' as Currency, fee: 1.5, nav: 378.33, aum: 3400248947.80, shares: 8987586.35 },
-      { fundIsin: 'SE0013358181', name: 'B', isin: 'SE0013358199', currency: 'EUR' as Currency, fee: 1.5, nav: 37.23, aum: 921562837.38, shares: 2265711.61 },
+      // Essential Metals
+      { fundIsin: 'SE0019175563', name: 'A', isin: 'SE0019175563', currency: 'SEK' as Currency, fee: 1.5, nav: 142.42, aum: 349892028.52, shares: 2456766.31 },
+      { fundIsin: 'SE0019175563', name: 'B', isin: 'SE0019175571', currency: 'EUR' as Currency, fee: 1.5, nav: 14.65, aum: 43120778.87, shares: 269451.12 },
+      { fundIsin: 'SE0019175563', name: 'C', isin: 'SE0019175589', currency: 'SEK' as Currency, fee: 1.0, nav: 128.56, aum: 2571291.72, shares: 20000.00 },
       // Gold Rush
       { fundIsin: 'SE0020677946', name: 'A', isin: 'SE0020677946', currency: 'SEK' as Currency, fee: 1.5, nav: 208.71, aum: 505494096.59, shares: 2422025.74 },
       { fundIsin: 'SE0020677946', name: 'B', isin: 'SE0020677953', currency: 'EUR' as Currency, fee: 1.5, nav: 22.63, aum: 98912.81, shares: 400.00 },
@@ -542,10 +529,9 @@ export class FundRegistry {
       { fundIsin: 'SE0014808440', name: 'A', isin: 'SE0014808440', currency: 'SEK' as Currency, fee: 1.5, nav: 198.87, aum: 328924859.33, shares: 1653996.37 },
       { fundIsin: 'SE0014808440', name: 'B', isin: 'SE0014808457', currency: 'EUR' as Currency, fee: 1.5, nav: 18.88, aum: 12524335.34, shares: 60729.92 },
       { fundIsin: 'SE0014808440', name: 'C', isin: 'SE0015948641', currency: 'SEK' as Currency, fee: 1.0, nav: 140.36, aum: 5845893.25, shares: 41648.44 },
-      // Essential Metals
-      { fundIsin: 'SE0019175563', name: 'A', isin: 'SE0019175563', currency: 'SEK' as Currency, fee: 1.5, nav: 142.42, aum: 349892028.52, shares: 2456766.31 },
-      { fundIsin: 'SE0019175563', name: 'B', isin: 'SE0019175571', currency: 'EUR' as Currency, fee: 1.5, nav: 14.65, aum: 43120778.87, shares: 269451.12 },
-      { fundIsin: 'SE0019175563', name: 'C', isin: 'SE0019175589', currency: 'SEK' as Currency, fee: 1.0, nav: 128.56, aum: 2571291.72, shares: 20000.00 },
+      // Silver Bullet
+      { fundIsin: 'SE0013358181', name: 'A', isin: 'SE0013358181', currency: 'SEK' as Currency, fee: 1.5, nav: 378.33, aum: 3400248947.80, shares: 8987586.35 },
+      { fundIsin: 'SE0013358181', name: 'B', isin: 'SE0013358199', currency: 'EUR' as Currency, fee: 1.5, nav: 37.23, aum: 921562837.38, shares: 2265711.61 },
     ];
 
     // Create funds

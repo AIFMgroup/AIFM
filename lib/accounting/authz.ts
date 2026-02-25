@@ -1,4 +1,4 @@
-export type UserRole = 'customer' | 'accountant' | 'manager' | 'executive' | 'admin' | 'auditor';
+export type UserRole = 'customer' | 'accountant' | 'manager' | 'executive' | 'admin' | 'auditor' | 'forvaltare' | 'operation';
 
 export type AccountingAction =
   | 'VIEW'
@@ -9,8 +9,10 @@ export type AccountingAction =
 
 const ROLE_LEVEL: Record<UserRole, number> = {
   customer: 1,
+  forvaltare: 1.5,
   accountant: 2,
   manager: 3,
+  operation: 3.5,
   executive: 4,
   admin: 5,
   auditor: 0, // explicit read-only
@@ -40,18 +42,20 @@ export function getRoleFromGroups(groups?: unknown): UserRole {
   if (has('aifm-admin', 'admin')) return 'admin';
   if (has('aifm-executive', 'executive', 'cfo', 'ceo')) return 'executive';
   if (has('aifm-manager', 'manager')) return 'manager';
+  if (has('aifm-operation', 'operation')) return 'operation';
   if (has('aifm-accountant', 'accountant', 'finance')) return 'accountant';
+  if (has('aifm-forvaltare', 'forvaltare')) return 'forvaltare';
   if (has('aifm-auditor', 'auditor', 'read-only', 'readonly')) return 'auditor';
   if (has('aifm-customer', 'customer')) return 'customer';
 
   const fallback = (process.env.AIFM_DEFAULT_ROLE || '').toLowerCase();
-  const allowed: UserRole[] = ['customer', 'accountant', 'manager', 'executive', 'admin', 'auditor'];
+  const allowed: UserRole[] = ['customer', 'accountant', 'manager', 'executive', 'admin', 'auditor', 'forvaltare', 'operation'];
   return (allowed.includes(fallback as UserRole) ? (fallback as UserRole) : 'customer');
 }
 
 export function getRoleFromRequest(request: Request): UserRole {
   const raw = (request.headers.get('x-aifm-role') || '').toLowerCase();
-  const allowed: UserRole[] = ['customer', 'accountant', 'manager', 'executive', 'admin', 'auditor'];
+  const allowed: UserRole[] = ['customer', 'accountant', 'manager', 'executive', 'admin', 'auditor', 'forvaltare', 'operation'];
   return (allowed.includes(raw as UserRole) ? (raw as UserRole) : 'accountant');
 }
 

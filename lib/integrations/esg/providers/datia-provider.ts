@@ -19,6 +19,7 @@ import type {
   NormalizedExclusionScreening,
   PAIIndicator,
   ExclusionInvolvement,
+  GHGScopeData,
 } from '../types';
 
 // ---------------------------------------------------------------------------
@@ -117,20 +118,32 @@ export class DatiaESGProvider implements ESGDataProvider {
     if (!this.isAvailable()) return null;
 
     try {
-      const [esgResult, profileResult, invResult, taxResult] = await Promise.allSettled([
+      const [esgResult, profileResult, invResult, taxResult, paiResult] = await Promise.allSettled([
         this.fetchESGScores([identifier]),
         this.fetchSustainabilityProfiles([identifier]),
         this.fetchBusinessInvolvements([identifier]),
         this.fetchTaxonomyInsights([identifier]),
+        this.fetchPAIData([identifier]),
       ]);
 
-      return this.buildNormalized(
+      const normalized = this.buildNormalized(
         identifier,
         esgResult.status === 'fulfilled' ? esgResult.value.get(identifier) ?? null : null,
         profileResult.status === 'fulfilled' ? profileResult.value.get(identifier) ?? null : null,
         invResult.status === 'fulfilled' ? invResult.value.get(identifier) ?? null : null,
         taxResult.status === 'fulfilled' ? taxResult.value.get(identifier) ?? null : null,
       );
+
+      // Enrich with PAI data (scope emissions)
+      if (paiResult.status === 'fulfilled') {
+        const paiIndicators = paiResult.value.get(identifier);
+        if (paiIndicators?.length) {
+          normalized.paiIndicators = paiIndicators;
+          normalized.ghgScopes = this.extractGHGScopes(paiIndicators);
+        }
+      }
+
+      return normalized;
     } catch (err) {
       console.error(`[Datia] getESGData error for ${identifier}:`, err);
       return null;
@@ -381,10 +394,16 @@ export class DatiaESGProvider implements ESGDataProvider {
     // Taxonomy
     const taxonomyPercent = taxonomy?.['taxonomy_alignment_%'];
 
-    // Exclusion: any involvement with weight > 0 fails
     const exclusionFlags = this.mapInvolvements(involvements);
+    // "Defense" is a broad Datia category (general defense-related revenue) that
+    // should NOT be treated the same as controversial weapons production.
+    // Only flag exclusion failure for categories that clearly represent
+    // prohibited activities (weapons, tobacco, etc.), not broad sector tags.
+    const BROAD_SECTOR_CATEGORIES = new Set(['defense', 'defence']);
     const meetsExclusion = involvements
-      ? involvements.every((i) => i.weight === 0)
+      ? involvements
+          .filter((i) => !BROAD_SECTOR_CATEGORIES.has(i.category.toLowerCase()))
+          .every((i) => i.weight === 0)
       : undefined;
 
     return {
@@ -451,6 +470,34 @@ export class DatiaESGProvider implements ESGDataProvider {
               : 'high' as const,
       details: i.count > 0 ? `${i.count} compan${i.count === 1 ? 'y' : 'ies'} involved` : undefined,
     }));
+  }
+
+  /**
+   * Extract structured GHG scope data from PAI indicators.
+   * Datia returns keys like: scope_1_emissions, scope_2_emissions, scope_3_emissions,
+   * total_ghg_emissions, carbon_footprint, carbon_intensity.
+   */
+  private extractGHGScopes(indicators: PAIIndicator[]): GHGScopeData {
+    const findNumeric = (...patterns: string[]): number | null => {
+      for (const pattern of patterns) {
+        const found = indicators.find((i) =>
+          i.description?.toLowerCase().includes(pattern) ||
+          i.name.toLowerCase().includes(pattern)
+        );
+        if (found && typeof found.value === 'number') return found.value;
+      }
+      return null;
+    };
+
+    return {
+      scope1: findNumeric('scope_1', 'scope 1'),
+      scope2: findNumeric('scope_2', 'scope 2'),
+      scope3: findNumeric('scope_3', 'scope 3'),
+      total: findNumeric('total_ghg', 'total ghg', 'ghg_emissions_total'),
+      carbonFootprint: findNumeric('carbon_footprint', 'carbon footprint'),
+      carbonIntensity: findNumeric('carbon_intensity', 'carbon intensity'),
+      carbonIntensityUnit: 'tonnes/M€ revenue',
+    };
   }
 
   /** Format a snake_case key to a readable name */

@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft, ArrowUpRight, ArrowDownRight, Calendar, Download,
   Send, RefreshCw, Clock, CheckCircle2, Filter, Search,
-  TrendingUp, TrendingDown, Wallet, FileSpreadsheet, Mail
+  TrendingUp, TrendingDown, Wallet, FileSpreadsheet, Mail,
+  Upload, AlertCircle, Loader2
 } from 'lucide-react';
 
 // ============================================================================
@@ -34,24 +35,6 @@ interface DailySummary {
   currency: string;
   transactionCount: number;
 }
-
-// ============================================================================
-// Mock Data
-// ============================================================================
-
-const mockYesterdayFlows: FlowEntry[] = [
-  { id: '1', fundName: 'AUAG Essential Metals A', isin: 'SE0019175563', type: 'inflow', amount: 500000, currency: 'SEK', shares: 3511.23, navPrice: 142.42, investor: 'Pension Fund AB', date: '2025-01-16', status: 'confirmed' },
-  { id: '2', fundName: 'AUAG Essential Metals A', isin: 'SE0019175563', type: 'outflow', amount: 150000, currency: 'SEK', shares: 1053.37, navPrice: 142.42, investor: 'Individual Investor', date: '2025-01-16', status: 'confirmed' },
-  { id: '3', fundName: 'AuAg Gold Rush A', isin: 'SE0020677946', type: 'inflow', amount: 1200000, currency: 'SEK', shares: 5749.55, navPrice: 208.71, investor: 'Insurance Company', date: '2025-01-16', status: 'confirmed' },
-  { id: '4', fundName: 'AuAg Silver Bullet A', isin: 'SE0013358181', type: 'inflow', amount: 2500000, currency: 'SEK', shares: 6607.53, navPrice: 378.33, investor: 'Foundation X', date: '2025-01-16', status: 'confirmed' },
-  { id: '5', fundName: 'AuAg Precious Green A', isin: 'SE0014808440', type: 'outflow', amount: 300000, currency: 'SEK', shares: 1508.45, navPrice: 198.87, investor: 'Private Bank Client', date: '2025-01-16', status: 'confirmed' },
-];
-
-const mockTodayFlows: FlowEntry[] = [
-  { id: '6', fundName: 'AuAg Gold Rush A', isin: 'SE0020677946', type: 'inflow', amount: 800000, currency: 'SEK', shares: 3833.04, navPrice: 208.71, investor: 'Corporate Client', date: '2025-01-17', status: 'pending' },
-  { id: '7', fundName: 'AUAG Essential Metals A', isin: 'SE0019175563', type: 'outflow', amount: 200000, currency: 'SEK', shares: 1404.49, navPrice: 142.42, investor: 'Retail Investor', date: '2025-01-17', status: 'pending' },
-  { id: '8', fundName: 'AuAg Silver Bullet A', isin: 'SE0013358181', type: 'inflow', amount: 1500000, currency: 'SEK', shares: 3964.52, navPrice: 378.33, investor: 'Asset Manager', date: '2025-01-17', status: 'processing' },
-];
 
 // ============================================================================
 // Helper Functions
@@ -175,14 +158,46 @@ function SummaryCard({ summary, type }: { summary: DailySummary; type: 'yesterda
 export default function FlowsPage() {
   const [activeTab, setActiveTab] = useState<'notor' | 'subred'>('notor');
   const [searchTerm, setSearchTerm] = useState('');
+  const [yesterdayFlows, setYesterdayFlows] = useState<FlowEntry[]>([]);
+  const [todayFlows, setTodayFlows] = useState<FlowEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dataSource, setDataSource] = useState<'live' | 'empty'>('empty');
 
-  const yesterdaySummary = calculateSummary(mockYesterdayFlows);
-  const todaySummary = calculateSummary(mockTodayFlows);
+  const fetchFlows = useCallback(async () => {
+    setLoading(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const [notorRes, subRedRes] = await Promise.all([
+        fetch(`/api/nav/flows?date=${today}&type=notor`).then((r) => r.ok ? r.json() : null),
+        fetch(`/api/nav/flows?date=${today}&type=subred`).then((r) => r.ok ? r.json() : null),
+      ]);
 
-  const totalYesterdayInflow = mockYesterdayFlows.filter(f => f.type === 'inflow').reduce((sum, f) => sum + f.amount, 0);
-  const totalYesterdayOutflow = mockYesterdayFlows.filter(f => f.type === 'outflow').reduce((sum, f) => sum + f.amount, 0);
-  const totalTodayInflow = mockTodayFlows.filter(f => f.type === 'inflow').reduce((sum, f) => sum + f.amount, 0);
-  const totalTodayOutflow = mockTodayFlows.filter(f => f.type === 'outflow').reduce((sum, f) => sum + f.amount, 0);
+      if (notorRes?.flows?.length > 0) {
+        setYesterdayFlows(notorRes.flows);
+        setDataSource('live');
+      }
+      if (subRedRes?.flows?.length > 0) {
+        setTodayFlows(subRedRes.flows);
+        setDataSource('live');
+      }
+    } catch {
+      // API not available — show empty state
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchFlows();
+  }, [fetchFlows]);
+
+  const yesterdaySummary = calculateSummary(yesterdayFlows);
+  const todaySummary = calculateSummary(todayFlows);
+
+  const totalYesterdayInflow = yesterdayFlows.filter(f => f.type === 'inflow').reduce((sum, f) => sum + f.amount, 0);
+  const totalYesterdayOutflow = yesterdayFlows.filter(f => f.type === 'outflow').reduce((sum, f) => sum + f.amount, 0);
+  const totalTodayInflow = todayFlows.filter(f => f.type === 'inflow').reduce((sum, f) => sum + f.amount, 0);
+  const totalTodayOutflow = todayFlows.filter(f => f.type === 'outflow').reduce((sum, f) => sum + f.amount, 0);
 
   return (
     <div className="space-y-6">
@@ -202,8 +217,18 @@ export default function FlowsPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm transition-all">
-              <RefreshCw className="w-4 h-4" />
+            {dataSource === 'live' && (
+              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-full text-xs font-medium">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Live-data
+              </span>
+            )}
+            <button
+              onClick={fetchFlows}
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-full text-sm transition-all disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
               <span>Uppdatera</span>
             </button>
           </div>
@@ -273,7 +298,7 @@ export default function FlowsPage() {
                 <div className="p-1.5 rounded-lg bg-aifm-charcoal/[0.06]"><CheckCircle2 className="w-4 h-4 text-aifm-charcoal/60" /></div>
                 <span className="text-sm text-aifm-charcoal/40">Transaktioner</span>
               </div>
-              <p className="text-xl font-semibold tracking-tight text-aifm-charcoal">{mockYesterdayFlows.length}</p>
+              <p className="text-xl font-semibold tracking-tight text-aifm-charcoal">{yesterdayFlows.length}</p>
             </div>
           </div>
 
@@ -302,7 +327,7 @@ export default function FlowsPage() {
           {/* Detailed Transactions */}
           <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="font-semibold text-aifm-charcoal tracking-tight">Detaljerade transaktioner - {new Date('2025-01-16').toLocaleDateString('sv-SE')}</h2>
+              <h2 className="font-semibold text-aifm-charcoal tracking-tight">Detaljerade transaktioner - {yesterdayFlows[0]?.date ? new Date(yesterdayFlows[0].date).toLocaleDateString('sv-SE') : 'Gårdag'}</h2>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-aifm-charcoal/40" />
                 <input
@@ -328,7 +353,7 @@ export default function FlowsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {mockYesterdayFlows.map((flow) => (
+                  {yesterdayFlows.map((flow) => (
                     <tr key={flow.id} className="hover:bg-aifm-charcoal/[0.02] transition-colors">
                       <td className="px-4 py-3">
                         <div>
@@ -366,7 +391,7 @@ export default function FlowsPage() {
       )}
 
       {/* SubRed Tab */}
-      {activeTab === 'subred' && (
+      {activeTab === 'subred' && !loading && (
         <>
           {/* Summary Stats */}
           <div className="grid grid-cols-4 gap-4">
@@ -398,7 +423,7 @@ export default function FlowsPage() {
                 <div className="p-1.5 rounded-lg bg-amber-50"><Clock className="w-4 h-4 text-amber-500" /></div>
                 <span className="text-sm text-aifm-charcoal/40">Väntande</span>
               </div>
-              <p className="text-xl font-semibold tracking-tight text-aifm-charcoal">{mockTodayFlows.filter(f => f.status === 'pending').length}</p>
+              <p className="text-xl font-semibold tracking-tight text-aifm-charcoal">{todayFlows.filter(f => f.status === 'pending').length}</p>
             </div>
           </div>
 
@@ -409,8 +434,8 @@ export default function FlowsPage() {
               <div>
                 <p className="font-medium text-aifm-charcoal">SubRed för morgondagen</p>
                 <p className="text-sm text-aifm-charcoal/40 mt-1">
-                  Visar planerade in- och utflöden för {new Date('2025-01-18').toLocaleDateString('sv-SE')}. 
-                  Kontoutdrag genereras automatiskt och skickas till förvaltare kl 16:00.
+                  Visar planerade in- och utflöden för idag. 
+                  Kontoutdrag genereras automatiskt och skickas till förvaltare efter NAV-godkännande.
                 </p>
               </div>
             </div>
@@ -441,7 +466,7 @@ export default function FlowsPage() {
           {/* Detailed Transactions */}
           <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="font-semibold text-aifm-charcoal tracking-tight">Planerade transaktioner - {new Date('2025-01-17').toLocaleDateString('sv-SE')}</h2>
+              <h2 className="font-semibold text-aifm-charcoal tracking-tight">Planerade transaktioner - {todayFlows[0]?.date ? new Date(todayFlows[0].date).toLocaleDateString('sv-SE') : 'Idag'}</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -457,7 +482,7 @@ export default function FlowsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {mockTodayFlows.map((flow) => (
+                  {todayFlows.map((flow) => (
                     <tr key={flow.id} className="hover:bg-aifm-charcoal/[0.02] transition-colors">
                       <td className="px-4 py-3">
                         <div>

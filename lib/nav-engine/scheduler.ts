@@ -6,13 +6,15 @@
  */
 
 import { createNAVService, NAVService } from './nav-service';
-import { 
-  getNAVRunStore, 
-  getNAVApprovalStore, 
+import {
+  getNAVRunStore,
+  getNAVApprovalStore,
   getNAVRecordStore,
   NAVRunRecord,
 } from './nav-store';
 import { NAVRun, NAVRunStatus, NAVCalculationResult } from './types';
+import { sendApprovalNotification } from './email-service';
+import { triggerDistributionAfterApproval } from './distribution';
 
 // ============================================================================
 // Types
@@ -168,16 +170,53 @@ export class NAVScheduler {
           results
         );
 
-        // Check for auto-approve
-        if (this.config.autoApprove) {
-          const maxChange = Math.max(...results.map(r => Math.abs(r.navChangePercent)));
-          if (maxChange <= this.config.autoApproveThreshold) {
-            console.log(`[NAV Scheduler] Auto-approving NAV (max change: ${maxChange.toFixed(2)}%)`);
-            // Auto-approve would go here
-          }
+        // Notify approvers (e-post när NAV väntar på godkännande)
+        const recipients = (this.config.notificationEmails || []).map((email) => ({
+          email,
+          name: email,
+          type: 'TO' as const,
+        }));
+        if (recipients.length > 0) {
+          sendApprovalNotification({
+            approval,
+            action: 'CREATED',
+            recipients,
+          }).catch((err) => console.warn('[NAV Scheduler] Failed to send approval notification:', err));
         }
 
-        run.approvalStatus = 'PENDING';
+        // Auto-approve for small changes
+        if (this.config.autoApprove) {
+          const maxChange = Math.max(...results.map((r) => Math.abs(r.navChangePercent ?? 0)));
+          if (maxChange <= this.config.autoApproveThreshold) {
+            console.log(`[NAV Scheduler] Auto-approving NAV (max change: ${maxChange.toFixed(2)}%)`);
+            try {
+              await this.approvalStore.approveFirst(approval.approvalId, 'system', 'System (auto)');
+              const approved = await this.approvalStore.approveSecond(approval.approvalId, 'system', 'System (auto)');
+              for (const nav of approved.navSummary) {
+                await this.recordStore.updateNAVStatus(
+                  nav.fundId,
+                  nav.shareClassId,
+                  approved.navDate,
+                  'APPROVED',
+                  {
+                    approvalId: approved.approvalId,
+                    approvedBy: ['system'],
+                    approvedAt: new Date().toISOString(),
+                  }
+                );
+              }
+              await triggerDistributionAfterApproval(approved);
+              run.approvalStatus = 'APPROVED';
+            } catch (err) {
+              console.warn('[NAV Scheduler] Auto-approve failed:', err);
+              run.approvalStatus = 'PENDING';
+            }
+          } else {
+            run.approvalStatus = 'PENDING';
+          }
+        } else {
+          run.approvalStatus = 'PENDING';
+        }
       }
 
       console.log(`[NAV Scheduler] NAV run completed: ${run.completedFunds}/${run.totalFunds} funds`);

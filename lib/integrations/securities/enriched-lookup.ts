@@ -269,7 +269,7 @@ export async function performEnrichedLookup(
   // Add Yahoo Finance data if available
   if (yahooResult.success && yahooResult.data) {
     const yd = yahooResult.data;
-    
+    enrichedData.yahooSymbol = createSourcedField(yd.symbol, 'yahoo_finance', yahooResult.sourceUrl, 'high');
     if (yd.sector) {
       enrichedData.gicsSector = createSourcedField(yd.sector, 'yahoo_finance', yahooResult.sourceUrl, 'high');
     }

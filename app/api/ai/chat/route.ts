@@ -19,6 +19,36 @@ import { getMarketDataClient } from '@/lib/integrations/market-data';
 import { findRelevantKnowledge, formatKnowledgeForContext } from '@/lib/knowledge';
 import { trackAIUsage, createUsageTimer } from '@/lib/analytics/aiUsageTracker';
 import { checkRateLimit, getClientId } from '@/lib/security/rateLimiter';
+import { getCompanyProfile } from '@/lib/companyProfileStore';
+
+// Retry helper for transient Bedrock errors (throttling, 5xx, network blips)
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  { retries = 3, baseDelay = 1000 }: { retries?: number; baseDelay?: number } = {},
+): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err: unknown) {
+      lastError = err;
+      const errName = err instanceof Error ? err.name : '';
+      const errMsg = err instanceof Error ? err.message : '';
+      const isRetryable =
+        errName === 'ThrottlingException' ||
+        errName === 'ServiceUnavailableException' ||
+        errName === 'InternalServerException' ||
+        errMsg.toLowerCase().includes('throttl') ||
+        errMsg.includes('ECONNRESET') ||
+        errMsg.includes('socket hang up');
+      if (!isRetryable || attempt >= retries) throw err;
+      const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 500;
+      console.warn(`[withRetry] Attempt ${attempt + 1} failed (${errName}), retrying in ${Math.round(delay)}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  throw lastError;
+}
 
 // Initialize Bedrock client
 const bedrockClient = new BedrockRuntimeClient({
@@ -69,6 +99,15 @@ interface DocxAttachmentContext {
   paragraphs?: string[];
 }
 
+interface FileAttachmentContext {
+  rawBase64: string;
+  fileName: string;
+  documentText: string;
+  fileType: 'docx' | 'pdf' | 'excel';
+  paragraphs?: string[];   // DOCX only
+  pageTexts?: string[];    // PDF only
+}
+
 interface ChatRequest {
   message: string;
   question?: string;
@@ -80,6 +119,7 @@ interface ChatRequest {
   images?: ImageAttachment[];
   templateId?: string;
   docxAttachment?: DocxAttachmentContext;
+  fileAttachment?: FileAttachmentContext;
   /** When set, instruct model to aim for shorter/medium/longer response. Omit = unchanged behaviour. */
   responseLength?: 'short' | 'medium' | 'long';
 }
@@ -228,7 +268,7 @@ const TOOL_DEFINITIONS: ToolConfiguration = {
     {
       toolSpec: {
         name: 'review_document',
-        description: 'Granskar ett bifogat Word-dokument (.docx) och applicerar spårändringar samt kommentarer direkt i filen. Använd ENDAST när användaren har bifogat ett Word-dokument och ber om granskning, revidering eller ändringar i dokumentet. Returnerar den modifierade filen med track changes och kommentarer som kan öppnas i Word.',
+        description: 'Granskar ett bifogat dokument (Word .docx, PDF eller Excel .xlsx/.xls) och applicerar kommentarer direkt i filen. För Word-filer appliceras spårändringar och kommentarer. För PDF-filer läggs sticky-note-annotationer till. För Excel-filer läggs cellanteckningar (notes) till. Använd ENDAST när användaren har bifogat ett dokument och ber om granskning, revidering eller ändringar. Returnerar den modifierade filen.',
         inputSchema: {
           json: {
             type: 'object',
@@ -243,6 +283,264 @@ const TOOL_DEFINITIONS: ToolConfiguration = {
         },
       },
     },
+    {
+      toolSpec: {
+        name: 'generate_pdf_report',
+        description: 'Genererar en professionell PDF-rapport med AIFM-branding (brun header, guldaccenter, tabeller, checklistor). Använd detta när användaren ber om att skapa, exportera eller generera en PDF. Varje sektion kan innehålla: items (nyckel-värde-par), text (löptext), summary (sammanfattning i ruta), bullets (punktlista), table (tabell), checklist (checkboxar). Kombinera fritt för bästa resultat.',
+        inputSchema: {
+          json: {
+            type: 'object',
+            properties: {
+              title: { type: 'string', description: 'Rapportens titel, t.ex. "ESG-analys Volvo"' },
+              subtitle: { type: 'string', description: 'Valfri underrubrik' },
+              sections: {
+                type: 'array',
+                description: 'Rapportens avsnitt. Varje avsnitt har en titel och en eller flera innehållstyper.',
+                items: {
+                  type: 'object',
+                  properties: {
+                    title: { type: 'string', description: 'Avsnittets rubrik' },
+                    items: {
+                      type: 'array',
+                      description: 'Nyckel-värde-par (label + value + valfri detail)',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          label: { type: 'string', description: 'Etikett/fråga' },
+                          value: { type: 'string', description: 'Värde/svar' },
+                          detail: { type: 'string', description: 'Valfri motivering' },
+                        },
+                        required: ['label', 'value'],
+                      },
+                    },
+                    text: { type: 'string', description: 'Löptext som visas i en accentruta' },
+                    summary: { type: 'string', description: 'Sammanfattning som visas i en framhävd ruta med guldlinje' },
+                    bullets: {
+                      type: 'object',
+                      description: 'Punktlista med titel',
+                      properties: {
+                        title: { type: 'string' },
+                        items: { type: 'array', items: { type: 'string' } },
+                        color: { type: 'string', enum: ['green', 'red', 'default'] },
+                      },
+                      required: ['title', 'items'],
+                    },
+                    table: {
+                      type: 'object',
+                      description: 'Tabell med rubriker och rader',
+                      properties: {
+                        headers: { type: 'array', items: { type: 'string' } },
+                        rows: { type: 'array', items: { type: 'array', items: { type: 'string' } } },
+                      },
+                      required: ['headers', 'rows'],
+                    },
+                    checklist: {
+                      type: 'array',
+                      description: 'Checklista med checkboxar',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          label: { type: 'string' },
+                          checked: { type: 'boolean' },
+                        },
+                        required: ['label', 'checked'],
+                      },
+                    },
+                  },
+                  required: ['title'],
+                },
+              },
+              signature: {
+                type: 'object',
+                description: 'Valfri signatursektion',
+                properties: {
+                  date: { type: 'string' },
+                  name: { type: 'string' },
+                  company: { type: 'string' },
+                },
+              },
+            },
+            required: ['title', 'sections'],
+          },
+        },
+      },
+    },
+    {
+      toolSpec: {
+        name: 'generate_excel',
+        description: 'Genererar en Excel-fil (.xlsx) med en eller flera flikar. Använd detta när användaren ber om att skapa en Excel-fil, tabell, datasammanställning eller liknande. Varje flik har en rubrikrad (headers) och datarader. Filen levereras som nedladdning till användaren.',
+        inputSchema: {
+          json: {
+            type: 'object',
+            properties: {
+              title: { type: 'string', description: 'Filens titel (används i filnamnet)' },
+              sheets: {
+                type: 'array',
+                description: 'Flikar i Excel-filen',
+                items: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string', description: 'Flikens namn (max 31 tecken)' },
+                    headers: { type: 'array', items: { type: 'string' }, description: 'Kolumnrubriker' },
+                    rows: {
+                      type: 'array',
+                      description: 'Datarader (varje rad är en array av strängar)',
+                      items: { type: 'array', items: { type: 'string' } },
+                    },
+                  },
+                  required: ['name', 'headers', 'rows'],
+                },
+              },
+            },
+            required: ['title', 'sheets'],
+          },
+        },
+      },
+    },
+    {
+      toolSpec: {
+        name: 'generate_word_document',
+        description: 'Genererar ett professionellt Word-dokument (.docx) med AIFM-branding. Använd detta när användaren ber om att skapa ett Word-dokument, rapport, PM eller liknande. Strukturera innehållet i sektioner med rubrik och punkter (label + value). Filen levereras som nedladdning till användaren.',
+        inputSchema: {
+          json: {
+            type: 'object',
+            properties: {
+              title: { type: 'string', description: 'Dokumentets titel' },
+              subtitle: { type: 'string', description: 'Valfri underrubrik' },
+              sections: {
+                type: 'array',
+                description: 'Dokumentets avsnitt',
+                items: {
+                  type: 'object',
+                  properties: {
+                    title: { type: 'string', description: 'Avsnittets rubrik' },
+                    items: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          label: { type: 'string', description: 'Fråga eller etikett' },
+                          value: { type: 'string', description: 'Svar eller värde' },
+                          detail: { type: 'string', description: 'Valfri motivering eller detalj' },
+                        },
+                        required: ['label', 'value'],
+                      },
+                    },
+                  },
+                  required: ['title', 'items'],
+                },
+              },
+              signature: {
+                type: 'object',
+                description: 'Valfri signatursektion',
+                properties: {
+                  date: { type: 'string' },
+                  name: { type: 'string' },
+                  company: { type: 'string' },
+                },
+              },
+            },
+            required: ['title', 'sections'],
+          },
+        },
+      },
+    },
+    {
+      toolSpec: {
+        name: 'get_fund_data',
+        description: 'Hämtar fonddata från ISEC SECURA-plattformen. Kan hämta en lista av alla fonder med NAV, eller detaljerad data för en specifik fond inklusive innehav (holdings), NAV per andel, och totalvärde. Använd detta verktyg när användaren frågar om fonder, fondvärde, NAV, portföljinnehav, fondöversikt, eller vill veta vilka värdepapper en fond äger.',
+        inputSchema: {
+          json: {
+            type: 'object',
+            properties: {
+              fundId: {
+                type: 'string',
+                description: 'Fond-ID för att hämta specifik fond med innehav. Utelämna för att lista alla fonder.',
+              },
+            },
+            required: [],
+          },
+        },
+      },
+    },
+    {
+      toolSpec: {
+        name: 'get_fund_transactions',
+        description: 'Hämtar transaktionshistorik för en specifik fond från ISEC SECURA. Visar köp, sälj, utdelningar och andra transaktioner. Använd detta när användaren frågar om fondtransaktioner, handelshistorik, eller aktivitet i en fond.',
+        inputSchema: {
+          json: {
+            type: 'object',
+            properties: {
+              fundId: {
+                type: 'string',
+                description: 'Fond-ID att hämta transaktioner för',
+              },
+              from: {
+                type: 'string',
+                description: 'Startdatum (YYYY-MM-DD)',
+              },
+              to: {
+                type: 'string',
+                description: 'Slutdatum (YYYY-MM-DD)',
+              },
+            },
+            required: ['fundId'],
+          },
+        },
+      },
+    },
+    {
+      toolSpec: {
+        name: 'get_fund_nav_history',
+        description: 'Hämtar NAV-historik (Net Asset Value) för en fond över tid från ISEC SECURA. Visar NAV per andel och totalvärde per datum. Använd detta när användaren frågar om fondutveckling, NAV-historik, eller prestation över tid.',
+        inputSchema: {
+          json: {
+            type: 'object',
+            properties: {
+              fundId: {
+                type: 'string',
+                description: 'Fond-ID att hämta NAV-historik för',
+              },
+              from: {
+                type: 'string',
+                description: 'Startdatum (YYYY-MM-DD)',
+              },
+              to: {
+                type: 'string',
+                description: 'Slutdatum (YYYY-MM-DD)',
+              },
+            },
+            required: ['fundId'],
+          },
+        },
+      },
+    },
+    {
+      toolSpec: {
+        name: 'calculate_nav',
+        description: 'Beräknar NAV (Net Asset Value) för en fond/andelsklass med data från ISEC SECURA. Hämtar positioner, kassor, FX-kurser, avgifter och andelsägare, och kör sedan NAV-beräkningsmotorn. Resultatet inkluderar: NAV per andel, bruttotillgångar, skulder (avgifter), fondförmögenhet, utestående andelar, samt detaljerad uppdelning per tillgångsslag. Använd detta verktyg när användaren frågar om NAV-beräkning, vill beräkna NAV, eller vill se en detaljerad NAV-uppdelning.',
+        inputSchema: {
+          json: {
+            type: 'object',
+            properties: {
+              fundId: {
+                type: 'string',
+                description: 'Fond-ID att beräkna NAV för',
+              },
+              shareClassId: {
+                type: 'string',
+                description: 'Andelsklass-ID (valfritt — använder första tillgängliga om ej angivet)',
+              },
+              navDate: {
+                type: 'string',
+                description: 'Datum för NAV-beräkning (YYYY-MM-DD, default idag)',
+              },
+            },
+            required: ['fundId'],
+          },
+        },
+      },
+    },
   ],
 };
 
@@ -253,7 +551,7 @@ const TOOL_DEFINITIONS: ToolConfiguration = {
 async function executeTool(
   toolName: string,
   toolInput: Record<string, any>,
-  options?: { docxAttachment?: DocxAttachmentContext }
+  options?: { docxAttachment?: DocxAttachmentContext; fileAttachment?: FileAttachmentContext }
 ): Promise<string> {
   console.log(`[AI Chat Tool] Executing: ${toolName}`, JSON.stringify(toolInput).substring(0, 200));
   
@@ -477,22 +775,75 @@ async function executeTool(
         });
       }
 
+      case 'generate_pdf_report': {
+        const { runGeneratePdf } = await import('@/lib/chat-tools/generate-pdf');
+        const pdfResult = await runGeneratePdf(toolInput as any);
+        return JSON.stringify(pdfResult);
+      }
+
+      case 'generate_excel': {
+        const { runGenerateExcel } = await import('@/lib/chat-tools/generate-excel');
+        const excelResult = await runGenerateExcel(toolInput as any);
+        return JSON.stringify(excelResult);
+      }
+
+      case 'generate_word_document': {
+        const { runGenerateWord } = await import('@/lib/chat-tools/generate-word');
+        const wordResult = await runGenerateWord(toolInput as any);
+        return JSON.stringify(wordResult);
+      }
+
       case 'review_document': {
-        const docx = options?.docxAttachment;
-        if (!docx) {
+        // Support both legacy docxAttachment and new fileAttachment
+        const fileAtt = options?.fileAttachment;
+        const docxAtt = options?.docxAttachment;
+
+        if (!fileAtt && !docxAtt) {
           return JSON.stringify({
             success: false,
-            error: 'Inget Word-dokument är bifogat. Bifoga en .docx-fil och be användaren granska den.',
+            error: 'Inget dokument är bifogat. Bifoga en .docx-, .pdf- eller .xlsx-fil och be användaren granska den.',
           });
         }
+
         try {
+          const instructions = toolInput.instructions || 'Granska dokumentet och föreslå ändringar.';
+
+          // Determine file type and route to the correct reviewer
+          if (fileAtt?.fileType === 'pdf') {
+            const { runReviewPdf } = await import('@/lib/pdf/review-pdf');
+            const result = await runReviewPdf({
+              fileBufferBase64: fileAtt.rawBase64,
+              fileName: fileAtt.fileName,
+              instructions,
+              documentText: fileAtt.documentText,
+              pageTexts: fileAtt.pageTexts,
+            });
+            return JSON.stringify(result);
+          }
+
+          if (fileAtt?.fileType === 'excel') {
+            const { runReviewExcel } = await import('@/lib/excel/review-excel');
+            const result = await runReviewExcel({
+              fileBufferBase64: fileAtt.rawBase64,
+              fileName: fileAtt.fileName,
+              instructions,
+              documentText: fileAtt.documentText,
+            });
+            return JSON.stringify(result);
+          }
+
+          // Default: DOCX review (supports both fileAttachment and legacy docxAttachment)
+          const docxData = fileAtt?.fileType === 'docx' ? fileAtt : docxAtt;
+          if (!docxData) {
+            return JSON.stringify({ success: false, error: 'Kunde inte identifiera filtypen.' });
+          }
           const { runReviewDocx } = await import('@/lib/docx/review-docx');
           const result = await runReviewDocx({
-            fileBufferBase64: docx.rawBase64,
-            fileName: docx.fileName,
-            instructions: toolInput.instructions || 'Granska dokumentet och föreslå ändringar.',
-            documentText: docx.documentText,
-            paragraphs: docx.paragraphs,
+            fileBufferBase64: docxData.rawBase64,
+            fileName: docxData.fileName,
+            instructions,
+            documentText: docxData.documentText,
+            paragraphs: docxData.paragraphs,
           });
           return JSON.stringify(result);
         } catch (err) {
@@ -502,6 +853,134 @@ async function executeTool(
             error: err instanceof Error ? err.message : 'Kunde inte granska dokumentet.',
           });
         }
+      }
+
+      case 'get_fund_data': {
+        const { getFundSummaryForChat, getISECFundWithHoldings, getISECFunds } = await import('@/lib/integrations/isec/isec-data-service');
+        if (toolInput.fundId) {
+          const fund = await getISECFundWithHoldings(toolInput.fundId);
+          if (!fund) return JSON.stringify({ error: 'Fond hittades inte i ISEC' });
+          const summary = await getFundSummaryForChat(toolInput.fundId);
+          return summary;
+        }
+        const summary = await getFundSummaryForChat();
+        return summary;
+      }
+
+      case 'get_fund_transactions': {
+        const { getISECTransactions } = await import('@/lib/integrations/isec/isec-data-service');
+        if (!toolInput.fundId) return JSON.stringify({ error: 'fundId krävs' });
+        const txns = await getISECTransactions(toolInput.fundId, {
+          from: toolInput.from,
+          to: toolInput.to,
+        });
+        if (txns.length === 0) return 'Inga transaktioner hittades för denna fond.';
+        const lines = [`## Transaktioner (${txns.length} st)`];
+        for (const t of txns.slice(0, 50)) {
+          lines.push(`- ${t.date} | ${t.type} | ${t.securityName || '–'} | ${t.amount.toLocaleString('sv-SE')} ${t.currency} | ${t.status}`);
+        }
+        if (txns.length > 50) lines.push(`... och ${txns.length - 50} till`);
+        return lines.join('\n');
+      }
+
+      case 'get_fund_nav_history': {
+        const { getISECNavHistory } = await import('@/lib/integrations/isec/isec-data-service');
+        if (!toolInput.fundId) return JSON.stringify({ error: 'fundId krävs' });
+        const history = await getISECNavHistory(toolInput.fundId, {
+          from: toolInput.from,
+          to: toolInput.to,
+        });
+        if (history.length === 0) return 'Ingen NAV-historik hittades.';
+        const lines = [`## NAV-historik (${history.length} datapunkter)`];
+        for (const h of history.slice(0, 60)) {
+          lines.push(`- ${h.date}: NAV/andel ${h.navRate?.toLocaleString('sv-SE') || '–'} (fond: ${h.fund || h.FundId})`);
+        }
+        if (history.length > 60) lines.push(`... och ${history.length - 60} till`);
+        return lines.join('\n');
+      }
+
+      case 'calculate_nav': {
+        if (!toolInput.fundId) return JSON.stringify({ error: 'fundId krävs' });
+        const { getISECNAVCalculationData } = await import('@/lib/integrations/isec/isec-data-service');
+        const { createNAVCalculator } = await import('@/lib/nav-engine/nav-calculator');
+
+        const navDate = toolInput.navDate || new Date().toISOString().split('T')[0];
+        const data = await getISECNAVCalculationData(toolInput.fundId, navDate);
+        if (!data) return 'Kunde inte hämta NAV-beräkningsdata från ISEC SECURA.';
+
+        const sc = toolInput.shareClassId
+          ? data.shareClasses.find(s => s.id === toolInput.shareClassId) || data.shareClasses[0]
+          : data.shareClasses[0];
+
+        if (!sc) return 'Inga andelsklasser hittades för denna fond.';
+
+        const positions = data.positions.map(p => ({
+          positionId: p.id, securityId: p.securityId, isin: p.isin || p.securityId,
+          name: p.securityName, securityType: 'OTHER' as const,
+          quantity: p.quantity, price: p.marketPrice, priceCurrency: p.priceCurrency,
+          priceDate: p.priceDate || navDate, priceSource: p.priceSource || 'ISEC',
+          marketValue: p.marketValue, marketValueFundCurrency: p.marketValue,
+          assetClass: 'OTHER' as const,
+        }));
+
+        const cashBals = data.cashBalances.map(c => ({
+          accountId: c.accountId, accountName: c.bankName, bankName: c.bankName,
+          currency: c.currency, balance: c.balance, balanceFundCurrency: c.balance,
+          valueDate: c.valueDate || navDate, accountType: 'CUSTODY' as const,
+        }));
+
+        const fxRates = data.fxRates.map(r => ({
+          baseCurrency: r.baseCurrency, quoteCurrency: r.quoteCurrency,
+          rate: r.rate, rateDate: r.date, source: r.source,
+        }));
+
+        const accruedFees = data.accruedFees.map(f => ({
+          feeType: 'OTHER' as const, periodStart: f.periodStart || navDate,
+          periodEnd: f.periodEnd || navDate, annualRate: f.annualRate,
+          baseAmount: 0, accruedAmount: f.accruedAmount, currency: f.currency,
+        }));
+
+        const sharesOutstanding = sc.outstandingShares || data.shareholders.reduce((s, sh) => s + sh.shares, 0) || 1_000_000;
+
+        const calculator = createNAVCalculator();
+        const result = calculator.calculate({
+          fundId: data.fundId, shareClassId: sc.id, navDate,
+          positions, cashBalances: cashBals, receivables: [], liabilities: [],
+          accruedFees, pendingRedemptions: [], sharesOutstanding, fxRates,
+          fundCurrency: data.currency, managementFeeRate: sc.managementFee,
+          performanceFeeRate: sc.performanceFee,
+        });
+
+        const fmt = (n: number) => n.toLocaleString('sv-SE', { maximumFractionDigits: 2 });
+        const lines = [
+          `## NAV-beräkning: ${data.fundName} — ${sc.name}`,
+          `- **Datum:** ${navDate}`,
+          `- **NAV per andel:** ${fmt(result.navPerShare)} ${data.currency}`,
+          `- **Fondförmögenhet:** ${fmt(result.netAssetValue)} ${data.currency}`,
+          `- **Bruttotillgångar:** ${fmt(result.grossAssets)} ${data.currency}`,
+          `- **Skulder (avgifter):** ${fmt(result.totalLiabilities)} ${data.currency}`,
+          `- **Utestående andelar:** ${fmt(result.sharesOutstanding)}`,
+          `- **Status:** ${result.status}`,
+          '',
+          '### Tillgångsfördelning',
+          `- Aktier: ${fmt(result.breakdown.assets.equities)}`,
+          `- Obligationer: ${fmt(result.breakdown.assets.bonds)}`,
+          `- Fonder: ${fmt(result.breakdown.assets.funds)}`,
+          `- Derivat: ${fmt(result.breakdown.assets.derivatives)}`,
+          `- Kassa: ${fmt(result.breakdown.assets.cash)}`,
+          `- Övrigt: ${fmt(result.breakdown.assets.other)}`,
+        ];
+
+        if (sc.navPerShare && Math.abs(sc.navPerShare - result.navPerShare) > 0.01) {
+          lines.push('', `### ISEC-referens`, `- ISEC NAV/andel: ${fmt(sc.navPerShare)} (avvikelse: ${fmt(result.navPerShare - sc.navPerShare)})`);
+        }
+
+        if (result.warnings.length > 0) {
+          lines.push('', '### Varningar');
+          for (const w of result.warnings) lines.push(`- ${w.message}`);
+        }
+
+        return lines.join('\n');
       }
 
       default:
@@ -569,15 +1048,47 @@ export async function POST(request: NextRequest) {
     }
 
     const today = new Date();
-    const currentDate = today.toISOString().split('T')[0];
-    const currentYear = today.getFullYear();
+    const stockholmFormatter = new Intl.DateTimeFormat('sv-SE', {
+      timeZone: 'Europe/Stockholm',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+    const stockholmParts = stockholmFormatter.formatToParts(today);
+    const getPart = (type: string) => stockholmParts.find(p => p.type === type)?.value || '';
+    const currentDate = `${getPart('year')}-${getPart('month')}-${getPart('day')}`;
+    const currentTime = `${getPart('hour')}:${getPart('minute')}`;
+    const currentYear = Number(getPart('year'));
 
     // =========================================================================
     // BUILD SYSTEM PROMPT (slimmer - tools handle data fetching now)
     // =========================================================================
+    const companyId = 'default';
+    const companyProfile = await getCompanyProfile(companyId).catch(() => null);
+    const companyContextBlock = companyProfile && (companyProfile.companyName || companyProfile.brandVoice || companyProfile.customInstructions || (companyProfile.autoLearnedFacts?.length ?? 0) > 0)
+      ? `
+
+## FÖRETAGSKONTEXT
+Du assisterar ${companyProfile.companyName || 'företaget'}.
+${companyProfile.brandVoice ? `Ton och stil: ${companyProfile.brandVoice}` : ''}
+${companyProfile.documentStyle ? `Dokumentstil: ${companyProfile.documentStyle}` : ''}
+${companyProfile.letterTemplate ? `Brevmallar: ${companyProfile.letterTemplate}` : ''}
+${companyProfile.reportTemplate ? `Rapportmallar: ${companyProfile.reportTemplate}` : ''}
+${companyProfile.investmentPhilosophy ? `Investeringsfilosofi: ${companyProfile.investmentPhilosophy}` : ''}
+${companyProfile.regulatoryContext ? `Regulatorisk kontext: ${companyProfile.regulatoryContext}` : ''}
+${companyProfile.exclusionPolicy ? `Exkluderingspolicy: ${companyProfile.exclusionPolicy}` : ''}
+${companyProfile.customInstructions ? companyProfile.customInstructions : ''}
+${(companyProfile.autoLearnedFacts?.length ?? 0) > 0 ? `\nAutomatiskt inlärd kunskap om företaget:\n${companyProfile.autoLearnedFacts!.filter(Boolean).join('\n')}` : ''}`
+      : '';
+
     const systemPrompt = `Du är en expert AI-assistent för AIFM Group, ett svenskt fondbolag med alla nödvändiga tillstånd från Finansinspektionen.
 
 DAGENS DATUM: ${currentDate}
+AKTUELL TID: ${currentTime} (Europe/Stockholm)
 AKTUELLT ÅR: ${currentYear}
 
 SPRÅK: Matcha användarens språk (svensk fråga = svenskt svar, engelsk fråga = engelskt svar).
@@ -601,15 +1112,25 @@ DU HAR TILLGÅNG TILL FÖLJANDE VERKTYG:
 🔍 VÄRDEPAPPER:
 - lookup_security: Slå upp värdepapper via ISIN/ticker (namn, börs, sektor, likviditet etc.)
 
+💰 FONDDATA (via ISEC SECURA):
+- get_fund_data: Hämta fondlista med NAV, eller detaljerad fonddata inklusive innehav. Använd ALLTID detta verktyg när användaren frågar om fonder, fondvärde, NAV, portföljinnehav, eller vilka värdepapper en fond äger.
+- get_fund_transactions: Hämta transaktionshistorik för en fond (köp, sälj, utdelningar etc.)
+- get_fund_nav_history: Hämta NAV-historik över tid för en fond
+- calculate_nav: Beräkna NAV (Net Asset Value) för en fond/andelsklass. Hämtar positioner, kassor, FX-kurser och avgifter från ISEC SECURA och kör NAV-beräkningsmotorn. Visar detaljerad uppdelning per tillgångsslag. Använd detta verktyg när användaren vill beräkna NAV, se en detaljerad NAV-uppdelning, eller vill kontrollera NAV-beräkningen.
+
 VIKTIGA REGLER FÖR VERKTYGSANVÄNDNING:
 
 1. ANVÄND ALLTID verktyg när du behöver specifik data. Gissa ALDRIG information som kan hämtas.
 2. Om användaren nämner ett värdepapper (ISIN, ticker eller namn), ANVÄND get_esg_data och/eller lookup_security.
 3. Om användaren frågar om regelverk eller policyer, ANVÄND search_knowledge_base.
 4. Du kan använda FLERA verktyg i samma svar om det behövs.
-5. Om användaren har bifogat ett Word-dokument (.docx) och ber om granskning, revidering eller ändringar i dokumentet, använd verktyget review_document med användarens instruktioner. Det returnerar en modifierad fil med spårändringar och kommentarer.
-6. Om ett verktyg returnerar ett fel, informera användaren och föreslå alternativ.
-7. Presentera ALLTID data med källhänvisning (t.ex. "Enligt data från Datia..." eller "Enligt FFFS 2013:10...").
+5. Om användaren har bifogat ett dokument (Word .docx, PDF eller Excel .xlsx/.xls) och ber om granskning, revidering eller ändringar, använd verktyget review_document med användarens instruktioner. För Word returneras spårändringar och kommentarer, för PDF läggs sticky-note-annotationer till, och för Excel läggs cellanteckningar till.
+6. Om användaren ber dig skapa, exportera eller generera en rapport, sammanställning eller analys som PDF, använd generate_pdf_report. Strukturera innehållet i tydliga sektioner med rubrik och punkter (label + value + valfri detail).
+7. Om användaren ber dig skapa en Excel-fil, tabell eller datasammanställning, använd generate_excel. Skapa tydliga kolumnrubriker och datarader.
+8. Om användaren ber dig skapa ett Word-dokument, PM, rapport eller liknande, använd generate_word_document. Strukturera innehållet i sektioner med rubrik och punkter.
+9. Du kan kombinera datahämtning och filgenerering: hämta först data med t.ex. get_esg_data, och generera sedan en rapport med generate_pdf_report baserat på resultatet.
+10. Om ett verktyg returnerar ett fel, informera användaren och föreslå alternativ.
+11. Presentera ALLTID data med källhänvisning (t.ex. "Enligt data från Datia..." eller "Enligt FFFS 2013:10...").
 
 PRIORITERINGSORDNING FÖR SVAR:
 
@@ -663,7 +1184,8 @@ DIAGRAM: Använd Mermaid-diagram i kodblock när det hjälper visualisera samban
 ${body.templateId && TEMPLATE_SYSTEM_ADDITIONS[body.templateId] ? TEMPLATE_SYSTEM_ADDITIONS[body.templateId] : ''}
 ${body.responseLength ? `\nSVARSLÄNGD: Användaren önskar ett ${body.responseLength === 'short' ? 'kort' : body.responseLength === 'medium' ? 'medellångt' : 'långt'} svar. Anpassa omfattningen därefter (kort = koncis, medel = balanserat, långt = utförligt med förklaringar).` : ''}
 
-SÄKERHET: All data stannar inom AWS-kontot via Bedrock.`;
+SÄKERHET: All data stannar inom AWS-kontot via Bedrock.
+${companyContextBlock}`;
 
     // =========================================================================
     // BUILD MESSAGES for Converse API
@@ -724,7 +1246,7 @@ SÄKERHET: All data stannar inom AWS-kontot via Bedrock.`;
         const push = (o: Record<string, unknown>) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(o)}\n\n`));
         let toolRound = 0;
         let toolsUsed: string[] = [];
-        let reviewedDocxResult: { fileBase64: string; fileName: string; summary: string } | null = null;
+        let reviewedDocxResult: { fileBase64: string; fileName: string; summary: string; fileType?: string } | null = null;
         const kbCitations: Array<{ documentTitle: string; documentNumber?: string; section?: string; excerpt: string; sourceUrl: string }> = [];
         const systemBlocks: SystemContentBlock[] = [{ text: systemPrompt }];
         let messages = [...converseMessages];
@@ -738,7 +1260,18 @@ SÄKERHET: All data stannar inom AWS-kontot via Bedrock.`;
           lookup_security: 'Slår upp värdepapper...',
           search_internal_knowledge: 'Söker i intern kunskap...',
           review_document: 'Granskar dokument...',
+          generate_pdf_report: 'Genererar PDF-rapport...',
+          generate_excel: 'Genererar Excel-fil...',
+          generate_word_document: 'Genererar Word-dokument...',
+          get_fund_data: 'Hämtar fonddata från ISEC...',
+          get_fund_transactions: 'Hämtar transaktioner från ISEC...',
+          get_fund_nav_history: 'Hämtar NAV-historik från ISEC...',
+          calculate_nav: 'Beräknar NAV via ISEC SECURA...',
         };
+
+        const heartbeatInterval = setInterval(() => {
+          try { controller.enqueue(encoder.encode(': heartbeat\n\n')); } catch { /* stream closed */ }
+        }, 15_000);
 
         try {
           push({ progress: 'Förbereder...', meta: true });
@@ -882,29 +1415,27 @@ SÄKERHET: All data stannar inom AWS-kontot via Bedrock.`;
                   console.log(`[AI Chat] Calling tool: ${toolName} (id: ${toolUseId})`);
 
                   const startMs = Date.now();
-                  const resultStr = await executeTool(toolName, toolInput, { docxAttachment: body.docxAttachment });
+                  const resultStr = await executeTool(toolName, toolInput, { docxAttachment: body.docxAttachment, fileAttachment: body.fileAttachment });
                   const durationMs = Date.now() - startMs;
                   push({ toolCallDone: { name: toolName, durationMs } });
 
                   // Build the tool result for Claude's context (strip large binary data)
                   let toolResultForClaude: Record<string, unknown> = JSON.parse(resultStr);
 
-                  if (toolName === 'review_document') {
+                  if (toolName === 'review_document' || toolName === 'generate_pdf_report' || toolName === 'generate_excel' || toolName === 'generate_word_document') {
                     try {
                       if (toolResultForClaude.success && toolResultForClaude.fileBase64) {
-                        // Capture the full result for the frontend download
                         reviewedDocxResult = {
                           fileBase64: toolResultForClaude.fileBase64 as string,
-                          fileName: (toolResultForClaude.fileName as string) || 'document_reviewed.docx',
+                          fileName: (toolResultForClaude.fileName as string) || 'document.pdf',
                           summary: (toolResultForClaude.summary as string) || '',
+                          fileType: (toolResultForClaude.fileType as string) || undefined,
                         };
-                        // Remove the huge base64 blob before sending back to Claude
-                        // (305k+ tokens otherwise, exceeding 200k limit)
                         toolResultForClaude = {
                           success: true,
                           fileName: reviewedDocxResult.fileName,
                           summary: reviewedDocxResult.summary,
-                          note: 'Dokumentet har granskats och modifierats med spårändringar och kommentarer. Filen levereras till användaren separat.',
+                          note: 'Filen har genererats och levereras till användaren som nedladdning.',
                         };
                       }
                     } catch { /* ignore */ }
@@ -950,6 +1481,7 @@ SÄKERHET: All data stannar inom AWS-kontot via Bedrock.`;
             break;
           }
 
+          // Send meta WITHOUT the large base64 blob first
           push({
             meta: true,
             kbSearched: kbCitations.length > 0,
@@ -958,9 +1490,24 @@ SÄKERHET: All data stannar inom AWS-kontot via Bedrock.`;
             citations: kbCitations,
             internalSources: [],
             toolsUsed,
-            reviewedDocx: reviewedDocxResult,
+            reviewedDocx: reviewedDocxResult
+              ? { fileName: reviewedDocxResult.fileName, summary: reviewedDocxResult.summary, fileType: reviewedDocxResult.fileType }
+              : undefined,
           });
 
+          // Send the large base64 file data in chunks to avoid SSE/proxy buffer limits
+          if (reviewedDocxResult?.fileBase64) {
+            const b64 = reviewedDocxResult.fileBase64;
+            const CHUNK_SIZE = 48_000; // ~48KB per chunk (safe for most proxies)
+            const totalChunks = Math.ceil(b64.length / CHUNK_SIZE);
+            for (let ci = 0; ci < totalChunks; ci++) {
+              const chunk = b64.slice(ci * CHUNK_SIZE, (ci + 1) * CHUNK_SIZE);
+              push({ docxChunk: chunk, chunkIndex: ci, totalChunks, fileName: reviewedDocxResult.fileName });
+            }
+            push({ docxComplete: true, fileName: reviewedDocxResult.fileName, summary: reviewedDocxResult.summary, fileType: reviewedDocxResult.fileType });
+          }
+
+          clearInterval(heartbeatInterval);
           push({ done: true, citations: kbCitations, toolsUsed });
           controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
           controller.close();
@@ -974,6 +1521,7 @@ SÄKERHET: All data stannar inom AWS-kontot via Bedrock.`;
             success: true,
           });
         } catch (err) {
+          clearInterval(heartbeatInterval);
           console.error('[AI Chat] Stream error:', err);
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: err instanceof Error ? err.message : 'Streaming error' })}\n\n`));
           controller.close();

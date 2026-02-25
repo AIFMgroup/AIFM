@@ -45,6 +45,22 @@ export const KNOWLEDGE_CATEGORIES: Category[] = [
     icon: 'building',
     color: 'orange',
   },
+  {
+    id: 'auto-learned',
+    name: 'Auto-inlärd',
+    nameEn: 'Auto-learned',
+    description: 'Kunskap som AI har extraherat från chattkonversationer',
+    icon: 'sparkles',
+    color: 'purple',
+  },
+  {
+    id: 'qa-generated',
+    name: 'Q&A-genererad',
+    nameEn: 'Q&A generated',
+    description: 'Frågor och svar genererade från företagets dokument',
+    icon: 'message-circle',
+    color: 'green',
+  },
 ];
 
 export function getCategoryById(id: string): Category | undefined {

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { dataRoomStore, getTypeLabel } from '@/lib/dataRooms/dataRoomService';
 import { getSession } from '@/lib/auth/session';
 
@@ -12,14 +11,19 @@ export async function GET() {
     const session = await getSession().catch(() => null);
     if (!session?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    // Only return rooms where the user is a member
+    const email = session.email;
     const rooms = await dataRoomStore.getAllRooms();
-    const memberships = await Promise.all(
-      rooms.map(async (r) => ({ room: r, member: await dataRoomStore.getMemberByEmail(r.id, session.email!) }))
-    );
-    const visibleRooms = memberships.filter((m) => !!m.member).map((m) => m.room);
 
-    // Add type labels
+    // Show rooms where user is a member OR where user is the creator
+    const memberships = await Promise.all(
+      rooms.map(async (r) => {
+        const isMember = await dataRoomStore.getMemberByEmail(r.id, email!);
+        const isCreator = r.createdBy === email;
+        return { room: r, visible: !!isMember || isCreator };
+      })
+    );
+    const visibleRooms = memberships.filter((m) => m.visible).map((m) => m.room);
+
     const roomsWithLabels = visibleRooms.map(room => ({
       ...room,
       typeLabel: getTypeLabel(room.type),
@@ -60,8 +64,8 @@ export async function POST(request: NextRequest) {
     const newRoom = await dataRoomStore.createRoom({
       name,
       description: description || '',
-      fundId: fundId || 'fund-1',
-      fundName: fundName || 'Nordic Growth Fund I',
+      fundId: fundId || 'auag-silver-bullet',
+      fundName: fundName || 'AuAg Silver Bullet',
       type,
       status: 'ACTIVE',
       createdBy: actorName,

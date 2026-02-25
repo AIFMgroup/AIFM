@@ -417,64 +417,148 @@ export function checkFundRestrictions(
 }
 
 /**
- * Example fund configurations
+ * Fund-specific restriction configurations
+ * Artikel 8/9 fonder har striktare regler, Artikel 6 har grundkrav.
  */
+
+const SANCTIONED_COUNTRIES = ['RU', 'BY', 'KP', 'IR'];
+const ALL_RESTRICTIONS = ['sector_concentration', 'country_concentration', 'excluded_countries', 'excluded_sectors', 'issuer_concentration', 'liquidity_requirement', 'regulated_market'];
+
 export const FUND_CONFIGURATIONS: Record<string, Partial<FundData>> = {
-  'fund-1': {
-    fundId: 'fund-1',
-    fundName: 'Nordic Ventures I',
-    article: '8',
-    aum: 500_000_000,
-    maxSectorWeight: 0.25,
-    maxCountryWeight: 0.40,
-    maxIssuerWeight: 0.05,
-    maxIlliquidWeight: 0.15,
-    excludedCountries: ['RU', 'BY', 'KP', 'IR'],
-    excludedSectors: ['Tobacco', 'Weapons', 'Gambling'],
-    esgExclusions: ['weapons', 'tobacco'],
-    restrictions: ['sector_concentration', 'country_concentration', 'excluded_countries', 'issuer_concentration', 'liquidity_requirement'],
+  // ── Artikel 8 ──
+  'auag-essential-metals': {
+    fundId: 'auag-essential-metals', fundName: 'AuAg Essential Metals', article: '8', aum: 395_000_000,
+    maxSectorWeight: 0.25, maxCountryWeight: 0.40, maxIssuerWeight: 0.05, maxIlliquidWeight: 0.15,
+    excludedCountries: SANCTIONED_COUNTRIES, excludedSectors: ['Tobacco', 'Weapons', 'Gambling'],
+    esgExclusions: ['weapons', 'tobacco', 'controversialWeapons', 'nuclearWeapons', 'alcohol', 'adultContent'], restrictions: ALL_RESTRICTIONS,
   },
-  'fund-2': {
-    fundId: 'fund-2',
-    fundName: 'Nordic Ventures II',
-    article: '9',
-    aum: 300_000_000,
-    maxSectorWeight: 0.20,
-    maxCountryWeight: 0.35,
-    maxIssuerWeight: 0.05,
-    maxIlliquidWeight: 0.10,
-    excludedCountries: ['RU', 'BY', 'KP', 'IR', 'SA'],
-    excludedSectors: ['Tobacco', 'Weapons', 'Gambling', 'Oil & Gas', 'Coal'],
-    esgExclusions: ['weapons', 'tobacco', 'fossilFuels', 'gambling'],
-    restrictions: ['sector_concentration', 'country_concentration', 'excluded_countries', 'excluded_sectors', 'issuer_concentration', 'liquidity_requirement'],
+  'auag-gold-rush': {
+    fundId: 'auag-gold-rush', fundName: 'AuAg Gold Rush', article: '8', aum: 606_000_000,
+    maxSectorWeight: 0.25, maxCountryWeight: 0.40, maxIssuerWeight: 0.05, maxIlliquidWeight: 0.15,
+    excludedCountries: SANCTIONED_COUNTRIES, excludedSectors: ['Tobacco', 'Weapons', 'Gambling'],
+    esgExclusions: ['weapons', 'tobacco', 'controversialWeapons', 'nuclearWeapons', 'alcohol', 'adultContent'], restrictions: ALL_RESTRICTIONS,
   },
-  'fund-3': {
-    fundId: 'fund-3',
-    fundName: 'AIFM Räntebärande',
-    article: '6',
-    aum: 200_000_000,
-    maxSectorWeight: 0.30,
-    maxCountryWeight: 0.50,
-    maxIssuerWeight: 0.10,
-    maxIlliquidWeight: 0.20,
-    excludedCountries: ['RU', 'BY', 'KP'],
-    excludedSectors: [],
-    esgExclusions: ['weapons'],
-    restrictions: ['excluded_countries', 'issuer_concentration'],
+  'auag-precious-green': {
+    fundId: 'auag-precious-green', fundName: 'AuAg Precious Green', article: '8', aum: 347_000_000,
+    maxSectorWeight: 0.25, maxCountryWeight: 0.40, maxIssuerWeight: 0.05, maxIlliquidWeight: 0.15,
+    excludedCountries: SANCTIONED_COUNTRIES, excludedSectors: ['Tobacco', 'Weapons', 'Gambling'],
+    esgExclusions: ['weapons', 'tobacco', 'controversialWeapons', 'nuclearWeapons', 'alcohol', 'adultContent'], restrictions: ALL_RESTRICTIONS,
   },
-  'fund-4': {
-    fundId: 'fund-4',
-    fundName: 'Global Tech Fund',
-    article: '8',
-    aum: 750_000_000,
-    maxSectorWeight: 0.40, // Higher for tech fund
-    maxCountryWeight: 0.50,
-    maxIssuerWeight: 0.05,
-    maxIlliquidWeight: 0.10,
-    excludedCountries: ['RU', 'BY', 'KP', 'IR', 'CN'],
-    excludedSectors: ['Tobacco', 'Weapons'],
-    esgExclusions: ['weapons', 'tobacco'],
-    restrictions: ['sector_concentration', 'country_concentration', 'excluded_countries', 'issuer_concentration', 'liquidity_requirement', 'market_cap_minimum'],
+  'auag-silver-bullet': {
+    fundId: 'auag-silver-bullet', fundName: 'AuAg Silver Bullet', article: '8', aum: 4_322_000_000,
+    maxSectorWeight: 0.25, maxCountryWeight: 0.40, maxIssuerWeight: 0.05, maxIlliquidWeight: 0.15,
+    excludedCountries: SANCTIONED_COUNTRIES, excludedSectors: ['Tobacco', 'Weapons', 'Gambling'],
+    esgExclusions: ['weapons', 'tobacco', 'controversialWeapons', 'nuclearWeapons', 'alcohol', 'adultContent'], restrictions: ALL_RESTRICTIONS,
+  },
+  'sensum-strategy-global': {
+    fundId: 'sensum-strategy-global', fundName: 'Sensum Strategy Global', article: '8', aum: 280_000_000,
+    maxSectorWeight: 0.25, maxCountryWeight: 0.40, maxIssuerWeight: 0.05, maxIlliquidWeight: 0.15,
+    excludedCountries: SANCTIONED_COUNTRIES, excludedSectors: ['Tobacco', 'Weapons', 'Gambling'],
+    esgExclusions: ['weapons', 'tobacco', 'clusterMines', 'chemicalBiological', 'nuclearWeapons', 'alcohol', 'adultContent'], restrictions: ALL_RESTRICTIONS,
+  },
+  'vinga-corporate-bond': {
+    fundId: 'vinga-corporate-bond', fundName: 'Vinga Corporate Bond', article: '8', aum: 350_000_000,
+    maxSectorWeight: 0.25, maxCountryWeight: 0.40, maxIssuerWeight: 0.05, maxIlliquidWeight: 0.15,
+    excludedCountries: SANCTIONED_COUNTRIES, excludedSectors: ['Tobacco', 'Weapons', 'Gambling', 'SMS-lån'],
+    esgExclusions: ['fossilFuels', 'controversialWeapons', 'smsLoans', 'gambling', 'alcohol', 'tobacco', 'adultContent'], restrictions: ALL_RESTRICTIONS,
+  },
+  'plain-capital-bronx': {
+    fundId: 'plain-capital-bronx', fundName: 'Plain Capital BronX', article: '8', aum: 750_000_000,
+    maxSectorWeight: 0.25, maxCountryWeight: 0.40, maxIssuerWeight: 0.05, maxIlliquidWeight: 0.15,
+    excludedCountries: SANCTIONED_COUNTRIES, excludedSectors: ['Tobacco', 'Weapons', 'Gambling'],
+    esgExclusions: ['weapons', 'controversialWeapons', 'tobacco', 'alcohol', 'adultContent', 'fossilFuels', 'gambling'], restrictions: ALL_RESTRICTIONS,
+  },
+  'plain-capital-lunatix': {
+    fundId: 'plain-capital-lunatix', fundName: 'Plain Capital LunatiX', article: '8', aum: 620_000_000,
+    maxSectorWeight: 0.25, maxCountryWeight: 0.40, maxIssuerWeight: 0.05, maxIlliquidWeight: 0.15,
+    excludedCountries: SANCTIONED_COUNTRIES, excludedSectors: ['Tobacco', 'Weapons', 'Gambling'],
+    esgExclusions: ['weapons', 'controversialWeapons', 'tobacco', 'alcohol', 'adultContent', 'fossilFuels', 'gambling'], restrictions: ALL_RESTRICTIONS,
+  },
+  'plain-capital-styx': {
+    fundId: 'plain-capital-styx', fundName: 'Plain Capital StyX', article: '8', aum: 480_000_000,
+    maxSectorWeight: 0.25, maxCountryWeight: 0.40, maxIssuerWeight: 0.05, maxIlliquidWeight: 0.15,
+    excludedCountries: SANCTIONED_COUNTRIES, excludedSectors: ['Tobacco', 'Weapons', 'Gambling'],
+    esgExclusions: ['weapons', 'controversialWeapons', 'tobacco', 'alcohol', 'adultContent', 'fossilFuels', 'gambling'], restrictions: ALL_RESTRICTIONS,
+  },
+  'metaspace-fund': {
+    fundId: 'metaspace-fund', fundName: 'MetaSpace Fund', article: '8', aum: 85_000_000,
+    maxSectorWeight: 0.25, maxCountryWeight: 0.40, maxIssuerWeight: 0.05, maxIlliquidWeight: 0.15,
+    excludedCountries: SANCTIONED_COUNTRIES, excludedSectors: ['Tobacco', 'Weapons', 'Gambling'],
+    esgExclusions: ['weapons', 'tobacco', 'controversialWeapons', 'nuclearWeapons', 'alcohol', 'adultContent'], restrictions: ALL_RESTRICTIONS,
+  },
+  'lucy-global-fund': {
+    fundId: 'lucy-global-fund', fundName: 'Lucy Global Fund', article: '8', aum: 150_000_000,
+    maxSectorWeight: 0.25, maxCountryWeight: 0.40, maxIssuerWeight: 0.05, maxIlliquidWeight: 0.15,
+    excludedCountries: SANCTIONED_COUNTRIES, excludedSectors: ['Tobacco', 'Weapons', 'Gambling'],
+    esgExclusions: ['weapons', 'tobacco', 'controversialWeapons', 'nuclearWeapons', 'alcohol', 'adultContent'], restrictions: ALL_RESTRICTIONS,
+  },
+  'sam-aktiv-ranta': {
+    fundId: 'sam-aktiv-ranta', fundName: 'SAM Aktiv Ränta', article: '8', aum: 210_000_000,
+    maxSectorWeight: 0.25, maxCountryWeight: 0.40, maxIssuerWeight: 0.05, maxIlliquidWeight: 0.15,
+    excludedCountries: SANCTIONED_COUNTRIES, excludedSectors: ['Tobacco', 'Weapons', 'Fossil Fuels'],
+    esgExclusions: ['weapons', 'controversialWeapons', 'nuclearWeapons', 'tobacco', 'adultContent', 'fossilFuels'], restrictions: ALL_RESTRICTIONS,
+  },
+  'arte-collectum-ii': {
+    fundId: 'arte-collectum-ii', fundName: 'Arte Collectum II AB', article: '8', aum: 80_000_000,
+    maxSectorWeight: 0.30, maxCountryWeight: 0.50, maxIssuerWeight: 0.10, maxIlliquidWeight: 0.20,
+    excludedCountries: SANCTIONED_COUNTRIES, excludedSectors: ['Tobacco', 'Weapons'],
+    esgExclusions: ['weapons', 'tobacco', 'controversialWeapons', 'nuclearWeapons', 'alcohol', 'adultContent'], restrictions: ALL_RESTRICTIONS,
+  },
+  // ── Artikel 9 ──
+  'proethos-fond': {
+    fundId: 'proethos-fond', fundName: 'Proethos Fond', article: '9', aum: 420_000_000,
+    maxSectorWeight: 0.20, maxCountryWeight: 0.35, maxIssuerWeight: 0.05, maxIlliquidWeight: 0.10,
+    excludedCountries: [...SANCTIONED_COUNTRIES, 'SA'], excludedSectors: ['Tobacco', 'Weapons', 'Gambling', 'Oil & Gas', 'Coal', 'Nuclear'],
+    esgExclusions: ['weapons', 'tobacco', 'fossilFuels', 'gambling', 'nuclear', 'alcohol', 'adultContent'], restrictions: ALL_RESTRICTIONS,
+  },
+  'arte-collectum-i': {
+    fundId: 'arte-collectum-i', fundName: 'Arte Collectum I AB', article: '9', aum: 120_000_000,
+    maxSectorWeight: 0.25, maxCountryWeight: 0.50, maxIssuerWeight: 0.10, maxIlliquidWeight: 0.20,
+    excludedCountries: SANCTIONED_COUNTRIES, excludedSectors: ['Tobacco', 'Weapons', 'Gambling', 'Oil & Gas', 'Coal'],
+    esgExclusions: ['weapons', 'tobacco', 'fossilFuels', 'gambling', 'adultContent'], restrictions: ALL_RESTRICTIONS,
+  },
+  // ── Artikel 6 ──
+  'epoque': {
+    fundId: 'epoque', fundName: 'EPOQUE', article: '6', aum: 180_000_000,
+    maxSectorWeight: 0.25, maxCountryWeight: 0.50, maxIssuerWeight: 0.05, maxIlliquidWeight: 0.15,
+    excludedCountries: SANCTIONED_COUNTRIES, excludedSectors: ['Weapons'],
+    esgExclusions: ['controversialWeapons'], restrictions: ALL_RESTRICTIONS,
+  },
+  'go-blockchain-fund': {
+    fundId: 'go-blockchain-fund', fundName: 'Go Blockchain Fund', article: '6', aum: 120_000_000,
+    maxSectorWeight: 0.30, maxCountryWeight: 0.50, maxIssuerWeight: 0.05, maxIlliquidWeight: 0.15,
+    excludedCountries: SANCTIONED_COUNTRIES, excludedSectors: ['Weapons'],
+    esgExclusions: ['controversialWeapons'], restrictions: ALL_RESTRICTIONS,
+  },
+  'soic-dynamic-china': {
+    fundId: 'soic-dynamic-china', fundName: 'SOIC Dynamic China', article: '6', aum: 150_000_000,
+    maxSectorWeight: 0.25, maxCountryWeight: 0.60, maxIssuerWeight: 0.05, maxIlliquidWeight: 0.15,
+    excludedCountries: ['RU', 'BY', 'KP', 'IR'], excludedSectors: ['Weapons'],
+    esgExclusions: ['controversialWeapons'], restrictions: ALL_RESTRICTIONS,
+  },
+  'arden-xfund': {
+    fundId: 'arden-xfund', fundName: 'Arden xFund', article: '6', aum: 100_000_000,
+    maxSectorWeight: 0.25, maxCountryWeight: 0.50, maxIssuerWeight: 0.05, maxIlliquidWeight: 0.15,
+    excludedCountries: SANCTIONED_COUNTRIES, excludedSectors: ['Weapons'],
+    esgExclusions: ['controversialWeapons'], restrictions: ALL_RESTRICTIONS,
+  },
+  'sbp-kredit': {
+    fundId: 'sbp-kredit', fundName: 'SBP Kredit', article: '6', aum: 300_000_000,
+    maxSectorWeight: 0.30, maxCountryWeight: 0.50, maxIssuerWeight: 0.10, maxIlliquidWeight: 0.20,
+    excludedCountries: SANCTIONED_COUNTRIES, excludedSectors: ['Weapons'],
+    esgExclusions: ['controversialWeapons'], restrictions: ALL_RESTRICTIONS,
+  },
+  'estea-omsorgsfastigheter': {
+    fundId: 'estea-omsorgsfastigheter', fundName: 'Estea Omsorgsfastigheter', article: '6', aum: 200_000_000,
+    maxSectorWeight: 0.30, maxCountryWeight: 0.50, maxIssuerWeight: 0.10, maxIlliquidWeight: 0.25,
+    excludedCountries: SANCTIONED_COUNTRIES, excludedSectors: ['Weapons'],
+    esgExclusions: ['controversialWeapons'], restrictions: ALL_RESTRICTIONS,
+  },
+  'ssid-co-invest-fund': {
+    fundId: 'ssid-co-invest-fund', fundName: 'SSID Co-Invest Fund', article: '6', aum: 50_000_000,
+    maxSectorWeight: 0.30, maxCountryWeight: 0.50, maxIssuerWeight: 0.10, maxIlliquidWeight: 0.25,
+    excludedCountries: SANCTIONED_COUNTRIES, excludedSectors: ['Weapons'],
+    esgExclusions: ['controversialWeapons'], restrictions: ALL_RESTRICTIONS,
   },
 };
 

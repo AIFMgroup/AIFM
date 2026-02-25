@@ -12,6 +12,7 @@ import {
   searchApprovedSecurities,
   copyApprovalAsDraft,
 } from '@/lib/integrations/securities';
+import { getSession } from '@/lib/auth/session';
 
 // GET /api/securities/drafts
 // Get all drafts for a user, search approved securities for copy, or get single draft
@@ -173,22 +174,29 @@ export async function POST(request: NextRequest) {
       updatedAt: draft.updatedAt,
       message: 'Utkast sparat',
     });
-  } catch (error) {
-    console.error('Draft POST error:', error);
+  } catch (error: any) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    const errName = error?.name ?? 'UnknownError';
+    console.error('Draft POST error:', errName, errMsg, error);
     
-    // If DynamoDB table doesn't exist, return helpful error
-    if (error instanceof Error && 
-        (error.message.includes('ResourceNotFoundException') || 
-         error.message.includes('Table') ||
-         error.name === 'ResourceNotFoundException')) {
+    if (errMsg.includes('ResourceNotFoundException') || 
+        errMsg.includes('Table') ||
+        errName === 'ResourceNotFoundException') {
       return NextResponse.json(
         { success: false, error: 'Databasen är inte konfigurerad. Kontakta administratör.' },
         { status: 503 }
       );
     }
+
+    if (errMsg.includes('SerializationException') || errMsg.includes('NaN') || errMsg.includes('Infinity')) {
+      return NextResponse.json(
+        { success: false, error: 'Ogiltigt datavärde i formuläret. Kontrollera numeriska fält.' },
+        { status: 400 }
+      );
+    }
     
     return NextResponse.json(
-      { success: false, error: 'Kunde inte spara utkast' },
+      { success: false, error: `Kunde inte spara utkast: ${errMsg.slice(0, 200)}` },
       { status: 500 }
     );
   }
@@ -242,11 +250,33 @@ function getCompletionStep(draft: any): number {
   return 8;
 }
 
+function sanitizeForDynamo(obj: any): any {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj === 'number') return Number.isFinite(obj) ? obj : undefined;
+  if (typeof obj === 'string' || typeof obj === 'boolean') return obj;
+  if (Array.isArray(obj)) return obj.map(sanitizeForDynamo).filter((v: any) => v !== undefined);
+  if (typeof obj === 'object') {
+    const clean: Record<string, any> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      const sanitized = sanitizeForDynamo(v);
+      if (sanitized !== undefined) clean[k] = sanitized;
+    }
+    return Object.keys(clean).length > 0 ? clean : undefined;
+  }
+  return undefined;
+}
+
+function safeParseFloat(val: any): number | undefined {
+  if (!val && val !== 0) return undefined;
+  const n = parseFloat(String(val));
+  return Number.isFinite(n) ? n : undefined;
+}
+
 // Helper: Convert frontend form data to approval structure
 function convertFormDataToApproval(formData: any, fundId: string, fundName: string) {
   if (!formData) return {};
 
-  return {
+  const raw = {
     basicInfo: {
       name: formData.name || '',
       category: formData.category || 'transferable_security',
@@ -312,8 +342,8 @@ function convertFormDataToApproval(formData: any, fundId: string, fundName: stri
         moreThan3Days: formData.moreThan3Days ?? false,
       },
       noHistoryEstimate: formData.noHistoryEstimate,
-      portfolioIlliquidShareBefore: formData.portfolioIlliquidBefore ? parseFloat(formData.portfolioIlliquidBefore) : undefined,
-      portfolioIlliquidShareAfter: formData.portfolioIlliquidAfter ? parseFloat(formData.portfolioIlliquidAfter) : undefined,
+      portfolioIlliquidShareBefore: safeParseFloat(formData.portfolioIlliquidBefore),
+      portfolioIlliquidShareAfter: safeParseFloat(formData.portfolioIlliquidAfter),
       portfolioMotivation: formData.portfolioMotivation,
       fffsLiquidityNotEndangered: formData.liquidityNotEndangered ?? true,
       fffsIsMarketable: formData.isMarketable ?? true,
@@ -330,6 +360,7 @@ function convertFormDataToApproval(formData: any, fundId: string, fundName: stri
     },
     esgInfo: {
       article8Or9Fund: formData.article8Or9Fund ?? false,
+      fundArticle: formData.fundArticle,
       environmentalCharacteristics: formData.environmentalCharacteristics,
       socialCharacteristics: formData.socialCharacteristics,
       meetsExclusionCriteria: formData.meetsExclusionCriteria ?? true,
@@ -339,7 +370,20 @@ function convertFormDataToApproval(formData: any, fundId: string, fundName: stri
       article9GoodGovernance: formData.article9GoodGovernance,
       article9OECDCompliant: formData.article9OECDCompliant,
       article9UNGPCompliant: formData.article9UNGPCompliant,
+      exclusionResults: formData.exclusionResults,
+      normScreening: {
+        UNGC: formData.normScreeningUNGC,
+        OECD: formData.normScreeningOECD,
+        humanRights: formData.normScreeningHumanRights,
+      },
+      governance: {
+        structure: formData.governanceStructure,
+        compensation: formData.compensationSystem,
+        taxCompliance: formData.taxCompliance,
+      },
     },
     plannedAcquisitionShare: formData.plannedAcquisitionShare,
   };
+
+  return sanitizeForDynamo(raw);
 }

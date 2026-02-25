@@ -217,6 +217,31 @@ else
 fi
 
 # -----------------------------------------------------------------------------
+# Table 6: aifm-nav-settings
+# NAV automation settings (schedule, recipients, data sources)
+# PK: tenantId
+# -----------------------------------------------------------------------------
+
+echo ""
+echo "Creating table: aifm-nav-settings..."
+
+aws dynamodb create-table \
+    --table-name aifm-nav-settings \
+    --attribute-definitions \
+        AttributeName=tenantId,AttributeType=S \
+    --key-schema \
+        AttributeName=tenantId,KeyType=HASH \
+    --billing-mode $BILLING_MODE \
+    --region $AWS_REGION \
+    2>/dev/null
+
+if [ $? -eq 0 ]; then
+    echo "✓ Table aifm-nav-settings created successfully"
+else
+    echo "! Table aifm-nav-settings may already exist or failed to create"
+fi
+
+# -----------------------------------------------------------------------------
 # Summary
 # -----------------------------------------------------------------------------
 
@@ -230,6 +255,7 @@ echo "  - aifm-nav-approvals   (Approval workflow)"
 echo "  - aifm-nav-runs        (Run logs)"
 echo "  - aifm-fund-config     (Fund configuration)"
 echo "  - aifm-fund-registry   (Fund Registry: funds, positions, cash, NAV)"
+echo "  - aifm-nav-settings    (NAV automation settings)"
 echo ""
 echo "Global Secondary Indexes created on each table:"
 echo "  - navDate-index        (Query by date)"

@@ -1,6 +1,6 @@
 'use client';
 
-import { Keyboard, Sparkles } from 'lucide-react';
+import { Keyboard } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { NotificationPanel } from './NotificationPanel';
 import { ProfileMenu } from './ProfileMenu';
@@ -44,20 +44,16 @@ export function MainHeader() {
             {/* AI Chat Button - Fullscreen */}
             <button
               onClick={() => router.push('/chat')}
-              className="group relative ml-1 p-2.5 rounded-xl bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/90 
+              className="group relative ml-1 px-4 py-2 rounded-xl bg-gradient-to-br from-aifm-charcoal to-aifm-charcoal/90 
                          text-white shadow-lg shadow-aifm-charcoal/20
                          hover:shadow-xl hover:shadow-aifm-gold/20 hover:scale-105
                          active:scale-95 transition-all duration-300"
-              title="AIFM Assistent (⌘J)"
+              title="AIFM Agent (⌘J)"
             >
               {/* Subtle glow effect */}
               <div className="absolute inset-0 rounded-xl bg-aifm-gold/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               
-              {/* Icon with animation */}
-              <Sparkles className="relative w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
-              
-              {/* Pulse indicator */}
-              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-aifm-gold rounded-full animate-pulse" />
+              <span className="relative text-sm font-medium tracking-wide">AIFM Agent</span>
             </button>
           </div>
         </div>

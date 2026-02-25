@@ -42,7 +42,7 @@ const navDataByCompany: Record<string, {
     distributions: number;
   }[];
 }> = {
-  'company-1': {
+  'aifm-group': {
     currentNAV: 128500000,
     previousNAV: 125200000,
     historicalNAV: [
@@ -75,7 +75,7 @@ const navDataByCompany: Record<string, {
       { investorId: 'inv-6', name: 'GP Commitment', type: 'GP', commitment: 20000000, ownershipPct: 10, navShare: 12850000, calledCapital: 15000000, distributions: 2000000 },
     ],
   },
-  'company-2': {
+  'aifm-group-2': {
     currentNAV: 215000000,
     previousNAV: 208000000,
     historicalNAV: [
@@ -107,7 +107,7 @@ const navDataByCompany: Record<string, {
       { investorId: 'inv-5', name: 'GP Commitment', type: 'GP', commitment: 50000000, ownershipPct: 17.5, navShare: 37625000, calledCapital: 35000000, distributions: 5000000 },
     ],
   },
-  'company-3': {
+  'aifm-group-3': {
     currentNAV: 89500000,
     previousNAV: 87200000,
     historicalNAV: [
@@ -138,7 +138,7 @@ const navDataByCompany: Record<string, {
       { investorId: 'inv-4', name: 'GP Commitment', type: 'GP', commitment: 28500000, ownershipPct: 24.5, navShare: 21927500, calledCapital: 21375000, distributions: 2850000 },
     ],
   },
-  'company-4': {
+  'aifm-group-4': {
     currentNAV: 156000000,
     previousNAV: 151000000,
     historicalNAV: [
@@ -170,7 +170,7 @@ const navDataByCompany: Record<string, {
       { investorId: 'inv-5', name: 'GP Commitment', type: 'GP', commitment: 35000000, ownershipPct: 17, navShare: 26520000, calledCapital: 26250000, distributions: 3500000 },
     ],
   },
-  'company-5': {
+  'aifm-group-5': {
     currentNAV: 63000000,
     previousNAV: 61500000,
     historicalNAV: [
@@ -236,8 +236,8 @@ function WaterfallChart({
   liabilities,
   nav
 }: { 
-  assets: typeof navDataByCompany['company-1']['assets'];
-  liabilities: typeof navDataByCompany['company-1']['liabilities'];
+  assets: typeof navDataByCompany['aifm-group']['assets'];
+  liabilities: typeof navDataByCompany['aifm-group']['liabilities'];
   nav: number;
 }) {
   const totalAssets = Object.values(assets).reduce((a, b) => a + b, 0);
@@ -408,7 +408,7 @@ function HistoricalNAVChart({ data }: { data: { month: string; nav: number; }[] 
 function InvestorBreakdown({ 
   investors
 }: { 
-  investors: typeof navDataByCompany['company-1']['investorBreakdown'];
+  investors: typeof navDataByCompany['aifm-group']['investorBreakdown'];
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -495,8 +495,8 @@ function InteractiveCalculator({
   initialLiabilities,
   onCalculate
 }: { 
-  initialAssets: typeof navDataByCompany['company-1']['assets'];
-  initialLiabilities: typeof navDataByCompany['company-1']['liabilities'];
+  initialAssets: typeof navDataByCompany['aifm-group']['assets'];
+  initialLiabilities: typeof navDataByCompany['aifm-group']['liabilities'];
   onCalculate: (nav: number) => void;
 }) {
   const [assets, setAssets] = useState(initialAssets);
@@ -638,7 +638,7 @@ export default function NAVCalculationPage() {
   const [calculatedNAV, setCalculatedNAV] = useState<number | null>(null);
 
   // Get NAV data for selected company
-  const navData = navDataByCompany[selectedCompany.id] || navDataByCompany['company-1'];
+  const navData = navDataByCompany[selectedCompany.id] || navDataByCompany['aifm-group'];
   const fund = fundsData ? getFundByCompanyId(fundsData, selectedCompany.id) : undefined;
 
   const navChange = navData.currentNAV - navData.previousNAV;

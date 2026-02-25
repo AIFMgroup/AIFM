@@ -339,6 +339,77 @@ export class MicrosoftClient extends BaseIntegrationClient {
     return this.delete(`/me/drive/items/${itemId}`);
   }
 
+  /** Download file content as binary (for sync). Requires init() and valid token. */
+  async getDriveItemContent(itemId: string): Promise<IntegrationApiResponse<ArrayBuffer>> {
+    await this.init();
+    if (!this.tokens?.accessToken) {
+      return { success: false, error: 'Not authenticated' };
+    }
+    const url = `${this.config.endpoints.api}/me/drive/items/${itemId}/content`;
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `${this.tokens.tokenType || 'Bearer'} ${this.tokens.accessToken}`,
+      },
+    });
+    if (!res.ok) {
+      return { success: false, error: await res.text(), statusCode: res.status };
+    }
+    const buffer = await res.arrayBuffer();
+    return { success: true, data: buffer, statusCode: res.status };
+  }
+
+  /**
+   * Delta sync: get changed items. If deltaLink is provided, use it; else start from root (or folderId).
+   * Returns items and the new deltaLink for next run.
+   */
+  async getDriveDelta(options?: {
+    deltaLink?: string;
+    folderId?: string;
+  }): Promise<IntegrationApiResponse<{ value: MicrosoftDriveItem[]; deltaLink: string | null }>> {
+    let url: string;
+    if (options?.deltaLink) {
+      url = options.deltaLink;
+    } else if (options?.folderId) {
+      url = `${this.config.endpoints.api}/me/drive/items/${options.folderId}/delta`;
+    } else {
+      url = `${this.config.endpoints.api}/me/drive/root/delta`;
+    }
+    await this.init();
+    if (!this.tokens?.accessToken) {
+      return { success: false, error: 'Not authenticated' };
+    }
+    const allValue: MicrosoftDriveItem[] = [];
+    let nextLink: string | null = url;
+    let deltaLink: string | null = null;
+
+    while (nextLink) {
+      const res = await fetch(nextLink, {
+        headers: {
+          Authorization: `${this.tokens.tokenType || 'Bearer'} ${this.tokens.accessToken}`,
+          Accept: 'application/json',
+        },
+      });
+      if (!res.ok) {
+        return {
+          success: false,
+          error: await res.text(),
+          statusCode: res.status,
+          data: { value: allValue, deltaLink },
+        };
+      }
+      const json = (await res.json()) as {
+        value?: MicrosoftDriveItem[];
+        '@odata.nextLink'?: string;
+        '@odata.deltaLink'?: string;
+      };
+      if (json.value) allValue.push(...json.value);
+      nextLink = json['@odata.nextLink'] ?? null;
+      if (json['@odata.deltaLink']) deltaLink = json['@odata.deltaLink'];
+    }
+
+    return { success: true, data: { value: allValue, deltaLink }, statusCode: 200 };
+  }
+
   // ============================================================================
   // Contacts
   // ============================================================================

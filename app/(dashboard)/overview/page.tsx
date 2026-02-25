@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { 
   ChevronRight, ChevronDown, ArrowUpRight, ArrowDownRight, FolderOpen,
   TrendingUp, Wallet, PieChart, BarChart3, CheckCircle2, Clock, AlertCircle,
-  Shield, FileCheck, Scale, AlertTriangle, ExternalLink
+  Shield, FileCheck, Scale, AlertTriangle, ExternalLink,
+  Bell, Bot, X, Check, Trash2, Info,
 } from 'lucide-react';
 import {
   getCompanyDashboard, formatCurrencyCompact
@@ -475,10 +476,211 @@ function ComplianceStatusWidget({ companyId }: { companyId: string }) {
   );
 }
 
+interface UserNotification {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  link?: string;
+  priority: 'high' | 'medium' | 'low';
+  read: boolean;
+  createdAt: string;
+  metadata?: Record<string, string>;
+}
+
+function SecurityAlertsBanner({ userEmail }: { userEmail: string | null }) {
+  const [notifications, setNotifications] = useState<UserNotification[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const fetchNotifications = useCallback(async () => {
+    if (!userEmail) return;
+    try {
+      const res = await fetch(`/api/notifications?email=${encodeURIComponent(userEmail)}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setNotifications(data.notifications || []);
+    } catch {
+      // silent
+    } finally {
+      setLoading(false);
+    }
+  }, [userEmail]);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  const handleMarkRead = async (n: UserNotification) => {
+    try {
+      await fetch('/api/notifications', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'mark_read', id: n.id, createdAt: n.createdAt }),
+      });
+      setNotifications((prev) =>
+        prev.map((x) => (x.id === n.id ? { ...x, read: true } : x))
+      );
+    } catch { /* silent */ }
+  };
+
+  const handleDelete = async (n: UserNotification) => {
+    try {
+      await fetch('/api/notifications', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: n.id, createdAt: n.createdAt }),
+      });
+      setNotifications((prev) => prev.filter((x) => x.id !== n.id));
+    } catch { /* silent */ }
+  };
+
+  if (loading || notifications.length === 0) return null;
+
+  const unread = notifications.filter((n) => !n.read);
+  const alertNotifs = notifications.filter(
+    (n) => n.type === 'security_review_alert' || n.type === 'security_expiring'
+  );
+
+  if (alertNotifs.length === 0) return null;
+
+  return (
+    <div className="mb-6">
+      <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50/80 to-orange-50/50 overflow-hidden">
+        <div className="flex items-center gap-3 px-5 py-3 border-b border-amber-200/60">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-amber-100">
+            <Bell className="w-5 h-5 text-amber-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-amber-900">
+              AI-varningar för dina värdepapper
+            </p>
+            <p className="text-xs text-amber-600">
+              {unread.length > 0 ? `${unread.length} olästa` : 'Alla lästa'} · Månatlig AI-granskning
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Bot className="w-4 h-4 text-amber-500" />
+            <span className="text-xs text-amber-500 font-medium">Claude Opus</span>
+          </div>
+        </div>
+
+        <div className="divide-y divide-amber-100">
+          {alertNotifs.map((n) => {
+            const isExpanded = expandedId === n.id;
+            const severityColor =
+              n.priority === 'high'
+                ? 'bg-red-500'
+                : n.priority === 'medium'
+                  ? 'bg-amber-500'
+                  : 'bg-blue-500';
+
+            return (
+              <div
+                key={n.id}
+                className={`px-5 py-3 transition-colors ${!n.read ? 'bg-amber-50/50' : ''}`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${severityColor}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p
+                          className={`text-sm font-medium truncate ${!n.read ? 'text-amber-900' : 'text-amber-800/70'}`}
+                        >
+                          {n.title}
+                        </p>
+                        <p className="text-xs text-amber-700/70 mt-0.5">{n.message}</p>
+                        {n.metadata?.fundName && (
+                          <p className="text-xs text-amber-600/60 mt-0.5">
+                            Fond: {n.metadata.fundName} · {n.metadata.securityName}
+                          </p>
+                        )}
+                        <p className="text-[10px] text-amber-500/60 mt-1">
+                          {new Date(n.createdAt).toLocaleDateString('sv-SE', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {n.metadata?.details && (
+                          <button
+                            type="button"
+                            onClick={() => setExpandedId(isExpanded ? null : n.id)}
+                            className="p-1 rounded text-amber-500 hover:text-amber-700 hover:bg-amber-100 transition-colors"
+                            title="Visa detaljer"
+                          >
+                            <Info className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        {!n.read && (
+                          <button
+                            type="button"
+                            onClick={() => handleMarkRead(n)}
+                            className="p-1 rounded text-amber-500 hover:text-amber-700 hover:bg-amber-100 transition-colors"
+                            title="Markera som läst"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(n)}
+                          className="p-1 rounded text-amber-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          title="Ta bort"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {isExpanded && n.metadata?.details && (
+                      <div className="mt-2 p-3 rounded-lg bg-white/70 border border-amber-200/50 text-xs text-amber-900/80 leading-relaxed whitespace-pre-wrap">
+                        {n.metadata.details}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function OverviewPage() {
   const { selectedCompany } = useCompany();
   const [selectedKPI, setSelectedKPI] = useState('NAV');
   const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  const [isecMetrics, setIsecMetrics] = useState<{ nav?: number; funds?: Array<{ id: string; name: string; nav: number }> } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/auth/role', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((data: { role?: string; email?: string | null }) => {
+        setUserRole(data.role ?? null);
+        setUserEmail(data.email ?? null);
+      })
+      .catch(() => {});
+
+    fetch('/api/isec?action=overview')
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok && data.data?.totalNav) {
+          setIsecMetrics({ nav: data.data.totalNav, funds: data.data.funds });
+        }
+      })
+      .catch(() => {});
+  }, []);
   
   const dashboard = getCompanyDashboard(selectedCompany.id);
 
@@ -490,7 +692,10 @@ export default function OverviewPage() {
     );
   }
 
-  const { portfolio, transactions, tasks, kpiDataSet, metrics } = dashboard;
+  const { portfolio, transactions, tasks, kpiDataSet, metrics: baseMetrics } = dashboard;
+  const metrics = isecMetrics?.nav
+    ? { ...baseMetrics, nav: isecMetrics.nav }
+    : baseMetrics;
   const totalPortfolioValue = portfolio.reduce((sum, item) => sum + item.value, 0);
 
   const getTransactionTypeLabel = (type: string) => {
@@ -522,6 +727,11 @@ export default function OverviewPage() {
         <h1 className="text-2xl sm:text-3xl font-semibold text-aifm-charcoal tracking-tight">Översikt</h1>
         <p className="text-aifm-charcoal/40 mt-1 sm:mt-2 text-sm">{selectedCompany.name}</p>
       </div>
+
+      {/* Security AI Alert Notifications (visible for forvaltare and operation) */}
+      {(userRole === 'forvaltare' || userRole === 'operation') && userEmail && (
+        <SecurityAlertsBanner userEmail={userEmail} />
+      )}
 
       {/* HERO: Key Metrics - Always Visible */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-10">

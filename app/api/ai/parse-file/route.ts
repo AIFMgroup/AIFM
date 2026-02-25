@@ -482,11 +482,24 @@ function cleanExtractedText(text: string): string {
 // Main Handler
 // ============================================================================
 
+export const maxDuration = 120;
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   console.log('[Parse] Request received');
   
   try {
-    const formData = await request.formData();
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch (parseErr) {
+      console.error('[Parse] FormData parse error:', parseErr);
+      return NextResponse.json(
+        { error: 'Kunde inte läsa filen. Kontrollera att filen inte är för stor (max 50 MB).', content: '[Filen kunde inte läsas.]' },
+        { status: 400 }
+      );
+    }
     console.log('[Parse] FormData parsed');
     
     const file = formData.get('file') as File;
@@ -499,13 +512,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`[Parse] File received: ${file.name}, type: ${file.type}, size: ${file.size}`);
-    
     const buffer = Buffer.from(await file.arrayBuffer());
-    const fileName = file.name;
-    const fileNameLower = fileName.toLowerCase();
-    const fileType = file.type;
+    const fileType = file.type || '';
 
+    // Robust filename: some clients send empty or invalid names (e.g. with special chars or path)
+    let fileName = typeof file.name === 'string' ? file.name.trim() : '';
+    if (!fileName || fileName.length > 200) {
+      const extFromType = fileType === 'application/pdf' ? '.pdf'
+        : fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? '.docx'
+        : fileType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ? '.xlsx'
+        : fileType.startsWith('image/') ? '.png' : '';
+      fileName = `document${extFromType || ''}`;
+    }
+    // Strip path components and normalize (keep underscores and common chars)
+    fileName = fileName.replace(/^.*[\\/]/, '').slice(0, 200);
+    const fileNameLower = fileName.toLowerCase();
+
+    console.log(`[Parse] File received: ${fileName}, type: ${fileType}, size: ${file.size}`);
     console.log(`[Parse] Processing: ${fileName} (${fileType}, ${buffer.length} bytes)`);
 
     let extractedText = '';
@@ -581,7 +604,7 @@ export async function POST(request: NextRequest) {
 
     const responseData: Record<string, unknown> = {
       content: extractedText,
-      fileName: file.name,
+      fileName,
       fileType: file.type,
       size: file.size,
       parseMethod,
@@ -589,14 +612,36 @@ export async function POST(request: NextRequest) {
       extractedLength: extractedText.length,
     };
 
+    // Include rawBase64 for review features, but skip for large files
+    // to avoid massive JSON responses that crash the browser
+    const RAW_BASE64_MAX_BYTES = 15 * 1024 * 1024; // 15 MB threshold
+    const includeRawBase64 = buffer.length <= RAW_BASE64_MAX_BYTES;
+
     if (parseMethod === 'docx') {
       try {
         const editor = await DocxXmlEditor.load(buffer);
         responseData.paragraphs = editor.getParagraphTexts();
-        responseData.rawBase64 = buffer.toString('base64');
+        if (includeRawBase64) {
+          responseData.rawBase64 = buffer.toString('base64');
+        }
+        responseData.reviewableType = 'docx';
       } catch (docxMetaErr) {
         console.warn('[Parse] Could not extract paragraphs/rawBase64 for DOCX:', docxMetaErr);
       }
+    }
+
+    if (parseMethod === 'pdf') {
+      if (includeRawBase64) {
+        responseData.rawBase64 = buffer.toString('base64');
+      }
+      responseData.reviewableType = 'pdf';
+    }
+
+    if (parseMethod === 'excel') {
+      if (includeRawBase64) {
+        responseData.rawBase64 = buffer.toString('base64');
+      }
+      responseData.reviewableType = 'excel';
     }
     
     console.log('[Parse] Sending response with content length:', String(responseData.content).length);

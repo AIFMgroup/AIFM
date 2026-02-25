@@ -62,77 +62,46 @@ interface ApprovalRole {
 // ============================================================================
 
 const mockFunds: Fund[] = [
-  {
-    id: 'f1',
-    name: 'AUAG Essential Metals',
-    legalName: 'AUAG Essential Metals AB',
-    baseCurrency: 'SEK',
-    navFrequency: 'DAILY',
-    navTime: '15:00',
-    fiscalYearEnd: '12-31',
-    launchDate: '2021-03-15',
-    isActive: true,
-    shareClasses: [
-      { id: 'sc1a', name: 'A', isin: 'SE0019175563', currency: 'SEK', managementFee: 1.25, performanceFee: 0, minInvestment: 100, isActive: true },
-      { id: 'sc1b', name: 'B', isin: 'SE0019175571', currency: 'EUR', managementFee: 1.25, performanceFee: 0, minInvestment: 100, isActive: true },
-    ],
-  },
-  {
-    id: 'f2',
-    name: 'AuAg Gold Rush',
-    legalName: 'AuAg Gold Rush AB',
-    baseCurrency: 'SEK',
-    navFrequency: 'DAILY',
-    navTime: '15:00',
-    fiscalYearEnd: '12-31',
-    launchDate: '2022-06-01',
-    isActive: true,
-    shareClasses: [
-      { id: 'sc2a', name: 'A', isin: 'SE0020677946', currency: 'SEK', managementFee: 1.50, performanceFee: 20, minInvestment: 100, isActive: true },
-      { id: 'sc2h', name: 'H (NOK)', isin: 'SE0020678001', currency: 'NOK', managementFee: 1.50, performanceFee: 20, minInvestment: 1000, isActive: true },
-    ],
-  },
-  {
-    id: 'f3',
-    name: 'AuAg Precious Green',
-    legalName: 'AuAg Precious Green AB',
-    baseCurrency: 'SEK',
-    navFrequency: 'DAILY',
-    navTime: '15:00',
-    fiscalYearEnd: '12-31',
-    launchDate: '2020-11-20',
-    isActive: true,
-    shareClasses: [
-      { id: 'sc3a', name: 'A', isin: 'SE0014808440', currency: 'SEK', managementFee: 1.25, performanceFee: 0, minInvestment: 100, isActive: true },
-    ],
-  },
-  {
-    id: 'f4',
-    name: 'AuAg Silver Bullet',
-    legalName: 'AuAg Silver Bullet AB',
-    baseCurrency: 'SEK',
-    navFrequency: 'DAILY',
-    navTime: '15:00',
-    fiscalYearEnd: '12-31',
-    launchDate: '2019-09-01',
-    isActive: true,
-    shareClasses: [
-      { id: 'sc4a', name: 'A', isin: 'SE0013358181', currency: 'SEK', managementFee: 1.00, performanceFee: 0, minInvestment: 100, isActive: true },
-      { id: 'sc4b', name: 'B', isin: 'SE0013358199', currency: 'EUR', managementFee: 1.00, performanceFee: 0, minInvestment: 100, isActive: true },
-    ],
-  },
+  { id: 'f1', name: 'AuAg Essential Metals', legalName: 'AuAg Essential Metals AB', baseCurrency: 'SEK', navFrequency: 'DAILY', navTime: '15:00', fiscalYearEnd: '12-31', launchDate: '2022-06-01', isActive: true, shareClasses: [
+    { id: 'sc1a', name: 'A', isin: 'SE0019175563', currency: 'SEK', managementFee: 1.25, performanceFee: 0, minInvestment: 100, isActive: true },
+    { id: 'sc1b', name: 'B', isin: 'SE0019175571', currency: 'EUR', managementFee: 1.25, performanceFee: 0, minInvestment: 100, isActive: true },
+  ] },
+  { id: 'f2', name: 'AuAg Gold Rush', legalName: 'AuAg Gold Rush AB', baseCurrency: 'SEK', navFrequency: 'DAILY', navTime: '15:00', fiscalYearEnd: '12-31', launchDate: '2021-09-01', isActive: true, shareClasses: [
+    { id: 'sc2a', name: 'A', isin: 'SE0020677946', currency: 'SEK', managementFee: 1.50, performanceFee: 20, minInvestment: 100, isActive: true },
+    { id: 'sc2h', name: 'H (NOK)', isin: 'SE0020678001', currency: 'NOK', managementFee: 1.50, performanceFee: 20, minInvestment: 1000, isActive: true },
+  ] },
+  { id: 'f3', name: 'AuAg Precious Green', legalName: 'AuAg Precious Green AB', baseCurrency: 'SEK', navFrequency: 'DAILY', navTime: '15:00', fiscalYearEnd: '12-31', launchDate: '2020-11-20', isActive: true, shareClasses: [
+    { id: 'sc3a', name: 'A', isin: 'SE0014808440', currency: 'SEK', managementFee: 1.25, performanceFee: 0, minInvestment: 100, isActive: true },
+  ] },
+  { id: 'f4', name: 'AuAg Silver Bullet', legalName: 'AuAg Silver Bullet AB', baseCurrency: 'SEK', navFrequency: 'DAILY', navTime: '15:00', fiscalYearEnd: '12-31', launchDate: '2020-03-15', isActive: true, shareClasses: [
+    { id: 'sc4a', name: 'A', isin: 'SE0013358181', currency: 'SEK', managementFee: 1.00, performanceFee: 0, minInvestment: 100, isActive: true },
+    { id: 'sc4b', name: 'B', isin: 'SE0013358199', currency: 'EUR', managementFee: 1.00, performanceFee: 0, minInvestment: 100, isActive: true },
+  ] },
+  { id: 'f5', name: 'EPOQUE', legalName: 'EPOQUE AB', baseCurrency: 'SEK', navFrequency: 'DAILY', navTime: '15:00', fiscalYearEnd: '12-31', launchDate: '2023-01-15', isActive: true, shareClasses: [] },
+  { id: 'f6', name: 'Go Blockchain Fund', legalName: 'Go Blockchain Fund AB', baseCurrency: 'SEK', navFrequency: 'DAILY', navTime: '15:00', fiscalYearEnd: '12-31', launchDate: '2022-04-01', isActive: true, shareClasses: [] },
+  { id: 'f7', name: 'MetaSpace Fund', legalName: 'MetaSpace Fund AB', baseCurrency: 'SEK', navFrequency: 'DAILY', navTime: '15:00', fiscalYearEnd: '12-31', launchDate: '2023-06-01', isActive: true, shareClasses: [] },
+  { id: 'f8', name: 'Plain Capital BronX', legalName: 'Plain Capital BronX AB', baseCurrency: 'SEK', navFrequency: 'DAILY', navTime: '15:00', fiscalYearEnd: '12-31', launchDate: '2018-01-15', isActive: true, shareClasses: [] },
+  { id: 'f9', name: 'Plain Capital LunatiX', legalName: 'Plain Capital LunatiX AB', baseCurrency: 'SEK', navFrequency: 'DAILY', navTime: '15:00', fiscalYearEnd: '12-31', launchDate: '2019-03-01', isActive: true, shareClasses: [] },
+  { id: 'f10', name: 'Plain Capital StyX', legalName: 'Plain Capital StyX AB', baseCurrency: 'SEK', navFrequency: 'DAILY', navTime: '15:00', fiscalYearEnd: '12-31', launchDate: '2017-06-01', isActive: true, shareClasses: [] },
+  { id: 'f11', name: 'Proethos Fond', legalName: 'Proethos Fond AB', baseCurrency: 'SEK', navFrequency: 'DAILY', navTime: '15:00', fiscalYearEnd: '12-31', launchDate: '2016-09-01', isActive: true, shareClasses: [] },
+  { id: 'f12', name: 'SAM Aktiv Ränta', legalName: 'SAM Aktiv Ränta AB', baseCurrency: 'SEK', navFrequency: 'DAILY', navTime: '15:00', fiscalYearEnd: '12-31', launchDate: '2021-01-10', isActive: true, shareClasses: [] },
+  { id: 'f13', name: 'Sensum Strategy Global', legalName: 'Sensum Strategy Global AB', baseCurrency: 'SEK', navFrequency: 'DAILY', navTime: '15:00', fiscalYearEnd: '12-31', launchDate: '2020-05-01', isActive: true, shareClasses: [] },
+  { id: 'f14', name: 'SOIC Dynamic China', legalName: 'SOIC Dynamic China AB', baseCurrency: 'SEK', navFrequency: 'DAILY', navTime: '15:00', fiscalYearEnd: '12-31', launchDate: '2022-03-01', isActive: true, shareClasses: [] },
+  { id: 'f15', name: 'Vinga Corporate Bond', legalName: 'Vinga Corporate Bond AB', baseCurrency: 'SEK', navFrequency: 'DAILY', navTime: '15:00', fiscalYearEnd: '12-31', launchDate: '2021-06-01', isActive: true, shareClasses: [] },
 ];
 
+const allFundIds = mockFunds.map(f => f.id);
+
 const mockRecipients: NAVRecipient[] = [
-  { id: 'r1', name: 'Christopher Genberg', email: 'christopher.genberg@aifm.se', type: 'INTERNAL', funds: ['f1', 'f2', 'f3', 'f4'], receiveDaily: true, receiveWeekly: true, receiveMonthly: true },
-  { id: 'r2', name: 'NAV Team', email: 'nav@aifm.se', type: 'INTERNAL', funds: ['f1', 'f2', 'f3', 'f4'], receiveDaily: true, receiveWeekly: false, receiveMonthly: true },
-  { id: 'r3', name: 'Finansinspektionen', email: 'rapporter@fi.se', type: 'REGULATOR', funds: ['f1', 'f2', 'f3', 'f4'], receiveDaily: false, receiveWeekly: false, receiveMonthly: true },
+  { id: 'r1', name: 'Christopher Genberg', email: 'christopher.genberg@aifm.se', type: 'INTERNAL', funds: allFundIds, receiveDaily: true, receiveWeekly: true, receiveMonthly: true },
+  { id: 'r2', name: 'NAV Team', email: 'nav@aifm.se', type: 'INTERNAL', funds: allFundIds, receiveDaily: true, receiveWeekly: false, receiveMonthly: true },
+  { id: 'r3', name: 'Finansinspektionen', email: 'rapporter@fi.se', type: 'REGULATOR', funds: allFundIds, receiveDaily: false, receiveWeekly: false, receiveMonthly: true },
 ];
 
 const mockApprovalRoles: ApprovalRole[] = [
-  { id: 'a1', userId: 'u1', userName: 'Christopher Genberg', email: 'christopher.genberg@aifm.se', role: 'ADMIN', funds: ['f1', 'f2', 'f3', 'f4'] },
-  { id: 'a2', userId: 'u2', userName: 'Anna Lindberg', email: 'anna.lindberg@aifm.se', role: 'FIRST_APPROVER', funds: ['f1', 'f2', 'f3', 'f4'] },
-  { id: 'a3', userId: 'u3', userName: 'Erik Svensson', email: 'erik.svensson@aifm.se', role: 'SECOND_APPROVER', funds: ['f1', 'f2', 'f3', 'f4'] },
+  { id: 'a1', userId: 'u1', userName: 'Christopher Genberg', email: 'christopher.genberg@aifm.se', role: 'ADMIN', funds: allFundIds },
+  { id: 'a2', userId: 'u2', userName: 'Anna Lindberg', email: 'anna.lindberg@aifm.se', role: 'FIRST_APPROVER', funds: allFundIds },
+  { id: 'a3', userId: 'u3', userName: 'Erik Svensson', email: 'erik.svensson@aifm.se', role: 'SECOND_APPROVER', funds: allFundIds },
 ];
 
 // ============================================================================

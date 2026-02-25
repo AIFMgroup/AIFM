@@ -166,6 +166,15 @@ function FeatureCard({ icon: Icon, title, description, enabled, onToggle, connec
 // Main Page Component
 // ============================================================================
 
+interface OneDriveSyncState {
+  companyId: string;
+  status: string;
+  lastSyncAt?: string;
+  syncedCount?: number;
+  error?: string;
+  notFound?: boolean;
+}
+
 export default function MicrosoftIntegrationPage() {
   const [integration, setIntegration] = useState<MicrosoftIntegration>(MOCK_INTEGRATION);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -173,6 +182,8 @@ export default function MicrosoftIntegrationPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [emails, setEmails] = useState<EmailMessage[]>([]);
   const [activeTab, setActiveTab] = useState<'settings' | 'calendar' | 'mail'>('settings');
+  const [syncStatus, setSyncStatus] = useState<OneDriveSyncState | null>(null);
+  const [syncTriggering, setSyncTriggering] = useState(false);
 
   // Simulate connection
   const handleConnect = async () => {
@@ -217,6 +228,37 @@ export default function MicrosoftIntegrationPage() {
         [key]: !integration.syncSettings[key],
       },
     });
+  };
+
+  const fetchSyncStatus = async () => {
+    try {
+      const res = await fetch('/api/knowledge/onedrive-sync');
+      if (res.ok) {
+        const data = await res.json();
+        setSyncStatus(data);
+      }
+    } catch {
+      setSyncStatus(null);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'settings') fetchSyncStatus();
+  }, [activeTab]);
+
+  const handleKnowledgeSync = async () => {
+    setSyncTriggering(true);
+    try {
+      const res = await fetch('/api/knowledge/onedrive-sync', { method: 'POST' });
+      const data = await res.json();
+      if (data.success !== false) {
+        await fetchSyncStatus();
+      } else {
+        setSyncStatus((prev) => ({ ...(prev || { companyId: 'default' }), status: 'error', error: data.error }));
+      }
+    } finally {
+      setSyncTriggering(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -380,6 +422,46 @@ export default function MicrosoftIntegrationPage() {
             onToggle={() => toggleSyncSetting('files')}
             connected={integration.connected}
           />
+
+          {/* Knowledge base sync from OneDrive */}
+          {integration.connected && (
+            <div className="mt-6 p-4 bg-white rounded-2xl border border-gray-100">
+              <div className="flex items-center gap-2 mb-3">
+                <FileText className="w-4 h-4 text-aifm-charcoal/40" />
+                <h3 className="text-sm font-medium text-aifm-charcoal">Kunskapsbas-synk från OneDrive</h3>
+              </div>
+              <p className="text-sm text-aifm-charcoal/60 mb-3">
+                Synka dokument (PDF, Word, Excel) från OneDrive till kunskapsbasen så att AIFM Agenten kan använda dem.
+              </p>
+              <div className="flex items-center gap-4 flex-wrap">
+                <button
+                  onClick={handleKnowledgeSync}
+                  disabled={syncTriggering}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-aifm-charcoal rounded-lg hover:bg-aifm-charcoal/90 disabled:opacity-50"
+                >
+                  {syncTriggering ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4" />
+                  )}
+                  {syncTriggering ? 'Synkar...' : 'Synka nu'}
+                </button>
+                {syncStatus && !syncStatus.notFound && (
+                  <span className="text-sm text-aifm-charcoal/60">
+                    {syncStatus.lastSyncAt
+                      ? `Senast: ${formatDate(syncStatus.lastSyncAt)}`
+                      : 'Ingen synk än'}
+                    {typeof syncStatus.syncedCount === 'number' && syncStatus.syncedCount > 0 && (
+                      <> · {syncStatus.syncedCount} fil(er) synkade</>
+                    )}
+                  </span>
+                )}
+              </div>
+              {syncStatus?.error && (
+                <p className="mt-2 text-sm text-red-600">{syncStatus.error}</p>
+              )}
+            </div>
+          )}
 
           {/* Permissions */}
           {integration.connected && (

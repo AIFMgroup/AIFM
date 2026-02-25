@@ -36,6 +36,7 @@ interface FundNAV {
 
 interface SystemStatus {
   dataSources: {
+    isec: { available: boolean; env: string; fundCount: number; message?: string };
     fundRegistry: { available: boolean; fundCount: number };
     priceProvider: { available: boolean; source: string; message?: string };
     seb: { configured: boolean; connected: boolean; error?: string };
@@ -45,6 +46,41 @@ interface SystemStatus {
   };
   readiness: {
     fullyOperational: boolean;
+    isecConnected: boolean;
+  };
+}
+
+function mapApiStatusToSystemStatus(apiStatus: Record<string, any>, apiReadiness: Record<string, any> | undefined): SystemStatus {
+  return {
+    dataSources: {
+      isec: {
+        available: apiStatus.isec?.available ?? false,
+        env: apiStatus.isec?.env ?? 'TEST',
+        fundCount: apiStatus.isec?.fundCount ?? 0,
+        message: apiStatus.isec?.message ?? undefined,
+      },
+      fundRegistry: {
+        available: apiStatus.fundRegistry?.available ?? false,
+        fundCount: apiStatus.fundRegistry?.fundCount ?? 0,
+      },
+      priceProvider: {
+        available: apiStatus.priceProvider?.available ?? false,
+        source: apiStatus.priceProvider?.activeSource ?? apiStatus.priceProvider?.source ?? 'unknown',
+        message: apiStatus.priceProvider?.message ?? undefined,
+      },
+      seb: {
+        configured: apiStatus.seb?.configured ?? false,
+        connected: apiStatus.seb?.connected ?? false,
+        error: apiStatus.seb?.error ?? undefined,
+      },
+    },
+    database: {
+      connected: apiStatus.database?.connected ?? false,
+    },
+    readiness: {
+      fullyOperational: apiReadiness?.fullyOperational ?? false,
+      isecConnected: apiReadiness?.isecConnected ?? false,
+    },
   };
 }
 
@@ -69,7 +105,8 @@ const mockProcesses: ProcessStatus[] = [
 // Helper Functions
 // ============================================================================
 
-function formatCurrency(value: number, currency: string = 'SEK'): string {
+function formatCurrency(value: number | undefined | null, currency: string = 'SEK'): string {
+  if (value == null || !Number.isFinite(value)) return '–';
   return new Intl.NumberFormat('sv-SE', {
     style: 'decimal',
     minimumFractionDigits: 2,
@@ -77,7 +114,8 @@ function formatCurrency(value: number, currency: string = 'SEK'): string {
   }).format(value);
 }
 
-function formatLargeCurrency(value: number): string {
+function formatLargeCurrency(value: number | undefined | null): string {
+  if (value == null || !Number.isFinite(value)) return '–';
   if (value >= 1000000000) {
     return `${(value / 1000000000).toFixed(2)} Mdr`;
   }
@@ -272,7 +310,7 @@ export default function NAVAdminPage() {
       if (statusResponse.ok) {
         const statusData = await statusResponse.json();
         if (statusData.success) {
-          setSystemStatus(statusData.status);
+          setSystemStatus(mapApiStatusToSystemStatus(statusData.status, statusData.readiness));
         }
       }
 
@@ -346,7 +384,7 @@ export default function NAVAdminPage() {
   };
   
   // Calculate totals from API data
-  const totalAUMValue = fundNAVs.reduce((sum, fund) => sum + fund.netAssetValue, 0);
+  const totalAUMValue = fundNAVs.reduce((sum, fund) => sum + (fund.netAssetValue ?? 0), 0);
   const uniqueFundIds = new Set(fundNAVs.map(f => f.fundName.split(' ').slice(0, -1).join(' ')));
   
   const totalTimeSaved = mockProcesses.reduce((sum, p) => {
@@ -362,36 +400,56 @@ export default function NAVAdminPage() {
       {/* Connection Status Banner */}
       {systemStatus && (
         <div className={`flex items-center gap-3 px-4 py-3 rounded-xl ${
-          systemStatus.readiness.fullyOperational 
-            ? 'bg-emerald-50 border border-emerald-200' 
-            : systemStatus.dataSources.fundRegistry.available
-              ? 'bg-amber-50 border border-amber-200'
-              : 'bg-aifm-charcoal/[0.04] border border-aifm-charcoal/10'
+          systemStatus.readiness?.isecConnected
+            ? 'bg-emerald-50 border border-emerald-200'
+            : systemStatus.readiness?.fullyOperational 
+              ? 'bg-emerald-50 border border-emerald-200' 
+              : systemStatus.dataSources?.fundRegistry?.available
+                ? 'bg-amber-50 border border-amber-200'
+                : 'bg-aifm-charcoal/[0.04] border border-aifm-charcoal/10'
         }`}>
-          {systemStatus.readiness.fullyOperational ? (
+          {systemStatus.dataSources?.isec?.available ? (
+            <>
+              <Wifi className="w-5 h-5 text-emerald-600" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-emerald-800">ISEC SECURA ansluten</p>
+                <p className="text-xs text-emerald-600">
+                  {systemStatus.dataSources.isec.fundCount} fonder ({systemStatus.dataSources.isec.env})
+                  {systemStatus.dataSources?.fundRegistry?.available ? ` \u2022 Fund Registry (${systemStatus.dataSources.fundRegistry.fundCount})` : ''}
+                  {systemStatus.dataSources?.seb?.connected ? ' \u2022 SEB' : ''}
+                </p>
+              </div>
+            </>
+          ) : systemStatus.readiness?.fullyOperational ? (
             <>
               <Wifi className="w-5 h-5 text-emerald-600" />
               <div className="flex-1">
                 <p className="text-sm font-medium text-emerald-800">Datakällor anslutna</p>
                 <p className="text-xs text-emerald-600">
-                  Fund Registry ({systemStatus.dataSources.fundRegistry.fundCount} fonder) &bull; {systemStatus.dataSources.priceProvider.source} &bull; SEB
+                  Fund Registry ({systemStatus.dataSources?.fundRegistry?.fundCount ?? 0} fonder)
+                  {systemStatus.dataSources?.seb?.connected ? ' \u2022 SEB' : ''}
                 </p>
               </div>
             </>
-          ) : systemStatus.dataSources.fundRegistry.available ? (
+          ) : systemStatus.dataSources?.fundRegistry?.available ? (
             <>
               <WifiOff className="w-5 h-5 text-amber-600" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-amber-800">Delvis ansluten</p>
-                <p className="text-xs text-amber-600">{systemStatus.dataSources.priceProvider.message || 'Vissa datakällor ej tillgängliga'}</p>
+                <p className="text-sm font-medium text-amber-800">Delvis ansluten — ISEC SECURA ej tillgänglig</p>
+                <p className="text-xs text-amber-600">
+                  {systemStatus.dataSources?.isec?.message || 'VPN-tunnel till ISEC ej aktiv'}
+                  {' \u2022 '}Fund Registry tillgängligt
+                </p>
               </div>
             </>
           ) : (
             <>
               <Database className="w-5 h-5 text-aifm-charcoal/60" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-aifm-charcoal">Demo-läge</p>
-                <p className="text-xs text-aifm-charcoal/40">Konfigurera datakällor (LSEG, SEB, Fund Registry) för live-data</p>
+                <p className="text-sm font-medium text-aifm-charcoal">Väntar på datakällor</p>
+                <p className="text-xs text-aifm-charcoal/40">
+                  ISEC SECURA: {systemStatus.dataSources?.isec?.message || 'Ej ansluten'} &bull; Konfigurera VPN eller datakällor
+                </p>
               </div>
               <Link
                 href="/nav-admin/settings"
@@ -402,11 +460,12 @@ export default function NAVAdminPage() {
             </>
           )}
           <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            dataSource === 'live' ? 'bg-emerald-100 text-emerald-700' :
+            dataSource === 'isec' ? 'bg-emerald-100 text-emerald-700' :
+            dataSource === 'fund_registry' ? 'bg-emerald-100 text-emerald-700' :
             dataSource === 'database' ? 'bg-aifm-gold/15 text-aifm-charcoal' :
             'bg-gray-100 text-aifm-charcoal/60'
           }`}>
-            {dataSource === 'live' ? 'Live' : dataSource === 'database' ? 'Databas' : 'Mock'}
+            {dataSource === 'isec' ? 'ISEC Live' : dataSource === 'fund_registry' ? 'Registry' : dataSource === 'database' ? 'Databas' : 'Mock'}
           </span>
         </div>
       )}
@@ -416,7 +475,9 @@ export default function NAVAdminPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-aifm-charcoal">NAV-processer</h1>
           <p className="text-aifm-charcoal/40 mt-1">
-            Automatisera NAV-rapportering, prisdata och ägardata
+            {dataSource === 'isec'
+              ? 'Automatisk NAV-beräkning via ISEC SECURA'
+              : 'Automatisera NAV-rapportering, prisdata och ägardata'}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -515,12 +576,22 @@ export default function NAVAdminPage() {
         <h2 className="text-lg font-semibold text-aifm-charcoal tracking-tight mb-4">Snabbåtgärder</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
           <QuickActionCard
+            title="Kör daglig pipeline"
+            description={systemStatus?.dataSources?.isec?.available
+              ? "Hämta data från ISEC SECURA, beräkna NAV automatiskt"
+              : "Importera priser, beräkna NAV, skapa godkännande"
+            }
+            icon={Zap}
+            href="/nav-admin/pipeline"
+            color="bg-gradient-to-br from-aifm-gold to-amber-600"
+            badge={systemStatus?.dataSources?.isec?.available ? "ISEC" : "Auto"}
+          />
+          <QuickActionCard
             title="NAV-historik"
             description="Bläddra och exportera historiska NAV"
             icon={History}
             href="/nav-admin/history"
             color="bg-gradient-to-br from-indigo-500 to-indigo-600"
-            badge="Nytt"
           />
           <QuickActionCard
             title="NAV-rapporter"
@@ -718,10 +789,10 @@ export default function NAVAdminPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <span className={`text-sm font-medium ${
-                        fund.navChangePercent > 0 ? 'text-emerald-600' : 
-                        fund.navChangePercent < 0 ? 'text-red-600' : 'text-gray-500'
+                        (fund.navChangePercent ?? 0) > 0 ? 'text-emerald-600' : 
+                        (fund.navChangePercent ?? 0) < 0 ? 'text-red-600' : 'text-gray-500'
                       }`}>
-                        {fund.navChangePercent > 0 ? '+' : ''}{fund.navChangePercent.toFixed(2)}%
+                        {fund.navChangePercent != null ? `${fund.navChangePercent > 0 ? '+' : ''}${fund.navChangePercent.toFixed(2)}%` : '–'}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right text-sm text-aifm-charcoal/70">

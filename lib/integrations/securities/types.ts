@@ -177,7 +177,7 @@ export interface ESGInfo {
 // Complete security approval request
 export interface SecurityApprovalRequest {
   id: string;
-  status: 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'expired';
+  status: 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'expired' | 'needs_info';
   createdAt: string;
   updatedAt: string;
   submittedAt?: string;
@@ -207,10 +207,21 @@ export interface SecurityApprovalRequest {
   
   // Acquisition details
   plannedAcquisitionShare?: string; // How much of the company/emission
+  plannedPortfolioWeight?: string; // Expected % of the fund's total portfolio
   
   // Review
   reviewComments?: string;
   rejectionReason?: string;
+  
+  // Request info (operations asks for clarification)
+  infoRequest?: string;
+  infoResponse?: string;
+  
+  // Discussion thread
+  comments?: ApprovalComment[];
+  
+  // Audit trail
+  auditTrail?: AuditEntry[];
   
   // Attachments
   attachments?: {
@@ -218,6 +229,28 @@ export interface SecurityApprovalRequest {
     url: string;
     type: string;
   }[];
+}
+
+// Audit log entry for an approval
+export interface AuditEntry {
+  timestamp: string;
+  action: 'created' | 'submitted' | 'approved' | 'rejected'
+    | 'info_requested' | 'info_responded' | 'comment_added'
+    | 'renewed' | 'expired';
+  actor: string;
+  actorEmail: string;
+  details?: string;
+}
+
+// Comment in discussion thread on an approval
+export interface ApprovalComment {
+  id: string;
+  approvalId: string;
+  author: string;
+  authorEmail: string;
+  role: 'forvaltare' | 'operation';
+  message: string;
+  createdAt: string;
 }
 
 // Approval list for Operations view

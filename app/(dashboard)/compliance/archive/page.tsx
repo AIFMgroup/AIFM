@@ -16,6 +16,9 @@ import {
   Building2,
   Calendar,
   RefreshCw,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
 } from 'lucide-react';
 
 // ============================================================================
@@ -32,6 +35,8 @@ interface Document {
     authority?: string;
     effectiveDate?: string;
     lastUpdated?: string;
+    summary?: string;
+    summaryStatus?: 'pending' | 'summarizing' | 'ready';
   };
   createdAt: string;
   updatedAt: string;
@@ -404,6 +409,8 @@ export default function ComplianceArchivePage() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [expandedDocId, setExpandedDocId] = useState<string | null>(null);
+  const [summarizingId, setSummarizingId] = useState<string | null>(null);
 
   // Fetch documents on mount
   useEffect(() => {
@@ -502,6 +509,29 @@ export default function ComplianceArchivePage() {
       }
     } catch (error) {
       showNotification('error', 'Något gick fel');
+    }
+  };
+
+  const handleGenerateSummary = async (documentId: string) => {
+    setSummarizingId(documentId);
+    try {
+      const response = await fetch('/api/compliance/documents/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ documentId }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        showNotification('success', 'Sammanfattning genererad');
+        fetchDocuments();
+        setExpandedDocId(documentId);
+      } else {
+        showNotification('error', data.error || 'Kunde inte generera sammanfattning');
+      }
+    } catch (error) {
+      showNotification('error', 'Kunde inte generera sammanfattning');
+    } finally {
+      setSummarizingId(null);
     }
   };
 
@@ -642,60 +672,116 @@ export default function ComplianceArchivePage() {
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
-            {filteredDocuments.map((doc) => (
-              <div
-                key={doc.id}
-                className="p-4 hover:bg-gray-50 transition-colors flex items-start gap-4"
-              >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                  doc.sourceType === 'url' ? 'bg-aifm-gold/10 text-aifm-gold' : 'bg-aifm-charcoal/[0.06] text-aifm-charcoal/60'
-                }`}>
-                  {getSourceIcon(doc.sourceType)}
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-aifm-charcoal truncate">{doc.title}</h3>
-                  <div className="flex flex-wrap items-center gap-3 mt-1">
-                    {doc.metadata.documentNumber && (
-                      <span className="px-2.5 py-0.5 text-xs font-medium bg-aifm-gold/15 text-aifm-charcoal rounded-full">
-                        {doc.metadata.documentNumber}
-                      </span>
-                    )}
-                    {doc.metadata.authority && (
-                      <span className="flex items-center gap-1 text-xs text-aifm-charcoal/40">
-                        <Building2 className="w-3 h-3" />
-                        {doc.metadata.authority}
-                      </span>
-                    )}
-                    <span className="flex items-center gap-1 text-xs text-gray-400">
-                      <Calendar className="w-3 h-3" />
-                      {new Date(doc.createdAt).toLocaleDateString('sv-SE')}
-                    </span>
-                  </div>
-                </div>
+            {filteredDocuments.map((doc) => {
+              const isExpanded = expandedDocId === doc.id;
+              const summaryStatus = doc.metadata.summaryStatus;
+              const summary = doc.metadata.summary;
+              const isSummarizing = summaryStatus === 'summarizing' || summarizingId === doc.id;
 
-                <div className="flex items-center gap-2">
-                  {doc.sourceType === 'url' && (
-                    <a
-                      href={doc.source}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 text-gray-400 hover:text-aifm-gold transition-colors"
-                      title="Öppna källa"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  )}
-                  <button
-                    onClick={() => handleDelete(doc.id)}
-                    className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                    title="Ta bort"
+              return (
+                <div key={doc.id} className="border-b border-gray-100 last:border-b-0">
+                  <div
+                    className="p-4 hover:bg-gray-50 transition-colors flex items-start gap-4 cursor-pointer"
+                    onClick={() => setExpandedDocId(isExpanded ? null : doc.id)}
                   >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                      doc.sourceType === 'url' ? 'bg-aifm-gold/10 text-aifm-gold' : 'bg-aifm-charcoal/[0.06] text-aifm-charcoal/60'
+                    }`}>
+                      {getSourceIcon(doc.sourceType)}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-aifm-charcoal truncate">{doc.title}</h3>
+                      <div className="flex flex-wrap items-center gap-3 mt-1">
+                        {doc.metadata.documentNumber && (
+                          <span className="px-2.5 py-0.5 text-xs font-medium bg-aifm-gold/15 text-aifm-charcoal rounded-full">
+                            {doc.metadata.documentNumber}
+                          </span>
+                        )}
+                        {doc.metadata.authority && (
+                          <span className="flex items-center gap-1 text-xs text-aifm-charcoal/40">
+                            <Building2 className="w-3 h-3" />
+                            {doc.metadata.authority}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1 text-xs text-gray-400">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(doc.createdAt).toLocaleDateString('sv-SE')}
+                        </span>
+                        {summary && (
+                          <span className="flex items-center gap-1 text-xs text-aifm-gold">
+                            <Sparkles className="w-3 h-3" />
+                            Sammanfattning
+                          </span>
+                        )}
+                        {isSummarizing && (
+                          <span className="flex items-center gap-1 text-xs text-amber-600">
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            Genererar sammanfattning...
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      {doc.sourceType === 'url' && (
+                        <a
+                          href={doc.source}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 text-gray-400 hover:text-aifm-gold transition-colors"
+                          title="Öppna källa"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      )}
+                      <button
+                        onClick={() => handleDelete(doc.id)}
+                        className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                        title="Ta bort"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        className="p-2 text-gray-400 hover:text-aifm-charcoal transition-colors"
+                        title={isExpanded ? 'Visa mindre' : 'Visa sammanfattning'}
+                      >
+                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {isExpanded && (
+                    <div className="px-4 pb-4 pt-0 pl-[4rem]">
+                      {isSummarizing && (
+                        <div className="flex items-center gap-2 py-4 text-sm text-aifm-charcoal/60">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Genererar sammanfattning...
+                        </div>
+                      )}
+                      {!isSummarizing && summary && (
+                        <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4 text-sm text-aifm-charcoal whitespace-pre-wrap">
+                          {summary}
+                        </div>
+                      )}
+                      {!isSummarizing && !summary && (
+                        <div className="rounded-xl border border-dashed border-gray-200 p-4">
+                          <p className="text-sm text-aifm-charcoal/60 mb-3">Ingen AI-sammanfattning ännu.</p>
+                          <button
+                            onClick={() => handleGenerateSummary(doc.id)}
+                            disabled={!!summarizingId}
+                            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-aifm-gold hover:bg-aifm-gold/90 rounded-lg disabled:opacity-50"
+                          >
+                            <Sparkles className="w-4 h-4" />
+                            Generera sammanfattning
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

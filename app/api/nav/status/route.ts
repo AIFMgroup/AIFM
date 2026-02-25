@@ -2,6 +2,7 @@
  * NAV System Status API
  *
  * Visar status för NAV-systemet:
+ * - ISEC SECURA
  * - Fund Registry
  * - LSEG prisdata
  * - SEB bankintegration
@@ -18,6 +19,12 @@ import { getNAVRunStore, getNAVRecordStore } from '@/lib/nav-engine/nav-store';
 export async function GET(request: NextRequest) {
   try {
     const status = {
+      isec: {
+        available: false,
+        env: 'TEST',
+        fundCount: 0,
+        message: null as string | null,
+      },
       fundRegistry: {
         available: false,
         fundCount: 0,
@@ -56,6 +63,24 @@ export async function GET(request: NextRequest) {
         totalAUM: number;
       } | null,
     };
+
+    // Check ISEC SECURA
+    try {
+      const { securaClient } = await import('@/lib/integrations/isec/isec-client');
+      const isecStatus = await securaClient.testConnection();
+      status.isec.available = isecStatus.connected;
+      status.isec.env = isecStatus.env;
+      status.isec.message = isecStatus.message;
+      if (isecStatus.connected) {
+        try {
+          const { getISECFunds } = await import('@/lib/integrations/isec/isec-data-service');
+          const funds = await getISECFunds();
+          status.isec.fundCount = funds.length;
+        } catch { /* skip */ }
+      }
+    } catch (error) {
+      status.isec.message = error instanceof Error ? error.message : 'ISEC unavailable';
+    }
 
     // Check Fund Registry
     try {
@@ -134,10 +159,11 @@ export async function GET(request: NextRequest) {
     }
 
     const readiness = {
-      canCalculateNAV: status.fundRegistry.available,
+      canCalculateNAV: status.isec.available || status.fundRegistry.available,
       canStoreResults: status.database.connected,
       canReconcile: status.seb.connected,
-      fullyOperational: status.fundRegistry.available && status.database.connected,
+      isecConnected: status.isec.available,
+      fullyOperational: (status.isec.available || status.fundRegistry.available) && status.database.connected,
     };
 
     return NextResponse.json({

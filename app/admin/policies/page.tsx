@@ -127,8 +127,8 @@ const mockPolicies: Policy[] = [
     description: 'Lägre gräns för auto-godkännande för Nordic Fund Management',
     type: 'auto_approval',
     scope: 'company',
-    companyId: 'company-2',
-    companyName: 'Nordic Fund Management',
+    companyId: 'aifm-group',
+    companyName: 'AIFM Group AB',
     enabled: true,
     priority: 15,
     conditions: [

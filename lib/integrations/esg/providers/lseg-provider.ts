@@ -23,6 +23,7 @@ import type {
   NormalizedExclusionScreening,
   PAIIndicator,
   ExclusionInvolvement,
+  GHGScopeData,
 } from '../types';
 
 // ============================================================================
@@ -156,6 +157,7 @@ export class LSEGESGProvider implements ESGDataProvider {
         exclusionFlags,
         meetsExclusionCriteria: exclusionFlags.every(f => (f.revenuePercent ?? 0) === 0 && f.involvementLevel === 'none'),
         paiIndicators: this.buildPAIIndicators(item),
+        ghgScopes: this.buildGHGScopes(item),
         provider: 'LSEG',
         fetchedAt: new Date().toISOString(),
         raw: item,
@@ -230,10 +232,13 @@ export class LSEGESGProvider implements ESGDataProvider {
       pai.push({ name: 'GHG Emissions Total', value: item.co2EmissionTotal, unit: 'tCO2e', description: 'Scope 1+2+3' });
     }
     if (item.co2DirectScope1 != null) {
-      pai.push({ name: 'GHG Scope 1', value: item.co2DirectScope1, unit: 'tCO2e' });
+      pai.push({ name: 'GHG Scope 1', value: item.co2DirectScope1, unit: 'tCO2e', description: 'Direkta utsläpp från egna källor' });
     }
     if (item.co2IndirectScope2 != null) {
-      pai.push({ name: 'GHG Scope 2', value: item.co2IndirectScope2, unit: 'tCO2e' });
+      pai.push({ name: 'GHG Scope 2', value: item.co2IndirectScope2, unit: 'tCO2e', description: 'Indirekta utsläpp från inköpt energi' });
+    }
+    if (item.co2IndirectScope3 != null) {
+      pai.push({ name: 'GHG Scope 3', value: item.co2IndirectScope3, unit: 'tCO2e', description: 'Övriga indirekta utsläpp i värdekedjan' });
     }
     if (item.carbonIntensity != null) {
       pai.push({ name: 'Carbon Intensity', value: item.carbonIntensity, unit: 'tCO2e/M$ revenue' });
@@ -242,5 +247,16 @@ export class LSEGESGProvider implements ESGDataProvider {
       pai.push({ name: 'Share of Thermal Coal Revenue', value: item.thermalCoalRevenue, unit: '%' });
     }
     return pai;
+  }
+
+  private buildGHGScopes(item: LSEGESGScore): GHGScopeData {
+    return {
+      scope1: item.co2DirectScope1 ?? null,
+      scope2: item.co2IndirectScope2 ?? null,
+      scope3: item.co2IndirectScope3 ?? null,
+      total: item.co2EmissionTotal ?? null,
+      carbonIntensity: item.carbonIntensity ?? null,
+      carbonIntensityUnit: 'tCO2e/M$ revenue',
+    };
   }
 }

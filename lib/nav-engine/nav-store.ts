@@ -462,20 +462,27 @@ export class NAVApprovalStore {
   }
 
   /**
-   * Get pending approvals
+   * Get pending approvals (PENDING_FIRST and PENDING_SECOND)
    */
   async getPendingApprovals(): Promise<NAVApproval[]> {
-    // Note: This would need a GSI on status for efficient querying
-    // For now, we'll use a scan with filter
-    const result = await docClient.send(new QueryCommand({
-      TableName: TABLES.NAV_APPROVALS,
-      IndexName: 'status-index', // Needs GSI
-      KeyConditionExpression: '#status = :status',
-      ExpressionAttributeNames: { '#status': 'status' },
-      ExpressionAttributeValues: { ':status': 'PENDING_FIRST' },
-    }));
-
-    return (result.Items as NAVApproval[]) || [];
+    const [first, second] = await Promise.all([
+      docClient.send(new QueryCommand({
+        TableName: TABLES.NAV_APPROVALS,
+        IndexName: 'status-index',
+        KeyConditionExpression: '#status = :status',
+        ExpressionAttributeNames: { '#status': 'status' },
+        ExpressionAttributeValues: { ':status': 'PENDING_FIRST' },
+      })),
+      docClient.send(new QueryCommand({
+        TableName: TABLES.NAV_APPROVALS,
+        IndexName: 'status-index',
+        KeyConditionExpression: '#status = :status',
+        ExpressionAttributeNames: { '#status': 'status' },
+        ExpressionAttributeValues: { ':status': 'PENDING_SECOND' },
+      })),
+    ]);
+    const items = [...(first.Items || []), ...(second.Items || [])] as NAVApproval[];
+    return items.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
   }
 
   /**

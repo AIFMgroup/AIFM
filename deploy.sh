@@ -32,6 +32,8 @@ zip -r "$SOURCE_ZIP" . \
   -x "*.git*" \
   -x "node_modules/*" \
   -x ".next/*" \
+  -x "next-standalone/*" \
+  -x "next-static/*" \
   -x "*.env*" \
   -x "*.DS_Store" \
   -x "apps/web/node_modules/*" \

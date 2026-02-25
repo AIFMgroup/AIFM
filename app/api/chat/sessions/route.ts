@@ -12,6 +12,7 @@ import { cookies } from 'next/headers';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import { checkRateLimit, getClientId } from '@/lib/security/rateLimiter';
+import { runAutoLearn } from '@/lib/knowledge/autoLearnService';
 
 // ---------------------------------------------------------------------------
 // Request body schemas
@@ -392,6 +393,15 @@ export async function POST(request: NextRequest) {
       TableName: TABLE_NAME,
       Key: { userId: effectiveUserId, sessionId },
     }));
+
+    const updatedSession = result.Item as ChatSession | undefined;
+    if (updatedSession?.messages && updatedSession.messages.length >= 4) {
+      runAutoLearn({
+        messages: updatedSession.messages,
+        sessionId,
+        userId: effectiveUserId,
+      }).catch((e) => console.warn('[Chat Sessions] Auto-learn failed:', e));
+    }
     
     return NextResponse.json(result.Item);
     

@@ -363,8 +363,8 @@ export const accountOptions = basKonton.map(k => ({
 export const costCenterOptions = [
   { value: '', label: 'Inget kostnadsställe' },
   { value: 'ADM', label: 'ADM – Administration' },
-  { value: 'FUND1', label: 'FUND1 – Nordic Ventures I' },
-  { value: 'FUND2', label: 'FUND2 – Nordic Ventures II' },
+  { value: 'FUND1', label: 'FUND1 – AuAg Silver Bullet' },
+  { value: 'FUND2', label: 'FUND2 – AuAg Essential Metals' },
   { value: 'SALES', label: 'SALES – Försäljning' },
 ];
 

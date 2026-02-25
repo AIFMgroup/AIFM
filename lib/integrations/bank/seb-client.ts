@@ -126,10 +126,21 @@ interface SEBApiResponse<T> {
 
 // Default fund-to-account mappings (should be moved to database/config)
 const DEFAULT_FUND_MAPPINGS: FundAccountMapping[] = [
-  { fundId: 'FUND001', fundName: 'AUAG Essential Metals', sebAccountId: 'SEB-001', isin: 'SE0019175563' },
-  { fundId: 'FUND002', fundName: 'AuAg Gold Rush', sebAccountId: 'SEB-002', isin: 'SE0020677946' },
-  { fundId: 'FUND003', fundName: 'AuAg Precious Green', sebAccountId: 'SEB-003', isin: 'SE0014808440' },
-  { fundId: 'FUND004', fundName: 'AuAg Silver Bullet', sebAccountId: 'SEB-004', isin: 'SE0013358181' },
+  { fundId: 'auag-essential-metals', fundName: 'AuAg Essential Metals', sebAccountId: 'SEB-001', isin: 'SE0019175563' },
+  { fundId: 'auag-gold-rush', fundName: 'AuAg Gold Rush', sebAccountId: 'SEB-002', isin: 'SE0020677946' },
+  { fundId: 'auag-precious-green', fundName: 'AuAg Precious Green', sebAccountId: 'SEB-003', isin: 'SE0014808440' },
+  { fundId: 'auag-silver-bullet', fundName: 'AuAg Silver Bullet', sebAccountId: 'SEB-004', isin: 'SE0013358181' },
+  { fundId: 'epoque', fundName: 'EPOQUE', sebAccountId: 'SEB-005', isin: '' },
+  { fundId: 'go-blockchain-fund', fundName: 'Go Blockchain Fund', sebAccountId: 'SEB-006', isin: '' },
+  { fundId: 'metaspace-fund', fundName: 'MetaSpace Fund', sebAccountId: 'SEB-007', isin: '' },
+  { fundId: 'plain-capital-bronx', fundName: 'Plain Capital BronX', sebAccountId: 'SEB-008', isin: '' },
+  { fundId: 'plain-capital-lunatix', fundName: 'Plain Capital LunatiX', sebAccountId: 'SEB-009', isin: '' },
+  { fundId: 'plain-capital-styx', fundName: 'Plain Capital StyX', sebAccountId: 'SEB-010', isin: '' },
+  { fundId: 'proethos-fond', fundName: 'Proethos Fond', sebAccountId: 'SEB-011', isin: '' },
+  { fundId: 'sam-aktiv-ranta', fundName: 'SAM Aktiv Ränta', sebAccountId: 'SEB-012', isin: '' },
+  { fundId: 'sensum-strategy-global', fundName: 'Sensum Strategy Global', sebAccountId: 'SEB-013', isin: '' },
+  { fundId: 'soic-dynamic-china', fundName: 'SOIC Dynamic China', sebAccountId: 'SEB-014', isin: '' },
+  { fundId: 'vinga-corporate-bond', fundName: 'Vinga Corporate Bond', sebAccountId: 'SEB-015', isin: '' },
 ];
 
 // ============================================================================

@@ -10,8 +10,7 @@ type Company = {
 };
 
 const companies: Company[] = [
-  { name: "Nordic Ventures I", orgNumber: "559123-4567", color: "#c0a280" },
-  { name: "Nordic Ventures II", orgNumber: "559234-5678", color: "#6f1823" },
+  { name: "AIFM Group AB", orgNumber: "559123-4567", color: "#c0a280" },
 ];
 
 interface HeaderProps {

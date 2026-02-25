@@ -7,7 +7,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getESGServiceClient } from '@/lib/integrations/esg/esg-service';
-import type { NormalizedESGData } from '@/lib/integrations/esg/types';
+import { getESGFundConfig } from '@/lib/integrations/securities/esg-fund-configs';
+import type { NormalizedESGData, ExclusionInvolvement } from '@/lib/integrations/esg/types';
 
 /** Approved holding from DynamoDB or mock data */
 interface HoldingInput {
@@ -69,6 +70,7 @@ export async function POST(request: NextRequest) {
 
     const esgClient = getESGServiceClient();
     const providerName = esgClient.getActiveProviderName();
+    const fundConfig = getESGFundConfig(fundId, fundId);
 
     // Fetch ESG data for all holdings (uses cache + bulk if supported)
     const identifiers = holdings.map((h) => h.identifier);
@@ -108,34 +110,51 @@ export async function POST(request: NextRequest) {
         const alignment = esg.sfdrAlignment || 'not_disclosed';
         sfdrDist[alignment] = (sfdrDist[alignment] || 0) + 1;
 
-        // Exclusion evaluation
+        // Exclusion evaluation using fund-specific thresholds
         if (esg.exclusionFlags && esg.exclusionFlags.length > 0) {
-          const hasHigh = esg.exclusionFlags.some(
-            (f) => f.involvementLevel === 'high' || (f.revenuePercent !== undefined && f.revenuePercent > 5)
-          );
-          const hasMedium = esg.exclusionFlags.some(
-            (f) => f.involvementLevel === 'medium' || (f.revenuePercent !== undefined && f.revenuePercent > 1)
-          );
-          if (hasHigh) {
-            exclusionStatus = 'fail';
-            esg.exclusionFlags
-              .filter((f) => f.involvementLevel === 'high')
-              .forEach((f) => exclusionNotes.push(f.categoryDescription));
-          } else if (hasMedium) {
-            exclusionStatus = 'warning';
-            esg.exclusionFlags
-              .filter((f) => f.involvementLevel === 'medium')
-              .forEach((f) => exclusionNotes.push(f.categoryDescription));
+          const flags = esg.exclusionFlags as ExclusionInvolvement[];
+          let anyFail = false;
+          let anyWarning = false;
+
+          if (fundConfig?.exclusions?.length) {
+            for (const ex of fundConfig.exclusions) {
+              const matchingFlags = flags.filter((f) => {
+                const fc = f.category.toLowerCase().replace(/[\s-]/g, '_');
+                const ec = ex.category.toLowerCase().replace(/[\s-]/g, '_');
+                return fc.includes(ec) || ec.includes(fc);
+              });
+              if (matchingFlags.length > 0) {
+                const maxPct = Math.max(...matchingFlags.map((f) => f.revenuePercent ?? 0));
+                if (maxPct > ex.threshold) {
+                  anyFail = true;
+                  exclusionNotes.push(`${ex.label}: ${maxPct.toFixed(1)}% > gräns ${ex.threshold}%`);
+                }
+              }
+            }
           } else {
-            exclusionStatus = 'pass';
+            anyFail = flags.some(
+              (f) => f.involvementLevel === 'high' || (f.revenuePercent !== undefined && f.revenuePercent > 5)
+            );
+            anyWarning = flags.some(
+              (f) => f.involvementLevel === 'medium' || (f.revenuePercent !== undefined && f.revenuePercent > 1)
+            );
+            if (anyFail) {
+              flags.filter((f) => f.involvementLevel === 'high')
+                .forEach((f) => exclusionNotes.push(f.categoryDescription));
+            } else if (anyWarning) {
+              flags.filter((f) => f.involvementLevel === 'medium')
+                .forEach((f) => exclusionNotes.push(f.categoryDescription));
+            }
           }
+
+          exclusionStatus = anyFail ? 'fail' : anyWarning ? 'warning' : 'pass';
         } else if (esg.meetsExclusionCriteria === true) {
           exclusionStatus = 'pass';
         } else if (esg.meetsExclusionCriteria === false) {
           exclusionStatus = 'fail';
           exclusionNotes.push('Uppfyller inte exkluderingskriterier');
         } else {
-          exclusionStatus = 'pass'; // No flags and no explicit failure
+          exclusionStatus = 'pass';
         }
       }
 

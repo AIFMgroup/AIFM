@@ -35,7 +35,7 @@ const mockDocuments: UploadedDocument[] = [
     status: 'completed',
     uploadedAt: new Date('2024-11-20'),
     pages: 45,
-    summary: 'Årsredovisning för Nordic Ventures I AB för räkenskapsåret 2023. Innehåller balansräkning, resultaträkning och förvaltningsberättelse.',
+    summary: 'Årsredovisning för AIFM Group AB för räkenskapsåret 2023. Innehåller balansräkning, resultaträkning och förvaltningsberättelse.',
     confidence: 98,
     category: 'Finansiellt'
   },
@@ -47,7 +47,7 @@ const mockDocuments: UploadedDocument[] = [
     status: 'completed',
     uploadedAt: new Date('2024-11-18'),
     pages: 28,
-    summary: 'Fondbestämmelser för Nordic Ventures I med information om investeringsstrategi, avgifter och utdelningspolicy.',
+    summary: 'Fondbestämmelser för AuAg Silver Bullet med information om investeringsstrategi, avgifter och utdelningspolicy.',
     confidence: 95,
     category: 'Juridiskt'
   },

@@ -21,7 +21,9 @@ const dynamoClient = new DynamoDBClient({
   region: process.env.AWS_REGION || 'eu-north-1',
 });
 
-const docClient = DynamoDBDocumentClient.from(dynamoClient);
+const docClient = DynamoDBDocumentClient.from(dynamoClient, {
+  marshallOptions: { removeUndefinedValues: true },
+});
 
 const TABLE_NAME = process.env.FUND_REGISTRY_TABLE || 'aifm-fund-registry';
 

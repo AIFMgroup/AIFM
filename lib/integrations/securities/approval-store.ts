@@ -16,7 +16,9 @@ import {
 import type { 
   SecurityApprovalRequest, 
   FundApprovalList, 
-  SecurityApprovalSummary 
+  SecurityApprovalSummary,
+  ApprovalComment,
+  AuditEntry,
 } from './types';
 
 const TABLE_NAME = process.env.SECURITIES_APPROVALS_TABLE || 'aifm-securities-approvals';
@@ -41,6 +43,24 @@ function getClient(): DynamoDBDocumentClient {
 // Generate unique ID
 function generateId(): string {
   return `sec-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+}
+
+// Append an audit entry to an approval's auditTrail
+function appendAuditEntry(
+  existing: SecurityApprovalRequest,
+  action: AuditEntry['action'],
+  actor: string,
+  actorEmail: string,
+  details?: string
+): AuditEntry[] {
+  const entry: AuditEntry = {
+    timestamp: new Date().toISOString(),
+    action,
+    actor,
+    actorEmail,
+    details,
+  };
+  return [...(existing.auditTrail || []), entry];
 }
 
 // Helper to create DynamoDB item from approval
@@ -75,6 +95,12 @@ export async function createApproval(
     status: 'draft',
     createdAt: now,
     updatedAt: now,
+    auditTrail: appendAuditEntry(
+      { ...data, id, status: 'draft', createdAt: now, updatedAt: now } as SecurityApprovalRequest,
+      'created',
+      data.createdBy,
+      data.createdByEmail
+    ),
   };
   
   const client = getClient();
@@ -199,10 +225,13 @@ export async function saveDraft(
 
 // Submit for review
 export async function submitApproval(id: string): Promise<SecurityApprovalRequest | null> {
+  const existing = await getApproval(id);
+  if (!existing) return null;
   const now = new Date().toISOString();
   return updateApproval(id, {
     status: 'submitted',
     submittedAt: now,
+    auditTrail: appendAuditEntry(existing, 'submitted', existing.createdBy, existing.createdByEmail),
   });
 }
 
@@ -213,10 +242,10 @@ export async function approveApproval(
   reviewedByEmail: string,
   comments?: string
 ): Promise<SecurityApprovalRequest | null> {
+  const existing = await getApproval(id);
+  if (!existing) return null;
   const now = new Date().toISOString();
-  // Approval valid for 12 months
   const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
-  
   return updateApproval(id, {
     status: 'approved',
     reviewedAt: now,
@@ -224,6 +253,7 @@ export async function approveApproval(
     reviewedByEmail,
     reviewComments: comments,
     expiresAt,
+    auditTrail: appendAuditEntry(existing, 'approved', reviewedBy, reviewedByEmail, comments),
   });
 }
 
@@ -234,15 +264,79 @@ export async function rejectApproval(
   reviewedByEmail: string,
   reason: string
 ): Promise<SecurityApprovalRequest | null> {
+  const existing = await getApproval(id);
+  if (!existing) return null;
   const now = new Date().toISOString();
-  
   return updateApproval(id, {
     status: 'rejected',
     reviewedAt: now,
     reviewedBy,
     reviewedByEmail,
     rejectionReason: reason,
+    auditTrail: appendAuditEntry(existing, 'rejected', reviewedBy, reviewedByEmail, reason),
   });
+}
+
+// Request info (operations asks förvaltare for clarification)
+export async function requestInfo(
+  id: string,
+  reviewedBy: string,
+  reviewedByEmail: string,
+  question: string
+): Promise<SecurityApprovalRequest | null> {
+  const existing = await getApproval(id);
+  if (!existing) return null;
+  const now = new Date().toISOString();
+  return updateApproval(id, {
+    status: 'needs_info',
+    reviewedAt: now,
+    reviewedBy,
+    reviewedByEmail,
+    infoRequest: question,
+    auditTrail: appendAuditEntry(existing, 'info_requested', reviewedBy, reviewedByEmail, question),
+  });
+}
+
+// Respond to info request (förvaltare answers, resubmits for review)
+export async function respondToInfoRequest(
+  id: string,
+  response: string
+): Promise<SecurityApprovalRequest | null> {
+  const existing = await getApproval(id);
+  if (!existing) return null;
+  const now = new Date().toISOString();
+  return updateApproval(id, {
+    status: 'submitted',
+    infoResponse: response,
+    infoRequest: undefined,
+    updatedAt: now,
+    auditTrail: appendAuditEntry(existing, 'info_responded', existing.createdBy, existing.createdByEmail, response),
+  });
+}
+
+// Add comment to discussion thread
+export async function addComment(
+  approvalId: string,
+  author: string,
+  authorEmail: string,
+  role: 'forvaltare' | 'operation',
+  message: string
+): Promise<SecurityApprovalRequest | null> {
+  const existing = await getApproval(approvalId);
+  if (!existing) return null;
+  const commentId = `comment-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const comment: ApprovalComment = {
+    id: commentId,
+    approvalId,
+    author,
+    authorEmail,
+    role,
+    message,
+    createdAt: new Date().toISOString(),
+  };
+  const comments = [...(existing.comments || []), comment];
+  const auditTrail = appendAuditEntry(existing, 'comment_added', author, authorEmail);
+  return updateApproval(approvalId, { comments, auditTrail });
 }
 
 // Delete approval (only drafts)
@@ -281,44 +375,73 @@ export async function listApprovalsByFund(fundId: string): Promise<SecurityAppro
   });
 }
 
-// List approvals by status
+// List approvals by status (with fallback to Scan if GSI2 not ready)
 export async function listApprovalsByStatus(
   status: SecurityApprovalRequest['status']
 ): Promise<SecurityApprovalRequest[]> {
   const client = getClient();
-  const result = await client.send(new QueryCommand({
-    TableName: TABLE_NAME,
-    IndexName: 'GSI2',
-    KeyConditionExpression: 'GSI2PK = :status',
-    ExpressionAttributeValues: {
-      ':status': `STATUS#${status}`,
-    },
-    ScanIndexForward: false,
-  }));
-  
-  return (result.Items || []).map(item => {
-    const { PK, SK, GSI1PK, GSI1SK, GSI2PK, GSI2SK, GSI3PK, GSI3SK, ttl, ...approval } = item;
-    return approval as SecurityApprovalRequest;
-  });
+  try {
+    const result = await client.send(new QueryCommand({
+      TableName: TABLE_NAME,
+      IndexName: 'GSI2',
+      KeyConditionExpression: 'GSI2PK = :status',
+      ExpressionAttributeValues: {
+        ':status': `STATUS#${status}`,
+      },
+      ScanIndexForward: false,
+    }));
+    return (result.Items || []).map(item => {
+      const { PK, SK, GSI1PK, GSI1SK, GSI2PK, GSI2SK, GSI3PK, GSI3SK, ttl, ...approval } = item;
+      return approval as SecurityApprovalRequest;
+    });
+  } catch (err: any) {
+    if (err.name === 'ValidationException' || err.message?.includes('GSI2')) {
+      const result = await client.send(new ScanCommand({
+        TableName: TABLE_NAME,
+        FilterExpression: '#s = :status',
+        ExpressionAttributeNames: { '#s': 'status' },
+        ExpressionAttributeValues: { ':status': status },
+      }));
+      return (result.Items || []).map(item => {
+        const { PK, SK, GSI1PK, GSI1SK, GSI2PK, GSI2SK, GSI3PK, GSI3SK, ttl, ...approval } = item;
+        return approval as SecurityApprovalRequest;
+      });
+    }
+    throw err;
+  }
 }
 
-// List approvals by user
+// List approvals by user (with fallback to Scan if GSI3 not ready)
 export async function listApprovalsByUser(email: string): Promise<SecurityApprovalRequest[]> {
   const client = getClient();
-  const result = await client.send(new QueryCommand({
-    TableName: TABLE_NAME,
-    IndexName: 'GSI3',
-    KeyConditionExpression: 'GSI3PK = :email',
-    ExpressionAttributeValues: {
-      ':email': `USER#${email}`,
-    },
-    ScanIndexForward: false,
-  }));
-  
-  return (result.Items || []).map(item => {
-    const { PK, SK, GSI1PK, GSI1SK, GSI2PK, GSI2SK, GSI3PK, GSI3SK, ttl, ...approval } = item;
-    return approval as SecurityApprovalRequest;
-  });
+  try {
+    const result = await client.send(new QueryCommand({
+      TableName: TABLE_NAME,
+      IndexName: 'GSI3',
+      KeyConditionExpression: 'GSI3PK = :email',
+      ExpressionAttributeValues: {
+        ':email': `USER#${email}`,
+      },
+      ScanIndexForward: false,
+    }));
+    return (result.Items || []).map(item => {
+      const { PK, SK, GSI1PK, GSI1SK, GSI2PK, GSI2SK, GSI3PK, GSI3SK, ttl, ...approval } = item;
+      return approval as SecurityApprovalRequest;
+    });
+  } catch (err: any) {
+    if (err.name === 'ValidationException' || err.message?.includes('GSI3')) {
+      const result = await client.send(new ScanCommand({
+        TableName: TABLE_NAME,
+        FilterExpression: 'createdByEmail = :email',
+        ExpressionAttributeValues: { ':email': email },
+      }));
+      return (result.Items || []).map(item => {
+        const { PK, SK, GSI1PK, GSI1SK, GSI2PK, GSI2SK, GSI3PK, GSI3SK, ttl, ...approval } = item;
+        return approval as SecurityApprovalRequest;
+      });
+    }
+    throw err;
+  }
 }
 
 // List drafts by user (for "resume draft" feature)

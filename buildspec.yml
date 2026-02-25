@@ -14,8 +14,16 @@ phases:
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:-latest}
+      - echo Removing stale .next symlink if present...
+      - rm -f .next
       - echo Building Next.js app...
       - npx next build
+      - echo Preparing standalone output for Docker...
+      - rm -rf next-standalone next-static
+      - cp -r .next/standalone next-standalone
+      - cp -r .next/static next-static
+      - echo Copying shared package into standalone...
+      - mkdir -p next-standalone/node_modules/@aifm/shared && cp -r packages/shared/dist next-standalone/node_modules/@aifm/shared/ && cp packages/shared/package.json next-standalone/node_modules/@aifm/shared/
 
   build:
     commands:
@@ -34,16 +42,9 @@ phases:
       - aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --force-new-deployment --region $AWS_DEFAULT_REGION
       - echo Invalidating CloudFront cache...
       - |
-        DISTRIBUTION_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?contains(Aliases.Items,'d31zvrvfawczta.cloudfront.net')].Id" --output text 2>/dev/null || true)
-        if [ -z "$DISTRIBUTION_ID" ] || [ "$DISTRIBUTION_ID" = "None" ]; then
-          DISTRIBUTION_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?DomainName=='d31zvrvfawczta.cloudfront.net'].Id" --output text 2>/dev/null || true)
-        fi
-        if [ -n "$DISTRIBUTION_ID" ] && [ "$DISTRIBUTION_ID" != "None" ]; then
-          aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*" --region us-east-1 > /dev/null 2>&1 || true
-          echo "CloudFront invalidation created for $DISTRIBUTION_ID"
-        else
-          echo "Warning: Could not find CloudFront distribution"
-        fi
+        DISTRIBUTION_ID="E1BOUQ7GFJ5MYT"
+        aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*" --region us-east-1 > /dev/null 2>&1 || true
+        echo "CloudFront invalidation created for $DISTRIBUTION_ID"
       - echo Deployment initiated!
 
 env:

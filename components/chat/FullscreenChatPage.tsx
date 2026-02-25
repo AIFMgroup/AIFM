@@ -14,7 +14,6 @@ import {
   Loader2,
   User,
   Trash2,
-  Shield,
   Paperclip,
   X,
   FileText,
@@ -68,6 +67,37 @@ import { MermaidDiagram } from '@/components/chat/MermaidDiagram';
 import { ActionDropdown } from '@/components/chat/ActionDropdown';
 
 // ============================================================================
+// Fetch with retry – wraps native fetch with exponential back-off for
+// transient network errors, 429 (rate-limit) and 5xx server errors.
+// ============================================================================
+async function fetchWithRetry(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  { retries = 3, baseDelay = 1000 }: { retries?: number; baseDelay?: number } = {},
+): Promise<Response> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(input, init);
+      // Don't retry client errors (4xx) except 429 (rate-limited)
+      if (response.ok || (response.status >= 400 && response.status < 500 && response.status !== 429)) {
+        return response;
+      }
+      // Retryable server / rate-limit error
+      lastError = new Error(`HTTP ${response.status}`);
+    } catch (err) {
+      // Network error – retryable
+      lastError = err;
+    }
+    if (attempt < retries) {
+      const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 500;
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  throw lastError;
+}
+
+// ============================================================================
 // Focus trap hook for modal dialogs
 // ============================================================================
 function useFocusTrap(active: boolean) {
@@ -117,6 +147,7 @@ interface ReviewedDocxAttachment {
   fileBase64: string;
   fileName: string;
   summary: string;
+  fileType?: string; // 'pdf' | 'excel' | undefined (docx)
 }
 
 interface Message {
@@ -149,8 +180,9 @@ interface AttachedFile {
   size: number;
   content?: string;
   preview?: string; // Base64 image preview for images
-  rawBase64?: string;  // Original DOCX buffer for review-docx
+  rawBase64?: string;  // Original file buffer for review (DOCX, PDF, Excel)
   paragraphs?: string[]; // Numbered paragraphs for DOCX
+  reviewableType?: 'docx' | 'pdf' | 'excel'; // File type for document review
 }
 
 interface Citation {
@@ -218,7 +250,7 @@ const SUPPORTED_FILE_TYPES = [
 ];
 
 /** Process a single file into an attachment: validates, creates preview, parses via API. Throws on failure. */
-async function processFileAttachment(file: File): Promise<{ name: string; type: string; size: number; content: string; preview?: string; rawBase64?: string; paragraphs?: string[] }> {
+async function processFileAttachment(file: File): Promise<{ name: string; type: string; size: number; content: string; preview?: string; rawBase64?: string; paragraphs?: string[]; reviewableType?: 'docx' | 'pdf' | 'excel' }> {
   // Create base64 preview for images
   let previewDataUrl: string | undefined;
   if (file.type.startsWith('image/')) {
@@ -243,42 +275,54 @@ async function processFileAttachment(file: File): Promise<{ name: string; type: 
 
   // For images the vision API analyses the image, so short OCR text is fine
   const isImage = file.type.startsWith('image/');
+  const displayName = (data.fileName != null && typeof data.fileName === 'string') ? data.fileName : (file.name || 'filen');
   if (!isImage && (!data.content || data.content.length < 10)) {
-    throw new Error(`Filen "${file.name}" kunde inte läsas. Innehållet verkar vara tomt.`);
+    throw new Error(`Filen "${displayName}" kunde inte läsas. Innehållet verkar vara tomt.`);
   }
 
   return {
-    name: file.name,
+    name: (data.fileName != null && typeof data.fileName === 'string') ? data.fileName : (file.name || 'document'),
     type: file.type,
     size: file.size,
     content: data.content || '[Bild för visuell analys]',
     preview: previewDataUrl,
     ...(data.rawBase64 != null && { rawBase64: data.rawBase64 }),
     ...(Array.isArray(data.paragraphs) && { paragraphs: data.paragraphs }),
+    ...(data.reviewableType && { reviewableType: data.reviewableType as 'docx' | 'pdf' | 'excel' }),
   };
 }
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
 
 function isFileTypeSupported(file: File): boolean {
-  return SUPPORTED_FILE_TYPES.includes(file.type) ||
-    file.name.endsWith('.txt') ||
-    file.name.endsWith('.xlsx') ||
-    file.name.endsWith('.xls') ||
-    file.name.endsWith('.csv') ||
-    file.name.endsWith('.pdf') ||
-    file.name.endsWith('.doc') ||
-    file.name.endsWith('.docx') ||
-    file.name.endsWith('.png') ||
-    file.name.endsWith('.jpg') ||
-    file.name.endsWith('.jpeg') ||
-    file.name.endsWith('.webp');
+  const type = file.type || '';
+  const name = (typeof file.name === 'string' ? file.name : '').toLowerCase();
+  return SUPPORTED_FILE_TYPES.includes(type) ||
+    name.endsWith('.txt') ||
+    name.endsWith('.xlsx') ||
+    name.endsWith('.xls') ||
+    name.endsWith('.csv') ||
+    name.endsWith('.pdf') ||
+    name.endsWith('.doc') ||
+    name.endsWith('.docx') ||
+    name.endsWith('.png') ||
+    name.endsWith('.jpg') ||
+    name.endsWith('.jpeg') ||
+    name.endsWith('.webp');
 }
 
 /** Map HTTP status to user-friendly Swedish error message */
-function friendlyApiError(status: number, fallback = 'Något gick fel. Försök igen.'): string {
+function friendlyApiError(status: number, fallback = 'Något gick fel. Försök igen.', _serverMsg?: string): string {
   switch (status) {
-    case 401: return 'Din session har gått ut. Ladda om sidan och logga in igen.';
+    case 401: {
+      // Auto-redirect to login after a short delay so the user sees the message
+      if (typeof window !== 'undefined') {
+        setTimeout(() => {
+          window.location.href = `/auth/login?returnTo=${encodeURIComponent(window.location.pathname)}`;
+        }, 2000);
+      }
+      return 'Din session har gått ut. Du loggas in igen automatiskt...';
+    }
     case 403: return 'Du har inte behörighet för denna åtgärd.';
     case 429: return 'För många förfrågningar. Vänta en stund och försök igen.';
     case 502:
@@ -309,6 +353,13 @@ async function streamAssistantResponse(
   let lastChunkTime = Date.now();
   let lineBuf = ''; // Buffer for partial SSE lines split across TCP chunks
 
+  // Buffer for chunked file base64 data (used for docx, pdf, excel)
+  let docxChunks: string[] = [];
+  let docxTotalChunks = 0;
+  let docxFileName = '';
+  let docxSummary = '';
+  let docxFileType: string | undefined;
+
   const processLine = (line: string) => {
     if (!line.startsWith('data: ')) return;
     const data = line.slice(6);
@@ -318,11 +369,36 @@ async function streamAssistantResponse(
       if (parsed.meta) {
         if (parsed.citations) citations = parsed.citations;
         if (parsed.internalSources) internalSources = parsed.internalSources;
+        // Legacy: support old-style meta with full fileBase64 inline
         if (parsed.reviewedDocx && parsed.reviewedDocx.fileBase64) reviewedDocx = parsed.reviewedDocx;
+        // New: meta with just fileName/summary (base64 comes in chunks)
+        if (parsed.reviewedDocx && parsed.reviewedDocx.fileName && !parsed.reviewedDocx.fileBase64) {
+          docxFileName = parsed.reviewedDocx.fileName;
+          docxSummary = parsed.reviewedDocx.summary || '';
+          docxFileType = parsed.reviewedDocx.fileType;
+        }
+      }
+      // Chunked file base64 data
+      if (parsed.docxChunk !== undefined) {
+        if (docxTotalChunks === 0) docxTotalChunks = parsed.totalChunks || 1;
+        docxChunks[parsed.chunkIndex] = parsed.docxChunk;
+        if (parsed.fileName) docxFileName = parsed.fileName;
+      }
+      if (parsed.docxComplete) {
+        // Reassemble the full base64 from chunks
+        const fullBase64 = docxChunks.join('');
+        if (fullBase64.length > 0) {
+          reviewedDocx = {
+            fileBase64: fullBase64,
+            fileName: parsed.fileName || docxFileName || 'document_reviewed.docx',
+            summary: parsed.summary || docxSummary || '',
+            fileType: parsed.fileType || docxFileType,
+          };
+        }
+        docxChunks = [];
+        docxTotalChunks = 0;
       }
       if (parsed.clearText) {
-        // Server signals that previous text was mid-thought (before tool call)
-        // and should be discarded – the real answer comes in the next round.
         fullContent = '';
         onChunk({ fullContent, citations, internalSources, progress: parsed.progress });
       }
@@ -1204,11 +1280,15 @@ const MessageBubble = memo(function MessageBubble({ message, onRegenerate, onFee
             </div>
           )}
 
-          {/* Granskad Word-fil med spårändringar – nedladdning */}
+          {/* Granskad fil med kommentarer – nedladdning (Word, PDF, Excel) */}
           {message.role === 'assistant' && message.reviewedDocx && (
             <div className={`mt-3 p-3 rounded-2xl border ${isDarkMode ? 'bg-aifm-charcoal/10 border-aifm-charcoal/20' : 'bg-aifm-gold/5 border-aifm-gold/20'}`}>
               <p className={`text-xs font-medium mb-1 ${isDarkMode ? 'text-aifm-gold' : 'text-aifm-charcoal/80'}`}>
-                Granskad Word-fil med spårändringar
+                {message.reviewedDocx.fileType === 'pdf'
+                  ? 'Granskad PDF med annotationer'
+                  : message.reviewedDocx.fileType === 'excel'
+                    ? 'Granskad Excel-fil med cellanteckningar'
+                    : 'Granskad Word-fil med spårändringar'}
               </p>
               {message.reviewedDocx.summary && (
                 <p className={`text-xs mb-2 ${isDarkMode ? 'text-gray-400' : 'text-aifm-charcoal/60'}`}>
@@ -1218,16 +1298,31 @@ const MessageBubble = memo(function MessageBubble({ message, onRegenerate, onFee
               <button
                 type="button"
                 onClick={() => {
-                  const bin = atob(message.reviewedDocx!.fileBase64);
-                  const arr = new Uint8Array(bin.length);
-                  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-                  const blob = new Blob([arr], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = message.reviewedDocx!.fileName || 'document_reviewed.docx';
-                  a.click();
-                  URL.revokeObjectURL(url);
+                  try {
+                    // Clean base64: remove any whitespace/newlines and fix padding
+                    let b64 = message.reviewedDocx!.fileBase64.replace(/[\s\r\n]+/g, '');
+                    // Ensure correct padding
+                    while (b64.length % 4 !== 0) b64 += '=';
+                    const bin = atob(b64);
+                    const arr = new Uint8Array(bin.length);
+                    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+                    // Determine MIME type based on file type
+                    const mimeType = message.reviewedDocx!.fileType === 'pdf'
+                      ? 'application/pdf'
+                      : message.reviewedDocx!.fileType === 'excel'
+                        ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                        : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+                    const blob = new Blob([arr], { type: mimeType });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = message.reviewedDocx!.fileName || 'document_reviewed.docx';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  } catch (err) {
+                    console.error('Download error:', err);
+                    showToast('Kunde inte ladda ner filen. Försök igen.');
+                  }
                 }}
                 className={`px-3 py-2 rounded-full text-xs font-medium transition-all ${
                   isDarkMode
@@ -1865,9 +1960,14 @@ function ChatPageContent() {
   const [shareCode, setShareCode] = useState<string | null>(null);
   const [sharedOwnerUserId, setSharedOwnerUserId] = useState<string | null>(null);
   const [sharedParticipants, setSharedParticipants] = useState<{ userId: string; name: string; email: string; role: string }[]>([]);
+  const [sharedTypingUsers, setSharedTypingUsers] = useState<{ name: string }[]>([]);
   const [isSharedSession, setIsSharedSession] = useState(false);
   const sharedPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sharedEventSourceRef = useRef<EventSource | null>(null);
+  const sseFailureCountRef = useRef(0);
   const lastUpdatedAtRef = useRef<string | null>(null);
+  const typingStopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const typingSentRef = useRef(false);
   const isDirtyRef = useRef(false);
   const messagesRef = useRef<Message[]>([]);
   const currentSessionIdRef = useRef<string | null>(null);
@@ -1881,6 +1981,28 @@ function ChatPageContent() {
   const saveDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingSaveBodyRef = useRef<Record<string, unknown> | null>(null);
   const pendingSaveRef = useRef<{ finalMessages: Message[]; branchId: string | null; branches: ChatBranch[] | null } | null>(null);
+
+  const stopSharedSync = useCallback(() => {
+    if (sharedEventSourceRef.current) {
+      sharedEventSourceRef.current.close();
+      sharedEventSourceRef.current = null;
+    }
+    if (sharedPollRef.current) {
+      clearInterval(sharedPollRef.current);
+      sharedPollRef.current = null;
+    }
+  }, []);
+
+  const sendSharedTyping = useCallback((typing: boolean) => {
+    const code = shareCodeRef.current;
+    if (!code) return;
+    fetch('/api/chat/sessions/share/typing', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ shareCode: code, typing }),
+    }).catch(() => { /* ignore */ });
+  }, []);
+
   const [currentUserName, setCurrentUserName] = useState<string>('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   
@@ -1956,13 +2078,8 @@ function ChatPageContent() {
       loadChatSessions(true);
     }
     
-    // Cleanup polling on unmount
-    return () => {
-      if (sharedPollRef.current) {
-        clearInterval(sharedPollRef.current);
-      }
-    };
-  }, []);
+    return () => stopSharedSync();
+  }, [stopSharedSync]);
 
   // Initialize dark mode from localStorage, falling back to system preference
   const prefersSystemDark = usePrefersDarkMode();
@@ -2243,6 +2360,35 @@ function ChatPageContent() {
           const latestSession = sessions[0];
           loadSession(latestSession.sessionId);
         }
+        // Check for any localStorage backups that weren't saved to server
+        // (e.g. from session expiry) and try to re-save them
+        try {
+          const backupKeys = Object.keys(localStorage).filter(k => k.startsWith('aifm_chat_backup_'));
+          for (const key of backupKeys) {
+            const backup = JSON.parse(localStorage.getItem(key) || '{}');
+            if (backup.expired && backup.messages?.length > 0) {
+              const sid = key.replace('aifm_chat_backup_', '');
+              // Check if this session already exists on server
+              const exists = sessions.some((s: { sessionId: string }) => s.sessionId === sid);
+              if (!exists && sid !== 'unsaved') {
+                // Try to re-save the session
+                const title = backup.messages[0]?.content?.slice(0, 50) || 'Återställd chatt';
+                await fetch('/api/chat/sessions', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    sessionId: sid,
+                    title,
+                    messages: backup.messages,
+                  }),
+                });
+                showToast('En chatt som inte sparades har återställts');
+              }
+              // Clean up the backup
+              localStorage.removeItem(key);
+            }
+          }
+        } catch { /* ignore backup restoration errors */ }
       }
     } catch (error) {
       console.error('Failed to load chat sessions:', error);
@@ -2277,6 +2423,19 @@ function ChatPageContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
+      if (response.status === 401) {
+        // Session expired – show clear message and redirect to login
+        showToast('Din session har gått ut. Du loggas in igen...');
+        // Save to localStorage as emergency backup before redirecting
+        try {
+          const sid = currentSessionId || 'unsaved';
+          localStorage.setItem(`aifm_chat_backup_${sid}`, JSON.stringify({ messages, savedAt: Date.now(), expired: true }));
+        } catch { /* ignore */ }
+        setTimeout(() => {
+          window.location.href = `/auth/login?returnTo=${encodeURIComponent(window.location.pathname)}`;
+        }, 1500);
+        return;
+      }
       if (response.ok) {
         const session = await response.json();
         if (!isSharedSession) {
@@ -2321,14 +2480,15 @@ function ChatPageContent() {
       return;
     }
 
-    // Debounce: store latest body and schedule save after 2s
+    // Debounce: shared sessions use 300ms for faster sync; others 2s
+    const debounceMs = isSharedSession ? 300 : 2000;
     pendingSaveBodyRef.current = body;
     if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
     saveDebounceRef.current = setTimeout(() => {
       const pending = pendingSaveBodyRef.current;
       pendingSaveBodyRef.current = null;
       if (pending) executeSave(pending);
-    }, 2000);
+    }, debounceMs);
   };
 
   /** Flush pending messages to server on tab hide/close (uses refs so it has latest state) */
@@ -2363,8 +2523,44 @@ function ChatPageContent() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
       keepalive: true,
-    }).then(res => { if (res.ok) isDirtyRef.current = false; }).catch(() => {});
+    }).then(res => {
+      if (res.ok) {
+        isDirtyRef.current = false;
+      } else if (res.status === 401 && msgs && msgs.length > 0) {
+        // Session expired – save to localStorage as emergency backup
+        try {
+          const backupSid = sid || 'unsaved';
+          localStorage.setItem(`aifm_chat_backup_${backupSid}`, JSON.stringify({
+            messages: msgs.map(msg => {
+              if ((msg as any).reviewedDocx?.fileBase64) {
+                return { ...msg, reviewedDocx: { ...(msg as any).reviewedDocx, fileBase64: '[stripped]' } };
+              }
+              return msg;
+            }),
+            savedAt: Date.now(),
+            expired: true,
+          }));
+        } catch { /* localStorage full – ignore */ }
+      }
+    }).catch(() => {});
   }, []);
+
+  // Backup messages to localStorage so they survive auth expiry
+  useEffect(() => {
+    const sid = currentSessionId;
+    const msgs = messages;
+    if (!sid || msgs.length === 0) return;
+    try {
+      // Strip large binary data (reviewedDocx.fileBase64) to keep localStorage small
+      const stripped = msgs.map(m => {
+        if (m.reviewedDocx?.fileBase64) {
+          return { ...m, reviewedDocx: { ...m.reviewedDocx, fileBase64: '[stripped]' } };
+        }
+        return m;
+      });
+      localStorage.setItem(`aifm_chat_backup_${sid}`, JSON.stringify({ messages: stripped, savedAt: Date.now() }));
+    } catch { /* localStorage full – ignore */ }
+  }, [messages, currentSessionId]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -2380,6 +2576,31 @@ function ChatPageContent() {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [flushPendingSave]);
+
+  // Keepalive: ping server every 10 min while user is active to prevent idle timeout
+  useEffect(() => {
+    let lastActivity = Date.now();
+    const onActivity = () => { lastActivity = Date.now(); };
+    window.addEventListener('mousemove', onActivity, { passive: true });
+    window.addEventListener('keydown', onActivity, { passive: true });
+    window.addEventListener('scroll', onActivity, { passive: true });
+    window.addEventListener('touchstart', onActivity, { passive: true });
+
+    const interval = setInterval(() => {
+      // Only ping if user was active in the last 15 minutes
+      if (Date.now() - lastActivity < 15 * 60 * 1000) {
+        fetch('/api/chat/invitations', { method: 'GET' }).catch(() => {});
+      }
+    }, 10 * 60 * 1000); // every 10 min
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('mousemove', onActivity);
+      window.removeEventListener('keydown', onActivity);
+      window.removeEventListener('scroll', onActivity);
+      window.removeEventListener('touchstart', onActivity);
+    };
+  }, []);
 
   /** Start a branch (fork) at the given message; user continues from there on the new branch */
   const startBranch = useCallback((messageId: string) => {
@@ -2418,12 +2639,7 @@ function ChatPageContent() {
 
   const loadSession = async (sessionId: string) => {
     try {
-      // Stop any existing polling
-      if (sharedPollRef.current) {
-        clearInterval(sharedPollRef.current);
-        sharedPollRef.current = null;
-      }
-
+      stopSharedSync();
       const response = await fetch(`/api/chat/sessions?sessionId=${sessionId}`);
       if (response.ok) {
         const session = await response.json();
@@ -2498,44 +2714,91 @@ function ChatPageContent() {
     }
   };
 
-  // Poll for updates on shared sessions (pauses when tab is hidden)
-  const startSharedPolling = (code: string) => {
-    if (sharedPollRef.current) {
-      clearInterval(sharedPollRef.current);
-    }
+  // Start real-time sync: SSE with fallback to 3s polling after 3 SSE failures
+  const startSharedPolling = useCallback((code: string) => {
+    stopSharedSync();
+    sseFailureCountRef.current = 0;
 
-    sharedPollRef.current = setInterval(async () => {
-      try {
-        const since = lastUpdatedAtRef.current || '';
-        const response = await fetch(`/api/chat/sessions/share?shareCode=${code}&since=${encodeURIComponent(since)}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.hasUpdates && data.messages) {
-            setMessages(data.messages);
-            setSharedParticipants(data.participants || []);
-            lastUpdatedAtRef.current = data.updatedAt || new Date().toISOString();
-            // Browser notification when tab is in background
-            if (typeof Notification !== 'undefined' && document.hidden) {
-              if (Notification.permission === 'granted') {
-                try {
-                  new Notification('Delad chatt – ny aktivitet', {
-                    body: 'Någon har skrivit i konversationen.',
-                  });
-                } catch {
-                  // ignore
-                }
-              } else if (Notification.permission === 'default') {
+    const backoffMs = [1000, 2000, 4000];
+    let reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const startFallbackPolling = () => {
+      stopSharedSync();
+      sharedPollRef.current = setInterval(async () => {
+        try {
+          const since = lastUpdatedAtRef.current || '';
+          const response = await fetch(`/api/chat/sessions/share?shareCode=${code}&since=${encodeURIComponent(since)}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.hasUpdates && data.messages) {
+              setMessages(data.messages);
+              setSharedParticipants(data.participants || []);
+              lastUpdatedAtRef.current = data.updatedAt || new Date().toISOString();
+              if (typeof Notification !== 'undefined' && document.hidden && Notification.permission === 'granted') {
+                try { new Notification('Delad chatt – ny aktivitet', { body: 'Någon har skrivit i konversationen.' }); } catch { /* ignore */ }
+              } else if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
                 Notification.requestPermission();
               }
             }
           }
+        } catch (err) {
+          console.error('Polling error:', err);
+          showToast('Kunde inte uppdatera delad chatt');
         }
-      } catch (error) {
-        console.error('Polling error:', error);
-        showToast('Kunde inte uppdatera delad chatt');
-      }
-    }, 5000);
-  };
+      }, 3000);
+    };
+
+    const connectSSE = () => {
+      const since = lastUpdatedAtRef.current || '';
+      const url = `/api/chat/sessions/share/stream?shareCode=${encodeURIComponent(code)}&since=${encodeURIComponent(since)}`;
+      const es = new EventSource(url);
+      sharedEventSourceRef.current = es;
+
+      es.addEventListener('update', (e: MessageEvent) => {
+        try {
+          const data = JSON.parse(e.data || '{}');
+          if (data.hasUpdates && data.messages) {
+            setMessages(data.messages);
+            setSharedParticipants(data.participants || []);
+            lastUpdatedAtRef.current = data.updatedAt || new Date().toISOString();
+            if (data.typingUsers?.length) setSharedTypingUsers(data.typingUsers); else setSharedTypingUsers([]);
+            if (typeof Notification !== 'undefined' && document.hidden && Notification.permission === 'granted') {
+              try { new Notification('Delad chatt – ny aktivitet', { body: 'Någon har skrivit i konversationen.' }); } catch { /* ignore */ }
+            } else if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+              Notification.requestPermission();
+            }
+          }
+        } catch { /* ignore */ }
+      });
+
+      es.addEventListener('typing', (e: MessageEvent) => {
+        try {
+          const data = JSON.parse(e.data || '{}');
+          setSharedTypingUsers(data.typingUsers || []);
+        } catch { /* ignore */ }
+      });
+
+      es.onopen = () => { sseFailureCountRef.current = 0; };
+
+      es.onerror = () => {
+        es.close();
+        sharedEventSourceRef.current = null;
+        sseFailureCountRef.current += 1;
+        if (reconnectTimeoutId) return;
+        if (sseFailureCountRef.current >= 3) {
+          startFallbackPolling();
+          return;
+        }
+        const delay = backoffMs[Math.min(sseFailureCountRef.current - 1, backoffMs.length - 1)];
+        reconnectTimeoutId = setTimeout(() => {
+          reconnectTimeoutId = null;
+          connectSSE();
+        }, delay);
+      };
+    };
+
+    connectSSE();
+  }, [stopSharedSync]);
 
   const startNewChat = () => {
     setMessages([]);
@@ -2548,11 +2811,9 @@ function ChatPageContent() {
     setShareCode(null);
     setSharedOwnerUserId(null);
     setSharedParticipants([]);
+    setSharedTypingUsers([]);
     setIsSharedSession(false);
-    if (sharedPollRef.current) {
-      clearInterval(sharedPollRef.current);
-      sharedPollRef.current = null;
-    }
+    stopSharedSync();
     // Focus the input after a short delay to ensure state is updated
     setTimeout(() => {
       inputRef.current?.focus();
@@ -2993,7 +3254,30 @@ function ChatPageContent() {
     setInput(value);
     textarea.style.height = 'auto';
     textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
-  }, []);
+
+    if (isSharedSessionRef.current && shareCodeRef.current) {
+      if (typingStopTimeoutRef.current) {
+        clearTimeout(typingStopTimeoutRef.current);
+        typingStopTimeoutRef.current = null;
+      }
+      if (value.trim()) {
+        if (!typingSentRef.current) {
+          sendSharedTyping(true);
+          typingSentRef.current = true;
+        }
+        typingStopTimeoutRef.current = setTimeout(() => {
+          typingStopTimeoutRef.current = null;
+          typingSentRef.current = false;
+          sendSharedTyping(false);
+        }, 3000);
+      } else {
+        if (typingSentRef.current) {
+          sendSharedTyping(false);
+          typingSentRef.current = false;
+        }
+      }
+    }
+  }, [sendSharedTyping]);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -3007,7 +3291,7 @@ function ChatPageContent() {
         continue;
       }
       if (file.size > MAX_FILE_SIZE) {
-        showToast('Filen är för stor. Max 10MB.');
+        showToast('Filen är för stor. Max 50MB.');
         continue;
       }
       try {
@@ -3065,7 +3349,7 @@ function ChatPageContent() {
         continue;
       }
       if (file.size > MAX_FILE_SIZE) {
-        showToast('Filen är för stor. Max 10MB.');
+        showToast('Filen är för stor. Max 50MB.');
         continue;
       }
       try {
@@ -3097,14 +3381,14 @@ function ChatPageContent() {
           continue;
         }
         if (file.size > MAX_FILE_SIZE) {
-          showToast('Filen är för stor. Max 10MB.');
-          continue;
-        }
-        try {
-          const attachment = await processFileAttachment(file);
-          setAttachedFiles(prev => [...prev, attachment]);
-        } catch (error) {
-          console.error('Paste file error:', error);
+        showToast('Filen är för stor. Max 50MB.');
+        continue;
+      }
+      try {
+        const attachment = await processFileAttachment(file);
+        setAttachedFiles(prev => [...prev, attachment]);
+      } catch (error) {
+        console.error('Paste file error:', error);
           showToast(`Kunde inte klistra in filen: ${file.name}`);
         }
       }
@@ -3136,7 +3420,7 @@ function ChatPageContent() {
       if (!file) continue;
 
       if (file.size > MAX_FILE_SIZE) {
-        showToast('Bilden är för stor. Max 10MB.');
+        showToast('Bilden är för stor. Max 50MB.');
         continue;
       }
 
@@ -3227,6 +3511,14 @@ function ChatPageContent() {
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     isDirtyRef.current = true;
+    if (typingStopTimeoutRef.current) {
+      clearTimeout(typingStopTimeoutRef.current);
+      typingStopTimeoutRef.current = null;
+    }
+    if (typingSentRef.current) {
+      sendSharedTyping(false);
+      typingSentRef.current = false;
+    }
     setInput('');
     clearDraft();
     setAttachedFiles([]);
@@ -3251,11 +3543,24 @@ function ChatPageContent() {
       const endpoint = '/api/ai/chat';
       const useStreaming = true;
       
+      // Legacy DOCX attachment (kept for backward compatibility)
       const firstDocx = attachedFiles.find(
         f => f.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || (f.name && f.name.toLowerCase().endsWith('.docx'))
       );
       const docxAttachment = firstDocx?.rawBase64 && firstDocx?.content
         ? { rawBase64: firstDocx.rawBase64, fileName: firstDocx.name, documentText: firstDocx.content, paragraphs: firstDocx.paragraphs }
+        : undefined;
+
+      // Generalized file attachment for review (DOCX, PDF, Excel)
+      const reviewableFile = attachedFiles.find(f => f.reviewableType && f.rawBase64);
+      const fileAttachment = reviewableFile?.rawBase64 && reviewableFile?.content
+        ? {
+            rawBase64: reviewableFile.rawBase64,
+            fileName: reviewableFile.name,
+            documentText: reviewableFile.content,
+            fileType: reviewableFile.reviewableType!,
+            ...(reviewableFile.paragraphs ? { paragraphs: reviewableFile.paragraphs } : {}),
+          }
         : undefined;
 
       const response = await fetchWithRetry(endpoint, {
@@ -3270,6 +3575,7 @@ function ChatPageContent() {
           images: imageAttachments, // Send image data for vision API
           stream: useStreaming,
           ...(docxAttachment ? { docxAttachment } : {}),
+          ...(fileAttachment ? { fileAttachment } : {}),
           ...(templateIdForRequest ? { templateId: templateIdForRequest } : {}),
           ...(responseLength ? { responseLength } : {}),
         }),
@@ -3575,12 +3881,10 @@ function ChatPageContent() {
       if (response.ok) {
         setShareCode(null);
         setSharedParticipants([]);
+        setSharedTypingUsers([]);
         setIsSharedSession(false);
         setSharedOwnerUserId(null);
-        if (sharedPollRef.current) {
-          clearInterval(sharedPollRef.current);
-          sharedPollRef.current = null;
-        }
+        stopSharedSync();
         showToast('Delningen avslutad');
       } else {
         const data = await response.json().catch(() => ({}));
@@ -3595,14 +3899,12 @@ function ChatPageContent() {
   const leaveSharedSession = () => {
     setShareCode(null);
     setSharedParticipants([]);
+    setSharedTypingUsers([]);
     setIsSharedSession(false);
     setSharedOwnerUserId(null);
     setMessages([]);
     setCurrentSessionId(null);
-    if (sharedPollRef.current) {
-      clearInterval(sharedPollRef.current);
-      sharedPollRef.current = null;
-    }
+    stopSharedSync();
     showToast('Du har lämnat den delade chatten');
   };
 
@@ -4285,24 +4587,6 @@ function ChatPageContent() {
       <div className="flex-1 flex overflow-hidden">
         {/* Chat Area */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Security Banner - Collapsible on mobile */}
-          <div className={`flex-shrink-0 border-b px-3 sm:px-4 py-1.5 sm:py-2 transition-colors duration-200 ${
-            isDarkMode 
-              ? 'bg-emerald-900/30 border-emerald-800/50' 
-              : 'bg-emerald-50 border-emerald-100'
-          }`}>
-            <div className="flex items-center justify-center gap-1.5 sm:gap-2">
-              <Shield className={`w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 ${
-                isDarkMode ? 'text-emerald-400' : 'text-emerald-600'
-              }`} />
-              <span className={`text-[10px] sm:text-xs font-medium truncate ${
-                isDarkMode ? 'text-emerald-300' : 'text-emerald-700'
-              }`}>
-                Säker miljö – Data stannar inom AWS/EU
-              </span>
-            </div>
-          </div>
-
           {/* Shared session banner */}
           {isSharedSession && (
             <div className={`flex-shrink-0 px-3 py-2 flex items-center justify-between text-xs border-b ${
@@ -4310,15 +4594,22 @@ function ChatPageContent() {
                 ? 'bg-violet-900/20 border-violet-800/40 text-violet-300' 
                 : 'bg-violet-50 border-violet-100 text-violet-700'
             }`}>
-              <div className="flex items-center gap-2">
-                <Users className="w-3.5 h-3.5 flex-shrink-0" />
-                <span className="font-medium">
-                  Delad konversation
-                </span>
-                <span className="opacity-60 hidden sm:inline">•</span>
-                <span className="opacity-75 hidden sm:inline truncate max-w-[200px]">
-                  {sharedParticipants.map(p => p.name || p.email?.split('@')[0] || '?').join(', ')}
-                </span>
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <div className="flex items-center gap-2">
+                  <Users className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="font-medium">
+                    Delad konversation
+                  </span>
+                  <span className="opacity-60 hidden sm:inline">•</span>
+                  <span className="opacity-75 hidden sm:inline truncate max-w-[200px]">
+                    {sharedParticipants.map(p => p.name || p.email?.split('@')[0] || '?').join(', ')}
+                  </span>
+                </div>
+                {sharedTypingUsers.length > 0 && (
+                  <span className="text-[10px] opacity-80 italic truncate">
+                    {sharedTypingUsers.map(u => u.name).join(', ')} skriver…
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-1.5">
                 <button
@@ -4672,6 +4963,14 @@ function ChatPageContent() {
                     ref={inputRef}
                     value={input}
                     onChange={handleInputChange}
+                    onBlur={() => {
+                      if (typingStopTimeoutRef.current) clearTimeout(typingStopTimeoutRef.current);
+                      typingStopTimeoutRef.current = null;
+                      if (typingSentRef.current) {
+                        sendSharedTyping(false);
+                        typingSentRef.current = false;
+                      }
+                    }}
                     onKeyDown={handleKeyDown}
                     onPaste={handlePaste}
                     placeholder="Skriv ett meddelande..."

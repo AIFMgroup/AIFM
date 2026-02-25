@@ -7,7 +7,7 @@
 
 import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, PutCommand, QueryCommand, ScanCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, PutCommand, GetCommand, QueryCommand, ScanCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import crypto from 'crypto';
 
@@ -28,6 +28,8 @@ export interface Document {
     effectiveDate?: string;
     lastUpdated?: string;
     authority?: string; // e.g., "Riksdagen", "Finansinspektionen"
+    summary?: string; // AI-generated structured summary
+    summaryStatus?: 'pending' | 'summarizing' | 'ready';
   };
   createdAt: string;
   updatedAt: string;
@@ -337,6 +339,22 @@ export async function addDocument(document: Omit<Document, 'id' | 'createdAt' | 
 }
 
 /**
+ * Get a document by ID
+ */
+export async function getDocument(documentId: string): Promise<Document | null> {
+  try {
+    const result = await docClient.send(new GetCommand({
+      TableName: DOCUMENTS_TABLE,
+      Key: { id: documentId },
+    }));
+    return (result.Item as Document) || null;
+  } catch (error) {
+    console.error('Failed to get document:', error);
+    return null;
+  }
+}
+
+/**
  * Get all documents
  */
 export async function getAllDocuments(): Promise<Document[]> {
@@ -349,6 +367,40 @@ export async function getAllDocuments(): Promise<Document[]> {
     console.error('Failed to get documents:', error);
     return [];
   }
+}
+
+/**
+ * Update document summary (AI-generated). Sets metadata.summary and metadata.summaryStatus = 'ready'.
+ */
+export async function updateDocumentSummary(documentId: string, summary: string): Promise<void> {
+  const doc = await getDocument(documentId);
+  if (!doc) throw new Error(`Document not found: ${documentId}`);
+  const updated: Document = {
+    ...doc,
+    metadata: { ...doc.metadata, summary, summaryStatus: 'ready' as const },
+    updatedAt: new Date().toISOString(),
+  };
+  await docClient.send(new PutCommand({
+    TableName: DOCUMENTS_TABLE,
+    Item: updated,
+  }));
+}
+
+/**
+ * Set document summary status to 'summarizing' (e.g. before starting async summarization).
+ */
+export async function setDocumentSummaryStatus(documentId: string, status: 'pending' | 'summarizing' | 'ready'): Promise<void> {
+  const doc = await getDocument(documentId);
+  if (!doc) throw new Error(`Document not found: ${documentId}`);
+  const updated: Document = {
+    ...doc,
+    metadata: { ...doc.metadata, summaryStatus: status },
+    updatedAt: new Date().toISOString(),
+  };
+  await docClient.send(new PutCommand({
+    TableName: DOCUMENTS_TABLE,
+    Item: updated,
+  }));
 }
 
 /**
@@ -492,7 +544,10 @@ Ge ett detaljerat svar baserat på ovanstående kontext. Referera till källorna
 
 export const knowledgeBase = {
   addDocument,
+  getDocument,
   getAllDocuments,
+  updateDocumentSummary,
+  setDocumentSummaryStatus,
   deleteDocument,
   searchChunks,
   ragQuery,

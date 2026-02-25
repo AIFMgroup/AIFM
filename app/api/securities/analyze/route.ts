@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
+import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
 import { getESGServiceClient } from '@/lib/integrations/esg/esg-service';
 import type { NormalizedESGData } from '@/lib/integrations/esg/types';
+import { getESGFundConfig } from '@/lib/integrations/securities/esg-fund-configs';
+import { getFundDocumentText } from '@/lib/fund-documents/fund-document-store';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // Initialize Bedrock client
 const bedrockClient = new BedrockRuntimeClient({
@@ -113,7 +118,7 @@ function createNotFound(reason: string): AIGeneratedField {
   };
 }
 
-export const maxDuration = 180; // Allow up to 180 seconds for AI analysis
+export const maxDuration = 600;
 
 /**
  * Attempt to extract top-level fields from broken JSON.
@@ -320,9 +325,11 @@ export async function POST(request: NextRequest) {
           if (esgProviderData.taxonomyAlignmentPercent !== null && esgProviderData.taxonomyAlignmentPercent !== undefined)
             verifiedFacts.push(`EU-taxonomianpassning: ${esgProviderData.taxonomyAlignmentPercent}% (källa: ${esgProviderData.provider})`);
           if (esgProviderData.exclusionFlags && esgProviderData.exclusionFlags.length > 0) {
-            const detailedExclusions = esgProviderData.exclusionFlags.map(f => 
-              `${f.categoryDescription}: involvering=${f.involvementLevel}, omsättning=${f.revenuePercent != null ? f.revenuePercent + '%' : 'okänd'}`
-            ).join('; ');
+            const detailedExclusions = esgProviderData.exclusionFlags.map(f => {
+              const isBroadDefense = f.category.toLowerCase() === 'defense' || f.category.toLowerCase() === 'defence';
+              const note = isBroadDefense ? ' (OBS: bred försvarssektor-klassificering, ej kontroversiella vapen)' : '';
+              return `${f.categoryDescription}: involvering=${f.involvementLevel}, omsättning=${f.revenuePercent != null ? f.revenuePercent + '%' : 'okänd'}${note}`;
+            }).join('; ');
             verifiedFacts.push(`Exkluderingsflaggor: ${detailedExclusions} (källa: ${esgProviderData.provider})`);
           }
           // Fetch and add PAI indicators
@@ -344,6 +351,42 @@ export async function POST(request: NextRequest) {
       console.warn('[Security Analyze] ESG service fetch failed:', esgErr);
     }
 
+    // Fetch fund-specific terms (fondvillkor + ESG exclusion config) from AWS
+    let fundTermsBlock = '';
+    if (fund.fundId) {
+      try {
+        const fundConfig = getESGFundConfig(fund.fundId, fund.fundName);
+        const fundDocText = await getFundDocumentText(fund.fundId);
+
+        const ftParts: string[] = [];
+        if (fundConfig) {
+          if (fundConfig.exclusions?.length) {
+            ftParts.push('EXKLUDERINGSKRITERIER (fond-specifika):');
+            for (const ex of fundConfig.exclusions) {
+              ftParts.push(`  - ${ex.label || ex.category}: max ${ex.threshold}% av omsättning (0% = nolltolerans)`);
+            }
+            ftParts.push('VIKTIGT: Exponering som är UNDER gränsvärdet = GODKÄND. Exponering ÖVER = UNDERKÄND.');
+          }
+          if (fundConfig.promotedCharacteristics?.length) {
+            ftParts.push(`FRÄMJADE EGENSKAPER: ${fundConfig.promotedCharacteristics.join(', ')}`);
+          }
+          if (fundConfig.normScreening) {
+            const ns = fundConfig.normScreening;
+            ftParts.push(`NORMSCREENING: UNGC=${ns.ungc ? 'Ja' : 'Nej'}, OECD=${ns.oecd ? 'Ja' : 'Nej'}, Mänskliga rättigheter=${ns.humanRights ? 'Ja' : 'Nej'}, Anti-korruption=${ns.antiCorruption ? 'Ja' : 'Nej'}`);
+          }
+        }
+        if (fundDocText) {
+          const trimmed = fundDocText.length > 6000 ? fundDocText.slice(0, 6000) + '\n... (förkortat)' : fundDocText;
+          ftParts.push(`\nFONDVILLKOR (utdrag ur fondbestämmelser):\n${trimmed}`);
+        }
+        if (ftParts.length > 0) {
+          fundTermsBlock = ftParts.join('\n');
+        }
+      } catch (e) {
+        console.warn('[Security Analyze] Fund terms fetch failed:', e);
+      }
+    }
+
     // Build system prompt with strict instructions
     const systemPrompt = `Du är en compliance-analytiker för fondbolag i Sverige. Du hjälper till att fylla i formulär för godkännande av nya värdepapper.
 
@@ -356,6 +399,13 @@ KRITISKA REGLER:
 6. Alla motiveringar ska vara sakliga och baserade på verifierad data, INTE generiska fraser.
 7. KRITISKT FÖR JSON: Alla textvärden MÅSTE vara korrekt JSON-escapade. Använd ALDRIG raka citattecken (") inuti strängar - använd enkla citattecken (') istället. Undvik radbrytningar i textvärden. Håll varje text under 500 tecken.
 
+VIKTIGT OM FÖRSVARSEXPONERING (Defense):
+Datia:s kategori 'Defense' är en BRED sektorklassificering som inkluderar alla företag med försvarsrelaterade intäkter (t.ex. lastbilar, motorer, IT-tjänster till försvaret). Detta är INTE samma sak som 'weapons' (vapenproduktion) eller 'controversialWeapons' (kontroversiella vapen som klusterbomber, kemiska vapen etc).
+- 'Defense' 100% betyder att företaget har NÅGON koppling till försvarssektorn, inte att de tillverkar vapen.
+- Ett företag som Volvo kan klassificeras som 'Defense: 100%' eftersom deras lastbilar och motorer används av försvaret, trots att Volvo inte tillverkar vapen.
+- Vid ESG-bedömning: Skilja TYDLIGT mellan 'Defense' (bred) och 'weapons'/'controversialWeapons' (direkt vapenproduktion).
+- 'Defense'-exponering ska INTE automatiskt leda till avvisning om fondens exkluderingsregler inte specifikt förbjuder bred försvarsexponering.
+
 VERIFIERAD DATA OM VÄRDEPAPPRET:
 ${verifiedFacts.map(f => `- ${f}`).join('\n')}
 
@@ -364,6 +414,7 @@ FONDINFORMATION:
 - SFDR-artikel: ${fund.article}
 ${fund.investmentFocus ? `- Placeringsinriktning: ${fund.investmentFocus}` : ''}
 ${fund.restrictions?.length ? `- Restriktioner: ${fund.restrictions.join(', ')}` : ''}
+${fundTermsBlock ? `\nFONDVILLKOR OCH EXKLUDERINGSPOLICY:\n${fundTermsBlock}\n\nVIKTIGT: Utvärdera varje exkluderingskategori specifikt mot fondens gränsvärden i ESG-bedömningen. Ange faktisk exponering vs gränsvärde. Bedöm 'complianceMotivation' mot fondens placeringsbestämmelser och syfte.` : ''}
 
 Svara ENDAST i JSON-format. Om du inte kan ge ett svar baserat på verifierad data, använd null för det fältet.
 
@@ -558,65 +609,77 @@ Fält att fylla i:
 }`;
 
     try {
-      // Try models in order of preference:
-      // 1. Claude Sonnet 4.5 via cross-region inference (eu prefix)
-      // 2. Claude Sonnet 4 via cross-region inference
-      // 3. Claude Haiku 4.5 via cross-region inference
       const modelCandidates = [
+        'eu.anthropic.claude-opus-4-6-v1',
         'eu.anthropic.claude-sonnet-4-5-20250929-v1:0',
         'eu.anthropic.claude-sonnet-4-20250514-v1:0',
         'eu.anthropic.claude-haiku-4-5-20251001-v1:0',
       ];
 
-      let responseBody: any = null;
+      let textContent = '';
       let usedModel = '';
+
+      const userMessage = `Analysera värdepappret baserat på den verifierade datan och ge förslag till formulärfälten. Kom ihåg: svara ENDAST baserat på den verifierade informationen, och använd null om data saknas. SVARA ENDAST MED GILTIG JSON - inga kommentarer, inga radbrytningar i strängar, inga oescapade citattecken. Använd enkla citattecken (') istället för dubbla inuti textvärden.`;
 
       for (const modelId of modelCandidates) {
         try {
           console.log(`[Security Analyze] Trying model: ${modelId}`);
-          const command = new InvokeModelCommand({
+          const command = new ConverseCommand({
             modelId,
-            contentType: 'application/json',
-            accept: 'application/json',
-            body: JSON.stringify({
-              anthropic_version: 'bedrock-2023-05-31',
-              max_tokens: 6000,
-              system: systemPrompt,
-              messages: [
-                {
-                  role: 'user',
-                  content: `Analysera värdepappret baserat på den verifierade datan och ge förslag till formulärfälten. Kom ihåg: svara ENDAST baserat på den verifierade informationen, och använd null om data saknas. SVARA ENDAST MED GILTIG JSON - inga kommentarer, inga radbrytningar i strängar, inga oescapade citattecken. Använd enkla citattecken (') istället för dubbla inuti textvärden.`,
-                },
-              ],
-            }),
+            system: [{ text: systemPrompt }],
+            messages: [{ role: 'user', content: [{ text: userMessage }] }],
+            inferenceConfig: { maxTokens: 16000 },
           });
 
           const response = await bedrockClient.send(command);
-          responseBody = JSON.parse(new TextDecoder().decode(response.body));
-          usedModel = modelId;
-          console.log(`[Security Analyze] Successfully used model: ${modelId}`);
-          break;
+          const outputContent = response.output?.message?.content;
+          if (outputContent?.[0] && 'text' in outputContent[0] && outputContent[0].text) {
+            textContent = outputContent[0].text;
+            usedModel = modelId;
+            console.log(`[Security Analyze] Successfully used model: ${modelId}`);
+            break;
+          }
         } catch (modelError) {
           console.warn(`[Security Analyze] Model ${modelId} failed:`, modelError instanceof Error ? modelError.message : modelError);
-          // Continue to next model
         }
       }
 
-      if (!responseBody) {
-        throw new Error('Alla AI-modeller misslyckades. Kontrollera att Bedrock-åtkomst är konfigurerad i AWS-kontot och att minst en Claude-modell är aktiverad i eu-north-1 regionen.');
-      }
-
-      // Parse response
-      const textContent = responseBody.content?.[0]?.text || '';
       if (!textContent) {
-        throw new Error('No text response from AI');
+        throw new Error('Alla AI-modeller misslyckades. Kontrollera att Bedrock-åtkomst är konfigurerad i AWS-kontot och att minst en Claude-modell är aktiverad.');
       }
 
-      // Extract JSON from response
-      const jsonMatch = textContent.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
+      // Extract JSON from response (strip markdown code blocks if present)
+      let cleanedText = textContent;
+      const fenceStart = cleanedText.indexOf('```');
+      if (fenceStart !== -1) {
+        const afterFence = cleanedText.indexOf('\n', fenceStart);
+        if (afterFence !== -1) {
+          const fenceEnd = cleanedText.lastIndexOf('```');
+          cleanedText = fenceEnd > afterFence ? cleanedText.slice(afterFence + 1, fenceEnd) : cleanedText.slice(afterFence + 1);
+        }
+      }
+      const jsonStart = cleanedText.indexOf('{');
+      if (jsonStart === -1) {
         throw new Error('Could not parse AI response as JSON');
       }
+      let depth = 0;
+      let inString = false;
+      let escape = false;
+      let jsonEnd = -1;
+      for (let i = jsonStart; i < cleanedText.length; i++) {
+        const ch = cleanedText[i];
+        if (escape) { escape = false; continue; }
+        if (ch === '\\' && inString) { escape = true; continue; }
+        if (ch === '"') { inString = !inString; continue; }
+        if (inString) continue;
+        if (ch === '{') depth++;
+        else if (ch === '}') { depth--; if (depth === 0) { jsonEnd = i; break; } }
+      }
+      if (jsonEnd === -1) {
+        throw new Error('Could not parse AI response as JSON');
+      }
+      const jsonMatch = [cleanedText.slice(jsonStart, jsonEnd + 1)];
+      // jsonMatch[0] now contains the balanced JSON object
 
       let aiResponse: any;
       try {

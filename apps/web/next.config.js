@@ -30,6 +30,16 @@ const nextConfig = {
   // Monorepo support
   transpilePackages: ['@aifm/shared'],
 
+  // Keep these packages out of the bundle; they are installed at Docker-build time.
+  serverExternalPackages: [
+    'puppeteer-core',
+    'pdfkit',
+    'mammoth',
+    'pdf-parse',
+    'xlsx',
+    'jszip',
+  ],
+
   // Environment
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',

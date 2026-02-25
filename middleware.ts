@@ -39,7 +39,7 @@ const isPublicPath = (pathname: string, searchParams?: URLSearchParams) =>
   pathname.startsWith("/api/public") ||
   (pathname === "/api/isec" && (searchParams?.get("action") === "health" || searchParams?.get("action") === "diagnostics")) ||
   pathname === "/api/isec/sync" ||
-  pathname === "/api/nav/worker" ||
+  pathname.startsWith("/api/nav/worker") ||
   STATIC_EXTENSIONS.some((ext) => pathname.endsWith(ext));
 
 /** Paths forvaltare role is allowed to access. Operation and others have no path restriction. */

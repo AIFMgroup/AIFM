@@ -1319,8 +1319,8 @@ export default function AIFMAgentPage() {
       }
 
       // Check file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        alert('Filen är för stor. Max 10MB.');
+      if (file.size > 50 * 1024 * 1024) {
+        alert('Filen är för stor. Max 50MB.');
         continue;
       }
 
@@ -1422,8 +1422,8 @@ export default function AIFMAgentPage() {
       }
 
       // Check file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        alert('Filen är för stor. Max 10MB.');
+      if (file.size > 50 * 1024 * 1024) {
+        alert('Filen är för stor. Max 50MB.');
         continue;
       }
 
@@ -1499,8 +1499,8 @@ export default function AIFMAgentPage() {
         }
 
         // Check file size (max 10MB)
-        if (file.size > 10 * 1024 * 1024) {
-          alert('Filen är för stor. Max 10MB.');
+        if (file.size > 50 * 1024 * 1024) {
+          alert('Filen är för stor. Max 50MB.');
           continue;
         }
 
@@ -1569,8 +1569,8 @@ export default function AIFMAgentPage() {
       if (!file) continue;
 
       // Check file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        alert('Bilden är för stor. Max 10MB.');
+      if (file.size > 50 * 1024 * 1024) {
+        alert('Bilden är för stor. Max 50MB.');
         continue;
       }
 

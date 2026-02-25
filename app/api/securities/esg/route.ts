@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
       exclusionFlags: esgData.exclusionFlags,
       meetsExclusionCriteria: esgData.meetsExclusionCriteria,
       paiIndicators: esgData.paiIndicators,
+      ghgScopes: esgData.ghgScopes,
       fetchedAt: esgData.fetchedAt,
     };
 

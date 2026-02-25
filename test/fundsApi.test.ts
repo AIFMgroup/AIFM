@@ -36,7 +36,7 @@ const mockFundsData: FundsApiResponse = {
   invoices: [],
   ledgerEntries: [],
   documents: [],
-  companyToFundMap: { 'company-1': 'f1' },
+  companyToFundMap: { 'aifm-group': 'f1' },
 };
 
 describe('fundsApi', () => {
@@ -69,13 +69,13 @@ describe('fundsApi', () => {
   });
 
   test('getFundByCompanyId returns fund for mapped company', () => {
-    const fund = getFundByCompanyId(mockFundsData, 'company-1');
+    const fund = getFundByCompanyId(mockFundsData, 'aifm-group');
     expect(fund?.id).toBe('f1');
     expect(getFundByCompanyId(mockFundsData, 'unknown')).toBeUndefined();
   });
 
   test('getInvestorsByCompanyId returns investors with commitments in fund', () => {
-    const list = getInvestorsByCompanyId(mockFundsData, 'company-1');
+    const list = getInvestorsByCompanyId(mockFundsData, 'aifm-group');
     expect(list).toHaveLength(1);
     expect(list[0].id).toBe('i1');
   });
