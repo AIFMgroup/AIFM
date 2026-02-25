@@ -159,6 +159,13 @@ interface FormData {
   bondMax10Issued: boolean;
   significantInfluence: boolean;
   plannedAcquisitionShare: string;
+  plannedPortfolioWeight: string;
+  
+  // Fund unit specific (5 kap. 17-18 § LVF)
+  fundUnitType: 'ucits' | 'ucits_like' | 'special_fund' | 'aif' | '';
+  fundUnitComplianceLinks: string;
+  fundUnitMaxOwn10Percent: boolean;
+  fundUnitMaxTarget25Percent: boolean;
   
   // Step 6: Liquidity
   liquidityInstrumentType: 'stock' | 'bond' | 'etf' | 'fund' | 'derivative' | 'money_market' | 'other' | '';
@@ -435,6 +442,11 @@ const initialFormData: FormData = {
   bondMax10Issued: false,
   significantInfluence: false,
   plannedAcquisitionShare: '',
+  plannedPortfolioWeight: '',
+  fundUnitType: '',
+  fundUnitComplianceLinks: '',
+  fundUnitMaxOwn10Percent: false,
+  fundUnitMaxTarget25Percent: false,
   liquidityInstrumentType: '',
   stockLiquidityPresumption: false,
   canLiquidate1Day: false,
@@ -532,20 +544,67 @@ const initialFormData: FormData = {
   engagementComment: '',
 };
 
+type FundAssignment = { fundId: string; fundName: string; article: '6' | '8' | '9' };
+
 export default function NewSecurityApprovalPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: fundsData, loading: fundsLoading, error: fundsError } = useFundsData();
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [fundAssignments, setFundAssignments] = useState<FundAssignment[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/auth/role', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((data: { role?: string; email?: string | null; name?: string | null }) => {
+        if (!cancelled) {
+          setUserRole((data.role || '').toLowerCase());
+          setUserEmail(data.email ?? null);
+          setUserName(data.name ?? null);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (userRole !== 'forvaltare' || !userEmail) return;
+    let cancelled = false;
+    fetch(`/api/admin/fund-assignments?email=${encodeURIComponent(userEmail)}`)
+      .then((r) => r.json())
+      .then((data: { assignments?: FundAssignment[] }) => {
+        if (!cancelled) setFundAssignments(data.assignments || []);
+      })
+      .catch(() => { if (!cancelled) setFundAssignments([]); });
+    return () => { cancelled = true; };
+  }, [userRole, userEmail]);
+
   const availableFunds = useMemo(() => {
     if (!fundsData) return [];
-    return fundsData.funds.map(f => ({
+    const all = fundsData.funds.map(f => ({
       id: f.id,
       name: f.name,
       nav: f.nav,
       article: getFundArticle(f.id, f.name),
       illiquidPercent: 0,
     }));
-  }, [fundsData]);
+    if (userRole === 'forvaltare' && fundAssignments.length > 0) {
+      const allowedIds = new Set(fundAssignments.map((a) => a.fundId));
+      return all
+        .filter((f) => allowedIds.has(f.id))
+        .map((f) => {
+          const assignment = fundAssignments.find((a) => a.fundId === f.id);
+          return {
+            ...f,
+            article: assignment?.article ?? f.article,
+          };
+        });
+    }
+    return all;
+  }, [fundsData, userRole, fundAssignments]);
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [isLookingUp, setIsLookingUp] = useState(false);
@@ -553,6 +612,8 @@ export default function NewSecurityApprovalPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [summaryPdfUrl, setSummaryPdfUrl] = useState<string | null>(null);
+  const [summaryPdfError, setSummaryPdfError] = useState<string | null>(null);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [isinError, setIsinError] = useState<string | null>(null);
   const [esgWarnings, setEsgWarnings] = useState<string[]>([]);
@@ -599,7 +660,11 @@ export default function NewSecurityApprovalPage() {
   const STEPS = useMemo(() => {
     const article = formData.fundArticle || '6';
     if (article === '6') {
-      return [...BASE_STEPS, { id: 8, name: 'ESG', icon: Leaf }];
+      return [
+        ...BASE_STEPS,
+        { id: 8, name: 'ESG', icon: Leaf },
+        { id: 9, name: 'Summering', icon: FileText },
+      ];
     }
     if (article === '8') {
       return [
@@ -610,6 +675,7 @@ export default function NewSecurityApprovalPage() {
         { id: 11, name: 'ESG-riskanalys', icon: BarChart3 },
         { id: 12, name: 'PAI-indikatorer', icon: Leaf },
         { id: 13, name: 'Sammanfattning ESG', icon: CheckCircle2 },
+        { id: 14, name: 'Summering', icon: FileText },
       ];
     }
     return [
@@ -623,6 +689,7 @@ export default function NewSecurityApprovalPage() {
       { id: 14, name: 'EU Taxonomi', icon: Leaf },
       { id: 15, name: 'Allokeringskontroll', icon: BarChart3 },
       { id: 16, name: 'Sammanfattning ESG', icon: CheckCircle2 },
+      { id: 17, name: 'Summering', icon: FileText },
     ];
   }, [formData.fundArticle]);
 
@@ -665,6 +732,7 @@ export default function NewSecurityApprovalPage() {
         'black_coal', 'black coal', 'coking_coal', 'coking coal',
         'oil_sands', 'oil sands', 'arctic_drilling', 'arctic drilling',
         'shale_energy', 'shale energy', 'coal', 'oil', 'gas',
+        'hydraulic_fracking', 'hydraulic fracking',
       ],
       controversialWeapons: [
         'controversial_weapons', 'controversial weapons',
@@ -675,8 +743,21 @@ export default function NewSecurityApprovalPage() {
         'depleted_uranium', 'depleted uranium',
         'white_phosphorus', 'white phosphorus',
       ],
+      clusterMines: [
+        'cluster_munitions', 'cluster munitions', 'cluster_mines', 'cluster mines',
+        'anti_personnel_mines', 'anti personnel mines', 'landmines',
+      ],
+      chemicalBiological: [
+        'chemical_weapons', 'chemical weapons', 'biological_weapons', 'biological weapons',
+        'chemical_biological', 'chemical biological',
+      ],
       nuclearWeapons: ['nuclear_weapons', 'nuclear weapons', 'nuclear'],
-      weapons: ['weapons', 'military', 'small_arms', 'small arms', 'arms', 'military_contracting', 'military contracting'],
+      weapons: [
+        'weapons', 'military', 'small_arms', 'small arms', 'arms',
+        'military_contracting', 'military contracting',
+        'aggregated_weapons', 'aggregated weapons',
+      ],
+      defense: ['defense', 'defence'],
       tobacco: ['tobacco'],
       alcohol: ['alcohol', 'alcoholic_beverages', 'alcoholic beverages'],
       adultContent: ['adult_entertainment', 'adult entertainment', 'pornography', 'adult_content', 'adult content'],
@@ -1278,6 +1359,11 @@ export default function NewSecurityApprovalPage() {
             engagementRequired: d.esgInfo?.engagementRequired ?? null,
             engagementComment: d.esgInfo?.engagementComment || '',
             plannedAcquisitionShare: d.plannedAcquisitionShare || '',
+            plannedPortfolioWeight: d.plannedPortfolioWeight || '',
+            fundUnitType: (d.fundUnitInfo?.fundType as FormData['fundUnitType']) || '',
+            fundUnitComplianceLinks: d.fundUnitInfo?.complianceLinks?.join(', ') || '',
+            fundUnitMaxOwn10Percent: d.fundUnitInfo?.maxOwnFundUnits10Percent ?? false,
+            fundUnitMaxTarget25Percent: d.fundUnitInfo?.maxTargetFundUnits25Percent ?? false,
           }));
           setLastSaved(d.updatedAt);
         }
@@ -1301,8 +1387,8 @@ export default function NewSecurityApprovalPage() {
           formData,
           fundId: formData.fundId,
           fundName: formData.fundName,
-          createdBy: 'Current User',
-          createdByEmail: 'user@aifm.se',
+          createdBy: userName || userEmail || 'Användare',
+          createdByEmail: userEmail || '',
         }),
       });
 
@@ -1362,42 +1448,6 @@ export default function NewSecurityApprovalPage() {
     setIsCheckingRestrictions(false);
   };
 
-  // Download PDF preview
-  const handleDownloadPDF = async () => {
-    setIsGeneratingPDF(true);
-    setSaveMessage(null);
-    
-    try {
-      const res = await fetch('/api/securities/pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          formData,
-          fundId: formData.fundId || 'preview',
-          fundName: formData.fundName || 'Förhandsvisning',
-        }),
-      });
-
-      if (res.ok) {
-        const html = await res.text();
-        const blob = new Blob([html], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const win = window.open(url, '_blank');
-        if (win) {
-          win.onload = () => win.print();
-        }
-      } else {
-        setSaveMessage('Kunde inte generera PDF');
-        setTimeout(() => setSaveMessage(null), 3000);
-      }
-    } catch (error) {
-      console.error('PDF error:', error);
-      setSaveMessage('Kunde inte generera PDF');
-      setTimeout(() => setSaveMessage(null), 3000);
-    } finally {
-      setIsGeneratingPDF(false);
-    }
-  };
 
   // Lookup security
   const handleLookup = async () => {
@@ -1968,8 +2018,8 @@ export default function NewSecurityApprovalPage() {
           formData,
           fundId: formData.fundId,
           fundName: formData.fundName,
-          createdBy: 'Current User',
-          createdByEmail: 'user@aifm.se',
+          createdBy: userName || userEmail || 'Användare',
+          createdByEmail: userEmail || '',
         }),
       });
 
@@ -2030,8 +2080,8 @@ export default function NewSecurityApprovalPage() {
         body: JSON.stringify({
           fundId: formData.fundId,
           fundName: formData.fundName,
-          createdBy: 'Current User', // Would come from session
-          createdByEmail: 'user@aifm.se',
+          createdBy: userName || userEmail || 'Användare',
+          createdByEmail: userEmail || '',
           basicInfo: {
             name: formData.name,
             category: formData.category,
@@ -2181,6 +2231,13 @@ export default function NewSecurityApprovalPage() {
             engagementComment: formData.engagementComment,
           },
           plannedAcquisitionShare: formData.plannedAcquisitionShare,
+          plannedPortfolioWeight: formData.plannedPortfolioWeight || undefined,
+          fundUnitInfo: (formData.category === 'fund_unit' || formData.type === 'fund' || formData.type === 'etf') ? {
+            fundType: formData.fundUnitType || '',
+            complianceLinks: formData.fundUnitComplianceLinks ? formData.fundUnitComplianceLinks.split(',').map(s => s.trim()).filter(Boolean) : undefined,
+            maxOwnFundUnits10Percent: formData.fundUnitMaxOwn10Percent,
+            maxTargetFundUnits25Percent: formData.fundUnitMaxTarget25Percent,
+          } : undefined,
         }),
       });
 
@@ -2196,6 +2253,10 @@ export default function NewSecurityApprovalPage() {
             action: 'submit',
           }),
         });
+
+        // Auto-archive: trigger PDF generation + archival via the existing securities PDF route
+        fetch(`/api/securities/pdf?id=${approval.id}&format=download`)
+          .catch(() => {});
 
         router.push('/securities?submitted=true');
       }
@@ -2222,6 +2283,10 @@ export default function NewSecurityApprovalPage() {
 
   // Render current step
   const renderStep = () => {
+    const isLastStep = currentStep === STEPS.length;
+    if (isLastStep && STEPS[STEPS.length - 1]?.name === 'Summering') {
+      return renderFinalSummaryStep();
+    }
     switch (currentStep) {
       case 1:
         return renderLookupStep();
@@ -2240,7 +2305,7 @@ export default function NewSecurityApprovalPage() {
       case 8:
         return formData.fundArticle === '6' ? renderESG_Step() : renderNormScreeningStep();
       case 9:
-        return renderExclusionStep();
+        return formData.fundArticle === '6' ? renderFinalSummaryStep() : renderExclusionStep();
       case 10:
         return renderGovernanceStep();
       case 11:
@@ -2250,11 +2315,13 @@ export default function NewSecurityApprovalPage() {
       case 13:
         return formData.fundArticle === '9' ? renderESGRiskStep() : renderESGSummaryStep();
       case 14:
-        return renderTaxonomyStep();
+        return formData.fundArticle === '9' ? renderTaxonomyStep() : renderFinalSummaryStep();
       case 15:
         return renderAllocationStep();
       case 16:
         return renderESGSummaryStep();
+      case 17:
+        return renderFinalSummaryStep();
       default:
         return null;
     }
@@ -2843,6 +2910,22 @@ export default function NewSecurityApprovalPage() {
           . Värden &gt;100 tolkas som belopp i SEK. Används för automatisk likviditetsberäkning i steg 6.
         </p>
       </div>
+
+      <div>
+        <label className="block text-sm font-medium text-aifm-charcoal mb-2">
+          Planerad andel av fonden (% av portföljen)
+        </label>
+        <input
+          type="text"
+          value={formData.plannedPortfolioWeight}
+          onChange={(e) => updateField('plannedPortfolioWeight', e.target.value)}
+          placeholder="T.ex. 3.5"
+          className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          Ange hur stor del av fondens totala förmögenhet innehavet förväntas utgöra efter förvärvet (i %).
+        </p>
+      </div>
     </div>
   );
 
@@ -3027,6 +3110,70 @@ export default function NewSecurityApprovalPage() {
           </label>
         </div>
       </div>
+
+      {/* Fund unit specific section — 5 kap. 17-18 § LVF */}
+      {(formData.category === 'fund_unit' || formData.type === 'fund' || formData.type === 'etf') && (
+        <div className="space-y-4 mt-6">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <p className="text-sm text-aifm-charcoal">
+              <strong>För fondandelar</strong> – 5 kap. 17-18 § LVF. Krav vid investering i andra fonder.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-aifm-charcoal mb-2">Fondtyp</label>
+            <select
+              value={formData.fundUnitType}
+              onChange={(e) => updateField('fundUnitType', e.target.value)}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
+            >
+              <option value="">Välj fondtyp...</option>
+              <option value="ucits">UCITS-fond</option>
+              <option value="ucits_like">UCITS-liknande fond</option>
+              <option value="special_fund">Specialfond</option>
+              <option value="aif">Alternativ investeringsfond (AIF)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-aifm-charcoal mb-2">
+              Länkar till fondbestämmelser / prospekt
+            </label>
+            <input
+              type="text"
+              value={formData.fundUnitComplianceLinks}
+              onChange={(e) => updateField('fundUnitComplianceLinks', e.target.value)}
+              placeholder="T.ex. https://fondbolaget.se/prospekt.pdf"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-aifm-gold/20 focus:border-aifm-gold transition-colors"
+            />
+          </div>
+
+          <div className="p-4 bg-gray-50 rounded-lg space-y-3">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.fundUnitMaxOwn10Percent}
+                onChange={(e) => updateField('fundUnitMaxOwn10Percent', e.target.checked)}
+                className="mt-0.5 w-4 h-4 text-aifm-charcoal border-gray-300 rounded-md focus:ring-aifm-gold/30 focus:ring-2"
+              />
+              <span className="text-sm text-aifm-charcoal/80">
+                5 kap. 17 § Max 10% av fondmedlen i andelar i en och samma fond uppfylls
+              </span>
+            </label>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.fundUnitMaxTarget25Percent}
+                onChange={(e) => updateField('fundUnitMaxTarget25Percent', e.target.checked)}
+                className="mt-0.5 w-4 h-4 text-aifm-charcoal border-gray-300 rounded-md focus:ring-aifm-gold/30 focus:ring-2"
+              />
+              <span className="text-sm text-aifm-charcoal/80">
+                5 kap. 18 § Max 25% av målfondernas andelar förvärvas uppfylls
+              </span>
+            </label>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -4048,6 +4195,212 @@ export default function NewSecurityApprovalPage() {
   );
 
   // Step 13 (Art 8) / 16 (Art 9): Sammanfattning ESG
+  const handleGenerateSummaryPDF = async () => {
+    setIsGeneratingPDF(true);
+    setSummaryPdfError(null);
+    try {
+      const res = await fetch('/api/securities/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          formData,
+          fundId: formData.fundId,
+          fundName: formData.fundName,
+          userEmail: userEmail || '',
+          userName: userName || userEmail || 'Förvaltare',
+        }),
+      });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => null);
+        throw new Error(errBody?.error || 'Kunde inte generera PDF');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${formData.name || 'Värdepapper'}_förhandsgranskning.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      setSummaryPdfUrl('generated');
+    } catch (err) {
+      setSummaryPdfError(err instanceof Error ? err.message : 'PDF-generering misslyckades');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
+  const handleDownloadPDF = () => {
+    handleGenerateSummaryPDF();
+  };
+
+  const summaryItems = useMemo(() => {
+    const items: { label: string; value: string; status?: 'ok' | 'warn' | 'error' }[] = [];
+    items.push({ label: 'Värdepapper', value: formData.name || '–' });
+    items.push({ label: 'ISIN', value: formData.isin || '–' });
+    items.push({ label: 'Typ', value: formData.type || '–' });
+    items.push({ label: 'Fond', value: formData.fundName || '–' });
+    items.push({ label: 'SFDR-artikel', value: formData.fundArticle ? `Artikel ${formData.fundArticle}` : '–' });
+    items.push({ label: 'Land', value: formData.country || '–' });
+    items.push({ label: 'Valuta', value: formData.currency || '–' });
+    items.push({ label: 'Emittent', value: formData.emitter || '–' });
+    items.push({ label: 'Sektor', value: formData.gicsSector || '–' });
+    items.push({
+      label: 'FFFS 2013:9',
+      value: (formData.limitedPotentialLoss && formData.liquidityNotEndangered && formData.isMarketable && formData.compatibleWithFund && formData.riskManagementCaptures) ? 'Alla krav uppfyllda' : 'Ej fullständigt',
+      status: (formData.limitedPotentialLoss && formData.liquidityNotEndangered && formData.isMarketable && formData.compatibleWithFund && formData.riskManagementCaptures) ? 'ok' : 'warn',
+    });
+    items.push({
+      label: 'Likviditet',
+      value: formData.averageDailyValueSEK ? `ADV ${formData.averageDailyValueSEK} SEK` : 'Ej beräknad',
+    });
+    items.push({
+      label: 'Dagspriser',
+      value: formData.reliableDailyPrices ? 'Ja' : 'Nej',
+      status: formData.reliableDailyPrices ? 'ok' : 'warn',
+    });
+    if (formData.article8Or9Fund) {
+      items.push({
+        label: 'Exkluderingskriterier',
+        value: formData.meetsExclusionCriteria ? 'Uppfyller' : 'Uppfyller inte',
+        status: formData.meetsExclusionCriteria ? 'ok' : 'error',
+      });
+      items.push({
+        label: 'PAI beaktad',
+        value: formData.paiConsidered ? 'Ja' : 'Nej',
+        status: formData.paiConsidered ? 'ok' : 'warn',
+      });
+    }
+    if (formData.esgDecision) {
+      items.push({
+        label: 'ESG-beslut',
+        value: formData.esgDecision === 'approved' ? 'Godkänns' : 'Avslås',
+        status: formData.esgDecision === 'approved' ? 'ok' : 'error',
+      });
+    }
+    return items;
+  }, [formData]);
+
+  const renderFinalSummaryStep = () => (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-br from-aifm-charcoal/5 to-transparent border border-aifm-charcoal/10 rounded-xl p-5">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-9 h-9 rounded-xl bg-aifm-gold/10 flex items-center justify-center">
+            <CheckCircle2 className="w-5 h-5 text-aifm-gold" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-aifm-charcoal">Summering av ansökan</p>
+            <p className="text-xs text-aifm-charcoal/50">Granska sammanfattningen och ladda hem PDF innan du skickar för godkännande.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Summary grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {summaryItems.map((item, i) => (
+          <div key={i} className="flex items-center justify-between p-3.5 bg-white rounded-xl border border-gray-100 hover:shadow-sm transition-shadow">
+            <span className="text-xs font-medium text-aifm-charcoal/50 uppercase tracking-wider">{item.label}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-aifm-charcoal text-right">{item.value}</span>
+              {item.status === 'ok' && <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />}
+              {item.status === 'warn' && <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />}
+              {item.status === 'error' && <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Compliance motivation */}
+      {formData.complianceMotivation && (
+        <div className="p-4 bg-white rounded-xl border border-gray-100">
+          <p className="text-xs font-semibold text-aifm-charcoal/50 uppercase tracking-wider mb-2">Motivering fondöverensstämmelse</p>
+          <p className="text-sm text-aifm-charcoal leading-relaxed">{formData.complianceMotivation}</p>
+        </div>
+      )}
+
+      {/* ESG decision motivation */}
+      {formData.esgDecisionMotivation && (
+        <div className="p-4 bg-white rounded-xl border border-gray-100">
+          <p className="text-xs font-semibold text-aifm-charcoal/50 uppercase tracking-wider mb-2">ESG-motivering</p>
+          <p className="text-sm text-aifm-charcoal leading-relaxed">{formData.esgDecisionMotivation}</p>
+        </div>
+      )}
+
+      {/* PDF section */}
+      <div className="border-t border-gray-100 pt-6">
+        <div className="p-5 bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-100 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-aifm-charcoal/5 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-aifm-charcoal/60" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-aifm-charcoal">Investeringscase PDF</p>
+              <p className="text-xs text-aifm-charcoal/50">Professionell presentation av hela ansökan. Bifogas automatiskt till Operations.</p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={summaryPdfUrl ? handleDownloadPDF : handleGenerateSummaryPDF}
+              disabled={isGeneratingPDF}
+              className="flex items-center gap-2 px-5 py-2.5 bg-aifm-gold text-white rounded-xl text-sm font-medium hover:bg-[#a8895c] disabled:opacity-50 transition-all shadow-sm"
+            >
+              {isGeneratingPDF ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Genererar PDF...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" />
+                  Ladda hem PDF
+                </>
+              )}
+            </button>
+            {summaryPdfUrl && (
+              <>
+                <button
+                  onClick={handleGenerateSummaryPDF}
+                  disabled={isGeneratingPDF}
+                  className="flex items-center gap-2 px-4 py-2.5 text-aifm-charcoal/60 hover:text-aifm-charcoal border border-gray-200 hover:border-gray-300 rounded-xl text-sm transition-all"
+                >
+                  {isGeneratingPDF ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                  Generera om
+                </button>
+                <span className="text-xs text-emerald-600 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  PDF redo
+                </span>
+              </>
+            )}
+          </div>
+
+          {summaryPdfError && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-xl">
+              <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+              <p className="text-sm text-red-600">{summaryPdfError}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Ready to submit info */}
+      <div className="p-4 bg-gradient-to-br from-aifm-gold/5 to-transparent rounded-xl border border-aifm-gold/10">
+        <div className="flex gap-3">
+          <Info className="w-5 h-5 text-aifm-gold flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-aifm-charcoal">Redo att skicka?</p>
+            <p className="text-xs text-aifm-charcoal/60 mt-0.5">
+              När du klickar &quot;Skicka för godkännande&quot; skickas ansökan samt PDF till Operations för granskning.
+              Du kan inte redigera ansökan efter att den skickats.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderESGSummaryStep = () => (
     <div className="space-y-6">
       <div className="bg-aifm-charcoal/5 border border-aifm-charcoal/10 rounded-xl p-4">
@@ -4329,12 +4682,12 @@ export default function NewSecurityApprovalPage() {
               )}
             </div>
 
-            {/* PDF Preview */}
+            {/* PDF Preview / Download */}
             <button
-              onClick={handleDownloadPDF}
+              onClick={summaryPdfUrl ? handleDownloadPDF : handleGenerateSummaryPDF}
               disabled={isGeneratingPDF}
               className="flex items-center gap-1.5 px-3.5 py-2 text-aifm-charcoal/50 hover:text-aifm-charcoal hover:bg-gray-50 rounded-full text-sm transition-all disabled:opacity-30"
-              title="Förhandsgranska PDF (öppnas i nytt fönster)"
+              title="Ladda hem PDF"
             >
               {isGeneratingPDF ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
               <span className="hidden sm:inline">PDF</span>

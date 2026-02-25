@@ -1,39 +1,62 @@
 /**
  * API Route: PDF Export for Security Approvals
- * Generates PDF documents from approval data
+ * Generates professional PDF documents via pdfkit.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getApproval, generateApprovalPDFContent, exportApprovalJSON } from '@/lib/integrations/securities';
+import { getApproval, exportApprovalJSON } from '@/lib/integrations/securities';
+import { generateApprovalPDF } from '@/lib/integrations/securities/pdf-generator-real';
 import { getESGServiceClient } from '@/lib/integrations/esg/esg-service';
 import type { PDFESGLiveData } from '@/lib/integrations/securities/pdf-generator';
-import { generateApprovalPDF } from '@/lib/integrations/securities/pdf-generator-real';
+import { getSession } from '@/lib/auth/session';
+import { archiveToDataroom } from '@/lib/dataRooms/archiveToDataroom';
 
-// GET /api/securities/pdf?id=xxx
-// Generate PDF for an approval
+async function fetchESGData(isin: string): Promise<PDFESGLiveData | undefined> {
+  try {
+    const esgClient = getESGServiceClient();
+    const esgData = await esgClient.getESGData(isin);
+    if (!esgData) return undefined;
+    return {
+      totalScore: esgData.totalScore,
+      environmentScore: esgData.environmentScore,
+      socialScore: esgData.socialScore,
+      governanceScore: esgData.governanceScore,
+      sfdrAlignment: esgData.sfdrAlignment,
+      taxonomyAlignmentPercent: esgData.taxonomyAlignmentPercent,
+      carbonIntensity: esgData.carbonIntensity,
+      carbonIntensityUnit: esgData.carbonIntensityUnit,
+      meetsExclusionCriteria: esgData.meetsExclusionCriteria,
+      exclusionFlags: esgData.exclusionFlags?.map(f => ({
+        category: f.category,
+        categoryDescription: f.categoryDescription,
+        revenuePercent: f.revenuePercent,
+      })),
+      provider: esgData.provider,
+      fetchedAt: esgData.fetchedAt,
+    };
+  } catch (err) {
+    console.warn('[PDF] Failed to fetch live ESG data:', err);
+    return undefined;
+  }
+}
+
+// GET /api/securities/pdf?id=xxx&format=pdf|json
 export async function GET(request: NextRequest) {
   try {
+    const session = await getSession().catch(() => null);
     const { searchParams } = new URL(request.url);
     const approvalId = searchParams.get('id');
-    const format = searchParams.get('format') || 'pdf'; // pdf, html, json
+    const format = searchParams.get('format') || 'pdf';
 
     if (!approvalId) {
-      return NextResponse.json(
-        { success: false, error: 'id krävs' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: 'id krävs' }, { status: 400 });
     }
 
     const approval = await getApproval(approvalId);
-
     if (!approval) {
-      return NextResponse.json(
-        { success: false, error: 'Ansökan hittades inte' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Ansökan hittades inte' }, { status: 404 });
     }
 
-    // JSON export for archiving
     if (format === 'json') {
       const jsonContent = exportApprovalJSON(approval);
       return new NextResponse(jsonContent, {
@@ -44,82 +67,54 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Fetch live ESG data if ISIN is available
-    let esgLiveData: PDFESGLiveData | undefined;
-    const isin = approval.basicInfo?.isin;
-    if (isin) {
-      try {
-        const esgClient = getESGServiceClient();
-        const esgData = await esgClient.getESGData(isin);
-        if (esgData) {
-          esgLiveData = {
-            totalScore: esgData.totalScore,
-            environmentScore: esgData.environmentScore,
-            socialScore: esgData.socialScore,
-            governanceScore: esgData.governanceScore,
-            sfdrAlignment: esgData.sfdrAlignment,
-            taxonomyAlignmentPercent: esgData.taxonomyAlignmentPercent,
-            carbonIntensity: esgData.carbonIntensity,
-            carbonIntensityUnit: esgData.carbonIntensityUnit,
-            meetsExclusionCriteria: esgData.meetsExclusionCriteria,
-            exclusionFlags: esgData.exclusionFlags?.map(f => ({
-              category: f.category,
-              categoryDescription: f.categoryDescription,
-              revenuePercent: f.revenuePercent,
-            })),
-            provider: esgData.provider,
-            fetchedAt: esgData.fetchedAt,
-          };
-        }
-      } catch (err) {
-        console.warn('[PDF] Failed to fetch live ESG data:', err);
-      }
-    }
+    const esgLiveData = approval.basicInfo?.isin
+      ? await fetchESGData(approval.basicInfo.isin)
+      : undefined;
 
-    // HTML fallback (for preview/print)
-    if (format === 'html') {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.aifm.se';
-      const htmlContent = generateApprovalPDFContent(approval, undefined, baseUrl, esgLiveData);
-      return new NextResponse(htmlContent, {
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8',
-        },
-      });
-    }
-
-    // Generate real PDF (default)
     const pdfBuffer = await generateApprovalPDF(approval, esgLiveData);
+
     const safeFilename = (approval.basicInfo?.name ?? 'approval').replace(/[^a-zA-Z0-9åäöÅÄÖ\s_-]/g, '').trim().replace(/\s+/g, '_');
+    const fileName = `${safeFilename}_${approvalId!.slice(-6)}.pdf`;
+
+    if (session?.email) {
+      archiveToDataroom({
+        userEmail: session.email,
+        userName: session.name || session.email || 'Användare',
+        analysisType: 'securities',
+        fileName,
+        pdfBuffer,
+        skipIfExists: false,
+      })
+        .then((res) => console.log(`[Securities PDF] Archived to dataroom: ${res.documentId}`))
+        .catch((e) => console.warn('[Securities PDF] Archive failed:', e));
+    }
+
     return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${safeFilename}_${approvalId.slice(-6)}.pdf"`,
+        'Content-Disposition': `attachment; filename="${fileName}"`,
       },
     });
   } catch (error) {
-    console.error('PDF generation error:', error);
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error('PDF generation error:', msg, error instanceof Error ? error.stack : '');
     return NextResponse.json(
-      { success: false, error: 'Kunde inte generera PDF' },
+      { success: false, error: `Kunde inte generera PDF: ${msg}` },
       { status: 500 }
     );
   }
 }
 
-// POST /api/securities/pdf
-// Generate PDF preview from form data (before saving)
+// POST /api/securities/pdf - Preview from form data
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { formData, fundId, fundName, userEmail, userName } = body;
 
     if (!formData) {
-      return NextResponse.json(
-        { success: false, error: 'formData krävs' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: 'formData krävs' }, { status: 400 });
     }
 
-    // Create a temporary approval object for preview
     const previewApproval = {
       id: 'preview-' + Date.now(),
       status: 'draft' as const,
@@ -196,6 +191,7 @@ export async function POST(request: NextRequest) {
       },
       esgInfo: {
         article8Or9Fund: formData.article8Or9Fund ?? false,
+        fundArticle: formData.fundArticle,
         environmentalCharacteristics: formData.environmentalCharacteristics,
         socialCharacteristics: formData.socialCharacteristics,
         meetsExclusionCriteria: formData.meetsExclusionCriteria ?? true,
@@ -205,21 +201,76 @@ export async function POST(request: NextRequest) {
         article9GoodGovernance: formData.article9GoodGovernance,
         article9OECDCompliant: formData.article9OECDCompliant,
         article9UNGPCompliant: formData.article9UNGPCompliant,
+        normScreening: formData.normScreening,
+        exclusionResults: formData.exclusionResults,
+        governance: formData.governance,
+        envRiskLevel: formData.envRiskLevel,
+        socialRiskLevel: formData.socialRiskLevel,
+        govRiskLevel: formData.govRiskLevel,
+        pai: formData.pai,
+        ghgData: formData.ghgData,
+        sustainableGoalCategory: formData.sustainableGoalCategory,
+        revenueCapExFromSustainable: formData.revenueCapExFromSustainable,
+        taxonomyQualifiedPercent: formData.taxonomyQualifiedPercent,
+        taxonomyAlignedPercent: formData.taxonomyAlignedPercent,
+        allocationBeforePercent: formData.allocationBeforePercent,
+        allocationAfterPercent: formData.allocationAfterPercent,
+        promotedCharacteristicsResult: formData.promotedCharacteristicsResult,
+        esgDecision: formData.esgDecision,
+        esgDecisionMotivation: formData.esgDecisionMotivation,
+        engagementRequired: formData.engagementRequired,
+        engagementComment: formData.engagementComment,
       },
       plannedAcquisitionShare: formData.plannedAcquisitionShare,
+      plannedPortfolioWeight: formData.plannedPortfolioWeight,
+      fundUnitInfo: (formData.category === 'fund_unit' || formData.type === 'fund' || formData.type === 'etf') ? {
+        fundType: formData.fundUnitType || '',
+        complianceLinks: formData.fundUnitComplianceLinks
+          ? (typeof formData.fundUnitComplianceLinks === 'string'
+            ? formData.fundUnitComplianceLinks.split(',').map((s: string) => s.trim()).filter(Boolean)
+            : formData.fundUnitComplianceLinks)
+          : undefined,
+        maxOwnFundUnits10Percent: formData.fundUnitMaxOwn10Percent ?? false,
+        maxTargetFundUnits25Percent: formData.fundUnitMaxTarget25Percent ?? false,
+      } : undefined,
     };
 
-    const pdfBuffer = await generateApprovalPDF(previewApproval as any);
+    const esgLiveData = (previewApproval as any).basicInfo?.isin
+      ? await fetchESGData((previewApproval as any).basicInfo.isin)
+      : undefined;
+
+    const pdfBuffer = await generateApprovalPDF(previewApproval as any, esgLiveData);
+
+    const safeName = (formData.name || 'värdepapper').replace(/[^a-zA-Z0-9åäöÅÄÖ\s_-]/g, '').trim().replace(/\s+/g, '_');
+    const fileName = `${safeName}_förhandsgranskning.pdf`;
+
+    const session = await getSession().catch(() => null);
+    if (session?.email || userEmail) {
+      const email = session?.email || userEmail;
+      const name = session?.name || userName || email || 'Användare';
+      archiveToDataroom({
+        userEmail: email,
+        userName: name,
+        analysisType: 'securities',
+        fileName,
+        pdfBuffer,
+        skipIfExists: false,
+      })
+        .then((res) => console.log(`[Securities PDF POST] Archived to dataroom: ${res.documentId}`))
+        .catch((e) => console.warn('[Securities PDF POST] Archive failed:', e));
+    }
+
     return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': 'inline; filename="preview.pdf"',
+        'Content-Disposition': `attachment; filename="${fileName}"`,
       },
     });
   } catch (error) {
-    console.error('PDF preview error:', error);
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error('PDF preview error:', msg, error instanceof Error ? error.stack : '');
     return NextResponse.json(
-      { success: false, error: 'Kunde inte generera förhandsvisning' },
+      { success: false, error: `Kunde inte generera förhandsvisning: ${msg}` },
       { status: 500 }
     );
   }

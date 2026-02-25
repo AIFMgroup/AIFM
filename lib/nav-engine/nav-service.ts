@@ -28,6 +28,7 @@ import {
   PendingRedemption,
   FXRate,
   FundConfig,
+  ValidationWarning,
 } from './types';
 
 // ============================================================================
@@ -72,6 +73,46 @@ export class NAVService {
 
     // 4. Fetch cash balances from registry
     const cashBalances = await this.registry.getCashBalances(fundId, navDate);
+
+    // 4b. If no positions AND no cash, fall back to existing external NAV
+    if (positions.length === 0 && cashBalances.length === 0) {
+      const existingNav = await this.registry.getNAV(shareClassId, navDate);
+      if (existingNav && existingNav.source === 'external_provider' && existingNav.navPerShare > 0) {
+        console.log(`[NAV Service] No positions/cash for ${fundId}/${shareClassId} – using external NAV: ${existingNav.navPerShare}`);
+        const tna = existingNav.totalNetAssets || 0;
+        return {
+          fundId,
+          shareClassId,
+          navDate,
+          calculatedAt: new Date().toISOString(),
+          grossAssets: tna,
+          totalLiabilities: 0,
+          netAssetValue: tna,
+          sharesOutstanding: existingNav.outstandingShares || 0,
+          navPerShare: existingNav.navPerShare,
+          navChange: 0,
+          navChangePercent: 0,
+          breakdown: {
+            assets: { equities: 0, bonds: 0, funds: 0, derivatives: 0, cash: tna, receivables: 0, other: 0, total: tna },
+            liabilities: { managementFee: 0, performanceFee: 0, depositaryFee: 0, adminFee: 0, auditFee: 0, taxLiability: 0, pendingRedemptions: 0, otherLiabilities: 0, total: 0 },
+            accruals: { accruedIncome: 0, accruedExpenses: 0, dividendsReceivable: 0, interestReceivable: 0, total: 0 },
+          },
+          validationErrors: [],
+          warnings: [{
+            code: 'EXTERNAL_NAV_USED',
+            message: `NAV from external provider (${existingNav.navPerShare.toFixed(4)}) used – no positions or cash available for independent calculation`,
+            severity: 'WARNING' as const,
+          }],
+          status: 'WARNINGS',
+          calculationDetails: [{
+            step: 'external_fallback',
+            description: 'Used pre-calculated NAV from ISEC SECURA (external_provider)',
+            inputValues: { externalNavPerShare: existingNav.navPerShare, totalNetAssets: tna },
+            outputValue: existingNav.navPerShare,
+          }],
+        } satisfies NAVCalculationResult;
+      }
+    }
 
     // 5. Enrich positions with latest prices from PriceProvider (if market prices are stale)
     const enrichedPositions = await this.enrichPositionsWithPrices(positions, navDate);
@@ -132,6 +173,15 @@ export class NAVService {
       previousNavPerShare,
       changeWarningThresholdPercent,
     });
+
+    // 13b. Stale price, position completeness, FX checks
+    this.appendPositionAndPriceWarnings(
+      result,
+      enrichedPositions as (RegistryPosition & { priceDate?: string })[],
+      fund.currency,
+      fxRates,
+      navDate
+    );
 
     console.log(`[NAV Service] NAV calculated: ${result.navPerShare.toFixed(4)} (status: ${result.status})`);
 
@@ -273,7 +323,62 @@ export class NAVService {
   // ==========================================================================
 
   /**
+   * Append validation warnings for stale price, missing price, missing FX, and position completeness.
+   */
+  private appendPositionAndPriceWarnings(
+    result: NAVCalculationResult,
+    positions: (RegistryPosition & { priceDate?: string })[],
+    fundCurrency: string,
+    fxRates: FXRate[],
+    navDate: string
+  ): void {
+    const fxCurrencies = new Set(fxRates.map((r) => r.baseCurrency));
+    const navDateMs = new Date(navDate + 'T12:00:00Z').getTime();
+    const oneDayMs = 24 * 60 * 60 * 1000;
+
+    for (const pos of positions) {
+      const isin = pos.isin ?? pos.instrumentId;
+      if (pos.marketPrice == null || pos.marketPrice === 0) {
+        result.warnings.push({
+          code: 'MISSING_PRICE',
+          severity: 'WARNING',
+          message: `Missing or zero price for ${isin}`,
+          field: 'positions',
+          details: { isin },
+        } as ValidationWarning);
+      }
+      if (pos.priceDate) {
+        const priceDateMs = new Date(pos.priceDate + 'T12:00:00Z').getTime();
+        if (navDateMs - priceDateMs > oneDayMs) {
+          result.warnings.push({
+            code: 'STALE_PRICE',
+            severity: 'WARNING',
+            message: `Stale price for ${isin} (price date: ${pos.priceDate})`,
+            field: 'positions',
+            details: { isin, priceDate: pos.priceDate, navDate },
+          } as ValidationWarning);
+        }
+      }
+      const posCurrency = pos.currency;
+      if (posCurrency !== fundCurrency && !fxCurrencies.has(posCurrency)) {
+        result.warnings.push({
+          code: 'MISSING_FX',
+          severity: 'WARNING',
+          message: `No FX rate for ${posCurrency} vs ${fundCurrency} (position ${isin})`,
+          field: 'fxRates',
+          details: { isin, currency: posCurrency },
+        } as ValidationWarning);
+      }
+    }
+
+    if (result.warnings.length > 0 && result.status === 'VALID') {
+      result.status = 'WARNINGS';
+    }
+  }
+
+  /**
    * Enrich positions with latest prices from PriceProvider if needed.
+   * If the active provider (e.g. LSEG) fails for an ISIN, falls back to fund_registry if available.
    */
   private async enrichPositionsWithPrices(
     positions: RegistryPosition[],
@@ -283,6 +388,7 @@ export class NAVService {
 
     const priceManager = getPriceDataProviderManager();
     const provider = priceManager.getActiveProvider();
+    const fallbackProvider = priceManager.getProvider('fund_registry');
 
     // Only enrich if provider supports instrument-level pricing
     if (!provider.getInstrumentPrice) return positions;
@@ -290,16 +396,29 @@ export class NAVService {
     const enriched: RegistryPosition[] = [];
     for (const pos of positions) {
       const isin = pos.isin ?? pos.instrumentId;
+      let latestPrice: { price: number; source: string; priceDate?: string } | null = null;
       try {
-        const latestPrice = await provider.getInstrumentPrice!(isin, navDate);
+        const p = await provider.getInstrumentPrice!(isin, navDate);
+        latestPrice = { price: p.price, source: p.source, priceDate: p.priceDate };
+      } catch {
+        if (fallbackProvider?.getInstrumentPrice) {
+          try {
+            const p = await fallbackProvider.getInstrumentPrice(isin, navDate);
+            latestPrice = { price: p.price, source: p.source, priceDate: p.priceDate };
+          } catch {
+            // Keep original position
+          }
+        }
+      }
+      if (latestPrice) {
         enriched.push({
           ...pos,
           marketPrice: latestPrice.price,
           marketValue: pos.quantity * latestPrice.price,
           priceSource: latestPrice.source,
-        });
-      } catch {
-        // Keep original position data if price fetch fails
+          ...(latestPrice.priceDate && { priceDate: latestPrice.priceDate }),
+        } as RegistryPosition & { priceDate?: string });
+      } else {
         enriched.push(pos);
       }
     }
